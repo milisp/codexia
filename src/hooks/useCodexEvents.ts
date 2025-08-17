@@ -205,6 +205,21 @@ export const useCodexEvents = ({
         scheduleReasoningFlush();
         break;
       }
+
+      case 'agent_reasoning': {
+        // Final snapshot of reasoning text
+        const text = (msg as any).text || '';
+        if (text) {
+          flushReasoningBuffer();
+          const state = useConversationStore.getState();
+          const conv = state.conversations.find(c => c.id === sessionId);
+          const msgs = conv?.messages || [];
+          if (msgs.length > 0) {
+            updateLastMessageReasoning(sessionId, text, { isStreaming: false });
+          }
+        }
+        break;
+      }
         
       case 'exec_approval_request':
         onApprovalRequest({

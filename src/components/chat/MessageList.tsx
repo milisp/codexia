@@ -119,18 +119,20 @@ export function MessageList({ messages, className = "", isLoading = false, isPen
             </span>
           </div>
 
-          {/* Reasoning (collapsed by default) */}
-          {normalized.role === 'assistant' && (normalized.reasoning || normalized.isReasoningStreaming) && (
+          {/* Reasoning (collapsed by default, but auto-shows while streaming) */}
+          {normalized.role === 'assistant' && (
             <div className="mb-2">
               <button
                 className="text-xs text-gray-500 hover:text-gray-700 underline"
                 onClick={() => toggleReasoning(normalized.id)}
               >
-                {showReasoningMap[normalized.id] ? 'Hide thinking' : 'Show thinking'}
+                {(showReasoningMap[normalized.id] || normalized.isReasoningStreaming || !!normalized.reasoning)
+                  ? 'Hide thinking'
+                  : 'Show thinking'}
               </button>
-              {showReasoningMap[normalized.id] && (
+              {(showReasoningMap[normalized.id] || normalized.isReasoningStreaming) && (
                 <div className="mt-1 rounded-md border border-gray-200 bg-gray-50 p-2 font-mono text-[11px] text-gray-700 whitespace-pre-wrap">
-                  {normalized.reasoning}
+                  {normalized.reasoning || (!normalized.isReasoningStreaming && 'No thinking tokens available for this response.')}
                   {normalized.isReasoningStreaming && (
                     <span className="inline-block w-2 h-4 bg-current opacity-75 animate-pulse ml-1 align-text-bottom">|</span>
                   )}

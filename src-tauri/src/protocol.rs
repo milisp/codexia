@@ -92,6 +92,9 @@ pub enum EventMsg {
     AgentMessageDelta {
         delta: String,
     },
+    AgentReasoning {
+        text: String,
+    },
     AgentReasoningDelta {
         delta: String,
     },
