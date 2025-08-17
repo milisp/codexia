@@ -13,7 +13,8 @@ export const useCodexEvents = ({
   onApprovalRequest
 }: UseCodexEventsProps) => {
   const { addMessage, updateLastMessage, updateLastMessageReasoning, updateLastMessageToolOutput, setSessionLoading, createConversation, snapshotConversations, setStreamingActive } = useConversationStore();
-  const RAW_STREAM = (import.meta as any)?.env?.DEV && (window as any)?.__CODEX_RAW_STREAM === true;
+  // Enable raw passthrough by default; set window.__CODEX_RAW_STREAM = false to disable
+  const RAW_STREAM = (typeof window !== 'undefined') ? ((window as any).__CODEX_RAW_STREAM !== false) : true;
   const DEBUG = (import.meta as any)?.env?.DEV && (window as any)?.__CODEX_DEBUG === true;
 
   // Buffer for streaming answer deltas with coalesced flushing
