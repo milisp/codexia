@@ -65,6 +65,13 @@ impl CodexClient {
             };
             cmd.arg("-c").arg(sandbox_config);
         }
+
+        // Optional dev override: force reasoning visibility like CLI
+        if std::env::var("CODEX_FORCE_REASONING").ok().as_deref() == Some("1") {
+            cmd.arg("-c").arg("show_raw_agent_reasoning=true");
+            cmd.arg("-c").arg("model_reasoning_effort=high");
+            cmd.arg("-c").arg("model_reasoning_summary=detailed");
+        }
         
         // Set working directory for the process
         if !config.working_directory.is_empty() {

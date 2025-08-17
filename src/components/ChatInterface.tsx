@@ -69,6 +69,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             : "system") as "user" | "agent" | "system",
         content: msg.content,
         timestamp: new Date(msg.timestamp),
+        isStreaming: (msg as any).isStreaming || false,
+        reasoning: (msg as any).reasoning || '',
+        isReasoningStreaming: (msg as any).isReasoningStreaming || false,
+        toolOutput: (msg as any).toolOutput || '',
+        isToolStreaming: (msg as any).isToolStreaming || false,
       }))
     : [];
 

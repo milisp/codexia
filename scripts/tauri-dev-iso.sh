@@ -19,6 +19,9 @@ echo "[tauri-dev-iso] XDG_CONFIG_HOME=$XDG_CONFIG_HOME"
 echo "[tauri-dev-iso] XDG_DATA_HOME=$XDG_DATA_HOME"
 echo "[tauri-dev-iso] Using project dev server settings (no override)"
 
+# Force reasoning visibility like CLI during dev runs
+export CODEX_FORCE_REASONING=1
+
 if command -v bun >/dev/null 2>&1; then
   exec bunx --bun @tauri-apps/cli dev "$@"
 else

@@ -74,6 +74,10 @@ export const useCodexEvents = ({
       content: message.content,
       timestamp: message.timestamp.getTime(),
       isStreaming: (message as any).isStreaming || false,
+      reasoning: (message as any).reasoning || '',
+      isReasoningStreaming: (message as any).isReasoningStreaming || false,
+      toolOutput: (message as any).toolOutput || '',
+      isToolStreaming: (message as any).isToolStreaming || false,
     } as any;
     console.log(`Adding message to session ${sessionId}:`, (conversationMessage.content || '').toString().substring(0, 100));
     addMessage(sessionId, conversationMessage);
@@ -179,6 +183,7 @@ export const useCodexEvents = ({
       }
 
       case 'agent_reasoning_delta': {
+        console.log('[reasoning_delta] delta len', (msg as any).delta?.length || 0);
         // Ensure conversation and assistant message exist using freshest state
         let state = useConversationStore.getState();
         let conv = state.conversations.find(c => c.id === sessionId);
@@ -205,6 +210,7 @@ export const useCodexEvents = ({
           updateLastMessageReasoning(sessionId, (last.reasoning || ''), { isStreaming: true });
         }
         reasoningBufferRef.current = reasoningBufferRef.current + ((msg as any).delta || '');
+        console.log('[reasoning_delta] buffer len', reasoningBufferRef.current.length);
         scheduleReasoningFlush();
         break;
       }
@@ -212,6 +218,7 @@ export const useCodexEvents = ({
       case 'agent_reasoning': {
         // Final snapshot of reasoning text
         const text = (msg as any).text || '';
+        console.log('[reasoning_snapshot] text len', text.length);
         if (text) {
           flushReasoningBuffer();
           let state = useConversationStore.getState();
@@ -236,6 +243,7 @@ export const useCodexEvents = ({
             addMessageToStore(agentMessage);
           } else {
             updateLastMessageReasoning(sessionId, text, { isStreaming: false });
+            console.log('[reasoning_snapshot] updated last message reasoning');
           }
         }
         break;
