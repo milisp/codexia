@@ -36,6 +36,7 @@ interface ConversationStore {
   // Message management
   addMessage: (conversationId: string, message: ChatMessage) => void;
   updateLastMessage: (conversationId: string, content: string, opts?: { isStreaming?: boolean }) => void;
+  updateLastMessageReasoning: (conversationId: string, reasoning: string, opts?: { isStreaming?: boolean }) => void;
 
   // Getters
   getCurrentConversation: () => Conversation | null;
@@ -301,6 +302,29 @@ export const useConversationStore = create<ConversationStore>()(
                 content,
                 ...(opts && typeof opts.isStreaming !== 'undefined' ? { isStreaming: opts.isStreaming } : {}),
               };
+
+              return {
+                ...conv,
+                messages: updatedMessages,
+                updatedAt: Date.now(),
+              };
+            }
+            return conv;
+          }),
+        }));
+      },
+
+      updateLastMessageReasoning: (conversationId: string, reasoning: string, opts?: { isStreaming?: boolean }) => {
+        set((state) => ({
+          conversations: state.conversations.map((conv) => {
+            if (conv.id === conversationId && conv.messages.length > 0) {
+              const updatedMessages = [...conv.messages];
+              const lastMessage = updatedMessages[updatedMessages.length - 1];
+              updatedMessages[updatedMessages.length - 1] = {
+                ...lastMessage,
+                reasoning,
+                ...(opts && typeof opts.isStreaming !== 'undefined' ? { isReasoningStreaming: opts.isStreaming } : {}),
+              } as any;
 
               return {
                 ...conv,

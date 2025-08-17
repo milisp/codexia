@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Bot, User, Terminal } from 'lucide-react';
 import type { ChatMessage as ChatMessageType } from '@/types/chat';
 import type { ChatMessage as CodexMessageType } from '@/types/codex';
@@ -15,6 +15,11 @@ interface MessageListProps {
 
 export function MessageList({ messages, className = "", isLoading = false, isPendingNewConversation = false }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showReasoningMap, setShowReasoningMap] = useState<Record<string, boolean>>({});
+
+  const toggleReasoning = (id: string) => {
+    setShowReasoningMap((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -33,7 +38,9 @@ export function MessageList({ messages, className = "", isLoading = false, isPen
         role: msg.type === 'user' ? 'user' : msg.type === 'agent' ? 'assistant' : 'system',
         content: msg.content,
         timestamp: msg.timestamp instanceof Date ? msg.timestamp.getTime() : new Date().getTime(),
-        isStreaming: (msg as any).isStreaming || false
+        isStreaming: (msg as any).isStreaming || false,
+        reasoning: (msg as any).reasoning || '',
+        isReasoningStreaming: (msg as any).isReasoningStreaming || false,
       };
     }
     // It's a chat message (has 'role' property)
@@ -42,7 +49,9 @@ export function MessageList({ messages, className = "", isLoading = false, isPen
       role: msg.role,
       content: msg.content,
       timestamp: typeof msg.timestamp === 'number' ? msg.timestamp : new Date().getTime(),
-      isStreaming: (msg as any).isStreaming || false
+      isStreaming: (msg as any).isStreaming || false,
+      reasoning: (msg as any).reasoning || '',
+      isReasoningStreaming: (msg as any).isReasoningStreaming || false,
     };
   };
 
@@ -109,6 +118,26 @@ export function MessageList({ messages, className = "", isLoading = false, isPen
               {formatTime(normalized.timestamp)}
             </span>
           </div>
+
+          {/* Reasoning (collapsed by default) */}
+          {normalized.role === 'assistant' && (normalized.reasoning || normalized.isReasoningStreaming) && (
+            <div className="mb-2">
+              <button
+                className="text-xs text-gray-500 hover:text-gray-700 underline"
+                onClick={() => toggleReasoning(normalized.id)}
+              >
+                {showReasoningMap[normalized.id] ? 'Hide thinking' : 'Show thinking'}
+              </button>
+              {showReasoningMap[normalized.id] && (
+                <div className="mt-1 rounded-md border border-gray-200 bg-gray-50 p-2 font-mono text-[11px] text-gray-700 whitespace-pre-wrap">
+                  {normalized.reasoning}
+                  {normalized.isReasoningStreaming && (
+                    <span className="inline-block w-2 h-4 bg-current opacity-75 animate-pulse ml-1 align-text-bottom">|</span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Content */}
           <div className={`rounded-lg border p-3 ${getMessageStyle(normalized.role)}`}>

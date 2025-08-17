@@ -26,6 +26,8 @@ export interface ChatMessage {
   content: string;
   timestamp: Date;
   isStreaming?: boolean;
+  reasoning?: string;
+  isReasoningStreaming?: boolean;
 }
 
 export interface ApprovalRequest {

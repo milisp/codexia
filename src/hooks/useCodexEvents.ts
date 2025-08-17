@@ -12,9 +12,9 @@ export const useCodexEvents = ({
   sessionId, 
   onApprovalRequest
 }: UseCodexEventsProps) => {
-  const { addMessage, updateLastMessage, setSessionLoading, createConversation } = useConversationStore();
+  const { addMessage, updateLastMessage, updateLastMessageReasoning, setSessionLoading, createConversation } = useConversationStore();
 
-  // Buffer for streaming deltas to reduce UI churn (single-word updates)
+  // Buffer for streaming answer deltas to reduce UI churn
   const bufferRef = useRef<string>('');
   const flushTimerRef = useRef<any>(null);
 
@@ -34,6 +34,28 @@ export const useCodexEvents = ({
   const scheduleFlush = () => {
     if (flushTimerRef.current) return;
     flushTimerRef.current = setTimeout(flushBuffer, 80);
+  };
+
+  // Separate buffer for reasoning deltas
+  const reasoningBufferRef = useRef<string>('');
+  const reasoningFlushTimerRef = useRef<any>(null);
+
+  const flushReasoningBuffer = () => {
+    const buf = reasoningBufferRef.current;
+    if (!buf) return;
+    const state = useConversationStore.getState();
+    const conv = state.conversations.find(c => c.id === sessionId);
+    const msgs = conv?.messages || [];
+    const last: any = msgs[msgs.length - 1];
+    const newReasoning = ((last?.reasoning as string) || '') + buf;
+    updateLastMessageReasoning(sessionId, newReasoning, { isStreaming: true });
+    reasoningBufferRef.current = '';
+    reasoningFlushTimerRef.current = null;
+  };
+
+  const scheduleReasoningFlush = () => {
+    if (reasoningFlushTimerRef.current) return;
+    reasoningFlushTimerRef.current = setTimeout(flushReasoningBuffer, 80);
   };
 
   const addMessageToStore = (message: ChatMessage) => {
@@ -71,6 +93,7 @@ export const useCodexEvents = ({
         
       case 'task_complete':
         flushBuffer();
+        flushReasoningBuffer();
         setSessionLoading(sessionId, false);
         // Mark last assistant as not streaming
         {
@@ -79,12 +102,14 @@ export const useCodexEvents = ({
           const msgs = conv?.messages || [];
           if (msgs.length > 0) {
             updateLastMessage(sessionId, (msgs[msgs.length - 1] as any).content || '', { isStreaming: false });
+            updateLastMessageReasoning(sessionId, ((msgs[msgs.length - 1] as any).reasoning || ''), { isStreaming: false });
           }
         }
         break;
 
       case 'turn_complete':
         flushBuffer();
+        flushReasoningBuffer();
         setSessionLoading(sessionId, false);
         {
           const state = useConversationStore.getState();
@@ -92,6 +117,7 @@ export const useCodexEvents = ({
           const msgs = conv?.messages || [];
           if (msgs.length > 0) {
             updateLastMessage(sessionId, (msgs[msgs.length - 1] as any).content || '', { isStreaming: false });
+            updateLastMessageReasoning(sessionId, ((msgs[msgs.length - 1] as any).reasoning || ''), { isStreaming: false });
           }
         }
         break;
@@ -152,9 +178,33 @@ export const useCodexEvents = ({
         break;
       }
 
-      case 'agent_reasoning_delta':
-        // For now, ignore in UI to avoid noisy single-word updates.
+      case 'agent_reasoning_delta': {
+        // Ensure conversation and assistant message exist using freshest state
+        let state = useConversationStore.getState();
+        let conv = state.conversations.find(c => c.id === sessionId);
+        if (!conv) {
+          createConversation('New Chat', 'agent', sessionId);
+          state = useConversationStore.getState();
+          conv = state.conversations.find(c => c.id === sessionId) || null as any;
+        }
+        const msgs = conv?.messages || [];
+        const last = msgs[msgs.length - 1] as any;
+        if (!(last && last.role === 'assistant')) {
+          const agentMessage: ChatMessage = {
+            id: `${sessionId}-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+            type: 'agent',
+            content: '',
+            timestamp: new Date(),
+            isStreaming: true,
+            reasoning: '',
+            isReasoningStreaming: true,
+          } as any;
+          addMessageToStore(agentMessage);
+        }
+        reasoningBufferRef.current = reasoningBufferRef.current + ((msg as any).delta || '');
+        scheduleReasoningFlush();
         break;
+      }
         
       case 'exec_approval_request':
         onApprovalRequest({
