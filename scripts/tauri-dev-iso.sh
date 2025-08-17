@@ -6,8 +6,9 @@ set -euo pipefail
 # - Keeps dev server behavior unchanged (uses the app's configured devUrl).
 
 ROOT_DIR=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+ORIG_HOME="$HOME"
 
-// Use isolated Codex CLI wrapper in this repo
+# Use isolated Codex CLI wrapper in this repo
 export CODEX_PATH="$ROOT_DIR/scripts/codex-iso.sh"
 
 # Isolate app config/data from your main system install
@@ -16,6 +17,9 @@ export XDG_DATA_HOME="$(mktemp -d)"
 
 # Use isolated HOME under the repo so dev config/auth are sandboxed
 export HOME="$ROOT_DIR/.codex-home"
+# Preserve Rust toolchain paths so cargo/rustup work even with isolated HOME
+export CARGO_HOME="${CARGO_HOME:-$ORIG_HOME/.cargo}"
+export RUSTUP_HOME="${RUSTUP_HOME:-$ORIG_HOME/.rustup}"
 mkdir -p "$HOME/.codex"
 
 # Ensure dev-specific ~/.codex/config.toml has NO mcp_servers (they cause issues in dev)
@@ -39,6 +43,8 @@ EOF
 fi
 
 echo "[tauri-dev-iso] Using HOME=$HOME"
+echo "[tauri-dev-iso] CARGO_HOME=$CARGO_HOME"
+echo "[tauri-dev-iso] RUSTUP_HOME=$RUSTUP_HOME"
 echo "[tauri-dev-iso] Dev config at $DEV_CFG with MCP servers removed"
 
 echo "[tauri-dev-iso] Using CODEX_PATH=$CODEX_PATH"

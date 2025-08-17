@@ -579,6 +579,12 @@ export const useCodexEvents = ({
         flushToolBuffer(true);
         break;
       }
+
+      case 'token_count': {
+        // No-op for now; can be surfaced in UI later
+        if (DEBUG) console.log('Token usage:', msg);
+        break;
+      }
         
       default:
         if (DEBUG) console.log('Unhandled event type:', (msg as any).type);

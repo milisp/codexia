@@ -128,6 +128,13 @@ pub enum EventMsg {
         stderr: String,
         exit_code: i32,
     },
+    TokenCount {
+        input_tokens: u64,
+        cached_input_tokens: u64,
+        output_tokens: u64,
+        reasoning_output_tokens: u64,
+        total_tokens: u64,
+    },
     ShutdownComplete,
     BackgroundEvent {
         message: String,

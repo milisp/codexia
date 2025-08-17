@@ -21,6 +21,7 @@ export type EventMsg =
   | { type: 'exec_command_begin'; call_id: string; command: string[]; cwd: string }
   | { type: 'exec_command_output_delta'; call_id: string; stream: string; chunk: number[] }
   | { type: 'exec_command_end'; call_id: string; stdout: string; stderr: string; exit_code: number }
+  | { type: 'token_count'; input_tokens: number; cached_input_tokens: number; output_tokens: number; reasoning_output_tokens: number; total_tokens: number }
   | { type: 'shutdown_complete' }
   | { type: 'background_event'; message: string };
 
