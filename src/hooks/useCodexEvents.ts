@@ -22,14 +22,18 @@ export const useCodexEvents = ({
   // Adaptive smoothing defaults (used before rate is learned)
   const DEFAULT_MIN_CHUNK = 12;
   const FRAME_TARGET_MS = 32; // target UI frame pacing
-  const MIN_FLUSH_MS = 16;
-  const MAX_SOFT_MS = 120;
-  const MAX_HARD_MS = 320;
+  // Legacy timer tunables (kept for reference after rAF migration)
+  // const MIN_FLUSH_MS = 16;
+  // const MAX_SOFT_MS = 120;
+  // const MAX_HARD_MS = 320;
 
   // Track incoming rate to adapt chunk sizes and waits
   const answerStatsRef = useRef<{ started: boolean; lastDeltaAt: number; lastFlushAt: number; ewmaInterMs: number; ewmaRateCps: number }>(
     { started: false, lastDeltaAt: 0, lastFlushAt: 0, ewmaInterMs: 0, ewmaRateCps: 0 }
   );
+  const answerRafIdRef = useRef<number | null>(null);
+  const answerStartTsRef = useRef<number>(0);
+  const INITIAL_BOOST_MS = 6000; // boost for first ~6s
 
   const hasWordBoundary = (s: string) => /[\s\.!?,;:\n]/.test(s);
 
@@ -52,18 +56,20 @@ export const useCodexEvents = ({
     return Math.max(DEFAULT_MIN_CHUNK, Math.min(256, chunk));
   };
 
-  const computeWaits = () => {
-    const inter = answerStatsRef.current.ewmaInterMs || 40;
-    const soft = Math.max(MIN_FLUSH_MS, Math.min(MAX_SOFT_MS, Math.round(inter * 1.1)));
-    const hard = Math.max(80, Math.min(MAX_HARD_MS, soft * 3));
-    return { soft, hard };
-  };
+  // const computeWaits = () => {
+  //   const inter = answerStatsRef.current.ewmaInterMs || 40;
+  //   const soft = Math.max(MIN_FLUSH_MS, Math.min(MAX_SOFT_MS, Math.round(inter * 1.1)));
+  //   const hard = Math.max(80, Math.min(MAX_HARD_MS, soft * 3));
+  //   return { soft, hard };
+  // };
 
   const resetAnswerStats = () => {
     answerStatsRef.current = { started: false, lastDeltaAt: 0, lastFlushAt: 0, ewmaInterMs: 0, ewmaRateCps: 0 };
     if (softFlushTimerRef.current) { clearTimeout(softFlushTimerRef.current); softFlushTimerRef.current = null; }
     if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); flushTimerRef.current = null; }
     bufferRef.current = '';
+    if (answerRafIdRef.current != null) { cancelAnimationFrame(answerRafIdRef.current); answerRafIdRef.current = null; }
+    answerStartTsRef.current = 0;
   };
 
   // Buffer tool/exec output to avoid per-chunk re-render jank
@@ -93,6 +99,7 @@ export const useCodexEvents = ({
   };
 
   const flushBuffer = (forced: boolean = false) => {
+    if (forced && answerRafIdRef.current != null) { cancelAnimationFrame(answerRafIdRef.current); answerRafIdRef.current = null; }
     const buf = bufferRef.current;
     if (!buf) return;
     const desired = computeDesiredChunk();
@@ -111,41 +118,41 @@ export const useCodexEvents = ({
     if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); flushTimerRef.current = null; }
   };
 
-  const scheduleFlush = () => {
-    const stats = answerStatsRef.current;
-    // Fast-start: flush immediately on first delta to avoid perceived lag
-    if (!stats.started) {
-      stats.started = true;
-      // Small microtask delay to batch multiple sub-ms arrivals if any
-      setTimeout(() => flushBuffer(true), 0);
-      return;
+  // rAF-driven answer streaming to avoid early-phase timer jank
+  const answerFrame = () => {
+    answerRafIdRef.current = null;
+    if (!bufferRef.current || bufferRef.current.length === 0) return;
+
+    const backlog = bufferRef.current.length;
+    const rate = answerStatsRef.current.ewmaRateCps || 120; // default until learned
+    let take = Math.max(1, Math.min(64, Math.round((rate * FRAME_TARGET_MS) / 1000)));
+
+    // Backlog scaling: catch up quickly without flooding UI
+    if (backlog > 200) take = Math.min(128, take * 4);
+    else if (backlog > 100) take = Math.min(96, take * 3);
+    else if (backlog > 40) take = Math.min(64, take * 2);
+
+    // Initial boost: ensure visible progress while rate stabilizes
+    if (answerStartTsRef.current > 0 && Date.now() - answerStartTsRef.current < INITIAL_BOOST_MS) {
+      take = Math.max(take, 16);
     }
 
-    const desired = computeDesiredChunk();
-    const { soft, hard } = computeWaits();
+    const chunk = bufferRef.current.slice(0, take);
+    bufferRef.current = bufferRef.current.slice(take);
 
-    // If we already have enough buffered, flush soon
-    if (bufferRef.current.length >= desired) {
-      const sinceLast = Date.now() - (answerStatsRef.current.lastFlushAt || 0);
-      const delay = Math.max(0, MIN_FLUSH_MS - sinceLast);
-      if (delay === 0) {
-        flushBuffer();
-      } else {
-        // Ensure only one soft timer exists at a time
-        if (softFlushTimerRef.current) clearTimeout(softFlushTimerRef.current);
-        softFlushTimerRef.current = setTimeout(() => flushBuffer(), delay);
-      }
-    } else {
-      // Re-schedule adaptive soft/hard flushes
-      if (softFlushTimerRef.current) clearTimeout(softFlushTimerRef.current);
-      // Extra-aggressive early phase: if we haven't learned a rate yet, flush sooner
-      const early = (answerStatsRef.current.ewmaRateCps || 0) <= 0 ? MIN_FLUSH_MS : soft;
-      softFlushTimerRef.current = setTimeout(() => flushBuffer(), early);
+    const state = useConversationStore.getState();
+    const conv = state.conversations.find(c => c.id === sessionId);
+    const msgs = conv?.messages || [];
+    const last = msgs[msgs.length - 1] as any;
+    const newContent = ((last?.content as string) || '') + chunk;
+    updateLastMessage(sessionId, newContent, { isStreaming: true });
 
-      if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
-      flushTimerRef.current = setTimeout(() => flushBuffer(true), hard);
+    if (bufferRef.current.length > 0) {
+      answerRafIdRef.current = requestAnimationFrame(answerFrame);
     }
   };
+
+  // scheduleFlush: no longer used (rAF streaming); kept for reference
 
   // Separate buffer for reasoning deltas with smoothing
   const reasoningBufferRef = useRef<string>('');
@@ -354,7 +361,13 @@ export const useCodexEvents = ({
         const deltaText = msg.delta || '';
         updateAnswerStats(deltaText.length);
         bufferRef.current = bufferRef.current + deltaText;
-        scheduleFlush();
+        if (!answerStatsRef.current.started) {
+          answerStatsRef.current.started = true;
+          answerStartTsRef.current = Date.now();
+        }
+        if (answerRafIdRef.current == null) {
+          answerRafIdRef.current = requestAnimationFrame(answerFrame);
+        }
         break;
       }
 
