@@ -29,6 +29,8 @@ export interface ChatMessage {
   isStreaming?: boolean;
   reasoning?: string;
   isReasoningStreaming?: boolean;
+  toolOutput?: string;
+  isToolStreaming?: boolean;
 }
 
 export interface ApprovalRequest {

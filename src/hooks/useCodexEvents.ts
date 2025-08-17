@@ -12,7 +12,7 @@ export const useCodexEvents = ({
   sessionId, 
   onApprovalRequest
 }: UseCodexEventsProps) => {
-  const { addMessage, updateLastMessage, updateLastMessageReasoning, setSessionLoading, createConversation } = useConversationStore();
+  const { addMessage, updateLastMessage, updateLastMessageReasoning, updateLastMessageToolOutput, setSessionLoading, createConversation } = useConversationStore();
 
   // Buffer for streaming answer deltas to reduce UI churn
   const bufferRef = useRef<string>('');
@@ -274,21 +274,57 @@ export const useCodexEvents = ({
         console.log('Session shutdown completed');
         break;
         
-      case 'background_event':
-        console.log('Background event:', msg.message);
+      case 'background_event': {
+        const state = useConversationStore.getState();
+        let conv = state.conversations.find(c => c.id === sessionId);
+        if (!conv) {
+          createConversation('New Chat', 'agent', sessionId);
+          conv = useConversationStore.getState().conversations.find(c => c.id === sessionId) || null as any;
+        }
+        const msgs = conv?.messages || [];
+        const last = msgs[msgs.length - 1] as any;
+        const prev = (last?.toolOutput as string) || '';
+        updateLastMessageToolOutput(sessionId, prev + `\n[info] ${msg.message}\n`, { isStreaming: true });
         break;
+      }
         
-      case 'exec_command_begin':
-        console.log('Command execution started');
+      case 'exec_command_begin': {
+        const state = useConversationStore.getState();
+        let conv = state.conversations.find(c => c.id === sessionId);
+        if (!conv) {
+          createConversation('New Chat', 'agent', sessionId);
+          conv = useConversationStore.getState().conversations.find(c => c.id === sessionId) || null as any;
+        }
+        const msgs = conv?.messages || [];
+        const last = msgs[msgs.length - 1] as any;
+        const prev = (last?.toolOutput as string) || '';
+        const cmd = (msg as any).command?.join(' ') || '';
+        updateLastMessageToolOutput(sessionId, prev + `\n$ ${cmd}\n`, { isStreaming: true });
         break;
+      }
         
-      case 'exec_command_output_delta':
-        console.log('Command output:', (msg as any).stream || '');
+      case 'exec_command_output_delta': {
+        const state = useConversationStore.getState();
+        const conv = state.conversations.find(c => c.id === sessionId);
+        const msgs = conv?.messages || [];
+        const last = msgs[msgs.length - 1] as any;
+        const prev = (last?.toolOutput as string) || '';
+        const chunkArr: number[] = (msg as any).chunk || [];
+        const text = String.fromCharCode(...chunkArr);
+        updateLastMessageToolOutput(sessionId, prev + text, { isStreaming: true });
         break;
+      }
         
-      case 'exec_command_end':
-        console.log('Command execution completed');
+      case 'exec_command_end': {
+        const state = useConversationStore.getState();
+        const conv = state.conversations.find(c => c.id === sessionId);
+        const msgs = conv?.messages || [];
+        const last = msgs[msgs.length - 1] as any;
+        const prev = (last?.toolOutput as string) || '';
+        const exit = (msg as any).exit_code;
+        updateLastMessageToolOutput(sessionId, prev + `\n[exit ${exit}]\n`, { isStreaming: false });
         break;
+      }
         
       default:
         console.log('Unhandled event type:', (msg as any).type);

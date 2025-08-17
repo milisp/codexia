@@ -127,6 +127,19 @@ export function MessageList({ messages, className = "", isLoading = false, isPen
             </div>
           )}
 
+          {/* Execution output (always visible) */}
+          {normalized.role === 'assistant' && (
+            <div className="mb-2">
+              <div className="text-xs text-gray-500 mb-1">Execution</div>
+              <div className="mt-1 rounded-md border border-gray-200 bg-gray-50 p-2 font-mono text-[11px] text-gray-700 whitespace-pre-wrap">
+                {(normalized as any).toolOutput || ''}
+                {(normalized as any).isToolStreaming && (
+                  <span className="inline-block w-2 h-4 bg-current opacity-75 animate-pulse ml-1 align-text-bottom">|</span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Content */}
           <div className={`rounded-lg border p-3 ${getMessageStyle(normalized.role)}`}>
             <div className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
