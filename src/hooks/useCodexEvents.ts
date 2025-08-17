@@ -13,6 +13,7 @@ export const useCodexEvents = ({
   onApprovalRequest
 }: UseCodexEventsProps) => {
   const { addMessage, updateLastMessage, updateLastMessageReasoning, updateLastMessageToolOutput, setSessionLoading, createConversation } = useConversationStore();
+  const DEBUG = (import.meta as any)?.env?.DEV && (window as any)?.__CODEX_DEBUG === true;
 
   // Buffer for streaming answer deltas with smoothing
   const bufferRef = useRef<string>('');
@@ -63,6 +64,32 @@ export const useCodexEvents = ({
     if (softFlushTimerRef.current) { clearTimeout(softFlushTimerRef.current); softFlushTimerRef.current = null; }
     if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); flushTimerRef.current = null; }
     bufferRef.current = '';
+  };
+
+  // Buffer tool/exec output to avoid per-chunk re-render jank
+  const toolBufferRef = useRef<string>('');
+  const toolRafIdRef = useRef<number | null>(null);
+  const flushToolBuffer = (finalize: boolean = false) => {
+    if (!toolBufferRef.current) return;
+    const state = useConversationStore.getState();
+    const conv = state.conversations.find(c => c.id === sessionId);
+    const msgs = conv?.messages || [];
+    const last = msgs[msgs.length - 1] as any;
+    const prev = (last?.toolOutput as string) || '';
+    const chunk = toolBufferRef.current;
+    toolBufferRef.current = '';
+    updateLastMessageToolOutput(sessionId, prev + chunk, { isStreaming: !finalize });
+  };
+  const scheduleToolFlush = () => {
+    if (toolRafIdRef.current != null) return;
+    toolRafIdRef.current = requestAnimationFrame(() => {
+      toolRafIdRef.current = null;
+      flushToolBuffer(false);
+    });
+  };
+  const resetToolBuffer = () => {
+    if (toolRafIdRef.current != null) { cancelAnimationFrame(toolRafIdRef.current); toolRafIdRef.current = null; }
+    toolBufferRef.current = '';
   };
 
   const flushBuffer = (forced: boolean = false) => {
@@ -202,7 +229,7 @@ export const useCodexEvents = ({
     const state = useConversationStore.getState();
     const conversationExists = state.conversations.find(conv => conv.id === sessionId);
     if (!conversationExists) {
-      console.log(`Creating conversation for session ${sessionId} from event`);
+      if (DEBUG) console.log(`Creating conversation for session ${sessionId}`);
       createConversation('New Chat', 'agent', sessionId);
     }
 
@@ -218,7 +245,7 @@ export const useCodexEvents = ({
       toolOutput: (message as any).toolOutput || '',
       isToolStreaming: (message as any).isToolStreaming || false,
     } as any;
-    console.log(`Adding message to session ${sessionId}:`, (conversationMessage.content || '').toString().substring(0, 100));
+    if (DEBUG) console.log(`Add message ${sessionId}:`, (conversationMessage.content || '').toString().slice(0, 80));
     addMessage(sessionId, conversationMessage);
   };
 
@@ -232,12 +259,15 @@ export const useCodexEvents = ({
         
       case 'task_started':
         resetAnswerStats();
+        resetToolBuffer();
         setSessionLoading(sessionId, true);
         break;
         
       case 'task_complete':
         flushBuffer(true);
         flushReasoningBuffer(true);
+        flushToolBuffer(true);
+        resetToolBuffer();
         resetAnswerStats();
         setSessionLoading(sessionId, false);
         // Mark last assistant as not streaming
@@ -255,6 +285,8 @@ export const useCodexEvents = ({
       case 'turn_complete':
         flushBuffer(true);
         flushReasoningBuffer(true);
+        flushToolBuffer(true);
+        resetToolBuffer();
         resetAnswerStats();
         setSessionLoading(sessionId, false);
         {
@@ -327,7 +359,7 @@ export const useCodexEvents = ({
       }
 
       case 'agent_reasoning_delta': {
-        console.log('[reasoning_delta] delta len', (msg as any).delta?.length || 0);
+        if (DEBUG) console.log('[reasoning_delta] len', (msg as any).delta?.length || 0);
         // Ensure conversation and assistant message exist using freshest state
         let state = useConversationStore.getState();
         let conv = state.conversations.find(c => c.id === sessionId);
@@ -356,7 +388,7 @@ export const useCodexEvents = ({
         const deltaText = (msg as any).delta || '';
         updateReasoningStats(deltaText.length);
         reasoningBufferRef.current = reasoningBufferRef.current + deltaText;
-        console.log('[reasoning_delta] buffer len', reasoningBufferRef.current.length);
+        if (DEBUG) console.log('[reasoning_delta] buffer', reasoningBufferRef.current.length);
         // Begin rAF-driven reveal immediately (fast-start)
         if (!reasoningRafIdRef.current) {
           reasoningRafIdRef.current = requestAnimationFrame(reasoningFrame);
@@ -367,7 +399,7 @@ export const useCodexEvents = ({
       case 'agent_reasoning': {
         // Final snapshot of reasoning text
         const text = (msg as any).text || '';
-        console.log('[reasoning_snapshot] text len', text.length);
+        if (DEBUG) console.log('[reasoning_snapshot] len', text.length);
         if (text) {
           // Append to buffer and let rAF loop handle display
           updateReasoningStats(text.length);
@@ -397,7 +429,7 @@ export const useCodexEvents = ({
             addMessageToStore(agentMessage);
           } else {
             updateLastMessageReasoning(sessionId, text, { isStreaming: false });
-            console.log('[reasoning_snapshot] updated last message reasoning');
+            if (DEBUG) console.log('[reasoning_snapshot] applied');
           }
         }
         break;
@@ -433,7 +465,7 @@ export const useCodexEvents = ({
         break;
         
       case 'shutdown_complete':
-        console.log('Session shutdown completed');
+        if (DEBUG) console.log('Session shutdown completed');
         break;
         
       case 'background_event': {
@@ -443,10 +475,8 @@ export const useCodexEvents = ({
           createConversation('New Chat', 'agent', sessionId);
           conv = useConversationStore.getState().conversations.find(c => c.id === sessionId) || null as any;
         }
-        const msgs = conv?.messages || [];
-        const last = msgs[msgs.length - 1] as any;
-        const prev = (last?.toolOutput as string) || '';
-        updateLastMessageToolOutput(sessionId, prev + `\n[info] ${msg.message}\n`, { isStreaming: true });
+        toolBufferRef.current += `\n[info] ${msg.message}\n`;
+        scheduleToolFlush();
         break;
       }
         
@@ -457,39 +487,33 @@ export const useCodexEvents = ({
           createConversation('New Chat', 'agent', sessionId);
           conv = useConversationStore.getState().conversations.find(c => c.id === sessionId) || null as any;
         }
-        const msgs = conv?.messages || [];
-        const last = msgs[msgs.length - 1] as any;
-        const prev = (last?.toolOutput as string) || '';
+        // Flush any pending buffered output before writing command header
+        flushToolBuffer(false);
         const cmd = (msg as any).command?.join(' ') || '';
-        updateLastMessageToolOutput(sessionId, prev + `\n$ ${cmd}\n`, { isStreaming: true });
+        toolBufferRef.current += `\n$ ${cmd}\n`;
+        scheduleToolFlush();
         break;
       }
         
       case 'exec_command_output_delta': {
-        const state = useConversationStore.getState();
-        const conv = state.conversations.find(c => c.id === sessionId);
-        const msgs = conv?.messages || [];
-        const last = msgs[msgs.length - 1] as any;
-        const prev = (last?.toolOutput as string) || '';
         const chunkArr: number[] = (msg as any).chunk || [];
         const text = String.fromCharCode(...chunkArr);
-        updateLastMessageToolOutput(sessionId, prev + text, { isStreaming: true });
+        toolBufferRef.current += text;
+        scheduleToolFlush();
         break;
       }
         
       case 'exec_command_end': {
-        const state = useConversationStore.getState();
-        const conv = state.conversations.find(c => c.id === sessionId);
-        const msgs = conv?.messages || [];
-        const last = msgs[msgs.length - 1] as any;
-        const prev = (last?.toolOutput as string) || '';
+        // Flush any pending buffered output before adding exit code
+        flushToolBuffer(false);
         const exit = (msg as any).exit_code;
-        updateLastMessageToolOutput(sessionId, prev + `\n[exit ${exit}]\n`, { isStreaming: false });
+        toolBufferRef.current += `\n[exit ${exit}]\n`;
+        flushToolBuffer(true);
         break;
       }
         
       default:
-        console.log('Unhandled event type:', (msg as any).type);
+        if (DEBUG) console.log('Unhandled event type:', (msg as any).type);
     }
   };
 
@@ -498,13 +522,13 @@ export const useCodexEvents = ({
 
     const eventUnlisten = listen<CodexEvent>(`codex-event-${sessionId}`, (event) => {
       const codexEvent = event.payload;
-      console.log('Received codex event:', codexEvent);
+      if (DEBUG) console.log('evt:', codexEvent.msg?.type);
       handleCodexEvent(codexEvent);
     });
     
     const responseUnlisten = listen<string>(`codex-response:${sessionId}`, (event) => {
       const response = event.payload;
-      console.log('Received codex response:', response);
+      if (DEBUG) console.log('response len:', (response || '').length);
       
       const agentMessage: ChatMessage = {
         id: `${sessionId}-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
@@ -518,7 +542,7 @@ export const useCodexEvents = ({
     
     const errorUnlisten = listen<string>(`codex-error:${sessionId}`, (event) => {
       let errorLine = event.payload;
-      console.log('Received codex error:', errorLine);
+      if (DEBUG) console.log('stderr line');
       
       errorLine = errorLine.replace(/\u001b\[[0-9;]*m/g, '');
       
