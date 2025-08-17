@@ -12,7 +12,7 @@ export const useCodexEvents = ({
   sessionId, 
   onApprovalRequest
 }: UseCodexEventsProps) => {
-  const { addMessage, updateLastMessage, updateLastMessageReasoning, updateLastMessageToolOutput, setSessionLoading, createConversation } = useConversationStore();
+  const { addMessage, updateLastMessage, updateLastMessageReasoning, updateLastMessageToolOutput, setSessionLoading, createConversation, snapshotConversations } = useConversationStore();
   const DEBUG = (import.meta as any)?.env?.DEV && (window as any)?.__CODEX_DEBUG === true;
 
   // Buffer for streaming answer deltas with coalesced flushing
@@ -304,6 +304,7 @@ export const useCodexEvents = ({
         resetToolBuffer();
         resetAnswerStats();
         setSessionLoading(sessionId, false);
+        snapshotConversations();
         // Mark last assistant as not streaming
         {
           const state = useConversationStore.getState();
@@ -323,6 +324,7 @@ export const useCodexEvents = ({
         resetToolBuffer();
         resetAnswerStats();
         setSessionLoading(sessionId, false);
+        snapshotConversations();
         {
           const state = useConversationStore.getState();
           const conv = state.conversations.find(c => c.id === sessionId);
@@ -608,6 +610,10 @@ export const useCodexEvents = ({
       if (softFlushTimerRef.current) {
         clearTimeout(softFlushTimerRef.current);
         softFlushTimerRef.current = null;
+      }
+      if (answerSpoolerRef.current) {
+        clearInterval(answerSpoolerRef.current);
+        answerSpoolerRef.current = null;
       }
       if (reasoningFlushTimerRef.current) {
         clearTimeout(reasoningFlushTimerRef.current);
