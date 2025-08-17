@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
 import { Bot, User, Terminal } from 'lucide-react';
 import type { ChatMessage as ChatMessageType } from '@/types/chat';
 import type { ChatMessage as CodexMessageType } from '@/types/codex';
@@ -15,11 +15,6 @@ interface MessageListProps {
 
 export function MessageList({ messages, className = "", isLoading = false, isPendingNewConversation = false }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [showReasoningMap, setShowReasoningMap] = useState<Record<string, boolean>>({});
-
-  const toggleReasoning = (id: string) => {
-    setShowReasoningMap((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -119,25 +114,16 @@ export function MessageList({ messages, className = "", isLoading = false, isPen
             </span>
           </div>
 
-          {/* Reasoning (collapsed by default, but auto-shows while streaming) */}
+          {/* Reasoning (always visible) */}
           {normalized.role === 'assistant' && (
             <div className="mb-2">
-              <button
-                className="text-xs text-gray-500 hover:text-gray-700 underline"
-                onClick={() => toggleReasoning(normalized.id)}
-              >
-                {(showReasoningMap[normalized.id] || normalized.isReasoningStreaming || !!normalized.reasoning)
-                  ? 'Hide thinking'
-                  : 'Show thinking'}
-              </button>
-              {(showReasoningMap[normalized.id] || normalized.isReasoningStreaming) && (
-                <div className="mt-1 rounded-md border border-gray-200 bg-gray-50 p-2 font-mono text-[11px] text-gray-700 whitespace-pre-wrap">
-                  {normalized.reasoning || (!normalized.isReasoningStreaming && 'No thinking tokens available for this response.')}
-                  {normalized.isReasoningStreaming && (
-                    <span className="inline-block w-2 h-4 bg-current opacity-75 animate-pulse ml-1 align-text-bottom">|</span>
-                  )}
-                </div>
-              )}
+              <div className="text-xs text-gray-500 mb-1">Thinking</div>
+              <div className="mt-1 rounded-md border border-gray-200 bg-gray-50 p-2 font-mono text-[11px] text-gray-700 whitespace-pre-wrap">
+                {normalized.reasoning || (!normalized.isReasoningStreaming && 'No thinking tokens available for this response.')}
+                {normalized.isReasoningStreaming && (
+                  <span className="inline-block w-2 h-4 bg-current opacity-75 animate-pulse ml-1 align-text-bottom">|</span>
+                )}
+              </div>
             </div>
           )}
 
