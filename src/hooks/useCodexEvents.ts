@@ -14,13 +14,22 @@ export const useCodexEvents = ({
 }: UseCodexEventsProps) => {
   const { addMessage, updateLastMessage, updateLastMessageReasoning, updateLastMessageToolOutput, setSessionLoading, createConversation } = useConversationStore();
 
-  // Buffer for streaming answer deltas to reduce UI churn
+  // Buffer for streaming answer deltas with smoothing
   const bufferRef = useRef<string>('');
-  const flushTimerRef = useRef<any>(null);
+  const flushTimerRef = useRef<any>(null);      // hard flush
+  const softFlushTimerRef = useRef<any>(null);  // soft flush
+  const MIN_CHUNK_ANSWER = 64;
+  const SOFT_WAIT_ANSWER = 80;
+  const HARD_WAIT_ANSWER = 240;
 
-  const flushBuffer = () => {
+  const hasWordBoundary = (s: string) => /[\s\.!?,;:\n]/.test(s);
+
+  const flushBuffer = (forced: boolean = false) => {
     const buf = bufferRef.current;
     if (!buf) return;
+    if (!forced && buf.length < MIN_CHUNK_ANSWER && !hasWordBoundary(buf)) {
+      return;
+    }
     const state = useConversationStore.getState();
     const conv = state.conversations.find(c => c.id === sessionId);
     const msgs = conv?.messages || [];
@@ -28,21 +37,33 @@ export const useCodexEvents = ({
     const newContent = ((last?.content as string) || '') + buf;
     updateLastMessage(sessionId, newContent, { isStreaming: true });
     bufferRef.current = '';
-    flushTimerRef.current = null;
+    if (softFlushTimerRef.current) { clearTimeout(softFlushTimerRef.current); softFlushTimerRef.current = null; }
+    if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); flushTimerRef.current = null; }
   };
 
   const scheduleFlush = () => {
-    if (flushTimerRef.current) return;
-    flushTimerRef.current = setTimeout(flushBuffer, 80);
+    if (!softFlushTimerRef.current && bufferRef.current.length >= MIN_CHUNK_ANSWER) {
+      softFlushTimerRef.current = setTimeout(() => flushBuffer(), SOFT_WAIT_ANSWER);
+    }
+    if (!flushTimerRef.current) {
+      flushTimerRef.current = setTimeout(() => flushBuffer(true), HARD_WAIT_ANSWER);
+    }
   };
 
-  // Separate buffer for reasoning deltas
+  // Separate buffer for reasoning deltas with smoothing
   const reasoningBufferRef = useRef<string>('');
-  const reasoningFlushTimerRef = useRef<any>(null);
+  const reasoningFlushTimerRef = useRef<any>(null);    // hard flush
+  const reasoningSoftTimerRef = useRef<any>(null);      // soft flush
+  const MIN_CHUNK_REASON = 48;
+  const SOFT_WAIT_REASON = 90;
+  const HARD_WAIT_REASON = 260;
 
-  const flushReasoningBuffer = () => {
+  const flushReasoningBuffer = (forced: boolean = false) => {
     const buf = reasoningBufferRef.current;
     if (!buf) return;
+    if (!forced && buf.length < MIN_CHUNK_REASON && !hasWordBoundary(buf)) {
+      return;
+    }
     const state = useConversationStore.getState();
     const conv = state.conversations.find(c => c.id === sessionId);
     const msgs = conv?.messages || [];
@@ -50,12 +71,17 @@ export const useCodexEvents = ({
     const newReasoning = ((last?.reasoning as string) || '') + buf;
     updateLastMessageReasoning(sessionId, newReasoning, { isStreaming: true });
     reasoningBufferRef.current = '';
-    reasoningFlushTimerRef.current = null;
+    if (reasoningSoftTimerRef.current) { clearTimeout(reasoningSoftTimerRef.current); reasoningSoftTimerRef.current = null; }
+    if (reasoningFlushTimerRef.current) { clearTimeout(reasoningFlushTimerRef.current); reasoningFlushTimerRef.current = null; }
   };
 
   const scheduleReasoningFlush = () => {
-    if (reasoningFlushTimerRef.current) return;
-    reasoningFlushTimerRef.current = setTimeout(flushReasoningBuffer, 80);
+    if (!reasoningSoftTimerRef.current && reasoningBufferRef.current.length >= MIN_CHUNK_REASON) {
+      reasoningSoftTimerRef.current = setTimeout(() => flushReasoningBuffer(), SOFT_WAIT_REASON);
+    }
+    if (!reasoningFlushTimerRef.current) {
+      reasoningFlushTimerRef.current = setTimeout(() => flushReasoningBuffer(true), HARD_WAIT_REASON);
+    }
   };
 
   const addMessageToStore = (message: ChatMessage) => {
@@ -96,8 +122,8 @@ export const useCodexEvents = ({
         break;
         
       case 'task_complete':
-        flushBuffer();
-        flushReasoningBuffer();
+        flushBuffer(true);
+        flushReasoningBuffer(true);
         setSessionLoading(sessionId, false);
         // Mark last assistant as not streaming
         {
@@ -112,8 +138,8 @@ export const useCodexEvents = ({
         break;
 
       case 'turn_complete':
-        flushBuffer();
-        flushReasoningBuffer();
+        flushBuffer(true);
+        flushReasoningBuffer(true);
         setSessionLoading(sessionId, false);
         {
           const state = useConversationStore.getState();
@@ -130,7 +156,7 @@ export const useCodexEvents = ({
         // Prefer last_agent_message if present for full content
         const content = (msg as any).last_agent_message || msg.message || '';
         if (content) {
-          flushBuffer();
+          flushBuffer(true);
           let state = useConversationStore.getState();
           let conv = state.conversations.find(c => c.id === sessionId);
           if (!conv) {
@@ -392,6 +418,18 @@ export const useCodexEvents = ({
       if (flushTimerRef.current) {
         clearTimeout(flushTimerRef.current);
         flushTimerRef.current = null;
+      }
+      if (softFlushTimerRef.current) {
+        clearTimeout(softFlushTimerRef.current);
+        softFlushTimerRef.current = null;
+      }
+      if (reasoningFlushTimerRef.current) {
+        clearTimeout(reasoningFlushTimerRef.current);
+        reasoningFlushTimerRef.current = null;
+      }
+      if (reasoningSoftTimerRef.current) {
+        clearTimeout(reasoningSoftTimerRef.current);
+        reasoningSoftTimerRef.current = null;
       }
       eventUnlisten.then(fn => fn());
       responseUnlisten.then(fn => fn());
