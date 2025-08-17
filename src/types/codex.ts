@@ -1,6 +1,9 @@
 export interface CodexEvent {
   id: string;
   msg: EventMsg;
+  // Optional backend timing metadata (ms since epoch)
+  t_read_ms?: number;
+  t_emit_ms?: number;
 }
 
 export type EventMsg = 

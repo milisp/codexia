@@ -8,7 +8,7 @@ use tokio::sync::mpsc;
 use uuid::Uuid;
 
 use crate::protocol::{
-    CodexConfig, Event, InputItem, Op, Submission
+    CodexConfig, Event, EventMsg, InputItem, Op, Submission
 };
 use crate::utils::logger::log_to_file;
 use crate::utils::codex_discovery::discover_codex_command;
@@ -179,20 +179,49 @@ impl CodexClient {
         // Handle stdout reading
         let app_clone = app.clone();
         let session_id_clone = session_id.clone();
+        #[derive(serde::Serialize, Clone)]
+        struct FrontendEvent {
+            id: String,
+            msg: EventMsg,
+            t_read_ms: u128,
+            t_emit_ms: u128,
+        }
+
         tokio::spawn(async move {
             let reader = BufReader::new(stdout);
             let mut lines = reader.lines();
             log_to_file(&format!("Starting stdout reader for session: {}", session_id_clone));
             while let Ok(Some(line)) = lines.next_line().await {
+                let t_read_ms = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_millis();
                 if let Ok(event) = serde_json::from_str::<Event>(&line) {
                     // Minimal logging by default to avoid I/O stalls
                     // log_to_file(&format!("Parsed event: {:?}", event));
-                    // Send event to frontend
-                    if let Err(e) = app_clone.emit(&format!("codex-event-{}", session_id_clone), &event) {
+                    // Send event to frontend with timing metadata
+                    let t_emit_ms = std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_millis();
+                    let fe = FrontendEvent {
+                        id: event.id.clone(),
+                        msg: event.msg.clone(),
+                        t_read_ms,
+                        t_emit_ms,
+                    };
+                    if let Err(e) = app_clone.emit(&format!("codex-event-{}", session_id_clone), &fe) {
                         log_to_file(&format!("Failed to emit event: {}", e));
                     }
                 } else {
-                    log_to_file(&format!("Failed to parse codex event: {}", line));
+                    // Forward as error event to surface protocol issues without heavy logging
+                    let fallback = FrontendEvent {
+                        id: "parse_error".to_string(),
+                        msg: EventMsg::Error { message: format!("Invalid event JSON: {}", line) },
+                        t_read_ms,
+                        t_emit_ms: t_read_ms,
+                    };
+                    let _ = app_clone.emit(&format!("codex-event-{}", session_id_clone), &fallback);
                 }
             }
             log_to_file(&format!("Stdout reader terminated for session: {}", session_id_clone));

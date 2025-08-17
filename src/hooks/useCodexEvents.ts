@@ -15,6 +15,7 @@ export const useCodexEvents = ({
   const { addMessage, updateLastMessage, updateLastMessageReasoning, updateLastMessageToolOutput, setSessionLoading, createConversation, snapshotConversations, setStreamingActive } = useConversationStore();
   // Enable raw passthrough by default; set window.__CODEX_RAW_STREAM = false to disable
   const RAW_STREAM = (typeof window !== 'undefined') ? ((window as any).__CODEX_RAW_STREAM !== false) : true;
+  const METRICS = (typeof window !== 'undefined') ? ((window as any).__CODEX_METRICS === true) : false;
   const DEBUG = (import.meta as any)?.env?.DEV && (window as any)?.__CODEX_DEBUG === true;
 
   // Buffer for streaming answer deltas with coalesced flushing
@@ -589,7 +590,18 @@ export const useCodexEvents = ({
 
     const eventUnlisten = listen<CodexEvent>(`codex-event-${sessionId}`, (event) => {
       const codexEvent = event.payload;
+      const t_recv = Date.now();
       if (DEBUG) console.log('evt:', codexEvent.msg?.type);
+      if (METRICS) {
+        const t_emit = (codexEvent as any).t_emit_ms || 0;
+        const t_read = (codexEvent as any).t_read_ms || 0;
+        if (t_emit && t_read) {
+          const parse = t_emit - t_read;
+          const delivery = t_recv - t_emit;
+          const total = t_recv - t_read;
+          console.log(`[timing] ${codexEvent.msg?.type} parse=${parse}ms delivery=${delivery}ms total=${total}ms`);
+        }
+      }
       handleCodexEvent(codexEvent);
     });
     
