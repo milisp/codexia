@@ -17,6 +17,7 @@ interface ConversationStore {
   sessionDisconnected: boolean;
   pendingUserInput: string | null;
   pendingNewConversation: boolean;
+  streamingActive: boolean;
 
   // Conversation management
   createConversation: (title?: string, mode?: ChatMode, sessionId?: string) => string;
@@ -28,6 +29,7 @@ interface ConversationStore {
   updateConversationMode: (id: string, mode: ChatMode) => void;
   toggleFavorite: (id: string) => void;
   snapshotConversations: () => void;
+  setStreamingActive: (active: boolean) => void;
 
   // Session management
   setSessionDisconnected: (disconnected: boolean) => void;
@@ -102,6 +104,7 @@ export const useConversationStore = create<ConversationStore>()(
       sessionDisconnected: false,
       pendingUserInput: null,
       pendingNewConversation: false,
+      streamingActive: false,
 
       // Configuration
       setConfig: (config) => {
@@ -235,6 +238,10 @@ export const useConversationStore = create<ConversationStore>()(
               : conv,
           ),
         }));
+      },
+
+      setStreamingActive: (active: boolean) => {
+        set({ streamingActive: active });
       },
 
       setSessionDisconnected: (disconnected: boolean) => {
@@ -407,12 +414,21 @@ export const useConversationStore = create<ConversationStore>()(
           },
         } as Storage;
       }),
-      partialize: (state) => ({
-        config: state.config,
-        // Persist snapshot if available (captured at turn/task boundaries). Falls back to live conversations otherwise.
-        conversations: state.conversationsSnapshot ?? state.conversations,
-        currentConversationId: state.currentConversationId,
-      }),
+      partialize: (state) => {
+        // While streaming, avoid persisting heavy conversation trees to reduce JSON serialization overhead.
+        if (state.streamingActive) {
+          return {
+            config: state.config,
+            currentConversationId: state.currentConversationId,
+          } as any;
+        }
+        return {
+          config: state.config,
+          // Persist snapshot if available (captured at turn/task boundaries). Falls back to live conversations otherwise.
+          conversations: state.conversationsSnapshot ?? state.conversations,
+          currentConversationId: state.currentConversationId,
+        } as any;
+      },
       migrate: (persistedState: any, version: number) => {
         if (version < 4) {
           // Migrate from version 3: add config field
