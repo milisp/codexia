@@ -14,6 +14,21 @@ export const useCodexEvents = ({
 }: UseCodexEventsProps) => {
   const { addMessage, updateLastMessage, setSessionLoading, createConversation, conversations } = useConversationStore();
 
+  // Buffer for streaming deltas to reduce UI churn (single-word updates)
+  const bufferRef = { current: '' } as { current: string };
+  let flushTimer: any = null as any;
+
+  const flushBuffer = () => {
+    if (!bufferRef.current) return;
+    const conv = conversations.find(c => c.id === sessionId);
+    const msgs = conv?.messages || [];
+    const last = msgs[msgs.length - 1];
+    const newContent = ((last?.content as string) || '') + bufferRef.current;
+    updateLastMessage(sessionId, newContent, { isStreaming: true });
+    bufferRef.current = '';
+    flushTimer = null;
+  };
+
   const addMessageToStore = (message: ChatMessage) => {
     // Ensure conversation exists
     const conversationExists = conversations.find(conv => conv.id === sessionId);
@@ -46,27 +61,59 @@ export const useCodexEvents = ({
         break;
         
       case 'task_complete':
+        flushBuffer();
         setSessionLoading(sessionId, false);
-        break;
-
-      case 'turn_complete':
-        setSessionLoading(sessionId, false);
-        break;
-        
-      case 'agent_message':
-        if (msg.message) {
-          const agentMessage: ChatMessage = {
-            id: `${sessionId}-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-            type: 'agent',
-            content: msg.message,
-            timestamp: new Date(),
-          };
-          addMessageToStore(agentMessage);
+        // Mark last assistant as not streaming
+        {
+          const conv = conversations.find(c => c.id === sessionId);
+          const msgs = conv?.messages || [];
+          if (msgs.length > 0) {
+            updateLastMessage(sessionId, msgs[msgs.length - 1].content || '', { isStreaming: false });
+          }
         }
         break;
 
+      case 'turn_complete':
+        flushBuffer();
+        setSessionLoading(sessionId, false);
+        {
+          const conv = conversations.find(c => c.id === sessionId);
+          const msgs = conv?.messages || [];
+          if (msgs.length > 0) {
+            updateLastMessage(sessionId, msgs[msgs.length - 1].content || '', { isStreaming: false });
+          }
+        }
+        break;
+        
+      case 'agent_message': {
+        // Prefer last_agent_message if present for full content
+        const content = (msg as any).last_agent_message || msg.message || '';
+        if (content) {
+          let conv = conversations.find(c => c.id === sessionId);
+          if (!conv) {
+            createConversation('New Chat', 'agent', sessionId);
+            conv = useConversationStore.getState().conversations.find(c => c.id === sessionId) || null as any;
+          }
+          const msgs = conv?.messages || [];
+          const last = msgs[msgs.length - 1];
+          if (last && last.role === 'assistant') {
+            updateLastMessage(sessionId, content, { isStreaming: true });
+          } else {
+            const agentMessage: ChatMessage = {
+              id: `${sessionId}-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+              type: 'agent',
+              content,
+              timestamp: new Date(),
+              isStreaming: true,
+            };
+            addMessageToStore(agentMessage);
+          }
+        }
+        break;
+      }
+
       case 'agent_message_delta': {
-        // Ensure conversation exists
+        // Ensure conversation and assistant message exist
         let conv = conversations.find(c => c.id === sessionId);
         if (!conv) {
           createConversation('New Chat', 'agent', sessionId);
@@ -74,19 +121,26 @@ export const useCodexEvents = ({
         }
         const msgs = conv?.messages || [];
         const last = msgs[msgs.length - 1];
-        if (last && last.role === 'assistant') {
-          updateLastMessage(sessionId, (last.content || '') + msg.delta);
-        } else {
+        if (!(last && last.role === 'assistant')) {
           const agentMessage: ChatMessage = {
             id: `${sessionId}-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
             type: 'agent',
-            content: msg.delta,
+            content: '',
             timestamp: new Date(),
+            isStreaming: true,
           };
           addMessageToStore(agentMessage);
         }
+        bufferRef.current += msg.delta;
+        if (!flushTimer) {
+          flushTimer = setTimeout(flushBuffer, 80);
+        }
         break;
       }
+
+      case 'agent_reasoning_delta':
+        // For now, ignore in UI to avoid noisy single-word updates.
+        break;
         
       case 'exec_approval_request':
         onApprovalRequest({
@@ -138,7 +192,7 @@ export const useCodexEvents = ({
         break;
         
       default:
-        console.log('Unhandled event type:', msg.type);
+        console.log('Unhandled event type:', (msg as any).type);
     }
   };
 

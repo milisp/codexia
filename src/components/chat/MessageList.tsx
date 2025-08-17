@@ -33,7 +33,7 @@ export function MessageList({ messages, className = "", isLoading = false, isPen
         role: msg.type === 'user' ? 'user' : msg.type === 'agent' ? 'assistant' : 'system',
         content: msg.content,
         timestamp: msg.timestamp instanceof Date ? msg.timestamp.getTime() : new Date().getTime(),
-        isStreaming: msg.isStreaming || false
+        isStreaming: (msg as any).isStreaming || false
       };
     }
     // It's a chat message (has 'role' property)
@@ -42,7 +42,7 @@ export function MessageList({ messages, className = "", isLoading = false, isPen
       role: msg.role,
       content: msg.content,
       timestamp: typeof msg.timestamp === 'number' ? msg.timestamp : new Date().getTime(),
-      isStreaming: false
+      isStreaming: (msg as any).isStreaming || false
     };
   };
 

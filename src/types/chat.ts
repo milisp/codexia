@@ -4,6 +4,7 @@ export interface ChatMessage {
   content: string;
   timestamp: number;
   image?: string;
+  isStreaming?: boolean;
 }
 
 export type ChatMode = "chat" | "agent";
