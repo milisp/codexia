@@ -126,13 +126,11 @@ impl CodexClient {
         tokio::spawn(async move {
             let reader = BufReader::new(stdout);
             let mut lines = reader.lines();
-            
             log_to_file(&format!("Starting stdout reader for session: {}", session_id_clone));
-            
             while let Ok(Some(line)) = lines.next_line().await {
-                log_to_file(&format!("Received line from codex: {}", line));
                 if let Ok(event) = serde_json::from_str::<Event>(&line) {
-                    log_to_file(&format!("Parsed event: {:?}", event));
+                    // Minimal logging by default to avoid I/O stalls
+                    // log_to_file(&format!("Parsed event: {:?}", event));
                     // Send event to frontend
                     if let Err(e) = app_clone.emit(&format!("codex-event-{}", session_id_clone), &event) {
                         log_to_file(&format!("Failed to emit event: {}", e));
