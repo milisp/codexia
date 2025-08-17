@@ -12,7 +12,7 @@ export const useCodexEvents = ({
   sessionId, 
   onApprovalRequest
 }: UseCodexEventsProps) => {
-  const { addMessage, setSessionLoading, createConversation, conversations } = useConversationStore();
+  const { addMessage, updateLastMessage, setSessionLoading, createConversation, conversations } = useConversationStore();
 
   const addMessageToStore = (message: ChatMessage) => {
     // Ensure conversation exists
@@ -48,6 +48,10 @@ export const useCodexEvents = ({
       case 'task_complete':
         setSessionLoading(sessionId, false);
         break;
+
+      case 'turn_complete':
+        setSessionLoading(sessionId, false);
+        break;
         
       case 'agent_message':
         if (msg.message) {
@@ -60,6 +64,29 @@ export const useCodexEvents = ({
           addMessageToStore(agentMessage);
         }
         break;
+
+      case 'agent_message_delta': {
+        // Ensure conversation exists
+        let conv = conversations.find(c => c.id === sessionId);
+        if (!conv) {
+          createConversation('New Chat', 'agent', sessionId);
+          conv = useConversationStore.getState().conversations.find(c => c.id === sessionId) || null as any;
+        }
+        const msgs = conv?.messages || [];
+        const last = msgs[msgs.length - 1];
+        if (last && last.role === 'assistant') {
+          updateLastMessage(sessionId, (last.content || '') + msg.delta);
+        } else {
+          const agentMessage: ChatMessage = {
+            id: `${sessionId}-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+            type: 'agent',
+            content: msg.delta,
+            timestamp: new Date(),
+          };
+          addMessageToStore(agentMessage);
+        }
+        break;
+      }
         
       case 'exec_approval_request':
         onApprovalRequest({

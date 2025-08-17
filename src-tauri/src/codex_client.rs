@@ -89,6 +89,7 @@ impl CodexClient {
 
         let stdin = process.stdin.take().expect("Failed to open stdin");
         let stdout = process.stdout.take().expect("Failed to open stdout");
+        let stderr = process.stderr.take().expect("Failed to open stderr");
 
         let (stdin_tx, mut stdin_rx) = mpsc::unbounded_channel::<String>();
 
@@ -134,6 +135,18 @@ impl CodexClient {
                 }
             }
             log_to_file(&format!("Stdout reader terminated for session: {}", session_id_clone));
+        });
+
+        // Handle stderr reading and forward to UI
+        let app_err = app.clone();
+        let session_id_err = session_id.clone();
+        tokio::spawn(async move {
+            let reader = BufReader::new(stderr);
+            let mut lines = reader.lines();
+            while let Ok(Some(line)) = lines.next_line().await {
+                let _ = app_err.emit(&format!("codex-error:{}", session_id_err), &line);
+            }
+            log_to_file(&format!("Stderr reader terminated for session: {}", session_id_err));
         });
 
         let client = Self {

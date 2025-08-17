@@ -28,3 +28,6 @@ CLAUDE.md
 .gemini/
 
 .env*
+
+# Local isolated Codex home (contains auth.json)
+.codex-home/

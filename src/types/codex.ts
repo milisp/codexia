@@ -9,6 +9,7 @@ export type EventMsg =
   | { type: 'task_complete'; response_id?: string; last_agent_message?: string }
   | { type: 'agent_message'; message?: string; last_agent_message?: string }
   | { type: 'agent_message_delta'; delta: string }
+  | { type: 'agent_reasoning_delta'; delta: string }
   | { type: 'exec_approval_request'; command: string; cwd: string }
   | { type: 'patch_approval_request'; patch: string; files: string[] }
   | { type: 'error'; message: string }

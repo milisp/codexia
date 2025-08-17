@@ -92,6 +92,9 @@ pub enum EventMsg {
     AgentMessageDelta {
         delta: String,
     },
+    AgentReasoningDelta {
+        delta: String,
+    },
     ExecApprovalRequest {
         command: String,
         cwd: String,
