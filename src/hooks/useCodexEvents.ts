@@ -200,6 +200,9 @@ export const useCodexEvents = ({
             isReasoningStreaming: true,
           } as any;
           addMessageToStore(agentMessage);
+        } else {
+          // Mark that reasoning is streaming even if message already exists
+          updateLastMessageReasoning(sessionId, (last.reasoning || ''), { isStreaming: true });
         }
         reasoningBufferRef.current = reasoningBufferRef.current + ((msg as any).delta || '');
         scheduleReasoningFlush();
@@ -211,10 +214,27 @@ export const useCodexEvents = ({
         const text = (msg as any).text || '';
         if (text) {
           flushReasoningBuffer();
-          const state = useConversationStore.getState();
-          const conv = state.conversations.find(c => c.id === sessionId);
+          let state = useConversationStore.getState();
+          let conv = state.conversations.find(c => c.id === sessionId);
+          if (!conv) {
+            createConversation('New Chat', 'agent', sessionId);
+            state = useConversationStore.getState();
+            conv = state.conversations.find(c => c.id === sessionId) || null as any;
+          }
           const msgs = conv?.messages || [];
-          if (msgs.length > 0) {
+          const last = msgs[msgs.length - 1] as any;
+          if (!(last && last.role === 'assistant')) {
+            const agentMessage: ChatMessage = {
+              id: `${sessionId}-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+              type: 'agent',
+              content: '',
+              timestamp: new Date(),
+              isStreaming: true,
+              reasoning: text,
+              isReasoningStreaming: false,
+            } as any;
+            addMessageToStore(agentMessage);
+          } else {
             updateLastMessageReasoning(sessionId, text, { isStreaming: false });
           }
         }
