@@ -13,6 +13,7 @@ export const useCodexEvents = ({
   onApprovalRequest
 }: UseCodexEventsProps) => {
   const { addMessage, updateLastMessage, updateLastMessageReasoning, updateLastMessageToolOutput, setSessionLoading, createConversation, snapshotConversations, setStreamingActive } = useConversationStore();
+  const RAW_STREAM = (import.meta as any)?.env?.DEV && (window as any)?.__CODEX_RAW_STREAM === true;
   const DEBUG = (import.meta as any)?.env?.DEV && (window as any)?.__CODEX_DEBUG === true;
 
   // Buffer for streaming answer deltas with coalesced flushing
@@ -392,9 +393,18 @@ export const useCodexEvents = ({
           addMessageToStore(agentMessage);
         }
         const deltaText = msg.delta || '';
-        updateAnswerStats(deltaText.length);
-        bufferRef.current = bufferRef.current + deltaText;
-        scheduleFlush();
+        if (RAW_STREAM) {
+          const s = useConversationStore.getState();
+          const c = s.conversations.find(c => c.id === sessionId);
+          const m = c?.messages || [];
+          const lastMsg: any = m[m.length - 1];
+          const newContent = ((lastMsg?.content as string) || '') + deltaText;
+          updateLastMessage(sessionId, newContent, { isStreaming: true });
+        } else {
+          updateAnswerStats(deltaText.length);
+          bufferRef.current = bufferRef.current + deltaText;
+          scheduleFlush();
+        }
         break;
       }
 
@@ -427,12 +437,21 @@ export const useCodexEvents = ({
           updateLastMessageReasoning(sessionId, (last.reasoning || ''), { isStreaming: true });
         }
         const deltaText = (msg as any).delta || '';
-        updateReasoningStats(deltaText.length);
-        reasoningBufferRef.current = reasoningBufferRef.current + deltaText;
-        if (DEBUG) console.log('[reasoning_delta] buffer', reasoningBufferRef.current.length);
-        // Begin rAF-driven reveal immediately (fast-start)
-        if (!reasoningRafIdRef.current) {
-          reasoningRafIdRef.current = requestAnimationFrame(reasoningFrame);
+        if (RAW_STREAM) {
+          const s = useConversationStore.getState();
+          const c = s.conversations.find(c => c.id === sessionId);
+          const m = c?.messages || [];
+          const lastMsg: any = m[m.length - 1];
+          const updated = ((lastMsg?.reasoning as string) || '') + deltaText;
+          updateLastMessageReasoning(sessionId, updated, { isStreaming: true });
+        } else {
+          updateReasoningStats(deltaText.length);
+          reasoningBufferRef.current = reasoningBufferRef.current + deltaText;
+          if (DEBUG) console.log('[reasoning_delta] buffer', reasoningBufferRef.current.length);
+          // Begin rAF-driven reveal immediately (fast-start)
+          if (!reasoningRafIdRef.current) {
+            reasoningRafIdRef.current = requestAnimationFrame(reasoningFrame);
+          }
         }
         break;
       }
@@ -442,11 +461,15 @@ export const useCodexEvents = ({
         const text = (msg as any).text || '';
         if (DEBUG) console.log('[reasoning_snapshot] len', text.length);
         if (text) {
-          // Append to buffer and let rAF loop handle display
-          updateReasoningStats(text.length);
-          reasoningBufferRef.current = reasoningBufferRef.current + text;
-          if (!reasoningRafIdRef.current) {
-            reasoningRafIdRef.current = requestAnimationFrame(reasoningFrame);
+          if (RAW_STREAM) {
+            updateLastMessageReasoning(sessionId, text, { isStreaming: false });
+          } else {
+            // Append to buffer and let rAF loop handle display
+            updateReasoningStats(text.length);
+            reasoningBufferRef.current = reasoningBufferRef.current + text;
+            if (!reasoningRafIdRef.current) {
+              reasoningRafIdRef.current = requestAnimationFrame(reasoningFrame);
+            }
           }
           let state = useConversationStore.getState();
           let conv = state.conversations.find(c => c.id === sessionId);
