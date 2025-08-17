@@ -15,10 +15,11 @@ export const useCodexEvents = ({
   const { addMessage, updateLastMessage, updateLastMessageReasoning, updateLastMessageToolOutput, setSessionLoading, createConversation } = useConversationStore();
   const DEBUG = (import.meta as any)?.env?.DEV && (window as any)?.__CODEX_DEBUG === true;
 
-  // Buffer for streaming answer deltas with smoothing
+  // Buffer for streaming answer deltas with coalesced flushing
   const bufferRef = useRef<string>('');
-  const flushTimerRef = useRef<any>(null);      // hard flush
-  const softFlushTimerRef = useRef<any>(null);  // soft flush
+  const flushTimerRef = useRef<any>(null);      // hard flush (post-boost)
+  const softFlushTimerRef = useRef<any>(null);  // soft flush (post-boost)
+  const answerSpoolerRef = useRef<any>(null);   // interval-based spooler
   // Adaptive smoothing defaults (used before rate is learned)
   const DEFAULT_MIN_CHUNK = 12;
   const FRAME_TARGET_MS = 32; // target UI frame pacing
@@ -68,6 +69,7 @@ export const useCodexEvents = ({
     if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); flushTimerRef.current = null; }
     bufferRef.current = '';
     answerStartTsRef.current = 0;
+    if (answerSpoolerRef.current) { clearInterval(answerSpoolerRef.current); answerSpoolerRef.current = null; }
   };
 
   // Buffer tool/exec output to avoid per-chunk re-render jank
@@ -115,7 +117,7 @@ export const useCodexEvents = ({
     if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); flushTimerRef.current = null; }
   };
 
-  // Timer-based scheduling for answers with early boost
+  // Timer-based scheduling for answers with early boost + interval spooler
   const scheduleFlush = () => {
     const stats = answerStatsRef.current;
     const now = Date.now();
@@ -125,6 +127,26 @@ export const useCodexEvents = ({
     if (!stats.started) {
       stats.started = true;
       answerStartTsRef.current = now;
+      // Start interval spooler to guarantee forward progress regardless of timer jitter
+      if (!answerSpoolerRef.current) {
+        answerSpoolerRef.current = setInterval(() => {
+          if (!bufferRef.current || bufferRef.current.length === 0) return;
+          // Take a modest chunk to keep UI responsive; scale with backlog
+          const backlog = bufferRef.current.length;
+          let take = Math.max(8, Math.min(96, Math.round((answerStatsRef.current.ewmaRateCps || 120) * FRAME_TARGET_MS / 1000)));
+          if (backlog > 400) take = Math.min(192, take * 3);
+          else if (backlog > 200) take = Math.min(144, take * 2);
+          const out = bufferRef.current.slice(0, take);
+          bufferRef.current = bufferRef.current.slice(take);
+          const state = useConversationStore.getState();
+          const conv = state.conversations.find(c => c.id === sessionId);
+          const msgs = conv?.messages || [];
+          const last = msgs[msgs.length - 1] as any;
+          const newContent = ((last?.content as string) || '') + out;
+          updateLastMessage(sessionId, newContent, { isStreaming: true });
+        }, 33); // ~30fps
+      }
+      // Microflush to show first tokens now
       setTimeout(() => flushBuffer(true), 0);
       return;
     }

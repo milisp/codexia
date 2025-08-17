@@ -16,13 +16,15 @@ interface MessageListProps {
 export function MessageList({ messages, className = "", isLoading = false, isPendingNewConversation = false }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Prefer instant scroll during streaming to avoid smooth-scroll backlog
+  const hasStreaming = Array.isArray(messages) && messages.some((m: any) => (m as any).isStreaming || (m as any).isReasoningStreaming || (m as any).isToolStreaming);
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: hasStreaming ? 'auto' : 'smooth' });
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, hasStreaming]);
 
   // Helper to normalize message data
   const normalizeMessage = (msg: UnifiedMessage) => {
