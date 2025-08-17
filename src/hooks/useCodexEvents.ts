@@ -111,7 +111,9 @@ export const useCodexEvents = ({
     } else {
       // Re-schedule adaptive soft/hard flushes
       if (softFlushTimerRef.current) clearTimeout(softFlushTimerRef.current);
-      softFlushTimerRef.current = setTimeout(() => flushBuffer(), soft);
+      // Extra-aggressive early phase: if we haven't learned a rate yet, flush sooner
+      const early = (answerStatsRef.current.ewmaRateCps || 0) <= 0 ? MIN_FLUSH_MS : soft;
+      softFlushTimerRef.current = setTimeout(() => flushBuffer(), early);
 
       if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
       flushTimerRef.current = setTimeout(() => flushBuffer(true), hard);
@@ -121,8 +123,9 @@ export const useCodexEvents = ({
   // Separate buffer for reasoning deltas with smoothing
   const reasoningBufferRef = useRef<string>('');
   const reasoningFlushTimerRef = useRef<any>(null);    // legacy hard flush (finalize)
-  const reasoningRevealTimerRef = useRef<any>(null);   // letter-by-letter loop
-  const isPunct = (c: string) => /[\.!?,;:\n]/.test(c);
+  const reasoningRevealTimerRef = useRef<any>(null);   // deprecated timer loop
+  const reasoningRafIdRef = useRef<number | null>(null); // requestAnimationFrame loop
+  // const isPunct = (c: string) => /[\.!?,;:\n]/.test(c);
 
   // Adaptive pacing for reasoning reveal
   const reasoningStatsRef = useRef<{ lastDeltaAt: number; ewmaRateCps: number }>(
@@ -138,18 +141,17 @@ export const useCodexEvents = ({
     }
     stats.lastDeltaAt = now;
   };
-  const computeReasoningDelay = (ch: string) => {
-    const rate = Math.max(10, Math.min(300, reasoningStatsRef.current.ewmaRateCps || 120));
-    const base = Math.max(3, Math.min(24, Math.round(1000 / rate)));
-    return isPunct(ch) ? Math.min(5 * base, 60) : base;
-  };
+  // Deprecated: rAF pacing now handles delays; kept for reference to avoid rework.
+  // const computeReasoningDelay = (_ch: string) => {
+  //   const rate = Math.max(10, Math.min(300, reasoningStatsRef.current.ewmaRateCps || 120));
+  //   const base = Math.max(3, Math.min(24, Math.round(1000 / rate)));
+  //   return base;
+  // };
 
   const flushReasoningBuffer = (forced: boolean = false) => {
     // On finalization, dump any pending characters and stop the reveal loop
-    if (reasoningRevealTimerRef.current) {
-      clearTimeout(reasoningRevealTimerRef.current);
-      reasoningRevealTimerRef.current = null;
-    }
+    if (reasoningRevealTimerRef.current) { clearTimeout(reasoningRevealTimerRef.current); reasoningRevealTimerRef.current = null; }
+    if (reasoningRafIdRef.current != null) { cancelAnimationFrame(reasoningRafIdRef.current); reasoningRafIdRef.current = null; }
     const buf = reasoningBufferRef.current;
     if (!buf && !forced) return;
     const state = useConversationStore.getState();
@@ -162,22 +164,35 @@ export const useCodexEvents = ({
     if (reasoningFlushTimerRef.current) { clearTimeout(reasoningFlushTimerRef.current); reasoningFlushTimerRef.current = null; }
   };
 
-  const stepReasoningReveal = () => {
+  // rAF-driven reveal loop: coalesce updates to animation frames to avoid UI jank
+  const reasoningFrame = () => {
+    reasoningRafIdRef.current = null;
     if (!reasoningBufferRef.current || reasoningBufferRef.current.length === 0) {
-      reasoningRevealTimerRef.current && clearTimeout(reasoningRevealTimerRef.current);
-      reasoningRevealTimerRef.current = null;
       return;
     }
-    const nextChar = reasoningBufferRef.current[0];
-    reasoningBufferRef.current = reasoningBufferRef.current.slice(1);
+    const backlog = reasoningBufferRef.current.length;
+    // Base chars per frame derived from rate
+    const base = Math.max(1, Math.min(8, Math.round((reasoningStatsRef.current.ewmaRateCps || 120) * FRAME_TARGET_MS / 1000)));
+    // Scale up with backlog to catch up quickly without flooding
+    let take = base;
+    if (backlog > 200) take = Math.min(32, base * 4);
+    else if (backlog > 100) take = Math.min(24, base * 3);
+    else if (backlog > 40) take = Math.min(16, base * 2);
+
+    const chunk = reasoningBufferRef.current.slice(0, take);
+    reasoningBufferRef.current = reasoningBufferRef.current.slice(take);
+
     const state = useConversationStore.getState();
     const conv = state.conversations.find(c => c.id === sessionId);
     const msgs = conv?.messages || [];
     const last: any = msgs[msgs.length - 1];
-    const newReasoning = ((last?.reasoning as string) || '') + nextChar;
+    const newReasoning = ((last?.reasoning as string) || '') + chunk;
     updateLastMessageReasoning(sessionId, newReasoning, { isStreaming: true });
-    const delay = computeReasoningDelay(nextChar);
-    reasoningRevealTimerRef.current = setTimeout(stepReasoningReveal, delay);
+
+    // Schedule next frame if backlog remains
+    if (reasoningBufferRef.current.length > 0) {
+      reasoningRafIdRef.current = requestAnimationFrame(reasoningFrame);
+    }
   };
 
   // no-op placeholder removed
@@ -342,26 +357,9 @@ export const useCodexEvents = ({
         updateReasoningStats(deltaText.length);
         reasoningBufferRef.current = reasoningBufferRef.current + deltaText;
         console.log('[reasoning_delta] buffer len', reasoningBufferRef.current.length);
-        // Begin letter-by-letter reveal immediately (fast-start)
-        if (!reasoningRevealTimerRef.current) {
-          const next = () => {
-            if (!reasoningBufferRef.current || reasoningBufferRef.current.length === 0) {
-              reasoningRevealTimerRef.current && clearTimeout(reasoningRevealTimerRef.current);
-              reasoningRevealTimerRef.current = null;
-              return;
-            }
-            const ch = reasoningBufferRef.current[0];
-            reasoningBufferRef.current = reasoningBufferRef.current.slice(1);
-            const stateNow = useConversationStore.getState();
-            const convNow = stateNow.conversations.find(c => c.id === sessionId);
-            const msgsNow = convNow?.messages || [];
-            const lastNow: any = msgsNow[msgsNow.length - 1];
-            const updated = ((lastNow?.reasoning as string) || '') + ch;
-            updateLastMessageReasoning(sessionId, updated, { isStreaming: true });
-            const delay = computeReasoningDelay(ch);
-            reasoningRevealTimerRef.current = setTimeout(next, delay);
-          };
-          reasoningRevealTimerRef.current = setTimeout(next, 0);
+        // Begin rAF-driven reveal immediately (fast-start)
+        if (!reasoningRafIdRef.current) {
+          reasoningRafIdRef.current = requestAnimationFrame(reasoningFrame);
         }
         break;
       }
@@ -371,28 +369,11 @@ export const useCodexEvents = ({
         const text = (msg as any).text || '';
         console.log('[reasoning_snapshot] text len', text.length);
         if (text) {
-          // Append to buffer and let reveal loop handle display
+          // Append to buffer and let rAF loop handle display
           updateReasoningStats(text.length);
           reasoningBufferRef.current = reasoningBufferRef.current + text;
-          if (!reasoningRevealTimerRef.current) {
-            const start = () => {
-              if (!reasoningBufferRef.current || reasoningBufferRef.current.length === 0) {
-                reasoningRevealTimerRef.current && clearTimeout(reasoningRevealTimerRef.current);
-                reasoningRevealTimerRef.current = null;
-                return;
-              }
-              const ch = reasoningBufferRef.current[0];
-              reasoningBufferRef.current = reasoningBufferRef.current.slice(1);
-              const stateNow = useConversationStore.getState();
-              const convNow = stateNow.conversations.find(c => c.id === sessionId);
-              const msgsNow = convNow?.messages || [];
-              const lastNow: any = msgsNow[msgsNow.length - 1];
-              const updated = ((lastNow?.reasoning as string) || '') + ch;
-              updateLastMessageReasoning(sessionId, updated, { isStreaming: true });
-              const delay = computeReasoningDelay(ch);
-              reasoningRevealTimerRef.current = setTimeout(start, delay);
-            };
-            reasoningRevealTimerRef.current = setTimeout(start, 0);
+          if (!reasoningRafIdRef.current) {
+            reasoningRafIdRef.current = requestAnimationFrame(reasoningFrame);
           }
           let state = useConversationStore.getState();
           let conv = state.conversations.find(c => c.id === sessionId);

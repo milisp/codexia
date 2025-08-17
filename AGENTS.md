@@ -5,7 +5,7 @@ Purpose: Consistent, tool-driven workflow for memory, documentation lookup, and 
 ## Core Principles
 - Be context-aware: retrieve past context before starting or switching tasks.
 - Prefer current docs: fetch up-to-date references before technical work.
-- Index first: ensure the project is indexed and use structured code tools.
+- Verify index (avoid redundant indexing): use structured code tools without re-indexing each chat.
 - Leave breadcrumbs: persist important findings and decisions into memory.
 
 ## Memory (OpenMemory) Usage
@@ -32,8 +32,8 @@ Always consult up-to-date docs before any technical or coding task.
 ## Code Index Usage
 Use the Code Index MCP tools for code-aware actions.
 - Initialization:
-  - If not set, call `code_index__set_project_path` with the absolute project path.
-  - Verify via `code_index__get_settings_info` and ensure the index exists.
+  - Only call `code_index__set_project_path` once per project/session, and only if not already set.
+  - Prefer `code_index__get_settings_info` to verify the existing index before taking any action.
 - Discovery and analysis:
   - `code_index__find_files`: glob-based file discovery (e.g., `src/**/*.tsx`).
   - `code_index__search_code_advanced`: fast pattern/regex/fuzzy search across the project; scope with `file_pattern` when helpful.
@@ -41,12 +41,13 @@ Use the Code Index MCP tools for code-aware actions.
 - Maintenance:
   - `code_index__get_file_watcher_status`: confirm auto-refresh is active.
   - `code_index__configure_file_watcher`: tune debounce/exclusions when needed.
-  - `code_index__refresh_index`: rebuild after large changes or when results seem stale.
+  - `code_index__refresh_index`: rebuild only after large changes or when results seem stale — not at chat start.
 
 ## Task Flow Checklist
 1) Before starting/switching tasks
 - Search memory for relevant context: `openmemory__search_memory`.
-- Ensure project path is set and indexed: `code_index__set_project_path` (once), then `code_index__get_settings_info`.
+- Verify project/index status: `code_index__get_settings_info`.
+- Only if not set, call `code_index__set_project_path` with the absolute path (one-time per project/session).
 - Identify libraries to reference and fetch docs: `Context7__resolve-library-id` → `Context7__get-library-docs`.
 
 2) During execution
@@ -61,7 +62,8 @@ Use the Code Index MCP tools for code-aware actions.
 - Prefer minimal, focused doc retrieval to avoid overload; refine `topic` when calling Context7.
 - Do not overwrite past memory; append new entries noting superseded info.
 - Avoid listing all memories unless you truly need the full set.
-- Validate paths and existence before indexing; use absolute paths for `set_project_path`.
+- Validate paths and existence; use absolute paths for `set_project_path`.
+- Do not run indexing at chat start; rely on watcher and refresh only when stale or after large changes.
 
 ---
 This guide is operational. Follow it by default for all technical work in this repo.
