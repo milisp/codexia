@@ -7,12 +7,39 @@ set -euo pipefail
 
 ROOT_DIR=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 
-# Use isolated Codex CLI wrapper in this repo
+// Use isolated Codex CLI wrapper in this repo
 export CODEX_PATH="$ROOT_DIR/scripts/codex-iso.sh"
 
 # Isolate app config/data from your main system install
 export XDG_CONFIG_HOME="$(mktemp -d)"
 export XDG_DATA_HOME="$(mktemp -d)"
+
+# Use isolated HOME under the repo so dev config/auth are sandboxed
+export HOME="$ROOT_DIR/.codex-home"
+mkdir -p "$HOME/.codex"
+
+# Ensure dev-specific ~/.codex/config.toml has NO mcp_servers (they cause issues in dev)
+DEV_CFG="$HOME/.codex/config.toml"
+if [[ -f "$DEV_CFG" ]]; then
+  # Filter out any [mcp_servers] and [mcp_servers.*] sections
+  TMP_CFG="$(mktemp)"
+  awk '
+    /^\[/ {
+      if ($0 ~ /^\[mcp_servers/) { skip=1; next } else { skip=0; print; next }
+    }
+    { if (skip==0) print }
+  ' "$DEV_CFG" > "$TMP_CFG"
+  mv "$TMP_CFG" "$DEV_CFG"
+else
+  # Create minimal config with empty projects
+  cat > "$DEV_CFG" << 'EOF'
+# Dev isolated Codex config (no MCP servers)
+[projects]
+EOF
+fi
+
+echo "[tauri-dev-iso] Using HOME=$HOME"
+echo "[tauri-dev-iso] Dev config at $DEV_CFG with MCP servers removed"
 
 echo "[tauri-dev-iso] Using CODEX_PATH=$CODEX_PATH"
 echo "[tauri-dev-iso] XDG_CONFIG_HOME=$XDG_CONFIG_HOME"
