@@ -18,16 +18,58 @@ export const useCodexEvents = ({
   const bufferRef = useRef<string>('');
   const flushTimerRef = useRef<any>(null);      // hard flush
   const softFlushTimerRef = useRef<any>(null);  // soft flush
-  const MIN_CHUNK_ANSWER = 64;
-  const SOFT_WAIT_ANSWER = 80;
-  const HARD_WAIT_ANSWER = 240;
+  // Adaptive smoothing defaults (used before rate is learned)
+  const DEFAULT_MIN_CHUNK = 12;
+  const FRAME_TARGET_MS = 32; // target UI frame pacing
+  const MIN_FLUSH_MS = 16;
+  const MAX_SOFT_MS = 120;
+  const MAX_HARD_MS = 320;
+
+  // Track incoming rate to adapt chunk sizes and waits
+  const answerStatsRef = useRef<{ started: boolean; lastDeltaAt: number; lastFlushAt: number; ewmaInterMs: number; ewmaRateCps: number }>(
+    { started: false, lastDeltaAt: 0, lastFlushAt: 0, ewmaInterMs: 0, ewmaRateCps: 0 }
+  );
 
   const hasWordBoundary = (s: string) => /[\s\.!?,;:\n]/.test(s);
+
+  const updateAnswerStats = (deltaLen: number) => {
+    const now = Date.now();
+    const stats = answerStatsRef.current;
+    if (stats.lastDeltaAt > 0) {
+      const inter = Math.max(1, now - stats.lastDeltaAt);
+      const instantRate = (deltaLen / inter) * 1000; // chars per second
+      stats.ewmaInterMs = stats.ewmaInterMs ? (stats.ewmaInterMs * 0.7 + inter * 0.3) : inter;
+      stats.ewmaRateCps = stats.ewmaRateCps ? (stats.ewmaRateCps * 0.7 + instantRate * 0.3) : instantRate;
+    }
+    stats.lastDeltaAt = now;
+  };
+
+  const computeDesiredChunk = () => {
+    const rate = answerStatsRef.current.ewmaRateCps || 0;
+    if (rate <= 0) return DEFAULT_MIN_CHUNK;
+    const chunk = Math.round((rate * FRAME_TARGET_MS) / 1000);
+    return Math.max(DEFAULT_MIN_CHUNK, Math.min(256, chunk));
+  };
+
+  const computeWaits = () => {
+    const inter = answerStatsRef.current.ewmaInterMs || 40;
+    const soft = Math.max(MIN_FLUSH_MS, Math.min(MAX_SOFT_MS, Math.round(inter * 1.1)));
+    const hard = Math.max(80, Math.min(MAX_HARD_MS, soft * 3));
+    return { soft, hard };
+  };
+
+  const resetAnswerStats = () => {
+    answerStatsRef.current = { started: false, lastDeltaAt: 0, lastFlushAt: 0, ewmaInterMs: 0, ewmaRateCps: 0 };
+    if (softFlushTimerRef.current) { clearTimeout(softFlushTimerRef.current); softFlushTimerRef.current = null; }
+    if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); flushTimerRef.current = null; }
+    bufferRef.current = '';
+  };
 
   const flushBuffer = (forced: boolean = false) => {
     const buf = bufferRef.current;
     if (!buf) return;
-    if (!forced && buf.length < MIN_CHUNK_ANSWER && !hasWordBoundary(buf)) {
+    const desired = computeDesiredChunk();
+    if (!forced && buf.length < desired && !hasWordBoundary(buf)) {
       return;
     }
     const state = useConversationStore.getState();
@@ -37,52 +79,108 @@ export const useCodexEvents = ({
     const newContent = ((last?.content as string) || '') + buf;
     updateLastMessage(sessionId, newContent, { isStreaming: true });
     bufferRef.current = '';
+    answerStatsRef.current.lastFlushAt = Date.now();
     if (softFlushTimerRef.current) { clearTimeout(softFlushTimerRef.current); softFlushTimerRef.current = null; }
     if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); flushTimerRef.current = null; }
   };
 
   const scheduleFlush = () => {
-    if (!softFlushTimerRef.current && bufferRef.current.length >= MIN_CHUNK_ANSWER) {
-      softFlushTimerRef.current = setTimeout(() => flushBuffer(), SOFT_WAIT_ANSWER);
+    const stats = answerStatsRef.current;
+    // Fast-start: flush immediately on first delta to avoid perceived lag
+    if (!stats.started) {
+      stats.started = true;
+      // Small microtask delay to batch multiple sub-ms arrivals if any
+      setTimeout(() => flushBuffer(true), 0);
+      return;
     }
-    if (!flushTimerRef.current) {
-      flushTimerRef.current = setTimeout(() => flushBuffer(true), HARD_WAIT_ANSWER);
+
+    const desired = computeDesiredChunk();
+    const { soft, hard } = computeWaits();
+
+    // If we already have enough buffered, flush soon
+    if (bufferRef.current.length >= desired) {
+      const sinceLast = Date.now() - (answerStatsRef.current.lastFlushAt || 0);
+      const delay = Math.max(0, MIN_FLUSH_MS - sinceLast);
+      if (delay === 0) {
+        flushBuffer();
+      } else {
+        // Ensure only one soft timer exists at a time
+        if (softFlushTimerRef.current) clearTimeout(softFlushTimerRef.current);
+        softFlushTimerRef.current = setTimeout(() => flushBuffer(), delay);
+      }
+    } else {
+      // Re-schedule adaptive soft/hard flushes
+      if (softFlushTimerRef.current) clearTimeout(softFlushTimerRef.current);
+      softFlushTimerRef.current = setTimeout(() => flushBuffer(), soft);
+
+      if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
+      flushTimerRef.current = setTimeout(() => flushBuffer(true), hard);
     }
   };
 
   // Separate buffer for reasoning deltas with smoothing
   const reasoningBufferRef = useRef<string>('');
-  const reasoningFlushTimerRef = useRef<any>(null);    // hard flush
-  const reasoningSoftTimerRef = useRef<any>(null);      // soft flush
-  const MIN_CHUNK_REASON = 48;
-  const SOFT_WAIT_REASON = 90;
-  const HARD_WAIT_REASON = 260;
+  const reasoningFlushTimerRef = useRef<any>(null);    // legacy hard flush (finalize)
+  const reasoningRevealTimerRef = useRef<any>(null);   // letter-by-letter loop
+  const isPunct = (c: string) => /[\.!?,;:\n]/.test(c);
+
+  // Adaptive pacing for reasoning reveal
+  const reasoningStatsRef = useRef<{ lastDeltaAt: number; ewmaRateCps: number }>(
+    { lastDeltaAt: 0, ewmaRateCps: 0 }
+  );
+  const updateReasoningStats = (deltaLen: number) => {
+    const now = Date.now();
+    const stats = reasoningStatsRef.current;
+    if (stats.lastDeltaAt > 0) {
+      const inter = Math.max(1, now - stats.lastDeltaAt);
+      const instantRate = (deltaLen / inter) * 1000;
+      stats.ewmaRateCps = stats.ewmaRateCps ? (stats.ewmaRateCps * 0.7 + instantRate * 0.3) : instantRate;
+    }
+    stats.lastDeltaAt = now;
+  };
+  const computeReasoningDelay = (ch: string) => {
+    const rate = Math.max(10, Math.min(300, reasoningStatsRef.current.ewmaRateCps || 120));
+    const base = Math.max(3, Math.min(24, Math.round(1000 / rate)));
+    return isPunct(ch) ? Math.min(5 * base, 60) : base;
+  };
 
   const flushReasoningBuffer = (forced: boolean = false) => {
-    const buf = reasoningBufferRef.current;
-    if (!buf) return;
-    if (!forced && buf.length < MIN_CHUNK_REASON && !hasWordBoundary(buf)) {
-      return;
+    // On finalization, dump any pending characters and stop the reveal loop
+    if (reasoningRevealTimerRef.current) {
+      clearTimeout(reasoningRevealTimerRef.current);
+      reasoningRevealTimerRef.current = null;
     }
+    const buf = reasoningBufferRef.current;
+    if (!buf && !forced) return;
     const state = useConversationStore.getState();
     const conv = state.conversations.find(c => c.id === sessionId);
     const msgs = conv?.messages || [];
     const last: any = msgs[msgs.length - 1];
-    const newReasoning = ((last?.reasoning as string) || '') + buf;
+    const newReasoning = ((last?.reasoning as string) || '') + (buf || '');
     updateLastMessageReasoning(sessionId, newReasoning, { isStreaming: true });
     reasoningBufferRef.current = '';
-    if (reasoningSoftTimerRef.current) { clearTimeout(reasoningSoftTimerRef.current); reasoningSoftTimerRef.current = null; }
     if (reasoningFlushTimerRef.current) { clearTimeout(reasoningFlushTimerRef.current); reasoningFlushTimerRef.current = null; }
   };
 
-  const scheduleReasoningFlush = () => {
-    if (!reasoningSoftTimerRef.current && reasoningBufferRef.current.length >= MIN_CHUNK_REASON) {
-      reasoningSoftTimerRef.current = setTimeout(() => flushReasoningBuffer(), SOFT_WAIT_REASON);
+  const stepReasoningReveal = () => {
+    if (!reasoningBufferRef.current || reasoningBufferRef.current.length === 0) {
+      reasoningRevealTimerRef.current && clearTimeout(reasoningRevealTimerRef.current);
+      reasoningRevealTimerRef.current = null;
+      return;
     }
-    if (!reasoningFlushTimerRef.current) {
-      reasoningFlushTimerRef.current = setTimeout(() => flushReasoningBuffer(true), HARD_WAIT_REASON);
-    }
+    const nextChar = reasoningBufferRef.current[0];
+    reasoningBufferRef.current = reasoningBufferRef.current.slice(1);
+    const state = useConversationStore.getState();
+    const conv = state.conversations.find(c => c.id === sessionId);
+    const msgs = conv?.messages || [];
+    const last: any = msgs[msgs.length - 1];
+    const newReasoning = ((last?.reasoning as string) || '') + nextChar;
+    updateLastMessageReasoning(sessionId, newReasoning, { isStreaming: true });
+    const delay = computeReasoningDelay(nextChar);
+    reasoningRevealTimerRef.current = setTimeout(stepReasoningReveal, delay);
   };
+
+  // no-op placeholder removed
 
   const addMessageToStore = (message: ChatMessage) => {
     // Ensure conversation exists using fresh state
@@ -118,12 +216,14 @@ export const useCodexEvents = ({
         break;
         
       case 'task_started':
+        resetAnswerStats();
         setSessionLoading(sessionId, true);
         break;
         
       case 'task_complete':
         flushBuffer(true);
         flushReasoningBuffer(true);
+        resetAnswerStats();
         setSessionLoading(sessionId, false);
         // Mark last assistant as not streaming
         {
@@ -140,6 +240,7 @@ export const useCodexEvents = ({
       case 'turn_complete':
         flushBuffer(true);
         flushReasoningBuffer(true);
+        resetAnswerStats();
         setSessionLoading(sessionId, false);
         {
           const state = useConversationStore.getState();
@@ -203,7 +304,9 @@ export const useCodexEvents = ({
           } as any;
           addMessageToStore(agentMessage);
         }
-        bufferRef.current = bufferRef.current + (msg.delta || '');
+        const deltaText = msg.delta || '';
+        updateAnswerStats(deltaText.length);
+        bufferRef.current = bufferRef.current + deltaText;
         scheduleFlush();
         break;
       }
@@ -235,9 +338,31 @@ export const useCodexEvents = ({
           // Mark that reasoning is streaming even if message already exists
           updateLastMessageReasoning(sessionId, (last.reasoning || ''), { isStreaming: true });
         }
-        reasoningBufferRef.current = reasoningBufferRef.current + ((msg as any).delta || '');
+        const deltaText = (msg as any).delta || '';
+        updateReasoningStats(deltaText.length);
+        reasoningBufferRef.current = reasoningBufferRef.current + deltaText;
         console.log('[reasoning_delta] buffer len', reasoningBufferRef.current.length);
-        scheduleReasoningFlush();
+        // Begin letter-by-letter reveal immediately (fast-start)
+        if (!reasoningRevealTimerRef.current) {
+          const next = () => {
+            if (!reasoningBufferRef.current || reasoningBufferRef.current.length === 0) {
+              reasoningRevealTimerRef.current && clearTimeout(reasoningRevealTimerRef.current);
+              reasoningRevealTimerRef.current = null;
+              return;
+            }
+            const ch = reasoningBufferRef.current[0];
+            reasoningBufferRef.current = reasoningBufferRef.current.slice(1);
+            const stateNow = useConversationStore.getState();
+            const convNow = stateNow.conversations.find(c => c.id === sessionId);
+            const msgsNow = convNow?.messages || [];
+            const lastNow: any = msgsNow[msgsNow.length - 1];
+            const updated = ((lastNow?.reasoning as string) || '') + ch;
+            updateLastMessageReasoning(sessionId, updated, { isStreaming: true });
+            const delay = computeReasoningDelay(ch);
+            reasoningRevealTimerRef.current = setTimeout(next, delay);
+          };
+          reasoningRevealTimerRef.current = setTimeout(next, 0);
+        }
         break;
       }
 
@@ -246,7 +371,29 @@ export const useCodexEvents = ({
         const text = (msg as any).text || '';
         console.log('[reasoning_snapshot] text len', text.length);
         if (text) {
-          flushReasoningBuffer();
+          // Append to buffer and let reveal loop handle display
+          updateReasoningStats(text.length);
+          reasoningBufferRef.current = reasoningBufferRef.current + text;
+          if (!reasoningRevealTimerRef.current) {
+            const start = () => {
+              if (!reasoningBufferRef.current || reasoningBufferRef.current.length === 0) {
+                reasoningRevealTimerRef.current && clearTimeout(reasoningRevealTimerRef.current);
+                reasoningRevealTimerRef.current = null;
+                return;
+              }
+              const ch = reasoningBufferRef.current[0];
+              reasoningBufferRef.current = reasoningBufferRef.current.slice(1);
+              const stateNow = useConversationStore.getState();
+              const convNow = stateNow.conversations.find(c => c.id === sessionId);
+              const msgsNow = convNow?.messages || [];
+              const lastNow: any = msgsNow[msgsNow.length - 1];
+              const updated = ((lastNow?.reasoning as string) || '') + ch;
+              updateLastMessageReasoning(sessionId, updated, { isStreaming: true });
+              const delay = computeReasoningDelay(ch);
+              reasoningRevealTimerRef.current = setTimeout(start, delay);
+            };
+            reasoningRevealTimerRef.current = setTimeout(start, 0);
+          }
           let state = useConversationStore.getState();
           let conv = state.conversations.find(c => c.id === sessionId);
           if (!conv) {
@@ -427,10 +574,7 @@ export const useCodexEvents = ({
         clearTimeout(reasoningFlushTimerRef.current);
         reasoningFlushTimerRef.current = null;
       }
-      if (reasoningSoftTimerRef.current) {
-        clearTimeout(reasoningSoftTimerRef.current);
-        reasoningSoftTimerRef.current = null;
-      }
+      // no reasoningSoftTimerRef in letter-by-letter mode
       eventUnlisten.then(fn => fn());
       responseUnlisten.then(fn => fn());
       errorUnlisten.then(fn => fn());
