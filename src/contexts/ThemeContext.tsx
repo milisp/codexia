@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import { useThemeStore, type Accent } from '@/stores/settings/ThemeStore';
 
 interface ThemeContextType {
@@ -15,6 +15,25 @@ const ThemeContext = React.createContext<ThemeContextType | undefined>(undefined
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const { theme, accent, toggleTheme, setTheme, setAccent } = useThemeStore();
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+
+    // Classes to cleanup
+    const themes = ['light', 'dark'];
+    const accents = ['accent-black', 'accent-pink', 'accent-blue', 'accent-green', 'accent-purple', 'accent-orange'];
+
+    // Handle dark/light mode
+    root.classList.remove(...themes);
+    root.classList.add(theme);
+
+    // Handle accent color
+    root.classList.remove(...accents);
+    root.classList.add(`accent-${accent}`);
+
+    // Apply color-scheme for browser UI elements (affects scrollbars, etc)
+    root.style.setProperty('color-scheme', theme);
+  }, [theme, accent]);
 
   const value: ThemeContextType = {
     theme,
