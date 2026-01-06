@@ -850,7 +850,7 @@ dependencies = [
 
 [[package]]
 name = "codex-bindings"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "codex-app-server-protocol",
  "codex-protocol",
@@ -859,7 +859,7 @@ dependencies = [
 
 [[package]]
 name = "codex-client"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -943,7 +943,7 @@ dependencies = [
 
 [[package]]
 name = "codexia"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
