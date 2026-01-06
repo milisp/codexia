@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2, FolderOpen, Plus, ChevronRight } from "lucide-react";
+import { Loader2, FolderOpen, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -208,22 +208,15 @@ export function ProjectPanel() {
 
     return (
       <div className="flex items-stretch gap-4 p-4 rounded-lg border hover:bg-accent transition-colors">
-        <div className="flex flex-col gap-1 shrink-0">
-          <button
-            onClick={(e) => handleCCClick(project, e)}
-            className="text-xs px-2 py-1 rounded text-muted-foreground hover:text-accent-foreground hover:bg-orange-400 transition-colors cursor-pointer"
-            title="Open in Claude Code"
-          >
-            cc
-          </button>
-          <button
-            onClick={(e) => handleCodexClick(project, e)}
-            className="text-xs px-2 py-1 rounded text-muted-foreground hover:text-accent-foreground hover:bg-cyan-400 transition-colors cursor-pointer"
-            title="Open in Codex"
-          >
-            codex
-          </button>
-        </div>
+
+
+        <button
+          onClick={(e) => handleCodexClick(project, e)}
+          className="text-xs px-2 py-1 rounded border text-muted-foreground hover:text-accent-foreground hover:bg-cyan-400 transition-colors cursor-pointer"
+          title="Open in Codex"
+        >
+          codex
+        </button>
         <div
           onClick={(e) => handleProjectNameClick(project, e)}
           className="flex-1 min-w-0 cursor-pointer"
@@ -233,7 +226,13 @@ export function ProjectPanel() {
             {project.path}
           </div>
         </div>
-        <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+        <button
+          onClick={(e) => handleCCClick(project, e)}
+          className="text-xs px-2 py-1 rounded border text-muted-foreground hover:text-accent-foreground hover:bg-orange-400 transition-colors cursor-pointer"
+          title="Open in Claude Code"
+        >
+          cc
+        </button>
       </div>
     );
   };
