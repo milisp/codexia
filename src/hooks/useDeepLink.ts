@@ -1,6 +1,6 @@
 import supabase from "@/lib/supabase";
-import { ensureProfileRecord, mapProfileRow } from "@/lib/profile";
 import { listen, type UnlistenFn, isRemoteRuntime } from "@/lib/tauri-proxy";
+import { useNavigationStore } from "@/stores";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -9,6 +9,7 @@ const processedUrls = new Set<string>();
 // useDeepLink hook: handles deep link auth
 export const useDeepLink = () => {
   const [isHandlingDeepLink, setIsHandlingDeepLink] = useState(false);
+  const { setMainView } = useNavigationStore();
 
   useEffect(() => {
     const handleUrl = async (urls: string[] | string) => {
@@ -49,29 +50,11 @@ export const useDeepLink = () => {
           }
 
           if (data.session) {
-            try {
-              const user = data.session.user;
-              const { data: profileRow } = await supabase
-                .from("profiles")
-                .select("id, full_name, avatar_url, bio, website, github_url, x_url, updated_at")
-                .eq("id", user.id)
-                .maybeSingle();
-
-              const profile = mapProfileRow(profileRow);
-              if (!profile) {
-                await ensureProfileRecord(user);
-              }
-
-              toast.success("User authenticated successfully");
-              // Reload page to reset app state
-              window.location.reload();
-              return;
-            } catch {
-              toast.success("User authenticated successfully");
-              // Reload page to reset app state
-              window.location.reload();
-              return;
-            }
+            toast.success("User authenticated successfully");
+            // Reload page to reset app state
+            window.location.reload();
+            setMainView('home')
+            return;
           }
         }
       } catch (err) {
