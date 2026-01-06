@@ -92,7 +92,7 @@ mod tests {
         let received = Arc::new(RwLock::new(Vec::new()));
         let received_clone = received.clone();
 
-        // 订阅事件
+        // Subscribe to events
         bus.subscribe(
             "test-event",
             Arc::new(move |event, data| {
@@ -105,10 +105,10 @@ mod tests {
         )
         .await;
 
-        // 发射事件
+        // Emit events
         bus.emit("test-event", json!({"message": "hello"})).await;
 
-        // 等待异步操作完成
+        // Wait for asynchronous operations to complete
         tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
 
         let received = received.read().await;
@@ -121,7 +121,7 @@ mod tests {
         let bus = EventBus::new();
         let counter = Arc::new(RwLock::new(0));
 
-        // 添加多个订阅者
+        // Add multiple subscribers
         for _ in 0..3 {
             let counter_clone = counter.clone();
             bus.subscribe(
@@ -137,10 +137,10 @@ mod tests {
             .await;
         }
 
-        // 发射事件
+        // Emit event
         bus.emit("count", json!({})).await;
 
-        // 等待所有订阅者处理完成
+        // Wait for all subscribers to finish processing
         tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
 
         assert_eq!(*counter.read().await, 3);
