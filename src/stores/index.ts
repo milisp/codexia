@@ -13,3 +13,4 @@ export {
   useProviderStore,
   useSandboxStore,
 } from "./config";
+export { useNavigationStore } from "./navigationStore";
