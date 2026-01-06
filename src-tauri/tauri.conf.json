@@ -28,24 +28,25 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost blob: data: https://avatars.githubusercontent.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-eval' https://app.posthog.com https://*.posthog.com https://*.i.posthog.com https://*.assets.i.posthog.com; connect-src 'self' ipc: https://ipc.localhost http://localhost:* https://app.posthog.com https://*.posthog.com https://*.i.posthog.com https://*.supabase.co",
+      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost blob: data: https://avatars.githubusercontent.com https://lh3.googleusercontent.com https://*.googleusercontent.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-eval' https://app.posthog.com https://*.posthog.com https://*.i.posthog.com https://*.assets.i.posthog.com; connect-src 'self' ipc: https://ipc.localhost http://localhost:* https://app.posthog.com https://*.posthog.com https://*.i.posthog.com https://*.googleusercontent.com https://*.supabase.co",
       "assetProtocol": {
         "enable": true,
-        "scope": ["$APPDATA/**", "$RESOURCE/**", "$HOME/**", "$TEMP/**"]
+        "scope": [
+          "$APPDATA/**",
+          "$RESOURCE/**",
+          "$HOME/**",
+          "$TEMP/**"
+        ]
       }
     }
   },
   "plugins": {
     "deep-link": {
       "desktop": {
-        "schemes": ["codexia"]
+        "schemes": [
+          "codexia"
+        ]
       }
-    },
-    "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNCM0Q1ODU3RTRGMkJFRgpSV1R2SzA5K2hkV3pBNHI0NlpIYzYyb2tvR09wWFJIMWhsRE5teHRCL0RzQWsvY1F4WWZzdGtXdwo=",
-      "endpoints": [
-        "https://github.com/milisp/codexia/releases/latest/download/latest.json"
-      ]
     }
   },
   "bundle": {
@@ -70,7 +71,10 @@
         "bundleMediaFramework": true
       },
       "deb": {
-        "depends": ["libwebkit2gtk-4.1-0", "libgtk-3-0"]
+        "depends": [
+          "libwebkit2gtk-4.1-0",
+          "libgtk-3-0"
+        ]
       }
     },
     "macOS": {
