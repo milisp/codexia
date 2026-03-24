@@ -19,6 +19,7 @@ Codexia is a **Tauri v2 app** for Codex CLI + Claude Code — combining agent wo
 ## Requirements
 
 - [Codex CLI](https://github.com/openai/codex)
+- [claw-army/claude-node](https://github.com/claw-army/claude-node) — Python subprocess bridge for Claude Code CLI, giving Python code direct access to Claude Code native capabilities via stream-json.
 - [Claude Code CLI](https://claude.ai/code)
 
 ## Installation
