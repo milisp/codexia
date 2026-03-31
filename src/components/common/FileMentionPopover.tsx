@@ -6,7 +6,6 @@ import { FileText } from 'lucide-react';
 import { searchFiles } from '@/services/tauri/filesystem';
 import { useWorkspaceStore } from '@/stores';
 import { isTauri } from '@/hooks/runtime';
-import type { MDXEditorMethods } from '@mdxeditor/editor';
 import {
   useComposerPopover,
   detectAtMention,
@@ -23,7 +22,7 @@ interface FileItem {
 interface FileMentionPopoverProps {
   input: string;
   setInput: (v: string) => void;
-  editorRef: React.RefObject<MDXEditorMethods | null>;
+  editorRef: React.RefObject<HTMLTextAreaElement | null>;
   triggerElement: HTMLElement | null;
 }
 

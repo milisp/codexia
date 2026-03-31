@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import type { MDXEditorMethods } from '@mdxeditor/editor';
 
 // ---------------------------------------------------------------------------
 // Detection helpers
@@ -163,27 +162,19 @@ export function useComposerPopover<T>({
 // ---------------------------------------------------------------------------
 
 /**
- * Apply a text replacement to both the CC input store and the MDXEditor,
- * then focus the editor.
+ * Apply a text replacement to the input store and the textarea, then focus it.
  */
 export function applyEditorReplacement(
   newValue: string,
   setInput: (v: string) => void,
-  editorRef: React.RefObject<MDXEditorMethods | null>,
+  editorRef: React.RefObject<HTMLTextAreaElement | null>,
 ) {
   setInput(newValue);
-  editorRef.current?.setMarkdown(newValue);
-  editorRef.current?.focus();
-  // setMarkdown resets cursor to the beginning; move it to the end after the editor updates.
-  requestAnimationFrame(() => {
-    const editable = document.activeElement as HTMLElement;
-    if (editable?.isContentEditable) {
-      const range = document.createRange();
-      const sel = window.getSelection();
-      range.selectNodeContents(editable);
-      range.collapse(false);
-      sel?.removeAllRanges();
-      sel?.addRange(range);
-    }
-  });
+  const ta = editorRef.current;
+  if (ta) {
+    ta.focus();
+    requestAnimationFrame(() => {
+      ta.setSelectionRange(newValue.length, newValue.length);
+    });
+  }
 }

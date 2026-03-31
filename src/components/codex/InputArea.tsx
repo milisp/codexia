@@ -7,19 +7,6 @@ import { FileMentionPopover } from '@/components/common';
 import { useInputStore } from '@/stores/useInputStore';
 import { useCodexStore } from '@/stores/codex';
 import { useIsProcessing } from '@/hooks/codex';
-// MDXEditor imports
-import {
-  MDXEditor,
-  headingsPlugin,
-  listsPlugin,
-  quotePlugin,
-  thematicBreakPlugin,
-  markdownShortcutPlugin,
-  linkPlugin,
-  type MDXEditorMethods,
-} from '@mdxeditor/editor';
-import '@mdxeditor/editor/style.css';
-import '@/mdx-input.css';
 
 interface InputAreaProps {
   onSend: (message: string) => Promise<void>;
@@ -40,41 +27,25 @@ export function InputArea({
   const { inputValue, setInputValue } = useInputStore();
 
   const isComposing = useRef(false);
-  const editorRef = useRef<MDXEditorMethods>(null);
-  const editorWrapperRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const handleSendRef = useRef<() => Promise<void>>(async () => { });
 
-  // Focus the editor when thread changes or triggered externally
+  // Focus the textarea when thread changes or triggered externally
   useEffect(() => {
-    editorRef.current?.focus();
+    textareaRef.current?.focus();
   }, [currentThreadId, inputFocusTrigger]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Attach IME listeners to the underlying contenteditable after mount
+  // Auto-resize textarea height to fit content
   useEffect(() => {
-    const wrapper = editorWrapperRef.current;
-    if (!wrapper) return;
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = `${ta.scrollHeight}px`;
+  }, [inputValue]);
 
-    const editable = wrapper.querySelector('[contenteditable="true"]') as HTMLElement | null;
-    if (!editable) return;
-
-    const onCompositionStart = () => { isComposing.current = true; };
-    const onCompositionEnd = () => {
-      // Brief delay to match macOS IME Enter misfire pattern
-      setTimeout(() => { isComposing.current = false; }, 50);
-    };
-
-    editable.addEventListener('compositionstart', onCompositionStart);
-    editable.addEventListener('compositionend', onCompositionEnd);
-
-    return () => {
-      editable.removeEventListener('compositionstart', onCompositionStart);
-      editable.removeEventListener('compositionend', onCompositionEnd);
-    };
-  }, []);
-
-  const handleWrapperKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLDivElement>) => {
-      // Enter without Shift = send (unless IME is active)
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         if (isComposing.current || (e.nativeEvent as KeyboardEvent & { isComposing?: boolean }).isComposing) {
           return;
@@ -87,15 +58,14 @@ export function InputArea({
   );
 
   const handleSend = async () => {
-    const markdown = inputValue.trim().replace(/\u00A0/g, ' ');
-    if (!markdown && images.length === 0) return;
+    const text = inputValue.trim();
+    if (!text && images.length === 0) return;
     if (isProcessing) return;
 
     setInputValue('');
-    editorRef.current?.setMarkdown('');
 
     try {
-      await onSend(markdown);
+      await onSend(text);
     } catch (error) {
       console.error('Failed to send message:', error);
     }
@@ -115,23 +85,23 @@ export function InputArea({
       <FileMentionPopover
         input={inputValue}
         setInput={setInputValue}
-        editorRef={editorRef}
-        triggerElement={editorWrapperRef.current}
+        editorRef={textareaRef}
+        triggerElement={wrapperRef.current}
       />
 
       <SlashCommandPopover
         input={inputValue}
         setInputValue={setInputValue}
-        editorRef={editorRef}
-        triggerElement={editorWrapperRef.current}
+        editorRef={textareaRef}
+        triggerElement={wrapperRef.current}
         currentThreadId={currentThreadId}
       />
 
       <SkillsInputPopover
         input={inputValue}
         setInputValue={setInputValue}
-        editorRef={editorRef}
-        triggerElement={editorWrapperRef.current}
+        editorRef={textareaRef}
+        triggerElement={wrapperRef.current}
       />
 
       <div className="max-w-3xl mx-2 sm:mx-auto relative border rounded-xl bg-background shadow-sm focus-within:ring-1 focus-within:ring-ring transition-all">
@@ -156,26 +126,18 @@ export function InputArea({
           </div>
         )}
 
-        {/* MDXEditor WYSIWYG input */}
-        <div
-          ref={editorWrapperRef}
-          onKeyDown={handleWrapperKeyDown}
-          className="mdx-input-wrapper max-h-64 overflow-y-auto px-2 pt-2"
-        >
-          <MDXEditor
-            ref={editorRef}
-            markdown={inputValue}
-            onChange={setInputValue}
+        {/* Textarea input */}
+        <div ref={wrapperRef} className="max-h-64 overflow-y-auto px-3 pt-3">
+          <textarea
+            ref={textareaRef}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onCompositionStart={() => { isComposing.current = true; }}
+            onCompositionEnd={() => { setTimeout(() => { isComposing.current = false; }, 50); }}
             placeholder="Ask anything... @file /command $skills"
-            plugins={[
-              headingsPlugin(),
-              listsPlugin(),
-              quotePlugin(),
-              thematicBreakPlugin(),
-              linkPlugin(),
-              markdownShortcutPlugin(),
-            ]}
-            contentEditableClassName="mdx-input-editable"
+            rows={1}
+            className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
         </div>
 

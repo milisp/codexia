@@ -7,7 +7,6 @@ import { codexService } from '@/services/codexService';
 import type { SkillsListEntry } from '@/bindings/v2/SkillsListEntry';
 import { Switch } from '@/components/ui/switch';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import type { MDXEditorMethods } from '@mdxeditor/editor';
 import { detectWordBoundaryTrigger, replaceAtTrigger, applyEditorReplacement } from '@/components/common/useComposerPopover';
 
 type SkillWithEnabled = SkillsListEntry['skills'][number] & { enabled?: boolean };
@@ -17,7 +16,7 @@ const detectDollar = detectWordBoundaryTrigger('$');
 interface SkillsInputPopoverProps {
   input: string;
   setInputValue: (v: string) => void;
-  editorRef: React.RefObject<MDXEditorMethods | null>;
+  editorRef: React.RefObject<HTMLTextAreaElement | null>;
   triggerElement: HTMLElement | null;
 }
 

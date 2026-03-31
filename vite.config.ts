@@ -33,7 +33,7 @@ export default defineConfig(({ mode }) => {
             // Ace editor + all language modes (loaded only when file editor opens)
             'vendor-ace': ['ace-builds', 'react-ace'],
             // Markdown editors + rendering (merged to avoid circular chunk)
-            'vendor-mdxeditor': ['@mdxeditor/editor', 'react-markdown', 'remark-gfm', 'streamdown'],
+            'vendor-markdown': ['react-markdown', 'remark-gfm', 'streamdown'],
             // Charts (Insights view)
             'vendor-recharts': ['recharts'],
             // Animation (Insights / git stats)

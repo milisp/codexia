@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { useCCStore } from '@/stores/cc';
 import { ccGetSlashCommands } from '@/services';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import type { MDXEditorMethods } from '@mdxeditor/editor';
 import {
   useComposerPopover,
   detectWordBoundaryTrigger,
@@ -15,7 +14,7 @@ import {
 interface CCSlashCommandPopoverProps {
   input: string;
   setInput: (v: string) => void;
-  editorRef: React.RefObject<MDXEditorMethods | null>;
+  editorRef: React.RefObject<HTMLTextAreaElement | null>;
   triggerElement: HTMLElement | null;
 }
 

@@ -9,7 +9,6 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { codexService } from '@/services/codexService';
-import type { MDXEditorMethods } from '@mdxeditor/editor';
 import {
   useComposerPopover,
   detectWordBoundaryTrigger,
@@ -25,7 +24,7 @@ const filterCmd = (cmd: { id: string }, query: string) =>
 interface SlashCommandPopoverProps {
   input: string;
   setInputValue: (v: string) => void;
-  editorRef: React.RefObject<MDXEditorMethods | null>;
+  editorRef: React.RefObject<HTMLTextAreaElement | null>;
   triggerElement: HTMLElement | null;
   currentThreadId: string | null;
 }

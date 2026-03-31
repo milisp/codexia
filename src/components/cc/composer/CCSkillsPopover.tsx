@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { ccGetInstalledSkills } from '@/services';
-import type { MDXEditorMethods } from '@mdxeditor/editor';
 import {
   useComposerPopover,
   detectWordBoundaryTrigger,
@@ -13,7 +12,7 @@ import {
 interface CCSkillsPopoverProps {
   input: string;
   setInput: (v: string) => void;
-  editorRef: React.RefObject<MDXEditorMethods | null>;
+  editorRef: React.RefObject<HTMLTextAreaElement | null>;
   triggerElement: HTMLElement | null;
 }
 
