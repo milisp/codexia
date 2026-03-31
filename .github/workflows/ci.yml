@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
@@ -53,9 +53,7 @@ jobs:
           workspaces: "src-tauri"
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+        uses: actions/setup-node@v6
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
