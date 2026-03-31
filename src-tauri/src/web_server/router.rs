@@ -33,7 +33,7 @@ use super::{
         api_mark_notes_synced, api_prevent_sleep,
         api_login_account, api_model_list, api_model_list_post, api_read_directory, api_read_file,
         api_read_dxt_setting,
-        api_read_pdf_content, api_read_text_file_lines, api_read_token_usage,
+        api_read_pdf_content, api_read_text_file_lines,
         api_read_xlsx_content, api_respond_command_execution_approval,
         api_respond_file_change_approval, api_respond_user_input, api_resume_thread,
         api_rollback_thread, api_fork_thread,
@@ -238,7 +238,6 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/git/reverse-files", post(api_git_reverse_files))
         .route("/api/git/commit", post(api_git_commit))
         .route("/api/git/push", post(api_git_push))
-        .route("/api/codex/usage/token", get(api_read_token_usage))
         .route("/api/cc/connect", post(api_cc_connect))
         .route("/api/cc/send-message", post(api_cc_send_message))
         .route("/api/cc/disconnect", post(api_cc_disconnect))

@@ -27,7 +27,6 @@ import type {
   FileChangeApprovalDecision,
 } from '@/bindings/v2';
 import type {
-  LoginChatGptResponse,
   RequestId,
   ThreadId,
 } from '@/bindings';
@@ -132,7 +131,7 @@ export async function threadUnarchive(threadId: ThreadId) {
 
 export async function loginChatGpt() {
   if (isDesktopTauri()) {
-    return await invokeTauri<LoginChatGptResponse>('login_chatgpt');
+    return await invokeTauri<LoginAccountResponse>('login_chatgpt');
   }
   toast({
     title: 'loginChatGpt is only available in Tauri mode.',
@@ -224,11 +223,4 @@ export async function allowSleep(conversationId?: string | null) {
     return await invokeTauri<void>('allow_sleep', { conversationId: conversationId ?? null });
   }
   await postNoContent('/api/sleep/allow', { conversation_id: conversationId ?? null });
-}
-
-export async function readTokenUsage<T = unknown>() {
-  if (isDesktopTauri()) {
-    return await invokeTauri<T>('read_token_usage');
-  }
-  return await getJson<T>('/api/codex/usage/token');
 }

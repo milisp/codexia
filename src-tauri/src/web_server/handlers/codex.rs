@@ -16,7 +16,7 @@ use crate::web_server::types::{ErrorResponse, WebServerState};
 
 use crate::codex::scan::{list_archived_threads_payload, list_threads_payload};
 use crate::codex::AppState;
-use crate::features::{mcp, usage};
+use crate::features::mcp;
 
 fn require_codex(state: &WebServerState) -> Result<&AppState, ErrorResponse> {
     state.codex_state.as_deref().ok_or_else(|| ErrorResponse {
@@ -342,10 +342,4 @@ pub(crate) async fn api_unified_read_mcp_config(
         .await
         .map_err(to_error_response)?;
     Ok(Json(result))
-}
-pub(crate) async fn api_read_token_usage() -> Result<Json<Vec<Value>>, ErrorResponse> {
-    let usage = usage::read_token_usage()
-        .await
-        .map_err(to_error_response)?;
-    Ok(Json(usage))
 }

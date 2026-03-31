@@ -17,7 +17,6 @@ import { openUrl } from '@tauri-apps/plugin-opener';
 const SettingsView = lazy(() =>
   import('@/components/settings').then((module) => ({ default: module.SettingsView })),
 );
-const UsageView = lazy(() => import('@/views/UsageView'));
 const PluginsView = lazy(() => import('@/views/PluginsView'));
 const AgentsView = lazy(() => import('@/views/AgentsView'));
 const AgentView = lazy(() => import('@/views/AgentView'));
@@ -171,8 +170,7 @@ export function AppLayout() {
           {view === 'history' && <History />}
           {view === 'login' && <LoginView />}
           {view === 'plugins' && <PluginsView />}
-          {view === 'usage' && <UsageView />}
-          {view === 'insights' && (isPro || inTrial || import.meta.env.DEV ? <InsightsView /> : (
+{view === 'insights' && (isPro || inTrial || import.meta.env.DEV ? <InsightsView /> : (
             <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-8">
               <div className="text-4xl">📊</div>
               <h2 className="text-lg font-semibold">Insights is a Pro feature</h2>

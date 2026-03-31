@@ -9,4 +9,3 @@ pub mod skillssh;
 pub mod sleep;
 pub mod terminal;
 pub mod insights;
-pub mod usage;

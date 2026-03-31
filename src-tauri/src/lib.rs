@@ -265,7 +265,6 @@ pub fn run() {
                 crate::commands::terminal::terminal_resize,
                 crate::commands::terminal::terminal_stop,
                 crate::codex::codex_home,
-                crate::commands::usage::read_token_usage,
                 crate::commands::insights::get_agent_heatmaps,
                 crate::commands::insights::get_insight_filter_options,
                 crate::commands::insights::get_insight_rankings,
