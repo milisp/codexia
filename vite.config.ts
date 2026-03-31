@@ -34,6 +34,7 @@ export default defineConfig(({ mode }) => {
             'vendor-ace': ['ace-builds', 'react-ace'],
             // Markdown editors + rendering (merged to avoid circular chunk)
             'vendor-markdown': ['react-markdown', 'remark-gfm', 'streamdown'],
+            'vendor-md': ['react-markdown-editor-lite', 'markdown-it'],
             // Charts (Insights view)
             'vendor-recharts': ['recharts'],
             // Animation (Insights / git stats)

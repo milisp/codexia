@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useConfigStore, type Personality } from '@/stores/codex';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -8,7 +8,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import MDEditor from '@uiw/react-md-editor';
+import MdEditor from 'react-markdown-editor-lite';
+import MarkdownIt from 'markdown-it';
+import 'react-markdown-editor-lite/lib/index.css';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
@@ -20,6 +22,7 @@ export function PersonalizationSettings() {
   const { personality, setPersonality } = useConfigStore();
   const selectValue = personality ?? 'friendly';
   const { resolvedTheme } = useThemeContext();
+  const mdParser = useRef(new MarkdownIt());
   const [instructions, setInstructions] = useState<string>('');
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -106,11 +109,12 @@ export function PersonalizationSettings() {
           <ExternalLink className="inline w-4 h-4" />
         </p>
         {loadError ? <p className="text-xs text-muted-foreground">{loadError}</p> : null}
-        <div data-color-mode={resolvedTheme}>
-          <MDEditor
-            preview="edit"
+        <div className={resolvedTheme === 'dark' ? 'rc-md-editor-dark' : ''}>
+          <MdEditor
             value={instructions}
-            onChange={(next) => setInstructions(next ?? '')}
+            view={{ menu: true, md: true, html: false }}
+            renderHTML={(text) => mdParser.current.render(text)}
+            onChange={({ text }) => setInstructions(text)}
           />
         </div>
         {saveError ? <p className="text-xs text-destructive">{saveError}</p> : null}

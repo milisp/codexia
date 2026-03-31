@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import MDEditor from '@uiw/react-md-editor';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import MdEditor from 'react-markdown-editor-lite';
+import MarkdownIt from 'markdown-it';
+import 'react-markdown-editor-lite/lib/index.css';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getErrorMessage } from '@/utils/errorUtils';
@@ -20,6 +22,7 @@ export default function AgentsView() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { theme } = useThemeContext();
+  const mdParser = useRef(new MarkdownIt());
 
   // Ensure we have default values
   const currentAgent = selectedAgent || 'codex';
@@ -159,15 +162,13 @@ export default function AgentsView() {
             {statusMessage}
           </div>
         ) : null}
-        <div className="min-h-0" data-color-mode={theme}>
-          <MDEditor
+        <div className={`min-h-0 ${theme === 'dark' ? 'rc-md-editor-dark' : ''}`}>
+          <MdEditor
             value={content}
-            onChange={(value) => setContent(value ?? '')}
-            textareaProps={{
-              placeholder: 'Write instructions in markdown…',
-              spellCheck: false,
-            }}
-            height={640}
+            style={{ height: 640 }}
+            placeholder="Write instructions in markdown…"
+            renderHTML={(text) => mdParser.current.render(text)}
+            onChange={({ text }) => setContent(text)}
           />
         </div>
       </div>

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import MDEditor from '@uiw/react-md-editor';
+import MdEditor from 'react-markdown-editor-lite';
+import MarkdownIt from 'markdown-it';
+import 'react-markdown-editor-lite/lib/index.css';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +40,7 @@ export function NoteEditor({
   const lastSavedContentRef = useRef('');
   const isMountedRef = useRef(true);
   const { resolvedTheme } = useThemeContext();
+  const mdParser = useRef(new MarkdownIt());
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -265,19 +268,18 @@ export function NoteEditor({
           </div>
         </div>
       </div>
-      <div className="min-h-0 flex-1 overflow-hidden" data-color-mode={resolvedTheme}>
-        <MDEditor
+      <div className={`min-h-0 flex-1 overflow-hidden ${resolvedTheme === 'dark' ? 'rc-md-editor-dark' : ''}`}>
+        <MdEditor
           value={content}
           className="h-full w-full"
           style={{ height: '100%', width: '100%' }}
-          minHeight={0}
-          preview="edit"
-          onChange={(next) => {
-            const nextValue = next ?? '';
-            setContent(nextValue);
-            latestContentRef.current = nextValue;
-            onContentChange?.(nextValue);
-            scheduleSave(nextValue);
+          view={{ menu: true, md: true, html: false }}
+          renderHTML={(text) => mdParser.current.render(text)}
+          onChange={({ text }) => {
+            setContent(text);
+            latestContentRef.current = text;
+            onContentChange?.(text);
+            scheduleSave(text);
           }}
         />
       </div>
