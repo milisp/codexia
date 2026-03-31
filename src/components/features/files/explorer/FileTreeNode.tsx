@@ -73,7 +73,7 @@ export function FileTreeNode({
   const handleInsert = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    appendInputValue(`[${node.name}](${relativePath})`);
+    appendInputValue(`\`${relativePath}\``);
   };
 
   return (

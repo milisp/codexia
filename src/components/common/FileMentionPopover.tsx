@@ -53,7 +53,7 @@ export function FileMentionPopover({
         normalizedCwd && normalizedPath.startsWith(`${normalizedCwd}/`)
           ? normalizedPath.slice(normalizedCwd.length + 1)
           : normalizedPath;
-      const link = `[${file.name}](${relativePath})`;
+      const link = `\`${relativePath}\``;
       const newValue = replaceAtTrigger(input, '@', link);
       if (newValue !== null) applyEditorReplacement(newValue, setInput, editorRef);
       else editorRef.current?.focus();
