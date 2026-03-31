@@ -61,20 +61,6 @@ export default defineConfig(({ mode }) => {
               '@radix-ui/react-tooltip',
               'radix-ui',
             ],
-            // Tauri plugin APIs
-            'vendor-tauri': [
-              '@tauri-apps/api',
-              '@tauri-apps/plugin-deep-link',
-              '@tauri-apps/plugin-dialog',
-              '@tauri-apps/plugin-fs',
-              '@tauri-apps/plugin-global-shortcut',
-              '@tauri-apps/plugin-log',
-              '@tauri-apps/plugin-opener',
-              '@tauri-apps/plugin-os',
-              '@tauri-apps/plugin-process',
-              '@tauri-apps/plugin-shell',
-              '@tauri-apps/plugin-updater',
-            ],
             // Analytics (lazy init, not on critical path)
             'vendor-analytics': ['posthog-js'],
             // Supabase (auth + realtime)
