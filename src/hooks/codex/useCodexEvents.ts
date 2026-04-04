@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import {
   useCodexStore,
@@ -49,6 +49,18 @@ export function useCodexEvents(enabled = true) {
   const { preventSleepDuringTasks, showReasoning } = useSettingsStore();
   const taskCompleteBeepMode = useSettingsStore((state) => state.enableTaskCompleteBeep);
   const isChatInterfaceActive = useLayoutStore((state) => state.view === 'agent');
+
+  // Use refs for values that change but are only read inside callbacks.
+  // This avoids re-registering all Tauri listeners whenever the user switches
+  // views or settings change — listener accumulation was the cause of 100% CPU.
+  const isChatInterfaceActiveRef = useRef(isChatInterfaceActive);
+  isChatInterfaceActiveRef.current = isChatInterfaceActive;
+  const taskCompleteBeepModeRef = useRef(taskCompleteBeepMode);
+  taskCompleteBeepModeRef.current = taskCompleteBeepMode;
+  const preventSleepDuringTasksRef = useRef(preventSleepDuringTasks);
+  preventSleepDuringTasksRef.current = preventSleepDuringTasks;
+  const showReasoningRef = useRef(showReasoning);
+  showReasoningRef.current = showReasoning;
 
   useEffect(() => {
     if (!enabled) {
@@ -105,7 +117,7 @@ export function useCodexEvents(enabled = true) {
           payload.method === 'item/reasoning/summaryTextDelta' ||
           payload.method === 'item/reasoning/summaryPartAdded' ||
           (payload.method === 'item/completed' && payload.params.item.type === 'reasoning');
-        if (!showReasoning && isReasoningEvent) {
+        if (!showReasoningRef.current && isReasoningEvent) {
           return;
         }
 
@@ -122,7 +134,7 @@ export function useCodexEvents(enabled = true) {
           }
         }
 
-        if (preventSleepDuringTasks && payload.method === 'turn/started') {
+        if (preventSleepDuringTasksRef.current && payload.method === 'turn/started') {
           void preventSleep(threadId).catch((error) => {
             console.warn('[useCodexEvents] preventSleep failed:', error);
           });
@@ -136,7 +148,7 @@ export function useCodexEvents(enabled = true) {
           const turnStatus = payload.params.turn.status;
           if (
             turnStatus === 'completed' &&
-            shouldPlayCompletionBeep(taskCompleteBeepMode, isChatInterfaceActive)
+            shouldPlayCompletionBeep(taskCompleteBeepModeRef.current, isChatInterfaceActiveRef.current)
           ) {
             playBeep();
           }
@@ -162,43 +174,48 @@ export function useCodexEvents(enabled = true) {
     };
 
     if (isDesktopTauri()) {
-      const unlistenPromises: Promise<() => void>[] = [];
       console.log('[useCodexEvents] Setting up Tauri event listeners...');
 
-      unlistenPromises.push(
-        listen<ApprovalRequest>('codex/approval-request', (event) => {
-          addApproval(event.payload);
-        })
-      );
+      // Collect resolved unlisten functions synchronously as promises settle.
+      // Using a cancelled flag ensures we don't register listeners after cleanup.
+      let cancelled = false;
+      const unlisteners: (() => void)[] = [];
 
-      unlistenPromises.push(
-        listen<RequestUserInputRequest>('codex/request-user-input', (event) => {
-          addRequest(event.payload);
-        })
-      );
+      const registerListener = async <T>(
+        event: string,
+        handler: (event: { payload: T }) => void
+      ) => {
+        const unlisten = await listen<T>(event, handler);
+        if (cancelled) {
+          unlisten();
+        } else {
+          unlisteners.push(unlisten);
+        }
+      };
 
-      unlistenPromises.push(
-        listen<ServerNotification>('codex:notification', (event) => {
-          handleServerNotification(event.payload);
-        })
-      );
+      void registerListener<ApprovalRequest>('codex/approval-request', (event) => {
+        addApproval(event.payload);
+      });
 
-      unlistenPromises.push(
-        listen<CodexStderrEvent>('codex:stderr', (event) => {
-          console.error('[useCodexEvents] codex stderr:', event.payload.message);
-        })
-      );
+      void registerListener<RequestUserInputRequest>('codex/request-user-input', (event) => {
+        addRequest(event.payload);
+      });
 
-      unlistenPromises.push(
-        listen<CodexParseErrorEvent>('codex:parseError', (event) => {
-          console.error('[useCodexEvents] codex parseError:', event.payload.error, event.payload.raw);
-        })
-      );
+      void registerListener<ServerNotification>('codex:notification', (event) => {
+        handleServerNotification(event.payload);
+      });
+
+      void registerListener<CodexStderrEvent>('codex:stderr', (event) => {
+        console.error('[useCodexEvents] codex stderr:', event.payload.message);
+      });
+
+      void registerListener<CodexParseErrorEvent>('codex:parseError', (event) => {
+        console.error('[useCodexEvents] codex parseError:', event.payload.error, event.payload.raw);
+      });
 
       return () => {
-        Promise.all(unlistenPromises).then((unlisteners) => {
-          unlisteners.forEach((unlisten) => unlisten());
-        });
+        cancelled = true;
+        unlisteners.forEach((unlisten) => unlisten());
       };
     }
 
@@ -245,15 +262,5 @@ export function useCodexEvents(enabled = true) {
     return () => {
       es.close();
     };
-  }, [
-    addEvent,
-    addApproval,
-    addRequest,
-    setHasAccount,
-    enabled,
-    taskCompleteBeepMode,
-    preventSleepDuringTasks,
-    showReasoning,
-    isChatInterfaceActive,
-  ]);
+  }, [addEvent, addApproval, addRequest, setHasAccount, enabled]);
 }
