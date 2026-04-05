@@ -26,8 +26,8 @@ jobs:
           - platform: "macos-latest"
             args: "--features desktop"
             node_options: "--max-old-space-size=4096"
-          # - platform: "macos-latest"
-          #   args: '--target x86_64-apple-darwin --features desktop'
+          - platform: "macos-latest"
+            args: '--target x86_64-apple-darwin --features desktop'
           - platform: "ubuntu-24.04"
             args: "--features desktop"
           - platform: "ubuntu-22.04-arm"
