@@ -324,6 +324,12 @@ pub fn run() {
                 crate::codex::scan::start_history_scanner(event_sink.clone());
                 crate::cc::scan::start_session_scanner(event_sink);
 
+                tauri::async_runtime::spawn(async {
+                    tokio::task::spawn_blocking(crate::features::git::scan_all_orphan_worktrees)
+                        .await
+                        .ok();
+                });
+
                 crate::tray::create_tray(app.handle())?;
 
                 if let Some(main_window) = app.get_webview_window("main") {
