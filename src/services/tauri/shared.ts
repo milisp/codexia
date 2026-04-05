@@ -79,7 +79,7 @@ export type GitDiffStatsResponse = {
   unstaged: GitDiffStatsCounts;
 };
 
-export type GitPrepareThreadWorktreeResponse = {
+export type GitCreateWorktreeResponse = {
   repo_root: string;
   worktree_path: string;
   existed: boolean;

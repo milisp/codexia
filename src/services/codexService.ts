@@ -12,7 +12,7 @@ import {
   loginChatGpt as tauriLoginChatGpt,
   getAccount as tauriGetAccount,
   reviewStart,
-  gitPrepareThreadWorktree,
+  gitCreateWorktree,
 } from './tauri';
 import type {
   Thread,
@@ -62,7 +62,7 @@ const resolveThreadCwd = (threadId: string): string | null => {
   return cwd ? cwd : null;
 };
 
-const generateThreadWorktreeKey = (): string => {
+const generateWorktreeKey = (): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return `thread-${crypto.randomUUID()}`;
   }
@@ -243,7 +243,7 @@ export const codexService = {
       let threadCwd = cwd;
       if (threadCwdMode === 'worktree' && cwd.trim()) {
         try {
-          const prepared = await gitPrepareThreadWorktree(cwd, generateThreadWorktreeKey());
+          const prepared = await gitCreateWorktree(cwd, generateWorktreeKey());
           threadCwd = prepared.worktree_path;
         } catch (error) {
           console.warn('[CodexService] Failed to prepare thread worktree, fallback to workspace cwd', error);

@@ -18,6 +18,6 @@ pub use self::staging::{git_reverse_files, git_stage_files, git_unstage_files};
 pub use self::status::git_status;
 pub use self::types::{
     GitBranchInfoResponse, GitBranchListResponse, GitDiffStatsResponse, GitFileDiffMetaResponse,
-    GitFileDiffResponse, GitPrepareThreadWorktreeResponse, GitStatusResponse,
+    GitCreateWorktreeResponse, GitFileDiffResponse, GitStatusResponse,
 };
-pub use self::worktree::{clone, git_delete_thread_worktree, git_prepare_thread_worktree};
+pub use self::worktree::{clone, git_create_worktree, git_remove_worktree};

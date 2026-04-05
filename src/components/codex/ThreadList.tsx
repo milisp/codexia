@@ -27,7 +27,7 @@ import { formatThreadAge } from '@/utils/formatThreadAge';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import type { ThreadListItem } from '@/types/codex/ThreadListItem';
 import { useLayoutStore, useAgentCenterStore } from '@/stores';
-import { gitDeleteThreadWorktree } from '@/services/tauri/git';
+import { gitRemoveWorktree } from '@/services/tauri/git';
 import { toast } from '@/components/ui/use-toast';
 
 type SessionMetaEntry = {
@@ -293,7 +293,7 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
     if (!mainCwd || !thread.cwd.includes('/.codexia/worktrees/')) return;
     const worktreeKey = thread.cwd.split('/').pop() ?? '';
     try {
-      await gitDeleteThreadWorktree(mainCwd, worktreeKey);
+      await gitRemoveWorktree(mainCwd, worktreeKey);
       toast.success('Worktree deleted');
     } catch (err) {
       toast.error('Failed to delete worktree', { description: String(err) });

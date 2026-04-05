@@ -6,7 +6,7 @@ import { ccGetSessionFilePath, ccDeleteSession } from '@/services/tauri/cc';
 import { readTextFileLines } from '@/services/tauri/filesystem';
 import { parseSessionJsonl } from '@/components/cc/utils/parseSessionJsonl';
 import { MoreVertical, Copy, Loader2, Trash2, FolderX } from 'lucide-react';
-import { gitDeleteThreadWorktree } from '@/services/tauri/git';
+import { gitRemoveWorktree } from '@/services/tauri/git';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -172,7 +172,7 @@ export function ClaudeCodeSessionList({ project, sessions, onSelectSession }: Pr
     const mainCwd = useWorkspaceStore.getState().cwd;
     if (!mainCwd) return;
     try {
-      await gitDeleteThreadWorktree(mainCwd, worktreeKey);
+      await gitRemoveWorktree(mainCwd, worktreeKey);
       toast({ description: 'Worktree deleted' });
     } catch {
       toast({ description: 'Failed to delete worktree', variant: 'destructive' });

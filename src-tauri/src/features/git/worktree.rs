@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::AtomicBool;
 
 use crate::features::git::helpers::{open_repo, repo_root_path};
-use crate::features::git::types::GitPrepareThreadWorktreeResponse;
+use crate::features::git::types::GitCreateWorktreeResponse;
 
 pub fn clone(url: &str, path: &Path) -> Result<PathBuf> {
     if path.exists() {
@@ -136,13 +136,13 @@ fn sanitize_worktree_key(input: &str) -> String {
     }
 }
 
-pub fn git_prepare_thread_worktree(
+pub fn git_create_worktree(
     cwd: String,
-    thread_key: String,
-) -> Result<GitPrepareThreadWorktreeResponse, String> {
+    worktree_key: String,
+) -> Result<GitCreateWorktreeResponse, String> {
     let repo = open_repo(&cwd)?;
     let repo_root = repo_root_path(&repo)?;
-    let safe_key = sanitize_worktree_key(&thread_key);
+    let safe_key = sanitize_worktree_key(&worktree_key);
     let worktrees_dir = worktrees_base_dir(&repo_root)?;
     let worktree_path = worktrees_dir.join(&safe_key);
 
@@ -150,7 +150,7 @@ pub fn git_prepare_thread_worktree(
     let worktree_path_str = worktree_path.to_string_lossy().to_string();
 
     if worktree_path.join(".git").exists() || gix::discover(&worktree_path).is_ok() {
-        return Ok(GitPrepareThreadWorktreeResponse {
+        return Ok(GitCreateWorktreeResponse {
             repo_root: repo_root_str,
             worktree_path: worktree_path_str,
             existed: true,
@@ -161,7 +161,7 @@ pub fn git_prepare_thread_worktree(
     create_git_worktree(&repo_root, &worktree_path)?;
     let copied_env_files = copy_env_files(&repo_root, &worktree_path);
 
-    Ok(GitPrepareThreadWorktreeResponse {
+    Ok(GitCreateWorktreeResponse {
         repo_root: repo_root_str,
         worktree_path: worktree_path_str,
         existed: false,
@@ -169,12 +169,12 @@ pub fn git_prepare_thread_worktree(
     })
 }
 
-/// Removes a linked worktree created by `git_prepare_thread_worktree`.
+/// Removes a linked worktree created by `git_create_worktree`.
 /// Uses `git worktree remove --force` so dirty worktrees are also cleaned up.
-pub fn git_delete_thread_worktree(cwd: String, thread_key: String) -> Result<(), String> {
+pub fn git_remove_worktree(cwd: String, worktree_key: String) -> Result<(), String> {
     let repo = open_repo(&cwd)?;
     let repo_root = repo_root_path(&repo)?;
-    let safe_key = sanitize_worktree_key(&thread_key);
+    let safe_key = sanitize_worktree_key(&worktree_key);
     let worktrees_dir = worktrees_base_dir(&repo_root)?;
     let worktree_path = worktrees_dir.join(&safe_key);
 

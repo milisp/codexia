@@ -53,7 +53,7 @@ pub struct GitBranchInfoResponse {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct GitPrepareThreadWorktreeResponse {
+pub struct GitCreateWorktreeResponse {
     pub repo_root: String,
     pub worktree_path: String,
     pub existed: bool,

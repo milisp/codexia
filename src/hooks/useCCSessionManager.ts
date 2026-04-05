@@ -3,7 +3,7 @@ import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { ccNewSession, ccResumeSession } from '@/services';
-import { gitPrepareThreadWorktree } from '@/services/tauri/git';
+import { gitCreateWorktree } from '@/services/tauri/git';
 
 const CC_LISTENER_READY_EVENT = 'cc-session-listener-ready';
 const CC_PERMISSION_LISTENER_READY_EVENT = 'cc-permission-listener-ready';
@@ -114,7 +114,7 @@ export function useCCSessionManager() {
       if (options.worktreeMode === 'worktree' && cwd?.trim()) {
         try {
           const worktreeKey = `cc-${crypto.randomUUID()}`;
-          const prepared = await gitPrepareThreadWorktree(cwd, worktreeKey);
+          const prepared = await gitCreateWorktree(cwd, worktreeKey);
           sessionCwd = prepared.worktree_path;
         } catch (err) {
           console.warn('[useCCSessionManager] Failed to prepare worktree, falling back to cwd', err);

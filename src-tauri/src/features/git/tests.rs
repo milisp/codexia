@@ -80,12 +80,12 @@ fn git_diff_stats_reports_staged_and_unstaged_counts() {
 }
 
 #[test]
-fn git_prepare_thread_worktree_creates_and_reuses_worktree_path() {
+fn git_create_worktree_creates_and_reuses_worktree_path() {
     let temp = tempfile::tempdir().expect("create tempdir");
     let repo_dir = temp.path();
     init_repo_with_one_commit(repo_dir);
 
-    let first = git_prepare_thread_worktree(
+    let first = git_create_worktree(
         repo_dir.to_string_lossy().to_string(),
         "thread-42".to_string(),
     )
@@ -99,7 +99,7 @@ fn git_prepare_thread_worktree_creates_and_reuses_worktree_path() {
         "worktree path should be a git repository"
     );
 
-    let second = git_prepare_thread_worktree(
+    let second = git_create_worktree(
         repo_dir.to_string_lossy().to_string(),
         "thread-42".to_string(),
     )

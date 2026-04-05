@@ -1,6 +1,6 @@
 pub use crate::features::git::{
     GitBranchInfoResponse, GitBranchListResponse, GitDiffStatsResponse, GitFileDiffMetaResponse,
-    GitFileDiffResponse, GitPrepareThreadWorktreeResponse, GitStatusResponse,
+    GitCreateWorktreeResponse, GitFileDiffResponse, GitStatusResponse,
 };
 
 use tokio::task::spawn_blocking;
@@ -26,21 +26,21 @@ pub async fn git_checkout_branch(cwd: String, branch: String) -> Result<(), Stri
 }
 
 #[tauri::command]
-pub async fn git_prepare_thread_worktree(
+pub async fn git_create_worktree(
     cwd: String,
-    thread_key: String,
-) -> Result<GitPrepareThreadWorktreeResponse, String> {
-    spawn_blocking(move || crate::features::git::git_prepare_thread_worktree(cwd, thread_key))
+    worktree_key: String,
+) -> Result<GitCreateWorktreeResponse, String> {
+    spawn_blocking(move || crate::features::git::git_create_worktree(cwd, worktree_key))
         .await
         .map_err(|e| format!("Task join error: {e}"))?
 }
 
 #[tauri::command]
-pub async fn git_delete_thread_worktree(
+pub async fn git_remove_worktree(
     cwd: String,
-    thread_key: String,
+    worktree_key: String,
 ) -> Result<(), String> {
-    spawn_blocking(move || crate::features::git::git_delete_thread_worktree(cwd, thread_key))
+    spawn_blocking(move || crate::features::git::git_remove_worktree(cwd, worktree_key))
         .await
         .map_err(|e| format!("Task join error: {e}"))?
 }

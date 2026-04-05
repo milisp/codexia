@@ -25,9 +25,9 @@ use super::{
         api_get_insight_rankings, api_get_note_by_id, api_get_notes,
         api_get_unsynced_notes,
         api_git_branch_info, api_git_checkout_branch, api_git_create_branch,
-        api_git_delete_thread_worktree,
+        api_git_remove_worktree,
         api_git_diff_stats, api_git_file_diff, api_git_file_diff_meta, api_git_list_branches,
-        api_git_prepare_thread_worktree, api_git_reverse_files, api_git_stage_files,
+        api_git_create_worktree, api_git_reverse_files, api_git_stage_files,
         api_git_status, api_git_unstage_files, api_git_commit, api_git_push,
         api_list_archived_threads, api_list_threads, api_load_manifest, api_load_manifests,
         api_mark_notes_synced, api_prevent_sleep,
@@ -218,12 +218,12 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/dxt/setting/read", post(api_read_dxt_setting))
         .route("/api/dxt/setting/save", post(api_save_dxt_setting))
         .route(
-            "/api/git/prepare-thread-worktree",
-            post(api_git_prepare_thread_worktree),
+            "/api/git/create-worktree",
+            post(api_git_create_worktree),
         )
         .route(
-            "/api/git/delete-thread-worktree",
-            post(api_git_delete_thread_worktree),
+            "/api/git/remove-worktree",
+            post(api_git_remove_worktree),
         )
         .route("/api/git/branch-info", post(api_git_branch_info))
         .route("/api/git/list-branches", post(api_git_list_branches))

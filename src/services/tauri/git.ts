@@ -33,7 +33,7 @@ export type GitDiffStatsResponse = {
   unstaged: GitDiffStatsCounts;
 };
 
-export type GitPrepareThreadWorktreeResponse = {
+export type GitCreateWorktreeResponse = {
   repo_root: string;
   worktree_path: string;
   existed: boolean;
@@ -136,25 +136,25 @@ export async function gitReverseFiles(cwd: string, filePaths: string[], staged: 
   await postNoContent('/api/git/reverse-files', { cwd, filePaths, staged });
 }
 
-export async function gitPrepareThreadWorktree(cwd: string, threadKey: string) {
+export async function gitCreateWorktree(cwd: string, worktreeKey: string) {
   if (isDesktopTauri()) {
-    return await invokeTauri<GitPrepareThreadWorktreeResponse>('git_prepare_thread_worktree', {
+    return await invokeTauri<GitCreateWorktreeResponse>('git_create_worktree', {
       cwd,
-      threadKey,
+      worktreeKey,
     });
   }
-  return await postJson<GitPrepareThreadWorktreeResponse>('/api/git/prepare-thread-worktree', {
+  return await postJson<GitCreateWorktreeResponse>('/api/git/create-worktree', {
     cwd,
-    threadKey,
+    worktreeKey,
   });
 }
 
-export async function gitDeleteThreadWorktree(cwd: string, threadKey: string): Promise<void> {
+export async function gitRemoveWorktree(cwd: string, worktreeKey: string): Promise<void> {
   if (isDesktopTauri()) {
-    await invokeTauri<void>('git_delete_thread_worktree', { cwd, threadKey });
+    await invokeTauri<void>('git_remove_worktree', { cwd, worktreeKey });
     return;
   }
-  await postNoContent('/api/git/delete-thread-worktree', { cwd, threadKey });
+  await postNoContent('/api/git/remove-worktree', { cwd, worktreeKey });
 }
 
 function resolveCwd(filePath: string): string {
