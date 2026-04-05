@@ -5,7 +5,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { codexService } from '@/services/codexService';
 import { ProjectSelector } from '@/components/project-selector';
-import { useLayoutStore } from '@/stores';
+import { useLayoutStore, useAgentCenterStore } from '@/stores';
 import { useCodexStore, useCurrentThread } from '@/stores/codex';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { RightPanelHeader } from './RightPanelHeader';
@@ -19,6 +19,8 @@ export function AppHeader() {
   const { setView, view } = useLayoutStore();
   const { open: isSidebarOpen, openMobile, isMobile } = useSidebar();
   const { setHistoryMode, selectedAgent } = useWorkspaceStore();
+  const { cards, currentAgentCardId } = useAgentCenterStore();
+  const hasCurrentCard = cards.some((c) => c.id === currentAgentCardId);
   const { needsTrafficLightOffset } = useTrafficLightConfig(isSidebarOpen);
   // Show trigger when sidebar is closed; on mobile the Sheet is transient so always show
   const showTrigger = isMobile ? !openMobile : !isSidebarOpen;
@@ -52,6 +54,11 @@ export function AppHeader() {
             <SidebarTrigger />
             <NewAgentButton />
           </div>
+        )}
+        {view === 'agent' && !hasCurrentCard && (
+          <span className="text-xs text-muted-foreground/60">
+            New {selectedAgent === 'codex' ? 'thread' : 'session'}
+          </span>
         )}
         {view === 'agent' && selectedAgent === 'cc' && (
           <span

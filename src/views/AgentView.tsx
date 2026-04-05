@@ -1,11 +1,11 @@
-import { lazy, Suspense, useState, useMemo } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { useAgentCenterStore } from '@/stores';
 import { useLayoutStore } from '@/stores';
 import { useCodexStore, useApprovalStore, useRequestUserInputStore } from '@/stores/codex';
 import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { codexService } from '@/services/codexService';
-import { ArrowLeft, X, Maximize2 } from 'lucide-react';
+import { ArrowLeft, X, Maximize2, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
 import { AgentIcon } from '@/components/common/AgentIcon';
 import { AgentComposer } from '@/components/common';
@@ -166,31 +166,33 @@ function AgentFullscreen() {
   );
 }
 
-type TabFilter = 'all' | 'idle' | 'running';
+// ─── Column label ────────────────────────────────────────────────────────────
+
+function ColumnLabel({ dot, label, count }: { dot?: 'green' | 'muted'; label: string; count: number }) {
+  return (
+    <div className="flex items-center gap-1.5 px-2 py-1 border-b shrink-0 bg-muted/20">
+      {dot && (
+        <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${dot === 'green' ? 'bg-green-500' : 'bg-muted-foreground/40'}`} />
+      )}
+      <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">{label}</span>
+      <span className="text-[10px] text-muted-foreground/50 ml-auto">{count}</span>
+    </div>
+  );
+}
+
+// ─── AgentGrid ────────────────────────────────────────────────────────────────
 
 function AgentGrid() {
   const { cards, removeCard, setCurrentAgentCardId, currentAgentCardId } = useAgentCenterStore();
   const { setIsAgentExpanded } = useLayoutStore();
   const { switchToSession, sessionLoadingMap, activeSessionId, setActiveSessionId } = useCCStore();
   const { threadStatusMap, currentThreadId } = useCodexStore();
-  const { setSelectedAgent } = useWorkspaceStore();
-  const [tab, setTab] = useState<TabFilter>('all');
+  const { setSelectedAgent, selectedAgent } = useWorkspaceStore();
 
   const isRunning = (card: AgentCenterCard) =>
     card.kind === 'codex'
       ? threadStatusMap[card.id]?.type === 'active'
       : !!sessionLoadingMap[card.id];
-
-  const counts = useMemo(
-    () => ({
-      all: cards.length,
-      idle: cards.filter((c) => !isRunning(c)).length,
-      running: cards.filter((c) => isRunning(c)).length,
-    }),
-    [cards, threadStatusMap, sessionLoadingMap]
-  );
-
-  const visible = tab === 'all' ? cards : cards.filter((c) => (tab === 'running') === isRunning(c));
 
   const handleRemove = (card: AgentCenterCard) => {
     removeCard(card);
@@ -219,67 +221,103 @@ function AgentGrid() {
     }
   };
 
-  const TABS: { key: TabFilter; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'idle', label: 'Idle' },
-    { key: 'running', label: 'Running' },
-  ];
+  const selectCard = (card: AgentCenterCard) => {
+    setCurrentAgentCardId(card.id);
+    setSelectedAgent(card.kind);
+    if (card.kind === 'codex') void codexService.setCurrentThread(card.id);
+    else switchToSession(card.id);
+  };
+
+  const [showSidePanels, setShowSidePanels] = useState(true);
+
+  const runningCards = useMemo(
+    () => cards.filter((c) => isRunning(c) && c.id !== currentAgentCardId),
+    [cards, threadStatusMap, sessionLoadingMap, currentAgentCardId]
+  );
+
+  const idleCards = useMemo(
+    () => cards.filter((c) => !isRunning(c) && c.id !== currentAgentCardId),
+    [cards, threadStatusMap, sessionLoadingMap, currentAgentCardId]
+  );
 
   return (
-    <div className="flex flex-col h-full min-h-0">
-      {/* Tab bar */}
-      <div className="flex items-center gap-1 px-3 py-2 border-b shrink-0">
-        {TABS.map(({ key, label }) => (
+    <div className="flex flex-col md:flex-row h-full min-h-0 overflow-hidden">
+      {/* Left: current session */}
+      <div className="md:flex-1 flex flex-col min-h-0 border-b md:border-b-0 md:border-r overflow-hidden"
+        style={{ minHeight: '40vh' }}>
+        {/* Toggle button — top-right corner, only on md+ */}
+        <div className="hidden md:flex justify-end px-1 pt-1 shrink-0">
           <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs transition-colors ${tab === key
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-              }`}
+            onClick={() => setShowSidePanels((v) => !v)}
+            className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+            aria-label={showSidePanels ? 'Hide side panels' : 'Show side panels'}
           >
-            {key !== 'all' && (
-              <span className={`h-1.5 w-1.5 rounded-full ${key === 'running' ? 'bg-green-500' : 'bg-muted-foreground/40'
-                }`} />
-            )}
-            {label}
-            <span className={`text-[10px] ${tab === key ? 'opacity-80' : 'opacity-50'}`}>
-              {counts[key]}
-            </span>
+            {showSidePanels
+              ? <PanelRightClose className="h-3.5 w-3.5" />
+              : <PanelRightOpen className="h-3.5 w-3.5" />}
           </button>
-        ))}
-      </div>
-
-      {/* Grid */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-3">
-        {visible.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-            No {tab} agents.
-          </div>
-        ) : (
-          <div
-            className="grid gap-3"
-            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}
-          >
-            {visible.map((card) => (
-              <GridCard
-                key={card.id}
-                card={card}
-                onExpand={() => void expand(card)}
-                onRemove={() => handleRemove(card)}
-                isSelected={card.id === currentAgentCardId}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Shared composer */}
-      <div className="flex justify-center">
-        <div className="max-w-3xl w-full px-2">
+        </div>
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <Suspense fallback={null}>
+            {selectedAgent === 'codex'
+              ? <ChatInterface hideComposer />
+              : <CCView hideComposer />}
+          </Suspense>
+        </div>
+        <div className="shrink-0">
           <AgentComposer />
         </div>
       </div>
+
+      {showSidePanels && (
+        <>
+          {/* Middle: running */}
+          <div className="md:flex-1 flex flex-col min-h-0 border-b md:border-b-0 md:border-r overflow-hidden">
+            <ColumnLabel dot="green" label="Running" count={runningCards.length} />
+            <div className="flex-1 min-h-0 overflow-y-auto p-2 flex flex-col gap-2">
+              {runningCards.length === 0 ? (
+                <div className="flex h-full items-center justify-center text-xs text-muted-foreground/50 py-4">
+                  No running agents
+                </div>
+              ) : (
+                runningCards.map((card) => (
+                  <div key={card.id} onClick={() => selectCard(card)} className="cursor-pointer">
+                    <GridCard
+                      card={card}
+                      onExpand={() => void expand(card)}
+                      onRemove={() => handleRemove(card)}
+                      isSelected={card.id === currentAgentCardId}
+                    />
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Right: idle */}
+          <div className="md:flex-1 flex flex-col min-h-0 overflow-hidden">
+            <ColumnLabel dot="muted" label="Idle" count={idleCards.length} />
+            <div className="flex-1 min-h-0 overflow-y-auto p-2 flex flex-col gap-2">
+              {idleCards.length === 0 ? (
+                <div className="flex h-full items-center justify-center text-xs text-muted-foreground/50 py-4">
+                  No idle agents
+                </div>
+              ) : (
+                idleCards.map((card) => (
+                  <div key={card.id} onClick={() => selectCard(card)} className="cursor-pointer">
+                    <GridCard
+                      card={card}
+                      onExpand={() => void expand(card)}
+                      onRemove={() => handleRemove(card)}
+                      isSelected={card.id === currentAgentCardId}
+                    />
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

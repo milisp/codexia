@@ -20,9 +20,11 @@ import type { PermissionDecision } from './types/permission';
 interface CCViewProps {
   /** When provided, renders in embedded (grid-card) mode for this specific session. */
   sessionId?: string;
+  /** Suppress the internal composer (e.g. when a parent renders its own composer). */
+  hideComposer?: boolean;
 }
 
-export default function CCView({ sessionId }: CCViewProps = {}) {
+export default function CCView({ sessionId, hideComposer = false }: CCViewProps = {}) {
   const isEmbedded = !!sessionId;
 
   const {
@@ -196,7 +198,7 @@ export default function CCView({ sessionId }: CCViewProps = {}) {
           onResolve={handleResolvePermission}
         />
       )}
-      {!isEmbedded && pendingPermissionIdx === -1 && <Composer />}
+      {!isEmbedded && !hideComposer && pendingPermissionIdx === -1 && <Composer />}
     </div>
   );
 }

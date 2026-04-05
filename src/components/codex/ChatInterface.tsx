@@ -10,7 +10,7 @@ import { Composer } from './Composer';
 import { CodexAuth } from './CodexAuth';
 import { useSettingsStore } from '@/stores/settings';
 
-export function ChatInterface() {
+export function ChatInterface({ hideComposer = false }: { hideComposer?: boolean } = {}) {
   const { currentThreadId, events, hasAccount } = useCodexStore();
   const { taskDetail, showReasoning } = useSettingsStore();
   const isProcessing = useIsProcessing();
@@ -144,7 +144,7 @@ export function ChatInterface() {
     <div className="flex-1 flex flex-col min-h-0 h-full relative">
       {/* Messages Area */}
       <div className="flex-1 min-h-0 overflow-hidden">
-        <ScrollArea className="h-full px-4 pb-32">
+        <ScrollArea className={`h-full px-4 ${hideComposer ? '' : 'pb-32'}`}>
           <div className="max-w-3xl mx-auto space-y-2 py-4">
             {renderedEvents.map((entry) =>
               entry.type === 'reasoningSummaryDelta' ? (
@@ -169,9 +169,11 @@ export function ChatInterface() {
       </div>
 
       {/* Input Area */}
-      <div className="absolute bottom-0 left-0 right-0 px-2 sm:px-0 max-w-3xl mx-auto">
-        <Composer />
-      </div>
+      {!hideComposer && (
+        <div className="absolute bottom-0 left-0 right-0 px-2 sm:px-0 max-w-3xl mx-auto">
+          <Composer />
+        </div>
+      )}
     </div>
   );
 }
