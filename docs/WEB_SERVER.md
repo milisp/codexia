@@ -4,28 +4,21 @@ This guide covers local web-mode and packaging for Codexia web server without GU
 
 ## Run after installation
 
-### Linux or Windows
+### Headless binary (Linux / Windows / macOS)
+
+The prebuilt headless binary is compiled without GUI (no Tauri). Just run it directly:
 
 ```sh
-codexia --web # default port is 7420
+./codexia
 ```
 
-You can specify a custom port with the `--port` flag, and use `--host` to allow external access (binds to `0.0.0.0` instead of `127.0.0.1`):
-```sh
-codexia --web --port 7420 --host
-```
-
-### macOS
+Optional flags:
 
 ```sh
-/Applications/codexia.app/Contents/MacOS/codexia --web
+./codexia --port 7420 --host   # custom port + bind to 0.0.0.0 for external access
 ```
 
-or download prebuilt linux headless web server then run
-
-```sh
-codexia --web
-```
+> `--web` flag is **not** needed for the headless binary and has no effect.
 
 ## Develop frontend and Rust backend together
 
