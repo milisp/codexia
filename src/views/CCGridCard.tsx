@@ -4,12 +4,14 @@ import { ccGetSessionFilePath, ccInterrupt, ccResumeSession } from '@/services/t
 import { readTextFileLines } from '@/services/tauri/filesystem';
 import { parseSessionJsonl } from '@/components/cc/utils/parseSessionJsonl';
 import { Button } from '@/components/ui/button';
-import { Square, RotateCcw } from 'lucide-react';
+import { Check, RotateCcw, Square } from 'lucide-react';
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { gitApplyWorktreeChanges, gitRemoveWorktree } from '@/services/tauri/git';
 const CCView = lazy(() => import('@/components/cc/CCView'));
 import type { ResultMessage } from '@/components/cc/types/messages';
+import { toast } from 'sonner';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -49,8 +51,9 @@ export function CCGridCard({ card, onRemove: _onRemove, header, isSelected }: CC
     options,
   } = useCCStore();
   const { cwd } = useWorkspaceStore();
-  const { setCurrentAgentCardId } = useAgentCenterStore();
+  const { setCurrentAgentCardId, updateCard } = useAgentCenterStore();
   const [isResumingSession, setIsResumingSession] = useState(false);
+  const [isApplyingWorktree, setIsApplyingWorktree] = useState(false);
 
   const messages = sessionMessagesMap[card.id] ?? [];
   const isActive = activeSessionIds.includes(card.id);
@@ -59,6 +62,7 @@ export function CCGridCard({ card, onRemove: _onRemove, header, isSelected }: CC
   const needsResume = !isActive && messages.length === 0;
 
   const hasPending = messages.some((m) => m.type === 'permission_request' && !m.resolved);
+  const canApplyWorktree = !!card.worktreePath && !!cwd && !processing && !hasPending;
 
   const resultMsg = useMemo<ResultMessage | null>(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -121,6 +125,25 @@ export function CCGridCard({ card, onRemove: _onRemove, header, isSelected }: CC
     }
   };
 
+  const handleApplyWorktree = async () => {
+    const worktreeKey = card.worktreePath?.split('/').pop();
+    if (!cwd || !worktreeKey) return;
+
+    setIsApplyingWorktree(true);
+    try {
+      const result = await gitApplyWorktreeChanges(cwd, worktreeKey);
+      await gitRemoveWorktree(cwd, worktreeKey);
+      updateCard({ ...card, worktreePath: undefined });
+      toast.success('Applied worktree changes', {
+        description: `${result.changed_files} file${result.changed_files === 1 ? '' : 's'} merged into the main checkout`,
+      });
+    } catch (error) {
+      toast.error('Failed to apply worktree changes', { description: String(error) });
+    } finally {
+      setIsApplyingWorktree(false);
+    }
+  };
+
   const attentionBorder = hasPending
     ? 'ring-2 ring-amber-500/70 border-amber-500/30'
     : isSelected
@@ -159,12 +182,24 @@ export function CCGridCard({ card, onRemove: _onRemove, header, isSelected }: CC
               <Square className="h-3 w-3" />
             </Button>
           )}
+          {canApplyWorktree && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 px-2 text-[10px] gap-1"
+              disabled={isApplyingWorktree || isResumingSession}
+              onClick={(e) => { e.stopPropagation(); void handleApplyWorktree(); }}
+            >
+              <Check className={`h-3 w-3 ${isApplyingWorktree ? 'animate-pulse' : ''}`} />
+              {isApplyingWorktree ? 'Applying…' : 'Apply'}
+            </Button>
+          )}
           {needsResume && (
             <Button
               size="sm"
               variant="outline"
               className="h-6 px-2 text-[10px] gap-1"
-              disabled={isResumingSession}
+              disabled={isResumingSession || isApplyingWorktree}
               onClick={(e) => { e.stopPropagation(); void handleResume(); }}
             >
               <RotateCcw className={`h-3 w-3 ${isResumingSession ? 'animate-spin' : ''}`} />

@@ -50,23 +50,23 @@ export function AgentComposer({ trayMode = false }: AgentComposerProps) {
   return (
     <div className="flex flex-col">
       {/* Agent tabs */}
-      <div className="flex items-center shrink-0">
-        <AgentSwitcher variant="tab" />
-        <TunnelIndicator variant="switch" />
+      <div className="flex items-center justify-between gap-2 shrink-0">
+          <AgentSwitcher variant="tab" />
+          <TunnelIndicator variant="switch" />
       </div>
 
       {/* Input area */}
       <div className="shrink-0">
-        {selectedAgent === 'cc' ? (
-          <CCComposer overrideSend={trayMode ? handleTrayOverrideSend : undefined} />
-        ) : (
-          <CodexComposer showControls={false} overrideSend={trayMode ? handleTrayOverrideSend : undefined} />
-        )}
+          {selectedAgent === 'cc' ? (
+            <CCComposer overrideSend={trayMode ? handleTrayOverrideSend : undefined} />
+          ) : (
+            <CodexComposer showControls={false} overrideSend={trayMode ? handleTrayOverrideSend : undefined} />
+          )}
       </div>
 
       {/* Bottom bar */}
       <div className="shrink-0">
-        {selectedAgent === 'codex' && <ComposerControls />}
+          {selectedAgent === 'codex' && <ComposerControls />}
       </div>
     </div>
   );

@@ -9,6 +9,7 @@ interface AgentCenterState {
   cards: AgentCenterCard[];
   addAgentCard: (card: AgentCenterCard) => boolean;
   removeCard: (card: AgentCenterCard) => void;
+  updateCard: (card: AgentCenterCard) => void;
   currentAgentCardId: string | null;
   setCurrentAgentCardId: (id: string | null) => void;
 }
@@ -23,11 +24,10 @@ export const useAgentCenterStore = create<AgentCenterState>()(
         let added = false;
         set((state) => {
           const idx = state.cards.findIndex((c) => c.kind === card.kind && c.id === card.id);
-          // Update preview for an existing card — never counts toward the limit.
+          // Update existing card metadata without dropping a saved worktree path.
           if (idx !== -1) {
-            if (!card.preview) return {};
             const next = [...state.cards];
-            next[idx] = { ...next[idx], preview: card.preview } as AgentCenterCard;
+            next[idx] = { ...next[idx], ...card } as AgentCenterCard;
             added = true;
             return { cards: next };
           }
@@ -40,6 +40,15 @@ export const useAgentCenterStore = create<AgentCenterState>()(
       removeCard: (card) =>
         set((state) => ({
           cards: state.cards.filter((c) => !(c.kind === card.kind && c.id === card.id)),
+        })),
+
+      updateCard: (card) =>
+        set((state) => ({
+          cards: state.cards.map((existing) =>
+            existing.kind === card.kind && existing.id === card.id
+              ? ({ ...existing, ...card } as AgentCenterCard)
+              : existing
+          ),
         })),
 
       currentAgentCardId: null,

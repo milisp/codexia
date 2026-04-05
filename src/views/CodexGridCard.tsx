@@ -2,12 +2,15 @@ import { useRef, useEffect, useState, useMemo } from 'react';
 import { useCodexStore } from '@/stores/codex';
 import { useApprovalStore, useRequestUserInputStore } from '@/stores/codex';
 import { codexService } from '@/services/codexService';
+import { gitApplyWorktreeChanges, gitRemoveWorktree } from '@/services/tauri/git';
 import { renderEvent } from '@/components/codex/items';
 import { Button } from '@/components/ui/button';
-import { Square, RotateCcw } from 'lucide-react';
+import { Check, RotateCcw, Square } from 'lucide-react';
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import type { ServerNotification } from '@/bindings';
+import { toast } from 'sonner';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -85,9 +88,11 @@ export function CodexGridCard({ card, onRemove: _onRemove, header, isSelected }:
   const { events, threadStatusMap, activeThreadIds } = useCodexStore();
   const { pendingApprovals } = useApprovalStore();
   const { pendingRequests } = useRequestUserInputStore();
-  const { setCurrentAgentCardId } = useAgentCenterStore();
+  const { setCurrentAgentCardId, updateCard } = useAgentCenterStore();
+  const { cwd } = useWorkspaceStore();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [resuming, setResuming] = useState(false);
+  const [isApplyingWorktree, setIsApplyingWorktree] = useState(false);
 
   const threadEvents = events[card.id] ?? [];
   const processing = threadStatusMap[card.id]?.type === 'active';
@@ -99,6 +104,7 @@ export function CodexGridCard({ card, onRemove: _onRemove, header, isSelected }:
 
   const tokens = getCodexTokens(threadEvents);
   const ctxWindow = getCodexContextWindow(threadEvents);
+  const canApplyWorktree = !!card.worktreePath && !!cwd && !processing && !hasPending;
 
   const [elapsed, setElapsed] = useState(0);
   const processingStartRef = useRef<number | null>(null);
@@ -135,6 +141,25 @@ export function CodexGridCard({ card, onRemove: _onRemove, header, isSelected }:
       setCurrentAgentCardId(card.id);
     } finally {
       setResuming(false);
+    }
+  };
+
+  const handleApplyWorktree = async () => {
+    const worktreeKey = card.worktreePath?.split('/').pop();
+    if (!cwd || !worktreeKey) return;
+
+    setIsApplyingWorktree(true);
+    try {
+      const result = await gitApplyWorktreeChanges(cwd, worktreeKey);
+      await gitRemoveWorktree(cwd, worktreeKey);
+      updateCard({ ...card, worktreePath: undefined });
+      toast.success('Applied worktree changes', {
+        description: `${result.changed_files} file${result.changed_files === 1 ? '' : 's'} merged into the main checkout`,
+      });
+    } catch (error) {
+      toast.error('Failed to apply worktree changes', { description: String(error) });
+    } finally {
+      setIsApplyingWorktree(false);
     }
   };
 
@@ -191,12 +216,24 @@ export function CodexGridCard({ card, onRemove: _onRemove, header, isSelected }:
             <Square className="h-3 w-3" />
           </Button>
         )}
+        {canApplyWorktree && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-6 px-2 text-[10px] gap-1"
+            disabled={isApplyingWorktree}
+            onClick={(e) => { e.stopPropagation(); void handleApplyWorktree(); }}
+          >
+            <Check className={`h-3 w-3 ${isApplyingWorktree ? 'animate-pulse' : ''}`} />
+            {isApplyingWorktree ? 'Applying…' : 'Apply'}
+          </Button>
+        )}
         {needsResume && (
           <Button
             size="sm"
             variant="outline"
             className="h-6 px-2 text-[10px] gap-1"
-            disabled={resuming}
+            disabled={resuming || isApplyingWorktree}
             onClick={(e) => { e.stopPropagation(); void handleResume(); }}
           >
             <RotateCcw className={`h-3 w-3 ${resuming ? 'animate-spin' : ''}`} />

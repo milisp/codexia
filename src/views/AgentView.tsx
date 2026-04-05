@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useAgentCenterStore } from '@/stores';
 import { useLayoutStore } from '@/stores';
 import { useCodexStore, useApprovalStore, useRequestUserInputStore } from '@/stores/codex';
@@ -10,6 +10,7 @@ import { ArrowLeft, X, Maximize2, PanelRightClose, PanelRightOpen } from 'lucide
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
 import { AgentIcon } from '@/components/common/AgentIcon';
 import { AgentComposer } from '@/components/common';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CodexGridCard } from './CodexGridCard';
 import { CCGridCard } from './CCGridCard';
 
@@ -237,6 +238,20 @@ function AgentGrid() {
   };
 
   const [showSidePanels, setShowSidePanels] = useState(true);
+  const [mobileTab, setMobileTab] = useState<'all' | 'idle' | 'running'>('all');
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.matchMedia('(min-width: 768px)').matches;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mediaQuery = window.matchMedia('(min-width: 768px)');
+    const handleChange = (event: MediaQueryListEvent) => setIsDesktop(event.matches);
+    setIsDesktop(mediaQuery.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   const runningCards = useMemo(
     () => cards.filter((c) => isRunning(c)),
@@ -248,13 +263,64 @@ function AgentGrid() {
     [cards, threadStatusMap, sessionLoadingMap]
   );
 
+  const mobileCards = useMemo(() => {
+    if (mobileTab === 'running') return runningCards;
+    if (mobileTab === 'idle') return idleCards;
+    return cards;
+  }, [cards, idleCards, mobileTab, runningCards]);
+
+  if (!isDesktop) {
+    return (
+      <div className="flex flex-col h-full min-h-0 overflow-hidden">
+        <Tabs value={mobileTab} onValueChange={(value) => setMobileTab(value as 'all' | 'idle' | 'running')} className="w-full">
+          <TabsList className="grid h-auto w-full grid-cols-3">
+            <TabsTrigger value="all" className="text-xs">All {cards.length}</TabsTrigger>
+            <TabsTrigger value="idle" className="text-xs flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-muted-foreground/40" />
+              Idle {idleCards.length}
+            </TabsTrigger>
+            <TabsTrigger value="running" className="text-xs flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-green-500" />
+              Running {runningCards.length}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <div className="flex-1 min-h-0 overflow-y-auto p-3">
+          {mobileCards.length === 0 ? (
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              No {mobileTab} agents.
+            </div>
+          ) : (
+            <div
+              className="grid gap-3"
+              style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}
+            >
+              {mobileCards.map((card) => (
+                <GridCard
+                  key={card.id}
+                  card={card}
+                  onExpand={() => void expand(card)}
+                  onRemove={() => handleRemove(card)}
+                  isSelected={card.id === currentAgentCardId}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="flex justify-center shrink-0">
+          <div className="w-full max-w-3xl px-2">
+            <AgentComposer />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col md:flex-row h-full min-h-0 overflow-hidden">
+    <div className="flex flex-row h-full min-h-0 overflow-hidden">
       {/* Left: current session */}
-      <div className="md:flex-1 flex flex-col min-h-0 border-b md:border-b-0 md:border-r overflow-hidden"
-        style={{ minHeight: '40vh' }}>
-        {/* Toggle button — top-right corner, only on md+ */}
-        <div className="hidden md:flex justify-end px-1 pt-1 shrink-0">
+      <div className="flex-1 flex flex-col min-h-0 border-r overflow-hidden">
+        <div className="flex justify-end px-1 pt-1 shrink-0">
           <button
             onClick={() => setShowSidePanels((v) => !v)}
             className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
@@ -272,15 +338,17 @@ function AgentGrid() {
               : <CCView hideComposer />}
           </Suspense>
         </div>
-        <div className="shrink-0">
-          <AgentComposer />
+        <div className="shrink-0 flex justify-center">
+          <div className="w-full px-2 md:max-w-3xl md:px-0">
+            <AgentComposer />
+          </div>
         </div>
       </div>
 
       {showSidePanels && (
         <>
           {/* Middle: running */}
-          <div className="md:flex-1 flex flex-col min-h-0 border-b md:border-b-0 md:border-r overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0 border-r overflow-hidden">
             <ColumnLabel dot="green" label="Running" count={runningCards.length} />
             <div className="flex-1 min-h-0 overflow-y-auto p-2 flex flex-col gap-2">
               {runningCards.length === 0 ? (
@@ -303,7 +371,7 @@ function AgentGrid() {
           </div>
 
           {/* Right: idle */}
-          <div className="md:flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <ColumnLabel dot="muted" label="Idle" count={idleCards.length} />
             <div className="flex-1 min-h-0 overflow-y-auto p-2 flex flex-col gap-2">
               {idleCards.length === 0 ? (
