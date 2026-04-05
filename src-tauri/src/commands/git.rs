@@ -1,6 +1,7 @@
 pub use crate::features::git::{
     GitBranchInfoResponse, GitBranchListResponse, GitDiffStatsResponse, GitFileDiffMetaResponse,
     GitApplyWorktreeResponse, GitCreateWorktreeResponse, GitFileDiffResponse, GitStatusResponse,
+    GitHasWorktreeChangesResponse,
 };
 
 use tokio::task::spawn_blocking;
@@ -51,6 +52,16 @@ pub async fn git_apply_worktree_changes(
     worktree_key: String,
 ) -> Result<GitApplyWorktreeResponse, String> {
     spawn_blocking(move || crate::features::git::git_apply_worktree_changes(cwd, worktree_key))
+        .await
+        .map_err(|e| format!("Task join error: {e}"))?
+}
+
+#[tauri::command]
+pub async fn git_has_worktree_changes(
+    cwd: String,
+    worktree_key: String,
+) -> Result<GitHasWorktreeChangesResponse, String> {
+    spawn_blocking(move || crate::features::git::git_has_worktree_changes(cwd, worktree_key))
         .await
         .map_err(|e| format!("Task join error: {e}"))?
 }

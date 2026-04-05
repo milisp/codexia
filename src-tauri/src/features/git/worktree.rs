@@ -5,7 +5,7 @@ use std::sync::{Arc, LazyLock, Mutex};
 use std::sync::atomic::AtomicBool;
 
 use crate::features::git::helpers::{open_repo, repo_root_path};
-use crate::features::git::types::{GitApplyWorktreeResponse, GitCreateWorktreeResponse};
+use crate::features::git::types::{GitApplyWorktreeResponse, GitCreateWorktreeResponse, GitHasWorktreeChangesResponse};
 
 // ---------------------------------------------------------------------------
 // Per-path locking — prevents concurrent create/remove on the same worktree.
@@ -470,6 +470,30 @@ pub fn git_apply_worktree_changes(
 
     Ok(GitApplyWorktreeResponse {
         changed_files: changed_count,
+    })
+}
+
+/// Checks if a worktree has any changes compared to the main repo's HEAD.
+/// Returns true only if there are actual tracked or untracked changes.
+pub fn git_has_worktree_changes(
+    cwd: String,
+    worktree_key: String,
+) -> Result<GitHasWorktreeChangesResponse, String> {
+    let repo = open_repo(&cwd)?;
+    let repo_root = repo_root_path(&repo)?;
+    let safe_key = sanitize_worktree_key(&worktree_key);
+    let worktrees_dir = worktrees_base_dir(&repo_root)?;
+    let worktree_path = worktrees_dir.join(&safe_key);
+
+    if !is_worktree_properly_set_up(&repo_root, &worktree_path) {
+        return Ok(GitHasWorktreeChangesResponse { has_changes: false });
+    }
+
+    let base_commit = git_rev_parse_head(&repo_root)?;
+    let changes = collect_worktree_changes(&worktree_path, &base_commit)?;
+
+    Ok(GitHasWorktreeChangesResponse {
+        has_changes: !changes.is_empty(),
     })
 }
 

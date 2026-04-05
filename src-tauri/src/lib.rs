@@ -255,6 +255,7 @@ pub fn run() {
                 crate::commands::git::git_create_worktree,
                 crate::commands::git::git_remove_worktree,
                 crate::commands::git::git_apply_worktree_changes,
+                crate::commands::git::git_has_worktree_changes,
                 crate::commands::git::git_commit,
                 crate::commands::git::git_push,
                 crate::commands::terminal::terminal_start,

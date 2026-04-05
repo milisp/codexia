@@ -44,6 +44,10 @@ export type GitApplyWorktreeResponse = {
   changed_files: number;
 };
 
+export type GitHasWorktreeChangesResponse = {
+  has_changes: boolean;
+};
+
 export type GitBranchInfoResponse = {
   owner: string;
   repo: string;
@@ -169,6 +173,19 @@ export async function gitApplyWorktreeChanges(cwd: string, worktreeKey: string) 
     });
   }
   return await postJson<GitApplyWorktreeResponse>('/api/git/apply-worktree-changes', {
+    cwd,
+    worktreeKey,
+  });
+}
+
+export async function gitHasWorktreeChanges(cwd: string, worktreeKey: string) {
+  if (isDesktopTauri()) {
+    return await invokeTauri<GitHasWorktreeChangesResponse>('git_has_worktree_changes', {
+      cwd,
+      worktreeKey,
+    });
+  }
+  return await postJson<GitHasWorktreeChangesResponse>('/api/git/has-worktree-changes', {
     cwd,
     worktreeKey,
   });

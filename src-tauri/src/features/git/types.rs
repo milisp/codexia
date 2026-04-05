@@ -65,3 +65,8 @@ pub struct GitCreateWorktreeResponse {
 pub struct GitApplyWorktreeResponse {
     pub changed_files: usize,
 }
+
+#[derive(Debug, Clone, Serialize)]
+pub struct GitHasWorktreeChangesResponse {
+    pub has_changes: bool,
+}

@@ -19,8 +19,9 @@ pub use self::status::git_status;
 pub use self::types::{
     GitBranchInfoResponse, GitBranchListResponse, GitDiffStatsResponse, GitFileDiffMetaResponse,
     GitApplyWorktreeResponse, GitCreateWorktreeResponse, GitFileDiffResponse, GitStatusResponse,
+    GitHasWorktreeChangesResponse,
 };
 pub use self::worktree::{
     clone, git_apply_worktree_changes, git_create_worktree, git_remove_worktree,
-    scan_all_orphan_worktrees,
+    git_has_worktree_changes, scan_all_orphan_worktrees,
 };

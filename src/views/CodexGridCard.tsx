@@ -2,7 +2,7 @@ import { useRef, useEffect, useState, useMemo } from 'react';
 import { useCodexStore } from '@/stores/codex';
 import { useApprovalStore, useRequestUserInputStore } from '@/stores/codex';
 import { codexService } from '@/services/codexService';
-import { gitApplyWorktreeChanges, gitRemoveWorktree, gitStatus, gitStageFiles, gitCommit } from '@/services/tauri/git';
+import { gitApplyWorktreeChanges, gitRemoveWorktree, gitStatus, gitStageFiles, gitCommit, gitHasWorktreeChanges } from '@/services/tauri/git';
 import { renderEvent } from '@/components/codex/items';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -102,6 +102,7 @@ export function CodexGridCard({ card, onRemove: _onRemove, header, isSelected }:
   const [showCommitInput, setShowCommitInput] = useState(false);
   const [commitMsg, setCommitMsg] = useState('');
   const [isCommitting, setIsCommitting] = useState(false);
+  const [worktreeHasChanges, setWorktreeHasChanges] = useState(false);
 
   const threadEvents = events[card.id] ?? [];
   const processing = threadStatusMap[card.id]?.type === 'active';
@@ -113,7 +114,7 @@ export function CodexGridCard({ card, onRemove: _onRemove, header, isSelected }:
 
   const tokens = getCodexTokens(threadEvents);
   const ctxWindow = getCodexContextWindow(threadEvents);
-  const canApplyWorktree = !!card.worktreePath && !!cwd && !processing && !hasPending;
+  const canApplyWorktree = !!card.worktreePath && !!cwd && !processing && !hasPending && worktreeHasChanges;
 
   const [elapsed, setElapsed] = useState(0);
   const processingStartRef = useRef<number | null>(null);
@@ -137,6 +138,28 @@ export function CodexGridCard({ card, onRemove: _onRemove, header, isSelected }:
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [threadEvents.length]);
+
+  useEffect(() => {
+    const checkWorktreeChanges = async () => {
+      if (!card.worktreePath || !cwd) {
+        setWorktreeHasChanges(false);
+        return;
+      }
+      try {
+        const worktreeKey = card.worktreePath.split('/').pop();
+        if (!worktreeKey) {
+          setWorktreeHasChanges(false);
+          return;
+        }
+        const result = await gitHasWorktreeChanges(cwd, worktreeKey);
+        setWorktreeHasChanges(result.has_changes);
+      } catch (error) {
+        setWorktreeHasChanges(false);
+      }
+    };
+
+    checkWorktreeChanges();
+  }, [card.worktreePath, cwd]);
 
   const handleStop = async () => {
     const turnId = getCodexActiveTurnId(threadEvents);
