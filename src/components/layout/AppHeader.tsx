@@ -19,16 +19,19 @@ export function AppHeader() {
   const { setView, view } = useLayoutStore();
   const { open: isSidebarOpen, openMobile, isMobile } = useSidebar();
   const { setHistoryMode, selectedAgent } = useWorkspaceStore();
-  const { cards, currentAgentCardId } = useAgentCenterStore();
-  const hasCurrentCard = cards.some((c) => c.id === currentAgentCardId);
+  const { cards } = useAgentCenterStore();
   const { needsTrafficLightOffset } = useTrafficLightConfig(isSidebarOpen);
   // Show trigger when sidebar is closed; on mobile the Sheet is transient so always show
   const showTrigger = isMobile ? !openMobile : !isSidebarOpen;
 
-  const { isConnected } = useCCStore();
+  const { isConnected, activeSessionId } = useCCStore();
   const { currentThreadId, activeThreadIds } = useCodexStore();
   const currentThread = useCurrentThread();
   const isHistoryView = view === 'history';
+  const activeAgentId = selectedAgent === 'codex' ? currentThreadId : activeSessionId;
+  const hasCurrentCard = activeAgentId
+    ? cards.some((c) => c.kind === selectedAgent && c.id === activeAgentId)
+    : false;
 
   const handleToggleHistoryMode = async () => {
     const nextMode = !isHistoryView;

@@ -239,13 +239,13 @@ function AgentGrid() {
   const [showSidePanels, setShowSidePanels] = useState(true);
 
   const runningCards = useMemo(
-    () => cards.filter((c) => isRunning(c) && c.id !== currentAgentCardId),
-    [cards, threadStatusMap, sessionLoadingMap, currentAgentCardId]
+    () => cards.filter((c) => isRunning(c)),
+    [cards, threadStatusMap, sessionLoadingMap]
   );
 
   const idleCards = useMemo(
-    () => cards.filter((c) => !isRunning(c) && c.id !== currentAgentCardId),
-    [cards, threadStatusMap, sessionLoadingMap, currentAgentCardId]
+    () => cards.filter((c) => !isRunning(c)),
+    [cards, threadStatusMap, sessionLoadingMap]
   );
 
   return (
