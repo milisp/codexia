@@ -11,8 +11,6 @@ mod features;
 mod state;
 #[cfg(all(feature = "core", feature = "tauri"))]
 mod commands;
-#[cfg(all(feature = "core", feature = "tauri"))]
-mod tray;
 #[cfg(feature = "tauri")]
 pub mod p2p;
 // web_server compiles for the standalone web binary AND the desktop Tauri app
@@ -243,8 +241,6 @@ pub fn run() {
                 crate::commands::automation::set_automation_paused,
                 crate::commands::automation::delete_automation,
                 crate::commands::automation::run_automation_now,
-                crate::tray::resize_tray_window,
-                crate::tray::show_main_window,
                 crate::commands::git::git_branch_info,
                 crate::commands::git::git_list_branches,
                 crate::commands::git::git_create_branch,
@@ -330,8 +326,6 @@ pub fn run() {
                         .await
                         .ok();
                 });
-
-                crate::tray::create_tray(app.handle())?;
 
                 if let Some(main_window) = app.get_webview_window("main") {
                     let app_handle = app.handle().clone();

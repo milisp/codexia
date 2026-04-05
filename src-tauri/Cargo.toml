@@ -101,7 +101,7 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 # --- tauri feature (iOS + desktop) ---
-tauri = { version = "2", features = ["macos-private-api", "protocol-asset", "devtools", "tray-icon"], optional = true }
+tauri = { version = "2", features = ["macos-private-api", "protocol-asset", "devtools"], optional = true }
 fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs", optional = true }
 tauri-plugin-os = "2"
 tauri-plugin-opener = { version = "2", optional = true }

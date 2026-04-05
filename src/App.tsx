@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, lazy, Suspense } from 'react';
+import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 import './App.css';
@@ -11,13 +11,8 @@ import { HistoryProjectsDialog } from '@/components/project-selector';
 import { AnalyticsConsentDialog } from '@/components/settings/AnalyticsConsentDialog';
 import { initializeCodexAsync } from '@/services/tauri';
 import type { InitializeResponse } from './bindings';
-import { useAgentCenterStore, useLayoutStore } from '@/stores';
 import { loadSettings, initSettingsSync } from '@/lib/settings';
 import { StoreErrorBoundary } from '@/components/StoreErrorBoundary';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { useTrayPendingStore } from '@/stores/useTrayPendingStore';
-import { useCCSessionManager } from '@/hooks/useCCSessionManager';
-import { codexService } from '@/services/codexService';
 import { useP2PConnection } from '@/hooks/useP2PConnection';
 import { toast } from 'sonner';
 import { useTunnel } from '@/hooks/useTunnel'
@@ -46,10 +41,6 @@ function AppShell() {
     void loadSettings().finally(() => setSettingsReady(true));
     return initSettingsSync();
   }, []);
-  const { pending, clearPending } = useTrayPendingStore();
-  const { handleNewSession } = useCCSessionManager();
-  const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
-
   // Mobile: auto-connect to desktop via Quinn P2P
   const { state: p2pState, error: p2pError, retry: p2pRetry } = useP2PConnection();
 
@@ -85,23 +76,6 @@ function AppShell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPhone, p2pAutoStart]);
 
-  const processTrayPending = useCallback(async (text: string, kind: 'cc' | 'codex') => {
-    clearPending();
-    if (kind === 'cc') {
-      await handleNewSession(text);
-    } else {
-      const thread = await codexService.threadStart();
-      addAgentCard({ kind: 'codex', id: thread.id, preview: text, cwd: useWorkspaceStore.getState().cwd });
-      setCurrentAgentCardId(thread.id);
-      await codexService.turnStart(thread.id, text, []);
-    }
-  }, [clearPending, handleNewSession, addAgentCard, setCurrentAgentCardId]);
-
-  useEffect(() => {
-    if (!pending) return;
-    void processTrayPending(pending.text, pending.kind);
-  }, [pending, processTrayPending]);
-
   useEffect(() => {
     if (!isTauri() || isPhone !== false) {
       return;
@@ -122,22 +96,9 @@ function AppShell() {
       setQuitDialogOpen(true);
     });
 
-    // Receive pending send from tray window, hand it off to the main window's send flow
-    const unlistenTray = listen<{ kind: 'cc' | 'codex'; text: string }>(
-      'tray:pending-send',
-      ({ payload }) => {
-        const { setView, setActiveSidebarTab } = useLayoutStore.getState();
-        setActiveSidebarTab(payload.kind);
-        setView('agent');
-        useWorkspaceStore.getState().setSelectedAgent(payload.kind);
-        useTrayPendingStore.getState().setPending({ kind: payload.kind, text: payload.text });
-      }
-    );
-
     return () => {
       unlisten.then((fn) => fn());
       unlistenQuit.then((fn) => fn());
-      unlistenTray.then((fn) => fn());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPhone]);
