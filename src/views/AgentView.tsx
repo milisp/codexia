@@ -5,6 +5,7 @@ import { useCodexStore, useApprovalStore, useRequestUserInputStore } from '@/sto
 import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { codexService } from '@/services/codexService';
+import { gitRemoveWorktree } from '@/services/tauri/git';
 import { ArrowLeft, X, Maximize2, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
 import { AgentIcon } from '@/components/common/AgentIcon';
@@ -206,6 +207,13 @@ function AgentGrid() {
     } else {
       if (card.id === activeSessionId) {
         setActiveSessionId(null);
+      }
+    }
+    if (card.worktreePath) {
+      const { cwd } = useWorkspaceStore.getState();
+      const worktreeKey = card.worktreePath.split('/').pop() ?? '';
+      if (cwd && worktreeKey) {
+        void gitRemoveWorktree(cwd, worktreeKey);
       }
     }
   };

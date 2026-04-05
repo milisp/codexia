@@ -111,11 +111,13 @@ export function useCCSessionManager() {
 
       // Prepare worktree if enabled
       let sessionCwd = cwd;
+      let sessionWorktreePath: string | undefined;
       if (options.worktreeMode === 'worktree' && cwd?.trim()) {
         try {
           const worktreeKey = `cc-${crypto.randomUUID()}`;
           const prepared = await gitCreateWorktree(cwd, worktreeKey);
           sessionCwd = prepared.worktree_path;
+          sessionWorktreePath = prepared.worktree_path;
         } catch (err) {
           console.warn('[useCCSessionManager] Failed to prepare worktree, falling back to cwd', err);
         }
@@ -157,7 +159,7 @@ export function useCCSessionManager() {
       addMessage({ type: 'user', text: initialMessage });
       setConnected(true);
       setSessionLoading(sessionId, true);
-      addAgentCard({ kind: 'cc', id: sessionId, preview: initialMessage });
+      addAgentCard({ kind: 'cc', id: sessionId, preview: initialMessage, worktreePath: sessionWorktreePath });
       setCurrentAgentCardId(sessionId);
 
       console.info('[useCCSessionManager] New session created', {

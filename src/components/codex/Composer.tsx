@@ -79,10 +79,12 @@ export function Composer({ showControls = true, overrideSend, onAfterSend }: Com
       return;
     }
     let targetThreadId = currentThreadId;
+    let worktreePath: string | undefined;
     if (!targetThreadId) {
       try {
         const thread = await codexService.threadStart();
         targetThreadId = thread.id;
+        worktreePath = thread.cwd?.includes('/.codexia/worktrees/') ? thread.cwd : undefined;
       } catch (error) {
         console.error('Failed to start thread:', error);
         toast.error('Failed to start thread', {
@@ -91,7 +93,7 @@ export function Composer({ showControls = true, overrideSend, onAfterSend }: Com
         return;
       }
     }
-    addAgentCard({ kind: 'codex', id: targetThreadId, preview: message });
+    addAgentCard({ kind: 'codex', id: targetThreadId, preview: message, worktreePath });
     setCurrentAgentCardId(targetThreadId);
     onAfterSend?.(targetThreadId, message);
     try {

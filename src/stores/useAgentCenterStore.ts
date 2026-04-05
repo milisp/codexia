@@ -2,8 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export type AgentCenterCard =
-  | { kind: 'codex'; id: string; preview?: string }
-  | { kind: 'cc'; id: string; preview?: string };
+  | { kind: 'codex'; id: string; preview?: string; worktreePath?: string }
+  | { kind: 'cc'; id: string; preview?: string; worktreePath?: string };
 
 interface AgentCenterState {
   cards: AgentCenterCard[];
