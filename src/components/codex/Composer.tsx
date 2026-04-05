@@ -25,33 +25,36 @@ import { WorkspaceSwitcher } from '@/components/common';
 /** Full Codex bottom bar: workspace switcher + access mode + cwd mode selector. */
 export function ComposerControls() {
   const { threadCwdMode, setThreadCwdMode } = useConfigStore();
+  const { currentThreadId } = useCodexStore();
   return (
     <div className="flex justify-between items-center gap-2">
       <span className="flex">
         <WorkspaceSwitcher />
       </span>
-      <Select
-        value={threadCwdMode}
-        onValueChange={(value) => setThreadCwdMode(value as ThreadCwdMode)}
-      >
-        <SelectTrigger className="w-fit">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="local">
-            <span className="inline-flex items-center gap-2">
-              <Monitor className="size-4" />
-              <span>Local</span>
-            </span>
-          </SelectItem>
-          <SelectItem value="worktree">
-            <span className="inline-flex items-center gap-2">
-              <Split className="size-4" />
-              <span>Worktree</span>
-            </span>
-          </SelectItem>
-        </SelectContent>
-      </Select>
+      {!currentThreadId && (
+        <Select
+          value={threadCwdMode}
+          onValueChange={(value) => setThreadCwdMode(value as ThreadCwdMode)}
+        >
+          <SelectTrigger className="w-fit">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="local">
+              <span className="inline-flex items-center gap-2">
+                <Monitor className="size-4" />
+                <span>Local</span>
+              </span>
+            </SelectItem>
+            <SelectItem value="worktree">
+              <span className="inline-flex items-center gap-2">
+                <Split className="size-4" />
+                <span>Worktree</span>
+              </span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      )}
     </div>
   );
 }
