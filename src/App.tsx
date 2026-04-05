@@ -18,7 +18,6 @@ import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useTrayPendingStore } from '@/stores/useTrayPendingStore';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
 import { codexService } from '@/services/codexService';
-import { useAgentLimit } from '@/hooks/useAgentLimit';
 import { useP2PConnection } from '@/hooks/useP2PConnection';
 import { toast } from 'sonner';
 import { useTunnel } from '@/hooks/useTunnel'
@@ -49,8 +48,7 @@ function AppShell() {
   }, []);
   const { pending, clearPending } = useTrayPendingStore();
   const { handleNewSession } = useCCSessionManager();
-  const { addAgentCard, setCurrentAgentCardId, setMaxCards } = useAgentCenterStore();
-  const { maxCards } = useAgentLimit();
+  const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
 
   // Mobile: auto-connect to desktop via Quinn P2P
   const { state: p2pState, error: p2pError, retry: p2pRetry } = useP2PConnection();
@@ -86,11 +84,6 @@ function AppShell() {
     void p2pStart();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPhone, p2pAutoStart]);
-
-  // Sync the subscription-derived limit into the store so all addAgentCard callers respect it.
-  useEffect(() => {
-    setMaxCards(maxCards);
-  }, [maxCards, setMaxCards]);
 
   const processTrayPending = useCallback(async (text: string, kind: 'cc' | 'codex') => {
     clearPending();

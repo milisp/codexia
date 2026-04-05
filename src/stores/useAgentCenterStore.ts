@@ -11,18 +11,14 @@ interface AgentCenterState {
   removeCard: (card: AgentCenterCard) => void;
   currentAgentCardId: string | null;
   setCurrentAgentCardId: (id: string | null) => void;
-  // Runtime limit (not persisted) — set by auth/subscription context
-  maxCards: number;
-  setMaxCards: (max: number) => void;
 }
 
 export const useAgentCenterStore = create<AgentCenterState>()(
   persist(
     (set) => ({
       cards: [],
-      maxCards: Infinity,
 
-      // Returns true if the card was added/updated, false if the limit was reached.
+      // Returns true if the card was added/updated.
       addAgentCard: (card) => {
         let added = false;
         set((state) => {
@@ -34,10 +30,6 @@ export const useAgentCenterStore = create<AgentCenterState>()(
             next[idx] = { ...next[idx], preview: card.preview } as AgentCenterCard;
             added = true;
             return { cards: next };
-          }
-          // New card: check limit.
-          if (state.cards.length >= state.maxCards) {
-            return {};
           }
           added = true;
           return { cards: [card, ...state.cards] };
@@ -52,13 +44,11 @@ export const useAgentCenterStore = create<AgentCenterState>()(
 
       currentAgentCardId: null,
       setCurrentAgentCardId: (id) => set({ currentAgentCardId: id }),
-
-      setMaxCards: (max) => set({ maxCards: max }),
     }),
     {
       name: 'agent-center-store',
       version: 1,
-      // maxCards and currentAgentCardId are runtime-only — not persisted
+      // currentAgentCardId is runtime-only — not persisted
       partialize: (state) => ({
         cards: state.cards,
       }),
