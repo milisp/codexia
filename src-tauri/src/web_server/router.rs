@@ -70,7 +70,6 @@ fn resolve_dist_dir() -> PathBuf {
     }
 
     if let Ok(exe_path) = std::env::current_exe() {
-        println!("[web] current_exe: {}", exe_path.display());
         if let Some(exe_dir) = exe_path.parent() {
             add_candidate(exe_dir.join("dist"));
             add_candidate(exe_dir.join("../dist"));
@@ -80,26 +79,15 @@ fn resolve_dist_dir() -> PathBuf {
             add_candidate(exe_dir.join("../Resources/dist"));
             add_candidate(exe_dir.join("../../Resources/dist"));
         }
-    } else {
-        println!("[web] current_exe: <unavailable>");
     }
 
     add_candidate(PathBuf::from("dist"));
-
-    for path in &candidates {
-        println!(
-            "[web] dist candidate: {} (index.html exists: {})",
-            path.display(),
-            path.join("index.html").exists()
-        );
-    }
 
     let selected = candidates
         .into_iter()
         .find(|path| path.join("index.html").exists())
         .unwrap_or_else(|| PathBuf::from("dist"));
 
-    println!("[web] resolved dist dir: {}", selected.display());
     selected
 }
 
