@@ -1,5 +1,8 @@
 use super::*;
 use std::path::{Path, PathBuf};
+use std::sync::{LazyLock, Mutex};
+
+static HOME_ENV_LOCK: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
 
 fn plugins_dir() -> PathBuf {
     dirs::home_dir()
@@ -54,6 +57,20 @@ fn init_repo_with_one_commit(repo_dir: &Path) {
         .expect("create initial commit");
 }
 
+fn with_temp_home<T>(home: &Path, action: impl FnOnce() -> T) -> T {
+    let _guard = HOME_ENV_LOCK.lock().expect("lock HOME env");
+    let previous_home = std::env::var_os("HOME");
+    // Tests serialize HOME mutations behind a process-wide mutex.
+    unsafe { std::env::set_var("HOME", home) };
+    let result = action();
+    if let Some(value) = previous_home {
+        unsafe { std::env::set_var("HOME", value) };
+    } else {
+        unsafe { std::env::remove_var("HOME") };
+    }
+    result
+}
+
 #[test]
 fn git_diff_stats_reports_staged_and_unstaged_counts() {
     let temp = tempfile::tempdir().expect("create tempdir");
@@ -85,39 +102,85 @@ fn git_create_worktree_creates_and_reuses_worktree_path() {
     let repo_dir = temp.path();
     init_repo_with_one_commit(repo_dir);
 
-    let first = git_create_worktree(
+    with_temp_home(temp.path(), || {
+        let first = git_create_worktree(
+            repo_dir.to_string_lossy().to_string(),
+            "thread-42".to_string(),
+        )
+        .expect("create worktree");
+        assert!(!first.existed, "first call should create worktree");
+
+        let worktree = PathBuf::from(&first.worktree_path);
+        assert!(worktree.exists(), "worktree path should exist");
+        assert!(
+            gix::discover(&worktree).is_ok(),
+            "worktree path should be a git repository"
+        );
+
+        let second = git_create_worktree(
+            repo_dir.to_string_lossy().to_string(),
+            "thread-42".to_string(),
+        )
+        .expect("reuse existing worktree");
+        assert!(second.existed, "second call should detect existing worktree");
+        assert_eq!(first.worktree_path, second.worktree_path);
+
+        let source_repo = gix::discover(repo_dir).expect("open source repo");
+        let source_head = source_repo.head_id().expect("source head").detach();
+        let worktree_repo = gix::discover(&worktree).expect("open worktree repo");
+        let worktree_head = worktree_repo.head_id().expect("worktree head").detach();
+        assert_eq!(source_head, worktree_head, "worktree should point to same HEAD");
+    });
+}
+
+#[test]
+fn git_apply_worktree_changes_applies_tracked_and_untracked_files() {
+    let temp = tempfile::tempdir().expect("create tempdir");
+    let repo_dir = temp.path();
+    init_repo_with_one_commit(repo_dir);
+
+    let tracked_file = repo_dir.join("tracked.txt");
+    std::fs::write(&tracked_file, "base\n").expect("write tracked file");
+    git_stage_files(
         repo_dir.to_string_lossy().to_string(),
-        "thread-42".to_string(),
+        vec!["tracked.txt".to_string()],
     )
-    .expect("create worktree");
-    assert!(!first.existed, "first call should create worktree");
-
-    let worktree = PathBuf::from(&first.worktree_path);
-    assert!(worktree.exists(), "worktree path should exist");
-    assert!(
-        gix::discover(&worktree).is_ok(),
-        "worktree path should be a git repository"
-    );
-
-    let second = git_create_worktree(
+    .expect("stage tracked file");
+    let _ = git_commit(
         repo_dir.to_string_lossy().to_string(),
-        "thread-42".to_string(),
+        "seed tracked file".to_string(),
     )
-    .expect("reuse existing worktree");
-    assert!(second.existed, "second call should detect existing worktree");
-    assert_eq!(first.worktree_path, second.worktree_path);
+    .expect("commit tracked file");
 
-    let source_repo = gix::discover(repo_dir).expect("open source repo");
-    let source_head = source_repo.head_id().expect("source head").detach();
-    let worktree_repo = gix::discover(&worktree).expect("open worktree repo");
-    let worktree_head = worktree_repo.head_id().expect("worktree head").detach();
-    assert_eq!(source_head, worktree_head, "worktree should point to same HEAD");
+    with_temp_home(temp.path(), || {
+        let worktree = git_create_worktree(
+            repo_dir.to_string_lossy().to_string(),
+            "apply-me".to_string(),
+        )
+        .expect("create worktree");
+        let worktree_path = PathBuf::from(&worktree.worktree_path);
 
-    // Clean up: the worktree is stored in ~/.codexia/worktrees/{repo}-{hash}/
-    // Remove only the per-repo directory to avoid touching other test data.
-    if let Some(per_repo_dir) = worktree.parent() {
-        let _ = std::fs::remove_dir_all(per_repo_dir);
-    }
+        std::fs::write(worktree_path.join("tracked.txt"), "worktree update\n")
+            .expect("update tracked file in worktree");
+        std::fs::write(worktree_path.join("new-file.txt"), "fresh\n")
+            .expect("write untracked file in worktree");
+
+        let result = git_apply_worktree_changes(
+            repo_dir.to_string_lossy().to_string(),
+            "apply-me".to_string(),
+        )
+        .expect("apply worktree changes");
+
+        assert_eq!(result.changed_files, 2);
+        assert_eq!(
+            std::fs::read_to_string(repo_dir.join("tracked.txt")).expect("read tracked file"),
+            "worktree update\n"
+        );
+        assert_eq!(
+            std::fs::read_to_string(repo_dir.join("new-file.txt")).expect("read new file"),
+            "fresh\n"
+        );
+    });
 }
 
 #[test]

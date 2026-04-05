@@ -25,6 +25,7 @@ use super::{
         api_get_insight_rankings, api_get_note_by_id, api_get_notes,
         api_get_unsynced_notes,
         api_git_branch_info, api_git_checkout_branch, api_git_create_branch,
+        api_git_apply_worktree_changes,
         api_git_remove_worktree,
         api_git_diff_stats, api_git_file_diff, api_git_file_diff_meta, api_git_list_branches,
         api_git_create_worktree, api_git_reverse_files, api_git_stage_files,
@@ -224,6 +225,10 @@ pub fn create_router(state: WebServerState) -> Router {
         .route(
             "/api/git/remove-worktree",
             post(api_git_remove_worktree),
+        )
+        .route(
+            "/api/git/apply-worktree-changes",
+            post(api_git_apply_worktree_changes),
         )
         .route("/api/git/branch-info", post(api_git_branch_info))
         .route("/api/git/list-branches", post(api_git_list_branches))

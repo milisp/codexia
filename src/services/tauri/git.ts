@@ -40,6 +40,10 @@ export type GitCreateWorktreeResponse = {
   copied_env_files: string[];
 };
 
+export type GitApplyWorktreeResponse = {
+  changed_files: number;
+};
+
 export type GitBranchInfoResponse = {
   owner: string;
   repo: string;
@@ -157,6 +161,19 @@ export async function gitRemoveWorktree(cwd: string, worktreeKey: string): Promi
   await postNoContent('/api/git/remove-worktree', { cwd, worktreeKey });
 }
 
+export async function gitApplyWorktreeChanges(cwd: string, worktreeKey: string) {
+  if (isDesktopTauri()) {
+    return await invokeTauri<GitApplyWorktreeResponse>('git_apply_worktree_changes', {
+      cwd,
+      worktreeKey,
+    });
+  }
+  return await postJson<GitApplyWorktreeResponse>('/api/git/apply-worktree-changes', {
+    cwd,
+    worktreeKey,
+  });
+}
+
 function resolveCwd(filePath: string): string {
   const normalized = filePath.replace(/\\/g, '/');
   const lastSlash = normalized.lastIndexOf('/');
@@ -202,4 +219,3 @@ export async function gitPush(cwd: string, remote?: string, branch?: string) {
   }
   return await postJson<string>('/api/git/push', { cwd, remote, branch });
 }
-

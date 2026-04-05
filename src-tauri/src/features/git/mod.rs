@@ -18,6 +18,9 @@ pub use self::staging::{git_reverse_files, git_stage_files, git_unstage_files};
 pub use self::status::git_status;
 pub use self::types::{
     GitBranchInfoResponse, GitBranchListResponse, GitDiffStatsResponse, GitFileDiffMetaResponse,
-    GitCreateWorktreeResponse, GitFileDiffResponse, GitStatusResponse,
+    GitApplyWorktreeResponse, GitCreateWorktreeResponse, GitFileDiffResponse, GitStatusResponse,
 };
-pub use self::worktree::{clone, git_create_worktree, git_remove_worktree, scan_all_orphan_worktrees};
+pub use self::worktree::{
+    clone, git_apply_worktree_changes, git_create_worktree, git_remove_worktree,
+    scan_all_orphan_worktrees,
+};

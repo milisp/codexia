@@ -60,3 +60,8 @@ pub struct GitCreateWorktreeResponse {
     /// Env files copied from the main repo (e.g. ".env", ".env.local")
     pub copied_env_files: Vec<String>,
 }
+
+#[derive(Debug, Clone, Serialize)]
+pub struct GitApplyWorktreeResponse {
+    pub changed_files: usize,
+}

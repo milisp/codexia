@@ -1,10 +1,11 @@
 use std::collections::HashMap;
+use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, LazyLock, Mutex};
 use std::sync::atomic::AtomicBool;
 
 use crate::features::git::helpers::{open_repo, repo_root_path};
-use crate::features::git::types::GitCreateWorktreeResponse;
+use crate::features::git::types::{GitApplyWorktreeResponse, GitCreateWorktreeResponse};
 
 // ---------------------------------------------------------------------------
 // Per-path locking — prevents concurrent create/remove on the same worktree.
@@ -202,6 +203,118 @@ fn copy_env_files(src: &Path, dst: &Path) -> Vec<String> {
     copied
 }
 
+fn run_git_collect_output<I, S>(cwd: &Path, args: I) -> Result<std::process::Output, String>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    std::process::Command::new("git")
+        .args(args)
+        .current_dir(cwd)
+        .output()
+        .map_err(|e| format!("Failed to run git: {e}"))
+}
+
+fn ensure_git_ok(output: std::process::Output, context: &str) -> Result<std::process::Output, String> {
+    if output.status.success() {
+        return Ok(output);
+    }
+    Err(format!(
+        "{context}: {}",
+        String::from_utf8_lossy(&output.stderr).trim()
+    ))
+}
+
+fn worktree_changed_files(worktree_path: &Path) -> Result<Vec<String>, String> {
+    let output = ensure_git_ok(
+        run_git_collect_output(
+            worktree_path,
+            ["status", "--porcelain=v1", "--untracked-files=all"],
+        )?,
+        "git status failed",
+    )?;
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    Ok(stdout
+        .lines()
+        .filter_map(|line| {
+            if line.len() < 4 {
+                return None;
+            }
+            Some(line[3..].to_string())
+        })
+        .collect())
+}
+
+fn build_untracked_patch(worktree_path: &Path, relative_path: &str) -> Result<Vec<u8>, String> {
+    let null_device = if cfg!(target_os = "windows") {
+        "NUL"
+    } else {
+        "/dev/null"
+    };
+    let output = run_git_collect_output(
+        worktree_path,
+        [
+            "diff",
+            "--binary",
+            "--full-index",
+            "--no-index",
+            "--",
+            null_device,
+            relative_path,
+        ],
+    )?;
+    match output.status.code() {
+        Some(0) | Some(1) => Ok(output.stdout),
+        _ => Err(format!(
+            "git diff for untracked file failed: {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        )),
+    }
+}
+
+fn append_untracked_patches(worktree_path: &Path, patch: &mut Vec<u8>) -> Result<(), String> {
+    let output = ensure_git_ok(
+        run_git_collect_output(
+            worktree_path,
+            ["ls-files", "--others", "--exclude-standard", "-z"],
+        )?,
+        "git ls-files failed",
+    )?;
+
+    for raw_path in output.stdout.split(|byte| *byte == 0).filter(|entry| !entry.is_empty()) {
+        let relative_path = String::from_utf8_lossy(raw_path).to_string();
+        let chunk = build_untracked_patch(worktree_path, &relative_path)?;
+        patch.extend_from_slice(&chunk);
+    }
+
+    Ok(())
+}
+
+fn build_worktree_patch(worktree_path: &Path) -> Result<Vec<u8>, String> {
+    let tracked = ensure_git_ok(
+        run_git_collect_output(worktree_path, ["diff", "--binary", "--full-index", "HEAD"])?,
+        "git diff failed",
+    )?;
+
+    let mut patch = tracked.stdout;
+    append_untracked_patches(worktree_path, &mut patch)?;
+    Ok(patch)
+}
+
+fn write_patch_file(bytes: &[u8]) -> Result<PathBuf, String> {
+    let unique = format!(
+        "codexia-worktree-apply-{}-{}.patch",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_err(|e| format!("Failed to compute timestamp: {e}"))?
+            .as_nanos()
+    );
+    let path = std::env::temp_dir().join(unique);
+    std::fs::write(&path, bytes).map_err(|e| format!("Failed to write patch file: {e}"))?;
+    Ok(path)
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -302,6 +415,77 @@ pub fn git_remove_worktree(cwd: String, worktree_key: String) -> Result<(), Stri
         worktree_path.to_string_lossy()
     );
     Ok(())
+}
+
+/// Applies all tracked and untracked changes from a linked worktree onto the
+/// target checkout at `cwd` using `git apply --3way`.
+pub fn git_apply_worktree_changes(
+    cwd: String,
+    worktree_key: String,
+) -> Result<GitApplyWorktreeResponse, String> {
+    let repo = open_repo(&cwd)?;
+    let repo_root = repo_root_path(&repo)?;
+    let safe_key = sanitize_worktree_key(&worktree_key);
+    let worktrees_dir = worktrees_base_dir(&repo_root)?;
+    let worktree_path = worktrees_dir.join(&safe_key);
+
+    let lock = acquire_path_lock(&worktree_path);
+    let _guard = lock.lock().unwrap();
+
+    if !is_worktree_properly_set_up(&repo_root, &worktree_path) {
+        return Err(format!(
+            "Worktree is not available: {}",
+            worktree_path.to_string_lossy()
+        ));
+    }
+
+    let target_path = canonical(Path::new(&cwd));
+    let source_path = canonical(&worktree_path);
+    if target_path == source_path {
+        return Err("Cannot apply worktree changes onto the same worktree".to_string());
+    }
+
+    let changed_files = worktree_changed_files(&worktree_path)?;
+    if changed_files.is_empty() {
+        return Err("No worktree changes to apply".to_string());
+    }
+
+    let patch = build_worktree_patch(&worktree_path)?;
+    if patch.is_empty() {
+        return Err("Failed to build a patch from worktree changes".to_string());
+    }
+
+    let patch_file = write_patch_file(&patch)?;
+    let patch_arg = patch_file.to_string_lossy().to_string();
+
+    let check_result = run_git_collect_output(
+        Path::new(&cwd),
+        ["apply", "--check", "--3way", "--binary", &patch_arg],
+    )?;
+    if !check_result.status.success() {
+        let _ = std::fs::remove_file(&patch_file);
+        return Err(format!(
+            "Worktree changes could not be applied cleanly: {}",
+            String::from_utf8_lossy(&check_result.stderr).trim()
+        ));
+    }
+
+    let apply_result = run_git_collect_output(
+        Path::new(&cwd),
+        ["apply", "--3way", "--binary", &patch_arg],
+    )?;
+    let _ = std::fs::remove_file(&patch_file);
+
+    if !apply_result.status.success() {
+        return Err(format!(
+            "Failed to apply worktree changes: {}",
+            String::from_utf8_lossy(&apply_result.stderr).trim()
+        ));
+    }
+
+    Ok(GitApplyWorktreeResponse {
+        changed_files: changed_files.len(),
+    })
 }
 
 /// Scans all of `~/.codexia/worktrees/` at startup and removes directories

@@ -3,8 +3,9 @@ use axum::{Json, http::StatusCode};
 use serde::Deserialize;
 
 use crate::features::git::{
-    GitBranchInfoResponse, GitBranchListResponse, GitCreateWorktreeResponse, GitDiffStatsResponse,
-    GitFileDiffMetaResponse, GitFileDiffResponse, GitStatusResponse, git_branch_info,
+    GitApplyWorktreeResponse, GitBranchInfoResponse, GitBranchListResponse,
+    GitCreateWorktreeResponse, GitDiffStatsResponse, GitFileDiffMetaResponse,
+    GitFileDiffResponse, GitStatusResponse, git_apply_worktree_changes, git_branch_info,
     git_checkout_branch, git_create_branch, git_create_worktree, git_diff_stats, git_file_diff,
     git_file_diff_meta, git_list_branches, git_remove_worktree, git_reverse_files,
     git_stage_files, git_status, git_unstage_files,
@@ -66,6 +67,14 @@ pub(crate) async fn api_git_remove_worktree(
 ) -> Result<StatusCode, ErrorResponse> {
     git_remove_worktree(params.cwd, params.worktree_key).map_err(to_error_response)?;
     Ok(StatusCode::OK)
+}
+
+pub(crate) async fn api_git_apply_worktree_changes(
+    Json(params): Json<GitRemoveWorktreeParams>,
+) -> Result<Json<GitApplyWorktreeResponse>, ErrorResponse> {
+    let result = git_apply_worktree_changes(params.cwd, params.worktree_key)
+        .map_err(to_error_response)?;
+    Ok(Json(result))
 }
 
 pub(crate) async fn api_git_branch_info(
