@@ -159,7 +159,7 @@ export function useCCSessionManager() {
       addMessage({ type: 'user', text: initialMessage });
       setConnected(true);
       setSessionLoading(sessionId, true);
-      addAgentCard({ kind: 'cc', id: sessionId, preview: initialMessage, worktreePath: sessionWorktreePath });
+      addAgentCard({ kind: 'cc', id: sessionId, preview: initialMessage, worktreePath: sessionWorktreePath, cwd });
       setCurrentAgentCardId(sessionId);
 
       console.info('[useCCSessionManager] New session created', {

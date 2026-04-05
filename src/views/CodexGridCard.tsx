@@ -2,10 +2,11 @@ import { useRef, useEffect, useState, useMemo } from 'react';
 import { useCodexStore } from '@/stores/codex';
 import { useApprovalStore, useRequestUserInputStore } from '@/stores/codex';
 import { codexService } from '@/services/codexService';
-import { gitApplyWorktreeChanges, gitRemoveWorktree } from '@/services/tauri/git';
+import { gitApplyWorktreeChanges, gitRemoveWorktree, gitStatus, gitStageFiles, gitCommit } from '@/services/tauri/git';
 import { renderEvent } from '@/components/codex/items';
 import { Button } from '@/components/ui/button';
-import { Check, RotateCcw, Square } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Check, GitCommitHorizontal, RotateCcw, Square } from 'lucide-react';
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
@@ -13,6 +14,11 @@ import type { ServerNotification } from '@/bindings';
 import { toast } from 'sonner';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
+
+export function getFileName(path: string | undefined | null): string {
+  if (!path) return '';
+  return path.replace(/\\/g, '/').replace(/\/$/, '').split('/').pop() ?? path;
+}
 
 export function getCodexActiveTurnId(events: ServerNotification[]): string | null {
   for (let i = events.length - 1; i >= 0; i--) {
@@ -93,6 +99,9 @@ export function CodexGridCard({ card, onRemove: _onRemove, header, isSelected }:
   const scrollRef = useRef<HTMLDivElement>(null);
   const [resuming, setResuming] = useState(false);
   const [isApplyingWorktree, setIsApplyingWorktree] = useState(false);
+  const [showCommitInput, setShowCommitInput] = useState(false);
+  const [commitMsg, setCommitMsg] = useState('');
+  const [isCommitting, setIsCommitting] = useState(false);
 
   const threadEvents = events[card.id] ?? [];
   const processing = threadStatusMap[card.id]?.type === 'active';
@@ -163,6 +172,31 @@ export function CodexGridCard({ card, onRemove: _onRemove, header, isSelected }:
     }
   };
 
+  const handleCommit = async () => {
+    const worktreeKey = card.worktreePath?.split('/').pop();
+    if (!cwd || !worktreeKey) return;
+
+    setIsCommitting(true);
+    try {
+      await gitApplyWorktreeChanges(cwd, worktreeKey);
+      const status = await gitStatus(cwd);
+      const paths = status.entries.map((e) => e.path);
+      if (paths.length > 0) await gitStageFiles(cwd, paths);
+      await gitCommit(cwd, commitMsg || card.preview || 'agent changes');
+      await gitRemoveWorktree(cwd, worktreeKey);
+      updateCard({ ...card, worktreePath: undefined });
+      setShowCommitInput(false);
+      setCommitMsg('');
+      toast.success('Committed worktree changes', {
+        description: commitMsg || card.preview || 'agent changes',
+      });
+    } catch (error) {
+      toast.error('Failed to commit', { description: String(error) });
+    } finally {
+      setIsCommitting(false);
+    }
+  };
+
   const codexItems = useMemo(
     () =>
       threadEvents
@@ -197,6 +231,36 @@ export function CodexGridCard({ card, onRemove: _onRemove, header, isSelected }:
 
       {ctxWindow && <ContextWindowBar used={ctxWindow.used} window={ctxWindow.window} />}
 
+      {showCommitInput && (
+        <div
+          className="flex items-center gap-1 px-2 py-1 border-t bg-muted/20 shrink-0"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Input
+            className="h-6 text-[10px] flex-1 min-w-0 px-1.5"
+            placeholder={card.preview?.slice(0, 60) || 'commit message…'}
+            value={commitMsg}
+            onChange={(e) => setCommitMsg(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void handleCommit();
+              if (e.key === 'Escape') { setShowCommitInput(false); setCommitMsg(''); }
+            }}
+            autoFocus
+            disabled={isCommitting}
+          />
+          <Button
+            size="sm"
+            variant="default"
+            className="h-6 px-2 text-[10px] gap-1 shrink-0"
+            disabled={isCommitting}
+            onClick={() => void handleCommit()}
+          >
+            <Check className={`h-3 w-3 ${isCommitting ? 'animate-pulse' : ''}`} />
+            {isCommitting ? 'Committing…' : 'OK'}
+          </Button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between px-2 py-1 border-t bg-muted/20 shrink-0">
         <div className="flex items-center gap-2">
           <span
@@ -210,6 +274,9 @@ export function CodexGridCard({ card, onRemove: _onRemove, header, isSelected }:
           {hasPending && !processing && (
             <span className="text-[10px] text-amber-500 animate-pulse">needs input</span>
           )}
+          <span className="text-[10px] text-muted-foreground/60 truncate max-w-[80px]" title={card.cwd}>
+            {getFileName(card.cwd)}
+          </span>
         </div>
         {processing && (
           <Button size="icon" variant="destructive" className="h-6 w-6" onClick={handleStop}>
@@ -217,23 +284,35 @@ export function CodexGridCard({ card, onRemove: _onRemove, header, isSelected }:
           </Button>
         )}
         {canApplyWorktree && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-6 px-2 text-[10px] gap-1"
-            disabled={isApplyingWorktree}
-            onClick={(e) => { e.stopPropagation(); void handleApplyWorktree(); }}
-          >
-            <Check className={`h-3 w-3 ${isApplyingWorktree ? 'animate-pulse' : ''}`} />
-            {isApplyingWorktree ? 'Applying…' : 'Apply'}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 px-2 text-[10px] gap-1"
+              disabled={isApplyingWorktree || isCommitting}
+              onClick={(e) => { e.stopPropagation(); void handleApplyWorktree(); }}
+            >
+              <Check className={`h-3 w-3 ${isApplyingWorktree ? 'animate-pulse' : ''}`} />
+              {isApplyingWorktree ? 'Applying…' : 'Apply'}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 px-2 text-[10px] gap-1"
+              disabled={isApplyingWorktree || isCommitting}
+              onClick={(e) => { e.stopPropagation(); setShowCommitInput((v) => !v); }}
+            >
+              <GitCommitHorizontal className="h-3 w-3" />
+              Commit
+            </Button>
+          </div>
         )}
         {needsResume && (
           <Button
             size="sm"
             variant="outline"
             className="h-6 px-2 text-[10px] gap-1"
-            disabled={resuming || isApplyingWorktree}
+            disabled={resuming || isApplyingWorktree || isCommitting}
             onClick={(e) => { e.stopPropagation(); void handleResume(); }}
           >
             <RotateCcw className={`h-3 w-3 ${resuming ? 'animate-spin' : ''}`} />

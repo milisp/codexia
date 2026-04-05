@@ -225,94 +225,84 @@ fn ensure_git_ok(output: std::process::Output, context: &str) -> Result<std::pro
     ))
 }
 
-fn worktree_changed_files(worktree_path: &Path) -> Result<Vec<String>, String> {
-    let output = ensure_git_ok(
+/// A file change to be applied from the worktree to the main checkout.
+struct WorktreeChange {
+    path: String,
+    deleted: bool,
+}
+
+/// Collects all files that differ between `base_commit` (main repo HEAD) and
+/// the worktree — covering both committed changes (worktree HEAD ahead of base)
+/// and uncommitted working-tree changes.
+fn collect_worktree_changes(
+    worktree_path: &Path,
+    base_commit: &str,
+) -> Result<Vec<WorktreeChange>, String> {
+    use std::collections::HashMap;
+
+    // 1. Committed changes: diff between base commit and worktree HEAD.
+    //    `--diff-filter=ACDMRT` covers Add/Copy/Delete/Modify/Rename/Type-change.
+    let committed_out = ensure_git_ok(
+        run_git_collect_output(
+            worktree_path,
+            [
+                "diff",
+                "--name-status",
+                "--diff-filter=ACDMRT",
+                base_commit,
+                "HEAD",
+            ],
+        )?,
+        "git diff (committed) failed",
+    )?;
+
+    // path → deleted
+    let mut map: HashMap<String, bool> = HashMap::new();
+
+    for line in String::from_utf8_lossy(&committed_out.stdout).lines() {
+        let mut parts = line.splitn(2, '\t');
+        let status = parts.next().unwrap_or("").trim();
+        let path = match parts.next() {
+            Some(p) => p.trim().to_string(),
+            None => continue,
+        };
+        if path.is_empty() { continue; }
+        map.insert(path, status.starts_with('D'));
+    }
+
+    // 2. Uncommitted changes (working tree + index) in the worktree.
+    let status_out = ensure_git_ok(
         run_git_collect_output(
             worktree_path,
             ["status", "--porcelain=v1", "--untracked-files=all"],
         )?,
         "git status failed",
     )?;
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    Ok(stdout
-        .lines()
-        .filter_map(|line| {
-            if line.len() < 4 {
-                return None;
-            }
-            Some(line[3..].to_string())
-        })
+
+    for line in String::from_utf8_lossy(&status_out.stdout).lines() {
+        if line.len() < 4 { continue; }
+        let x = line.chars().next().unwrap_or(' ');
+        let y = line.chars().nth(1).unwrap_or(' ');
+        let path = line[3..].trim().to_string();
+        if path.is_empty() { continue; }
+        let deleted = y == 'D' || (x == 'D' && y == ' ');
+        // Uncommitted change overwrites the committed-change entry for the same path.
+        map.insert(path, deleted);
+    }
+
+    Ok(map
+        .into_iter()
+        .map(|(path, deleted)| WorktreeChange { path, deleted })
         .collect())
 }
 
-fn build_untracked_patch(worktree_path: &Path, relative_path: &str) -> Result<Vec<u8>, String> {
-    let null_device = if cfg!(target_os = "windows") {
-        "NUL"
-    } else {
-        "/dev/null"
-    };
-    let output = run_git_collect_output(
-        worktree_path,
-        [
-            "diff",
-            "--binary",
-            "--full-index",
-            "--no-index",
-            "--",
-            null_device,
-            relative_path,
-        ],
+/// Returns the full commit hash of HEAD in the given directory.
+fn git_rev_parse_head(dir: &Path) -> Result<String, String> {
+    let out = ensure_git_ok(
+        run_git_collect_output(dir, ["rev-parse", "HEAD"])?,
+        "git rev-parse HEAD failed",
     )?;
-    match output.status.code() {
-        Some(0) | Some(1) => Ok(output.stdout),
-        _ => Err(format!(
-            "git diff for untracked file failed: {}",
-            String::from_utf8_lossy(&output.stderr).trim()
-        )),
-    }
-}
-
-fn append_untracked_patches(worktree_path: &Path, patch: &mut Vec<u8>) -> Result<(), String> {
-    let output = ensure_git_ok(
-        run_git_collect_output(
-            worktree_path,
-            ["ls-files", "--others", "--exclude-standard", "-z"],
-        )?,
-        "git ls-files failed",
-    )?;
-
-    for raw_path in output.stdout.split(|byte| *byte == 0).filter(|entry| !entry.is_empty()) {
-        let relative_path = String::from_utf8_lossy(raw_path).to_string();
-        let chunk = build_untracked_patch(worktree_path, &relative_path)?;
-        patch.extend_from_slice(&chunk);
-    }
-
-    Ok(())
-}
-
-fn build_worktree_patch(worktree_path: &Path) -> Result<Vec<u8>, String> {
-    let tracked = ensure_git_ok(
-        run_git_collect_output(worktree_path, ["diff", "--binary", "--full-index", "HEAD"])?,
-        "git diff failed",
-    )?;
-
-    let mut patch = tracked.stdout;
-    append_untracked_patches(worktree_path, &mut patch)?;
-    Ok(patch)
-}
-
-fn write_patch_file(bytes: &[u8]) -> Result<PathBuf, String> {
-    let unique = format!(
-        "codexia-worktree-apply-{}-{}.patch",
-        std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map_err(|e| format!("Failed to compute timestamp: {e}"))?
-            .as_nanos()
-    );
-    let path = std::env::temp_dir().join(unique);
-    std::fs::write(&path, bytes).map_err(|e| format!("Failed to write patch file: {e}"))?;
-    Ok(path)
+    Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
 }
 
 // ---------------------------------------------------------------------------
@@ -418,7 +408,11 @@ pub fn git_remove_worktree(cwd: String, worktree_key: String) -> Result<(), Stri
 }
 
 /// Applies all tracked and untracked changes from a linked worktree onto the
-/// target checkout at `cwd` using `git apply --3way`.
+/// target checkout at `cwd` by directly copying/deleting files.
+///
+/// This approach is robust regardless of the main checkout's index state
+/// (e.g. staged changes to the same files won't cause "does not match index"
+/// errors that the `git apply` patch approach suffers from).
 pub fn git_apply_worktree_changes(
     cwd: String,
     worktree_key: String,
@@ -445,46 +439,37 @@ pub fn git_apply_worktree_changes(
         return Err("Cannot apply worktree changes onto the same worktree".to_string());
     }
 
-    let changed_files = worktree_changed_files(&worktree_path)?;
-    if changed_files.is_empty() {
+    // Get main repo HEAD to use as the base for diffing committed changes.
+    let base_commit = git_rev_parse_head(&repo_root)?;
+
+    let changes = collect_worktree_changes(&worktree_path, &base_commit)?;
+    if changes.is_empty() {
         return Err("No worktree changes to apply".to_string());
     }
 
-    let patch = build_worktree_patch(&worktree_path)?;
-    if patch.is_empty() {
-        return Err("Failed to build a patch from worktree changes".to_string());
-    }
+    let changed_count = changes.len();
 
-    let patch_file = write_patch_file(&patch)?;
-    let patch_arg = patch_file.to_string_lossy().to_string();
-
-    let check_result = run_git_collect_output(
-        Path::new(&cwd),
-        ["apply", "--check", "--3way", "--binary", &patch_arg],
-    )?;
-    if !check_result.status.success() {
-        let _ = std::fs::remove_file(&patch_file);
-        return Err(format!(
-            "Worktree changes could not be applied cleanly: {}",
-            String::from_utf8_lossy(&check_result.stderr).trim()
-        ));
-    }
-
-    let apply_result = run_git_collect_output(
-        Path::new(&cwd),
-        ["apply", "--3way", "--binary", &patch_arg],
-    )?;
-    let _ = std::fs::remove_file(&patch_file);
-
-    if !apply_result.status.success() {
-        return Err(format!(
-            "Failed to apply worktree changes: {}",
-            String::from_utf8_lossy(&apply_result.stderr).trim()
-        ));
+    for change in &changes {
+        if change.deleted {
+            let dst = repo_root.join(&change.path);
+            if dst.exists() {
+                std::fs::remove_file(&dst)
+                    .map_err(|e| format!("Failed to delete {}: {e}", change.path))?;
+            }
+        } else {
+            let src = worktree_path.join(&change.path);
+            let dst = repo_root.join(&change.path);
+            if let Some(parent) = dst.parent() {
+                std::fs::create_dir_all(parent)
+                    .map_err(|e| format!("Failed to create directory for {}: {e}", change.path))?;
+            }
+            std::fs::copy(&src, &dst)
+                .map_err(|e| format!("Failed to copy {}: {e}", change.path))?;
+        }
     }
 
     Ok(GitApplyWorktreeResponse {
-        changed_files: changed_files.len(),
+        changed_files: changed_count,
     })
 }
 

@@ -17,6 +17,7 @@ import { Monitor, Split } from 'lucide-react';
 import { useInputStore } from '@/stores/useInputStore';
 import { useConfigStore, useCodexStore, type ThreadCwdMode } from '@/stores/codex';
 import { useAgentCenterStore } from '@/stores';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { codexService } from '@/services/codexService';
 import { toast } from '@/components/ui/use-toast';
 import { getErrorMessage } from '@/utils/errorUtils';
@@ -93,7 +94,8 @@ export function Composer({ showControls = true, overrideSend, onAfterSend }: Com
         return;
       }
     }
-    addAgentCard({ kind: 'codex', id: targetThreadId, preview: message, worktreePath });
+    const { cwd: composerCwd } = useWorkspaceStore.getState();
+    addAgentCard({ kind: 'codex', id: targetThreadId, preview: message, worktreePath, cwd: composerCwd });
     setCurrentAgentCardId(targetThreadId);
     onAfterSend?.(targetThreadId, message);
     try {

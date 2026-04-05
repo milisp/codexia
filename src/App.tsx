@@ -91,7 +91,7 @@ function AppShell() {
       await handleNewSession(text);
     } else {
       const thread = await codexService.threadStart();
-      addAgentCard({ kind: 'codex', id: thread.id, preview: text });
+      addAgentCard({ kind: 'codex', id: thread.id, preview: text, cwd: useWorkspaceStore.getState().cwd });
       setCurrentAgentCardId(thread.id);
       await codexService.turnStart(thread.id, text, []);
     }

@@ -214,7 +214,7 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
       }
 
       setHistoryMode(false);
-      addAgentCard({ kind: 'codex', id: threadId, preview });
+      addAgentCard({ kind: 'codex', id: threadId, preview, cwd: listCwd });
       setCurrentAgentCardId(threadId);
       setView('agent');
       await handleSelectThread(threadId, { resume: true });
@@ -278,7 +278,7 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
     async (threadId: string) => {
       const preview = mergedThreads.find((t) => t.id === threadId)?.preview;
       await codexService.threadFork(threadId);
-      addAgentCard({ kind: 'codex', id: threadId, preview });
+      addAgentCard({ kind: 'codex', id: threadId, preview, cwd: listCwd });
       setCurrentAgentCardId(threadId);
       setView('agent');
       if (isProjectScoped) {

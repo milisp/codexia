@@ -136,7 +136,7 @@ export function ClaudeCodeSessionList({ project, sessions, onSelectSession }: Pr
       setCwd(session.project);
     }
     setSelectedAgent('cc');
-    addAgentCard({ kind: 'cc', id: session.sessionId, preview: session.display });
+    addAgentCard({ kind: 'cc', id: session.sessionId, preview: session.display, cwd: session.project || cwd });
     setCurrentAgentCardId(session.sessionId);
     setView('agent');
     if (onSelectSession) {
