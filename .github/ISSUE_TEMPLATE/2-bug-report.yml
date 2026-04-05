@@ -15,6 +15,14 @@ body:
 
         Please try to include as much information as possible.
 
+        **Troubleshooting hard-to-diagnose issues (e.g. blank/white screen, UI not loading):**
+        These are often caused by corrupted localStorage or cached app data. Before filing a bug, please try:
+        1. Quit Codexia completely.
+        2. **Delete the Codexia app** (drag to Trash or `rm -rf /Applications/Codexia.app`).
+        3. **Back up and clear app data**: `cp -r ~/.codexia ~/.codexia.bak && rm -rf ~/.codexia`
+        4. Reinstall Codexia from the [latest release](https://github.com/milisp/codexia/releases) and relaunch.
+        If this fixes the issue, please mention it in your report — it helps us identify the root cause.
+
   - type: input
     id: version
     attributes:
