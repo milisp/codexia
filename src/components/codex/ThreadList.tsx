@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { Archive, GitFork, Pin, FolderX } from 'lucide-react';
-import { listen } from '@tauri-apps/api/event';
 import { useThreadFilter } from '@/hooks/codex/useThreadFilter';
 import { codexService } from '@/services/codexService';
 import { useCodexStore, useThreadListStore } from '@/stores/codex';
 import { deleteFile, readSessionMetaFile, threadList, writeSessionMetaFile } from '@/services/tauri';
-import { isDesktopTauri } from '@/hooks/runtime';
 import {
   Dialog,
   DialogContent,
@@ -156,40 +154,6 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
     };
   }, [isProjectScoped, listCwd, sortKey]);
 
-  // Re-fetch scoped threads whenever the backend fires thread/list-updated
-  useEffect(() => {
-    if (!isProjectScoped) {
-      return;
-    }
-
-    const debounceMs = 150;
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const scheduleReload = () => {
-      if (debounceTimer) clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        void reloadScopedThreadsRef.current?.();
-      }, debounceMs);
-    };
-
-    if (isDesktopTauri()) {
-      let unlisten: (() => void) | null = null;
-      void listen('thread/list-updated', scheduleReload).then((dispose) => {
-        unlisten = dispose;
-      });
-      return () => {
-        if (debounceTimer) clearTimeout(debounceTimer);
-        unlisten?.();
-      };
-    }
-
-    // Web/non-Tauri path mirrors how useCodexEvents forwards the event
-    window.addEventListener('thread/list-updated', scheduleReload);
-    return () => {
-      if (debounceTimer) clearTimeout(debounceTimer);
-      window.removeEventListener('thread/list-updated', scheduleReload);
-    };
-  }, [isProjectScoped]);
 
   const handleSelectThread = useCallback(
     async (threadId: string, options?: { resume?: boolean }) => {
