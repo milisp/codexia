@@ -1,6 +1,6 @@
 [package]
 name = "codexia"
-version = "0.28.2"
+version = "0.28.3"
 description = "A powerful IDE/GUI and Toolkit for Codex CLI + Claude code"
 authors = ["milisp"]
 license = "AGPL-3.0"
