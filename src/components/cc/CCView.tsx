@@ -22,9 +22,14 @@ interface CCViewProps {
   sessionId?: string;
   /** Suppress the internal composer (e.g. when a parent renders its own composer). */
   hideComposer?: boolean;
+  /**
+   * Disable the internal event listeners. Use when a sibling standalone CCView
+   * is already listening to the same session to prevent double-writing messages.
+   */
+  disableListener?: boolean;
 }
 
-export default function CCView({ sessionId, hideComposer = false }: CCViewProps = {}) {
+export default function CCView({ sessionId, hideComposer = false, disableListener = false }: CCViewProps = {}) {
   const isEmbedded = !!sessionId;
 
   const {
@@ -148,8 +153,8 @@ export default function CCView({ sessionId, hideComposer = false }: CCViewProps 
     }
   };
 
-  useCCSessionListener({ sessionId });
-  useCCPermissionListener({ sessionId });
+  useCCSessionListener({ sessionId, disabled: disableListener });
+  useCCPermissionListener({ sessionId, disabled: disableListener });
 
   return (
     <div className="flex flex-col h-full min-h-0 w-full max-w-4xl mx-auto">

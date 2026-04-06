@@ -47,12 +47,13 @@ export function CCGridCard({ card, onRemove: _onRemove, header, isSelected }: CC
     sessionLoadingMap,
     sessionStartTimeMap,
     activeSessionIds,
+    activeSessionId,
     addActiveSessionId,
     addMessageToSession,
     setSessionLoading,
     options,
   } = useCCStore();
-  const { cwd } = useWorkspaceStore();
+  const { cwd, selectedAgent } = useWorkspaceStore();
   const { setCurrentAgentCardId, updateCard } = useAgentCenterStore();
   const [isResumingSession, setIsResumingSession] = useState(false);
   const [isApplyingWorktree, setIsApplyingWorktree] = useState(false);
@@ -185,8 +186,14 @@ export function CCGridCard({ card, onRemove: _onRemove, header, isSelected }: CC
       {header}
 
       {/* Message area — CCView owns its own listener and display */}
+      {/* Disable the listener when the standalone left-panel CCView already covers this session */}
       <div className="flex-1 min-h-0 overflow-hidden">
-        <Suspense fallback={null}><CCView sessionId={card.id} /></Suspense>
+        <Suspense fallback={null}>
+          <CCView
+            sessionId={card.id}
+            disableListener={selectedAgent === 'cc' && activeSessionId === card.id}
+          />
+        </Suspense>
       </div>
 
       {showCommitInput && (
