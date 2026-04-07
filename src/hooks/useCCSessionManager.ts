@@ -86,6 +86,7 @@ export function useCCSessionManager() {
     addMessage,
     switchToSession,
     setSessionLoading,
+    setPendingNewSession,
   } = useCCStore();
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
 
@@ -161,6 +162,12 @@ export function useCCSessionManager() {
       setSessionLoading(sessionId, true);
       addAgentCard({ kind: 'cc', id: sessionId, preview: initialMessage, worktreePath: sessionWorktreePath, cwd });
       setCurrentAgentCardId(sessionId);
+      setPendingNewSession({
+        session_id: sessionId,
+        summary: initialMessage,
+        last_modified: Date.now(),
+        cwd: sessionCwd ?? null,
+      });
 
       // Send the initial message now that the listener is set up.
       await ccSendMessage(sessionId, initialMessage);

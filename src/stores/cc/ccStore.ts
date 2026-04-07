@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { CCMessage } from '@/components/cc/types/messages';
 import type { CCMcpServers } from '@/types/cc/cc-mcp';
 import type { ThreadCwdMode } from '@/stores/codex/useConfigStore';
+import type { SdkSessionInfo } from '@/lib/sessions';
 
 export type PermissionMode = 'default' | 'acceptEdits' | 'plan' | 'bypassPermissions';
 export type ModelType = 'sonnet' | 'haiku' | 'opus';
@@ -43,6 +44,8 @@ interface CCStoreState {
   showExamples: boolean;
   /** Slash commands available in the current session (populated from System::init) */
   slashCommands: string[];
+  /** Newly created session not yet reflected in the backend session list */
+  pendingNewSession: SdkSessionInfo | null;
 
   setActiveSessionId: (id: string | null) => void;
   addActiveSessionId: (id: string) => void;
@@ -62,6 +65,7 @@ interface CCStoreState {
   setShowExamples: (show: boolean) => void;
   clearMessages: () => void;
   setSlashCommands: (commands: string[]) => void;
+  setPendingNewSession: (session: SdkSessionInfo | null) => void;
 }
 
 export const useCCStore = create<CCStoreState>()(
@@ -81,6 +85,7 @@ export const useCCStore = create<CCStoreState>()(
       isLoading: false,
       showExamples: true,
       slashCommands: [],
+      pendingNewSession: null,
 
       setActiveSessionId: (id) =>
         set((state) => {
@@ -210,6 +215,7 @@ export const useCCStore = create<CCStoreState>()(
       setShowExamples: (show) => set({ showExamples: show }),
       clearMessages: () => set({ messages: [] }),
       setSlashCommands: (commands) => set({ slashCommands: commands }),
+      setPendingNewSession: (session) => set({ pendingNewSession: session }),
     }),
     {
       name: 'cc-store',

@@ -44,7 +44,7 @@ export function ClaudeCodeSessionList({ directory, sessions, onSelectSession }: 
   const { setCwd, setSelectedAgent } = useWorkspaceStore();
   const { setView } = useLayoutStore();
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
-  const { activeSessionIds, activeSessionId, isLoading, addMessageToSession, setSessionLoading, sessionMessagesMap } = useCCStore();
+  const { activeSessionIds, activeSessionId, isLoading, addMessageToSession, setSessionLoading, sessionMessagesMap, pendingNewSession, setPendingNewSession } = useCCStore();
   const { toast } = useToast();
 
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -63,6 +63,8 @@ export function ClaudeCodeSessionList({ directory, sessions, onSelectSession }: 
       });
       setLoadedSessions(fetched);
       setTotalCount(total);
+      // Once the real list is fetched, clear the optimistic pending session
+      setPendingNewSession(null);
     } catch (err) {
       console.error('Failed to load sessions:', err);
       const message = err instanceof Error ? err.message : 'Failed to load sessions';
@@ -99,7 +101,14 @@ export function ClaudeCodeSessionList({ directory, sessions, onSelectSession }: 
 
   const [expanded, setExpanded] = useState(false);
 
-  const allSessions = sessions ?? loadedSessions;
+  const baseList = sessions ?? loadedSessions;
+  // Prepend the optimistic pending session if it belongs to this directory and isn't in the list yet
+  const allSessions =
+    pendingNewSession &&
+    !baseList.some((s) => s.session_id === pendingNewSession.session_id) &&
+    (pendingNewSession.cwd === directory || (!pendingNewSession.cwd && !directory))
+      ? [pendingNewSession, ...baseList]
+      : baseList;
   const visibleSessions = expanded ? allSessions : allSessions.slice(0, DEFAULT_VISIBLE);
   const effectiveTotal = sessions !== undefined ? sessions.length : totalCount;
   const allLoaded = allSessions.length >= effectiveTotal;
