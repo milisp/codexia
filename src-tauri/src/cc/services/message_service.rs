@@ -38,7 +38,7 @@ pub(crate) async fn send_message_and_wait(
 
     if image_paths.is_empty() {
         let mut client = client.write().await;
-        client.query(message).await.map_err(|e| e.to_string())?;
+        client.query_with_session(message, session_id).await.map_err(|e| e.to_string())?;
     } else {
         let mut content: Vec<UserContentBlock> = Vec::new();
         if !message.is_empty() {
@@ -51,7 +51,7 @@ pub(crate) async fn send_message_and_wait(
             content.push(UserContentBlock::text(""));
         }
         let mut client = client.write().await;
-        client.query_with_content(content).await.map_err(|e| e.to_string())?;
+        client.query_with_content_and_session(content, session_id).await.map_err(|e| e.to_string())?;
     }
 
     loop {

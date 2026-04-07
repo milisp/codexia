@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
-import { ccNewSession, ccResumeSession } from '@/services';
+import { ccNewSession, ccResumeSession, ccSendMessage } from '@/services';
 import { gitCreateWorktree } from '@/services/tauri/git';
 
 const CC_LISTENER_READY_EVENT = 'cc-session-listener-ready';
@@ -149,9 +149,9 @@ export function useCCSessionManager() {
 
       console.debug('ClaudeAgentOptions', ClaudeAgentOptions);
 
-      // cc_new_session now blocks until System::init and returns the real session_id.
-      // Streaming starts inside the command; we just need to subscribe after returning.
-      const sessionId = await ccNewSession(ClaudeAgentOptions, initialMessage);
+      // Backend creates the session and returns a UUID. Set up all state first so
+      // the listener is ready before the first message arrives.
+      const sessionId = await ccNewSession(ClaudeAgentOptions);
 
       setActiveSessionId(sessionId);
       setMessages([]);
@@ -161,6 +161,9 @@ export function useCCSessionManager() {
       setSessionLoading(sessionId, true);
       addAgentCard({ kind: 'cc', id: sessionId, preview: initialMessage, worktreePath: sessionWorktreePath, cwd });
       setCurrentAgentCardId(sessionId);
+
+      // Send the initial message now that the listener is set up.
+      await ccSendMessage(sessionId, initialMessage);
 
       console.info('[useCCSessionManager] New session created', {
         sessionId,

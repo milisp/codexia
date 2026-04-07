@@ -1,13 +1,12 @@
 use crate::cc::state::CCState;
 use crate::cc::types::{AgentOptions, CCConnectParams, parse_permission_mode};
 use claude_agent_sdk_rs::{
-    ClaudeAgentOptions, HookInput, HookJsonOutput, HookSpecificOutput, Hooks, Message as SDKMessage,
+    ClaudeAgentOptions, HookInput, HookJsonOutput, HookSpecificOutput, Hooks,
     PreToolUseHookSpecificOutput, SyncHookJsonOutput,
 };
 use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
-use super::message_service;
 use super::super::db::SessionCache;
 use uuid;
 
@@ -116,12 +115,10 @@ fn build_permission_hooks(
             };
             let tool_name = pre_tool.tool_name;
             let tool_input = pre_tool.tool_input;
-            // The SDK always provides the real session_id in the hook input — use it
-            // for the event payload so the frontend's sessionId check always matches.
-            let sdk_session_id = pre_tool.session_id;
             let cwd = pre_tool.cwd;
 
-            // Read current session_id from Arc for permission_mode lookup.
+            // Use our own session_id (the UUID we generated and returned to the frontend)
+            // rather than the CLI's internal session_id, so the frontend filter matches.
             let current_session_id = session_id.lock().unwrap().clone();
 
             // Always read permission mode fresh from state so runtime changes take effect.
@@ -182,7 +179,7 @@ fn build_permission_hooks(
 
             state.emit("cc-permission-request", serde_json::json!({
                 "requestId": request_id,
-                "sessionId": sdk_session_id,
+                "sessionId": current_session_id,
                 "toolName": tool_name,
                 "toolInput": tool_input,
                 "alwaysAllowTarget": always_allow_target,
@@ -248,8 +245,6 @@ pub async fn disconnect(session_id: &str, state: &CCState) -> Result<(), String>
     state.remove_client(session_id).await
 }
 
-#[allow(unused)]
-#[cfg(any(feature = "web", all(feature = "desktop", feature = "tauri")))]
 pub async fn new_session(
     options: AgentOptions,
     state: &CCState,
@@ -268,94 +263,6 @@ pub async fn new_session(
     state.session_arcs.insert(session_id.clone(), session_id_arc);
     state.create_client(session_id.clone(), claude_options, permission_mode_str).await?;
     Ok(session_id)
-}
-
-/// Create a new session, send the first message, and block until the real SDK session_id
-/// is known (from `System::init`). Returns the real session_id so the frontend never
-/// sees a temporary UUID.
-pub async fn new_session_and_send(
-    options: AgentOptions,
-    initial_message: String,
-    state: &CCState,
-) -> Result<String, String> {
-    let temp_id = uuid::Uuid::new_v4().to_string();
-    let session_id_arc: SessionIdArc = Arc::new(Mutex::new(temp_id.clone()));
-    let permission_mode_str = options.permission_mode.clone();
-    let mut claude_options = options.to_claude_options(None);
-
-    if needs_permission_callback(permission_mode_str.as_deref()) {
-        claude_options.hooks = Some(build_permission_hooks(
-            state.clone(), session_id_arc.clone(),
-        ));
-    }
-
-    state.session_arcs.insert(temp_id.clone(), session_id_arc.clone());
-    state.create_client(temp_id.clone(), claude_options, permission_mode_str).await?;
-
-    let (tx_real_id, rx_real_id) = tokio::sync::oneshot::channel::<String>();
-    let tx_slot: Arc<Mutex<Option<tokio::sync::oneshot::Sender<String>>>> =
-        Arc::new(Mutex::new(Some(tx_real_id)));
-
-    let state_clone = state.clone();
-    let session_id_arc_clone = session_id_arc;
-    let temp_id_clone = temp_id.clone();
-
-    message_service::send_message(
-        &temp_id,
-        &initial_message,
-        &[],
-        state,
-        move |msg| {
-            let current_id = session_id_arc_clone.lock().unwrap().clone();
-
-            // On System::init: resolve temp_id → real SDK session_id.
-            if let SDKMessage::System(ref sys) = msg {
-                if sys.subtype == "init" {
-                    if let Some(ref real_id) = sys.session_id {
-                        if real_id != &temp_id_clone {
-                            *session_id_arc_clone.lock().unwrap() = real_id.clone();
-                            state_clone.add_session_alias(real_id, &temp_id_clone);
-                            if let Some(tx) = tx_slot.lock().unwrap().take() {
-                                let _ = tx.send(real_id.clone());
-                            }
-                            if let Ok(mut payload) = serde_json::to_value(&msg) {
-                                println!("cc-message init:\n{}", payload);
-                                if let Some(obj) = payload.as_object_mut() {
-                                    obj.entry("session_id").or_insert_with(|| serde_json::Value::String(real_id.clone()));
-                                }
-                                state_clone.emit("cc-message", payload);
-                            }
-                            return;
-                        }
-                    }
-                }
-            }
-
-            if let Ok(mut payload) = serde_json::to_value(&msg) {
-                println!("cc-message:\n{}", payload);
-                if let Some(obj) = payload.as_object_mut() {
-                    obj.entry("session_id").or_insert_with(|| serde_json::Value::String(current_id.clone()));
-                }
-                state_clone.emit("cc-message", payload);
-            }
-        },
-    )
-    .await?;
-
-    // Wait for the real session_id from System::init with a timeout fallback.
-    let real_id = tokio::time::timeout(
-        std::time::Duration::from_secs(10),
-        rx_real_id,
-    )
-    .await
-    .ok()
-    .and_then(|r| r.ok())
-    .unwrap_or_else(|| {
-        log::warn!("[new_session_and_send] Timed out waiting for System::init, using temp_id");
-        temp_id
-    });
-
-    Ok(real_id)
 }
 
 pub async fn set_permission_mode(session_id: &str, mode: &str, state: &CCState) -> Result<(), String> {

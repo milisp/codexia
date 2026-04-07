@@ -56,23 +56,6 @@ pub fn mark_run_status_by_session(session_id: &str, status: &str) -> Result<(), 
     mark_run_status_by_thread(session_id, status)
 }
 
-pub fn replace_run_thread_id(old_thread_id: &str, new_thread_id: &str) -> Result<(), String> {
-    if old_thread_id == new_thread_id {
-        return Ok(());
-    }
-
-    let conn = get_connection()?;
-    let now = Utc::now().to_rfc3339();
-    conn.execute(
-        "UPDATE automation_runs
-         SET thread_id = ?1, updated_at = ?2
-         WHERE thread_id = ?3",
-        params![new_thread_id, now, old_thread_id],
-    )
-    .map_err(|e| format!("Failed to replace automation run thread id: {}", e))?;
-    Ok(())
-}
-
 pub fn list_runs(task_id: Option<&str>, limit: usize) -> Result<Vec<AutomationRunRecord>, String> {
     let conn = get_connection()?;
     let limit = if limit == 0 { 100 } else { limit.min(500) };

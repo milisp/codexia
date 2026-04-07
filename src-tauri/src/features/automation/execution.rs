@@ -73,15 +73,6 @@ fn sandbox_policy_workspace_write() -> Value {
     })
 }
 
-fn extract_cc_session_id_from_message(message: &claude_agent_sdk_rs::Message) -> Option<String> {
-    let payload = serde_json::to_value(message).ok()?;
-    payload
-        .get("session_id")
-        .and_then(Value::as_str)
-        .or_else(|| payload.get("sessionId").and_then(Value::as_str))
-        .map(ToString::to_string)
-}
-
 async fn run_task_with_codex(
     codex: Arc<CodexAppServer>,
     task: AutomationTask,
@@ -251,36 +242,16 @@ async fn run_task_with_cc(
             err
         });
 
-        let mut actual_session_id = None::<String>;
-
         if let Err(err) = message_service::send_message_and_wait(
             session_id.as_str(),
             task.prompt.as_str(),
             &[],
             &cc_state,
-            |message| {
-                if actual_session_id.is_none() {
-                    actual_session_id = extract_cc_session_id_from_message(&message);
-                }
-            },
+            |_| {},
         )
         .await
         {
-            let resolved_session_id = actual_session_id.as_deref().unwrap_or(session_id.as_str());
-            if resolved_session_id != session_id.as_str() {
-                let _ =
-                    automation_runs::replace_run_thread_id(session_id.as_str(), resolved_session_id)
-                        .map_err(|db_err| {
-                            log::warn!(
-                                "failed to replace automation run session id for '{}' (cc): {}",
-                                task.id,
-                                db_err
-                            );
-                            db_err
-                        });
-            }
-
-            let _ = automation_runs::mark_run_status_by_session(resolved_session_id, "failed")
+            let _ = automation_runs::mark_run_status_by_session(session_id.as_str(), "failed")
                 .map_err(|db_err| {
                     log::warn!(
                         "failed to mark automation run failed for '{}' (cc): {}",
@@ -293,20 +264,7 @@ async fn run_task_with_cc(
             return Err(err);
         }
 
-        let resolved_session_id = actual_session_id.as_deref().unwrap_or(session_id.as_str());
-        if resolved_session_id != session_id.as_str() {
-            let _ = automation_runs::replace_run_thread_id(session_id.as_str(), resolved_session_id)
-                .map_err(|db_err| {
-                    log::warn!(
-                        "failed to replace automation run session id for '{}' (cc): {}",
-                        task.id,
-                        db_err
-                    );
-                    db_err
-                });
-        }
-
-        let _ = automation_runs::mark_run_status_by_session(resolved_session_id, "completed")
+        let _ = automation_runs::mark_run_status_by_session(session_id.as_str(), "completed")
             .map_err(|db_err| {
                 log::warn!(
                     "failed to mark automation run completed for '{}' (cc): {}",

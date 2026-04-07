@@ -224,7 +224,6 @@ pub(crate) struct CcSendMessageParams {
 #[derive(Deserialize)]
 pub(crate) struct CcNewSessionParams {
     pub(crate) options: AgentOptions,
-    pub(crate) initial_message: String,
 }
 
 #[derive(Deserialize)]

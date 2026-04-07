@@ -1,10 +1,10 @@
 import { invokeTauri, isDesktopTauri, postNoContent, postJson, getJson } from './shared';
 
-export async function ccNewSession(options: Record<string, unknown>, initialMessage: string) {
+export async function ccNewSession(options: Record<string, unknown>) {
   if (isDesktopTauri()) {
-    return await invokeTauri<string>('cc_new_session', { options, initialMessage });
+    return await invokeTauri<string>('cc_new_session', { options });
   }
-  return await postJson<string>('/api/cc/new-session', { options, initial_message: initialMessage });
+  return await postJson<string>('/api/cc/new-session', { options });
 }
 
 export async function ccSendMessage(sessionId: string, message: string, imagePaths: string[] = []) {

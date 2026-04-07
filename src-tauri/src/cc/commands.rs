@@ -51,10 +51,9 @@ pub async fn cc_disconnect(session_id: String, state: State<'_, CCState>) -> Res
 #[tauri::command]
 pub async fn cc_new_session(
     options: AgentOptions,
-    initial_message: String,
     state: State<'_, CCState>,
 ) -> Result<String, String> {
-    session_service::new_session_and_send(options, initial_message, &state).await
+    session_service::new_session(options, &state).await
 }
 
 #[tauri::command]

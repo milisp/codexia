@@ -72,9 +72,8 @@ pub(crate) async fn api_cc_new_session(
     AxumState(state): AxumState<WebServerState>,
     Json(params): Json<CcNewSessionParams>,
 ) -> Result<Json<String>, ErrorResponse> {
-    let session_id = cc_session_service::new_session_and_send(
+    let session_id = cc_session_service::new_session(
         params.options,
-        params.initial_message,
         state.cc_state.as_ref(),
     )
     .await
