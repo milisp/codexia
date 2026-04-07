@@ -91,7 +91,6 @@ interface CodexStore {
   threadStatusMap: Record<string, ThreadStatus>;
   activeThreadIds: string[]; // Track resumed/active threads
   inputFocusTrigger: number; // Increment to trigger focus in InputArea
-  threadListRefreshToken: number; // Increment to trigger thread list refresh
   threadListNextCursor: string | null;
 
   // Basic Setters
@@ -101,7 +100,6 @@ interface CodexStore {
   setHasAccount: (hasAccount: boolean | null) => void;
   addEvent: (threadId: string, event: ServerNotification) => void;
   triggerInputFocus: () => void;
-  triggerThreadListRefresh: () => void;
 }
 
 export const useCodexStore = create<CodexStore>((set) => ({
@@ -113,7 +111,6 @@ export const useCodexStore = create<CodexStore>((set) => ({
   threadStatusMap: {},
   activeThreadIds: [],
   inputFocusTrigger: 0,
-  threadListRefreshToken: 0,
   threadListNextCursor: null,
 
   setThreads: (threads: ThreadListItem[]) => {
@@ -188,10 +185,6 @@ export const useCodexStore = create<CodexStore>((set) => ({
 
   triggerInputFocus: () => {
     set((state) => ({ inputFocusTrigger: state.inputFocusTrigger + 1 }));
-  },
-
-  triggerThreadListRefresh: () => {
-    set((state) => ({ threadListRefreshToken: state.threadListRefreshToken + 1 }));
   },
 }));
 

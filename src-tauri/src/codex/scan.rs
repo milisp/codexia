@@ -289,23 +289,7 @@ fn scan_and_emit_to_sinks(
     Ok(())
 }
 
-fn filtered_non_empty_entries(entries: &[HistoryEntry]) -> Vec<HistoryEntry> {
-    entries
-        .iter()
-        .filter(|entry| !entry.preview.trim().is_empty())
-        .cloned()
-        .collect::<Vec<_>>()
-}
-
-fn emit_entries_to_sink(event_sink: &dyn EventSink, entries: &[HistoryEntry]) {
-    let non_empty_entries = filtered_non_empty_entries(entries);
-    let watched_cwds = read_watch_cwds();
-    let entries_to_emit = filter_entries_for_watch_cwds(&non_empty_entries, &watched_cwds);
-    let payload = json!({
-        "data": history_entries_to_thread_values(&entries_to_emit),
-        "nextCursor": null
-    });
-    event_sink.emit("thread/list-updated", payload);
+fn emit_entries_to_sink(_event_sink: &dyn EventSink, _entries: &[HistoryEntry]) {
 }
 
 fn emit_entries_to_sinks(sinks: &EventSinks, entries: &[HistoryEntry]) {
@@ -360,56 +344,6 @@ fn remember_watch_cwd(cwd: &str) {
     if let Ok(mut guarded) = watch_cwds().lock() {
         guarded.insert(trimmed.to_string());
     }
-}
-
-fn read_watch_cwds() -> Vec<String> {
-    if let Ok(guarded) = watch_cwds().lock() {
-        return guarded.iter().cloned().collect();
-    }
-    Vec::new()
-}
-
-fn filter_entries_for_watch_cwds(entries: &[HistoryEntry], watch_cwds: &[String]) -> Vec<HistoryEntry> {
-    if watch_cwds.is_empty() {
-        return entries.to_vec();
-    }
-
-    let normalized_watch_cwds = watch_cwds
-        .iter()
-        .map(|cwd| cwd.trim())
-        .filter(|cwd| !cwd.is_empty())
-        .collect::<Vec<_>>();
-    if normalized_watch_cwds.is_empty() {
-        return entries.to_vec();
-    }
-
-    let filter_repo_roots = normalized_watch_cwds
-        .iter()
-        .map(|cwd| repo_root_for_path(cwd))
-        .collect::<Vec<_>>();
-    let mut entry_repo_roots: HashMap<String, Option<String>> = HashMap::new();
-
-    entries
-        .iter()
-        .filter(|entry| {
-            normalized_watch_cwds
-                .iter()
-                .enumerate()
-                .any(|(idx, filter_cwd)| {
-                    if entry.cwd == *filter_cwd {
-                        return true;
-                    }
-                    let entry_root = entry_repo_roots
-                        .entry(entry.cwd.clone())
-                        .or_insert_with(|| repo_root_for_path(&entry.cwd));
-                    match (&filter_repo_roots[idx], entry_root) {
-                        (Some(filter_root), Some(entry_root)) => filter_root == entry_root,
-                        _ => false,
-                    }
-                })
-        })
-        .cloned()
-        .collect()
 }
 
 fn repo_root_for_path(path: &str) -> Option<String> {

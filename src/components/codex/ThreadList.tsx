@@ -154,6 +154,45 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
     };
   }, [isProjectScoped, listCwd, sortKey]);
 
+  useEffect(() => {
+    if (!isProjectScoped) {
+      return;
+    }
+
+    setScopedThreads((prev) => {
+      const globalById = new Map(threads.map((thread) => [thread.id, thread]));
+      let changed = false;
+      const next = prev.map((thread) => {
+        const globalThread = globalById.get(thread.id);
+        if (!globalThread) {
+          return thread;
+        }
+        if (
+          globalThread.preview === thread.preview &&
+          globalThread.cwd === thread.cwd &&
+          globalThread.path === thread.path &&
+          globalThread.source === thread.source &&
+          globalThread.createdAt === thread.createdAt &&
+          globalThread.updatedAt === thread.updatedAt
+        ) {
+          return thread;
+        }
+        changed = true;
+        return globalThread;
+      });
+
+      if (listCwd === cwd && currentThreadId) {
+        const activeThread = globalById.get(currentThreadId);
+        if (activeThread && !next.some((thread) => thread.id === activeThread.id)) {
+          changed = true;
+          next.unshift(activeThread);
+        }
+      }
+
+      return changed ? next : prev;
+    });
+  }, [cwd, currentThreadId, isProjectScoped, listCwd, threads]);
+
 
   const handleSelectThread = useCallback(
     async (threadId: string, options?: { resume?: boolean }) => {

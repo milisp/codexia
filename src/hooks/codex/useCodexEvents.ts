@@ -134,6 +134,17 @@ export function useCodexEvents(enabled = true) {
           }
         }
 
+        if (payload.method === 'thread/name/updated') {
+          const { threadId: renamedThreadId, threadName } = payload.params;
+          useCodexStore.setState((state) => ({
+            threads: state.threads.map((thread) =>
+              thread.id === renamedThreadId
+                ? { ...thread, preview: threadName ?? thread.preview }
+                : thread
+            ),
+          }));
+        }
+
         if (preventSleepDuringTasksRef.current && payload.method === 'turn/started') {
           void preventSleep(threadId).catch((error) => {
             console.warn('[useCodexEvents] preventSleep failed:', error);
@@ -228,10 +239,6 @@ export function useCodexEvents(enabled = true) {
 
         if (envelope.event === 'fs_change') {
           window.dispatchEvent(new CustomEvent('fs_change', { detail: envelope.payload }));
-          return;
-        }
-        if (envelope.event === 'thread/list-updated') {
-          window.dispatchEvent(new CustomEvent('thread/list-updated', { detail: envelope.payload }));
           return;
         }
         if (envelope.event === 'codex/approval-request') {
