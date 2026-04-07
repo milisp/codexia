@@ -181,18 +181,8 @@ export async function ccGetSessionMessages(sessionId: string): Promise<SdkSessio
 export async function ccResolvePermission(requestId: string, decision: string): Promise<void> {
   if (isDesktopTauri()) {
     return invokeTauri('cc_resolve_permission', { requestId, decision });
-  } else {
-    const port = import.meta.env.VITE_WEB_PORT || 8094;
-    const response = await fetch(`http://127.0.0.1:${port}/api/cc/resolve-permission`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ request_id: requestId, decision }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to resolve permission: ${response.statusText}`);
-    }
   }
+  await postNoContent('/api/cc/resolve-permission', { request_id: requestId, decision });
 }
 
 export async function ccSetPermissionMode(sessionId: string, mode: string) {

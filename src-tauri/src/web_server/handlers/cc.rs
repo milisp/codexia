@@ -44,8 +44,9 @@ pub(crate) async fn api_cc_send_message(
                 // Inject session_id into the payload so the frontend filter matches,
                 // and emit under the plain "cc-message" event name (same as the Tauri command).
                 if let Some(obj) = payload.as_object_mut() {
-                    obj.entry("session_id")
-                        .or_insert_with(|| serde_json::Value::String(sid.clone()));
+                    // Always override session_id with the caller's sid so that resumed sessions
+                    // (which may produce a new SDK session_id) are still routed to the correct card.
+                    obj.insert("session_id".to_string(), serde_json::Value::String(sid.clone()));
                 }
                 cc_state.emit("cc-message", payload);
             }
