@@ -4,7 +4,7 @@ import { SideBarProjectList } from './SideBarProjectList';
 
 type Props = {
   /** Called when user wants to start a new CC session in a given project. */
-  onStartNewSession: (project: string) => void;
+  onStartNewSession: (directory: string) => void;
 };
 
 export function SideBarClaudeTab({ onStartNewSession }: Props) {
@@ -14,8 +14,8 @@ export function SideBarClaudeTab({ onStartNewSession }: Props) {
     <SideBarProjectList
       onNewAction={onStartNewSession}
       newActionTitle={(name) => `Start new session in ${name}`}
-      renderList={(project) => (
-        <ClaudeCodeSessionList project={project} onSelectSession={handleSessionSelect} />
+      renderList={(directory) => (
+        <ClaudeCodeSessionList directory={directory} onSelectSession={handleSessionSelect} />
       )}
     />
   );

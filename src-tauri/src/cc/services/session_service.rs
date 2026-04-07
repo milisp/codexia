@@ -8,9 +8,35 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use super::message_service;
+use super::super::db::SessionCache;
 use uuid;
 
-pub use crate::cc::scan::get_sessions;
+#[derive(serde::Serialize)]
+pub struct SessionListResult {
+    pub sessions: Vec<claude_agent_sdk_rs::types::sessions::SdkSessionInfo>,
+    pub total: usize,
+}
+
+pub fn list_sessions(
+    directory: Option<&str>,
+    limit: Option<usize>,
+    offset: usize,
+    include_worktrees: bool,
+) -> Result<SessionListResult, String> {
+    let cache = SessionCache::new()?;
+    let (sessions, total) = cache.list_sessions(directory, limit, offset, include_worktrees)?;
+    if sessions.is_empty() {
+        if let Some(directory) = directory {
+            crate::cc::scan::sync_project_session_cache(directory, include_worktrees)?;
+        } else {
+            crate::cc::scan::sync_session_cache();
+        }
+        let cache = SessionCache::new()?;
+        let (sessions, total) = cache.list_sessions(directory, limit, offset, include_worktrees)?;
+        return Ok(SessionListResult { sessions, total });
+    }
+    Ok(SessionListResult { sessions, total })
+}
 
 /// Shared session-id that can be updated from temp UUID to real SDK session_id.
 pub type SessionIdArc = Arc<Mutex<String>>;
@@ -348,11 +374,6 @@ pub async fn interrupt(session_id: &str, state: &CCState) -> Result<(), String> 
     let client = state.get_client(session_id).await.ok_or("Client not found")?;
     let client = client.read().await;
     client.interrupt().await.map_err(|e| e.to_string())
-}
-
-pub async fn list_sessions(state: &CCState) -> Result<Vec<String>, String> {
-    let clients = state.clients.lock().await;
-    Ok(clients.keys().cloned().collect())
 }
 
 pub async fn resume_session(

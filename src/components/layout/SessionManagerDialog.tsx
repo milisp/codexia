@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Trash2, Search, CheckSquare, Square } from 'lucide-react';
-import { getSessions, SessionData } from '@/lib/sessions';
+import { listSessions, type SdkSessionInfo } from '@/lib/sessions';
 import { ccDeleteSession } from '@/services/tauri/cc';
 import { deleteFile } from '@/services/tauri';
 import type { ThreadListItem } from '@/types/codex/ThreadListItem';
@@ -72,7 +72,7 @@ export function SessionManagerDialog({ open, onOpenChange, defaultTab = 'cc' }: 
 
         <div className="flex flex-col flex-1 min-h-0 px-4 pb-4 pt-3">
           {activeTab === 'cc' ? (
-            <CCSessionManager />
+            <CCSessionManager open={open} />
           ) : (
             <CodexThreadManager />
           )}
@@ -84,46 +84,62 @@ export function SessionManagerDialog({ open, onOpenChange, defaultTab = 'cc' }: 
 
 // ── CC Session Manager ────────────────────────────────────────────────────────
 
-function CCSessionManager() {
-  const [sessions, setSessions] = useState<SessionData[]>([]);
+function CCSessionManager({ open }: { open: boolean }) {
+  const [sessions, setSessions] = useState<SdkSessionInfo[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[] | null>(null);
+  const [offset, setOffset] = useState(0);
   const { toast } = useToast();
+  const PAGE_SIZE = 20;
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getSessions();
-      setSessions(data);
+      const data = await listSessions(undefined, {
+        limit: PAGE_SIZE,
+        offset,
+        includeWorktrees: true,
+      });
+      setSessions(data.sessions);
+      setTotal(data.total);
     } catch {
       toast({ description: 'Failed to load sessions', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [offset, toast]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    if (!open) return;
+    void load();
+  }, [load, open]);
+
+  useEffect(() => {
+    setOffset(0);
+    setSelectedIds(new Set());
+  }, [search]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return sessions;
     return sessions.filter(
       (s) =>
-        s.display.toLowerCase().includes(q) ||
-        s.project.toLowerCase().includes(q) ||
-        s.sessionId.toLowerCase().includes(q),
+        s.summary.toLowerCase().includes(q) ||
+        (s.cwd ?? '').toLowerCase().includes(q) ||
+        s.session_id.toLowerCase().includes(q),
     );
   }, [sessions, search]);
 
-  const allSelected = filtered.length > 0 && filtered.every((s) => selectedIds.has(s.sessionId));
+  const allSelected = filtered.length > 0 && filtered.every((s) => selectedIds.has(s.session_id));
 
   const toggleAll = () => {
     if (allSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filtered.map((s) => s.sessionId)));
+      setSelectedIds(new Set(filtered.map((s) => s.session_id)));
     }
   };
 
@@ -144,7 +160,7 @@ function CCSessionManager() {
         failed++;
       }
     }
-    setSessions((prev) => prev.filter((s) => !ids.includes(s.sessionId)));
+    setSessions((prev) => prev.filter((s) => !ids.includes(s.session_id)));
     setSelectedIds((prev) => {
       const next = new Set(prev);
       ids.forEach((id) => next.delete(id));
@@ -176,26 +192,26 @@ function CCSessionManager() {
         ) : (
           filtered.map((session) => (
             <div
-              key={session.sessionId}
+              key={session.session_id}
               className="flex items-center gap-3 px-2 py-1.5 rounded-md hover:bg-accent/40 group"
             >
               <Checkbox
-                checked={selectedIds.has(session.sessionId)}
-                onCheckedChange={() => toggle(session.sessionId)}
+                checked={selectedIds.has(session.session_id)}
+                onCheckedChange={() => toggle(session.session_id)}
                 className="shrink-0"
               />
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{session.display}</div>
-                <div className="text-xs text-muted-foreground truncate">{getFilename(session.project) || session.project}</div>
+                <div className="text-sm font-medium truncate">{session.summary || session.session_id}</div>
+                <div className="text-xs text-muted-foreground truncate">{getFilename(session.cwd ?? '') || session.cwd || 'Unknown project'}</div>
               </div>
               <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
-                {formatThreadAge(session.timestamp)}
+                {formatThreadAge(Math.floor(session.last_modified / 1000))}
               </span>
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive shrink-0"
-                onClick={() => setPendingDeleteIds([session.sessionId])}
+                onClick={() => setPendingDeleteIds([session.session_id])}
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
@@ -203,6 +219,31 @@ function CCSessionManager() {
           ))
         )}
       </ScrollArea>
+
+      <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+        <span>All projects</span>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2"
+            disabled={offset === 0 || loading}
+            onClick={() => setOffset((prev) => Math.max(0, prev - PAGE_SIZE))}
+          >
+            Prev
+          </Button>
+          <span>{offset + 1}-{offset + filtered.length} / {total}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2"
+            disabled={loading || offset + PAGE_SIZE >= total}
+            onClick={() => setOffset((prev) => prev + PAGE_SIZE)}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
 
       <DeleteConfirmDialog
         open={!!pendingDeleteIds}

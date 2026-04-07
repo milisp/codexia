@@ -143,7 +143,7 @@ tokio-cron-scheduler = { version = "0.13", optional = true }
 tauri-plugin-updater = { version = "2", optional = true }
 codex-protocol = { git = "https://github.com/openai/codex.git", package = "codex-protocol", tag = "rust-v0.114.0", optional = true }
 codex-app-server-protocol = { git = "https://github.com/openai/codex.git", package = "codex-app-server-protocol", tag = "rust-v0.114.0", optional = true }
-claude-agent-sdk-rs = { git = "https://github.com/milisp/claude-agent-sdk-rs", optional = true }
+claude-agent-sdk-rs = { git = "https://github.com/milisp/claude-agent-sdk-rs", tag = "v0.6.6", optional = true }
 codex-finder = { git = "https://github.com/milisp/codex-finder.git", optional = true }
 
 # --- p2p (tauri feature: desktop server + mobile client) ---

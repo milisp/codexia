@@ -7,7 +7,6 @@ use tokio::sync::broadcast;
 
 use super::{router::create_router, types::WebServerState};
 use crate::cc::CCState;
-use crate::cc::scan::start_session_scanner;
 use crate::codex::scan::start_history_scanner;
 use crate::codex::{AppState, CodexInitializationState, connect_codex, initialize_codex};
 use crate::features::event_sink::{EventSink, WebSocketEventSink};
@@ -39,8 +38,7 @@ pub async fn start_web_server_with_events(
 
     let history_sink: Arc<dyn EventSink> = Arc::new(WebSocketEventSink::new(event_tx.clone()));
     start_history_scanner(history_sink);
-    let session_sink: Arc<dyn EventSink> = Arc::new(WebSocketEventSink::new(event_tx.clone()));
-    start_session_scanner(session_sink);
+    crate::cc::scan::start_session_scanner();
 
     let state = WebServerState {
         codex_state,

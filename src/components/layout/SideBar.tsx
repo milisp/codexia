@@ -65,11 +65,11 @@ export function SideBar() {
   );
 
   const handleStartNewCcSessionForProject = useCallback(
-    async (project: string) => {
+    async (directory: string) => {
       setSelectedAgent('cc');
       setActiveSidebarTab('cc');
       setView('agent');
-      setCwd(project);
+      setCwd(directory);
       await handleNewSession();
       focusCCInput();
     },

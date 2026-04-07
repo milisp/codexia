@@ -13,7 +13,6 @@ import { useEffect, useState } from 'react';
 import type { AutomationTask } from '@/services/tauri';
 import {
   ccInterrupt,
-  ccListSessions,
   listModels,
   runAutomationNow,
   turnInterrupt,
@@ -27,7 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/components/ui/use-toast';
-import { getSessions } from '@/lib/sessions';
+import { listSessions } from '@/lib/sessions';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
 import { useLayoutStore } from '@/stores';
 import { useCCStore } from '@/stores/cc';
@@ -251,10 +250,9 @@ export function TaskDetailPanel({ task, now, runs, togglingPauseTaskId }: TaskDe
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [openAiModels, setOpenAiModels] = useState<Model[]>([]);
   const [ollamaModels, setOllamaModels] = useState<OllamaModel[]>([]);
-  const [activeCcSessionIds, setActiveCcSessionIds] = useState<string[]>([]);
   const { setView, setActiveSidebarTab } = useLayoutStore();
   const { setSelectedAgent, setCwd } = useWorkspaceStore();
-  const { setActiveSessionId, setConnected, setMessages } = useCCStore();
+  const { setActiveSessionId, activeSessionIds, switchToSession } = useCCStore();
   const { handleSessionSelect } = useCCSessionManager();
   const resolvedModelProvider = task ? resolveModelProvider(task) : 'openai';
 
@@ -273,38 +271,32 @@ export function TaskDetailPanel({ task, now, runs, togglingPauseTaskId }: TaskDe
     setSelectedAgent('cc');
     setActiveSidebarTab('cc');
     setView('agent');
-    const isActiveSession = activeCcSessionIds.includes(run.threadId);
+    // If the session is already active, just switch to it without a full reconnect
+    if (activeSessionIds.includes(run.threadId)) {
+      console.info('[TaskDetailPanel] Switch to already-active cc session', { sessionId: run.threadId });
+      switchToSession(run.threadId);
+      return;
+    }
+
     try {
-      const sessions = await getSessions();
-      const matched = sessions.find((session) => session.sessionId === run.threadId);
+      // Search all sessions — matching is done by session_id so directory filtering adds no value,
+      // and would miss sessions from projects[1..n] when the task has multiple projects.
+      const result = await listSessions(null, { limit: 100 });
+      const matched = result.sessions.find((session) => session.session_id === run.threadId);
       console.info('[TaskDetailPanel] Match cc session before resume', {
         sessionId: run.threadId,
         matched: Boolean(matched),
-        matchedProject: matched?.project ?? null,
+        matchedProject: matched?.cwd ?? null,
       });
-      if (matched?.project) {
-        setCwd(matched.project);
+      if (matched?.cwd) {
+        setCwd(matched.cwd);
       }
     } catch (error) {
       console.warn('[TaskDetailPanel] Failed to load sessions before resume', error);
     }
 
-    if (isActiveSession) {
-      console.info('[TaskDetailPanel] Skip resume for active cc session', {
-        sessionId: run.threadId,
-      });
-      setMessages([]);
-      setActiveSessionId(run.threadId);
-      setConnected(true);
-      setActiveCcSessionIds((prev) =>
-        prev.includes(run.threadId) ? prev : [...prev, run.threadId]
-      );
-      return;
-    }
-
     setActiveSessionId(run.threadId);
     await handleSessionSelect(run.threadId);
-    setActiveCcSessionIds((prev) => (prev.includes(run.threadId) ? prev : [...prev, run.threadId]));
     console.info('[TaskDetailPanel] cc session resume requested', { sessionId: run.threadId });
   };
 
@@ -335,39 +327,6 @@ export function TaskDetailPanel({ task, now, runs, togglingPauseTaskId }: TaskDe
 
     void loadProviderModels();
   }, [resolvedModelProvider, task]);
-
-  useEffect(() => {
-    if (!task || task.agent !== 'cc') {
-      setActiveCcSessionIds([]);
-      return;
-    }
-
-    let cancelled = false;
-
-    const loadActiveCcSessions = async () => {
-      try {
-        const sessions = await ccListSessions();
-        if (!cancelled) {
-          setActiveCcSessionIds(sessions);
-        }
-      } catch (error) {
-        console.warn('[TaskDetailPanel] Failed to load active CC sessions', error);
-        if (!cancelled) {
-          setActiveCcSessionIds([]);
-        }
-      }
-    };
-
-    void loadActiveCcSessions();
-    const timer = setInterval(() => {
-      void loadActiveCcSessions();
-    }, 3000);
-
-    return () => {
-      cancelled = true;
-      clearInterval(timer);
-    };
-  }, [task]);
 
   const handleRunNow = async () => {
     if (!task) return;
@@ -556,7 +515,7 @@ export function TaskDetailPanel({ task, now, runs, togglingPauseTaskId }: TaskDe
                     key={run.threadId}
                     run={run}
                     agent={task.agent}
-                    isCcSessionActive={activeCcSessionIds.includes(run.threadId)}
+                    isCcSessionActive={activeSessionIds.includes(run.threadId)}
                     onOpenRun={handleOpenRun}
                   />
                 ))}

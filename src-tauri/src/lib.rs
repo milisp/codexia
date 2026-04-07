@@ -189,10 +189,9 @@ pub fn run() {
                 crate::cc::cc_send_message,
                 crate::cc::cc_disconnect,
                 crate::cc::cc_interrupt,
-                crate::cc::cc_list_sessions,
                 crate::cc::cc_resume_session,
                 crate::cc::cc_get_projects,
-                crate::cc::cc_get_sessions,
+                crate::cc::cc_list_sessions,
                 crate::cc::cc_delete_session,
                 crate::cc::cc_get_session_file_path,
                 crate::cc::cc_get_installed_skills,
@@ -320,7 +319,7 @@ pub fn run() {
                 }
 
                 crate::codex::scan::start_history_scanner(event_sink.clone());
-                crate::cc::scan::start_session_scanner(event_sink);
+                crate::cc::scan::start_session_scanner();
 
                 tauri::async_runtime::spawn(async {
                     tokio::task::spawn_blocking(crate::features::git::scan_all_orphan_worktrees)

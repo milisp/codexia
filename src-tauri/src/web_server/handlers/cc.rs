@@ -2,14 +2,13 @@ use std::sync::Arc;
 use super::to_error_response;
 use super::types::{
     CcMcpAddParams, CcMcpGetParams, CcMcpListParams, CcMcpRemoveParams, CcMcpToggleParams,
-    CcNewSessionParams, CcResolvePermissionParams, CcResumeSessionParams, CcSendMessageParams,
-    CcSessionIdParams, CcSetPermissionModeParams, CcUpdateSettingsParams,
+    CcGetSessionsParams, CcNewSessionParams, CcResolvePermissionParams, CcResumeSessionParams,
+    CcSendMessageParams, CcSessionIdParams, CcSetPermissionModeParams, CcUpdateSettingsParams,
 };
 use axum::{Json, extract::State as AxumState, http::StatusCode};
 use serde_json::Value;
 use crate::web_server::types::{ErrorResponse, WebServerState};
 
-use crate::cc::db::SessionData;
 use crate::cc::mcp::{self as cc_mcp_commands, ClaudeCodeMcpServer, ClaudeCodeResponse};
 use crate::cc::services::{
     message_service as cc_message_service, project_service as cc_project_service,
@@ -17,6 +16,7 @@ use crate::cc::services::{
     skill_service as cc_skill_service,
 };
 use crate::cc::types::CCConnectParams;
+use crate::cc::services::session_service::SessionListResult;
 
 pub(crate) async fn api_cc_connect(
     AxumState(state): AxumState<WebServerState>,
@@ -93,15 +93,6 @@ pub(crate) async fn api_cc_interrupt(
     Ok(StatusCode::OK)
 }
 
-pub(crate) async fn api_cc_list_sessions(
-    AxumState(state): AxumState<WebServerState>,
-) -> Result<Json<Vec<String>>, ErrorResponse> {
-    let sessions = cc_session_service::list_sessions(state.cc_state.as_ref())
-        .await
-        .map_err(to_error_response)?;
-    Ok(Json(sessions))
-}
-
 pub(crate) async fn api_cc_resume_session(
     AxumState(state): AxumState<WebServerState>,
     Json(params): Json<CcResumeSessionParams>,
@@ -147,30 +138,34 @@ pub(crate) async fn api_cc_update_settings(
     Ok(StatusCode::OK)
 }
 
-pub(crate) async fn api_cc_get_sessions() -> Result<Json<Vec<SessionData>>, ErrorResponse> {
-    let sessions = cc_session_service::get_sessions().map_err(to_error_response)?;
-    Ok(Json(sessions))
+pub(crate) async fn api_cc_list_sessions(
+    axum::extract::Query(params): axum::extract::Query<CcGetSessionsParams>,
+) -> Result<Json<SessionListResult>, ErrorResponse> {
+    let result = cc_session_service::list_sessions(
+        params.directory.as_deref(),
+        params.limit,
+        params.offset.unwrap_or(0),
+        params.include_worktrees.unwrap_or(true),
+    )
+    .map_err(to_error_response)?;
+    Ok(Json(result))
 }
 
 pub(crate) async fn api_cc_delete_session(
     Json(params): Json<CcSessionIdParams>,
 ) -> Result<StatusCode, ErrorResponse> {
-    use crate::cc::db::SessionDB;
-    let db = SessionDB::new().map_err(to_error_response)?;
-    let file_path = db.delete_session(&params.session_id).map_err(to_error_response)?;
-    if let Some(path) = file_path {
-        let _ = std::fs::remove_file(&path);
-    }
+    claude_agent_sdk_rs::session_mutations::delete_session(&params.session_id, None)
+        .map_err(to_error_response)?;
+    crate::cc::db::SessionCache::new()
+        .and_then(|cache| cache.delete_session(&params.session_id))
+        .map_err(to_error_response)?;
     Ok(StatusCode::OK)
 }
 
 pub(crate) async fn api_cc_get_session_file_path(
     Json(params): Json<CcSessionIdParams>,
 ) -> Result<Json<Option<String>>, ErrorResponse> {
-    use crate::cc::db::SessionDB;
-    let db = SessionDB::new().map_err(to_error_response)?;
-    let path = db.get_file_path(&params.session_id).map_err(to_error_response)?;
-    Ok(Json(path))
+    Ok(Json(crate::cc::scan::find_session_file(&params.session_id)))
 }
 
 pub(crate) async fn api_cc_resolve_permission(
