@@ -51,13 +51,6 @@ export async function ccGetSlashCommands(cwd?: string) {
   return await getJson<string[]>(`/api/cc/slash-commands${qs}`);
 }
 
-export async function ccGetProjects() {
-  if (isDesktopTauri()) {
-    return await invokeTauri<string[]>('cc_get_projects');
-  }
-  return await getJson<string[]>('/api/cc/projects');
-}
-
 type CcListSessionsOptions = {
   limit?: number;
   offset?: number;

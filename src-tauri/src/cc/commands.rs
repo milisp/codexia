@@ -5,7 +5,7 @@ use super::mcp::{
     cc_mcp_list as mcp_cc_mcp_list, cc_mcp_remove as mcp_cc_mcp_remove,
 };
 use super::services::{
-    message_service, project_service, session_service, settings_service, skill_service,
+    message_service, session_service, settings_service, skill_service,
 };
 use super::state::CCState;
 use super::types::{AgentOptions, CCConnectParams};
@@ -69,11 +69,6 @@ pub async fn cc_resume_session(
     state: State<'_, CCState>,
 ) -> Result<(), String> {
     session_service::resume_session(session_id, options, &state).await
-}
-
-#[tauri::command]
-pub fn cc_get_projects() -> Result<Vec<String>, String> {
-    project_service::get_projects()
 }
 
 #[tauri::command]

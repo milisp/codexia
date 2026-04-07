@@ -190,7 +190,6 @@ pub fn run() {
                 crate::cc::cc_disconnect,
                 crate::cc::cc_interrupt,
                 crate::cc::cc_resume_session,
-                crate::cc::cc_get_projects,
                 crate::cc::cc_list_sessions,
                 crate::cc::cc_delete_session,
                 crate::cc::cc_get_session_file_path,

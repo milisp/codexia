@@ -11,8 +11,7 @@ use crate::web_server::types::{ErrorResponse, WebServerState};
 
 use crate::cc::mcp::{self as cc_mcp_commands, ClaudeCodeMcpServer, ClaudeCodeResponse};
 use crate::cc::services::{
-    message_service as cc_message_service, project_service as cc_project_service,
-    session_service as cc_session_service, settings_service as cc_settings_service,
+    message_service as cc_message_service, session_service as cc_session_service, settings_service as cc_settings_service,
     skill_service as cc_skill_service,
 };
 use crate::cc::types::CCConnectParams;
@@ -106,11 +105,6 @@ pub(crate) async fn api_cc_resume_session(
     .map_err(to_error_response)?;
 
     Ok(StatusCode::OK)
-}
-
-pub(crate) async fn api_cc_get_projects() -> Result<Json<Vec<String>>, ErrorResponse> {
-    let projects = cc_project_service::get_projects().map_err(to_error_response)?;
-    Ok(Json(projects))
 }
 
 pub(crate) async fn api_cc_get_installed_skills() -> Result<Json<Vec<String>>, ErrorResponse> {
