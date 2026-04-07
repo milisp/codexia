@@ -1,8 +1,5 @@
-use std::path::Path;
 use std::sync::Once;
-use std::time::{Duration, Instant};
-
-use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use std::time::Instant;
 
 use super::db::SessionCache;
 
@@ -11,87 +8,9 @@ static SESSION_SCANNER_START: Once = Once::new();
 pub fn start_session_scanner() {
     SESSION_SCANNER_START.call_once(|| {
         std::thread::spawn(|| {
-            let home = match dirs::home_dir() {
-                Some(path) => path,
-                None => return,
-            };
-            let projects_root = home.join(".claude").join("projects");
-            if !projects_root.exists() {
-                return;
-            }
-
-            let (tx, rx) = std::sync::mpsc::channel();
-            let mut watcher: RecommendedWatcher = match notify::recommended_watcher(tx) {
-                Ok(watcher) => watcher,
-                Err(err) => {
-                    log::error!("cc session scanner: watcher init failed: {}", err);
-                    return;
-                }
-            };
-
-            if let Err(err) = watcher.watch(&projects_root, RecursiveMode::Recursive) {
-                log::error!("cc session scanner: watch failed: {}", err);
-                return;
-            }
-
-            let mut last_scan = Instant::now() - Duration::from_secs(60);
-            let mut pending_rescan = false;
-
-            loop {
-                match rx.recv_timeout(Duration::from_millis(200)) {
-                    Ok(Ok(event)) => {
-                        if !should_rescan_for_event(&event) {
-                            continue;
-                        }
-
-                        if last_scan.elapsed() < Duration::from_millis(500) {
-                            pending_rescan = true;
-                        } else {
-                            last_scan = Instant::now();
-                            sync_session_cache();
-                            pending_rescan = false;
-                        }
-                    }
-                    Ok(Err(err)) => {
-                        log::error!("cc session scanner: watch event error: {}", err);
-                    }
-                    Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {}
-                    Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
-                }
-
-                if pending_rescan && last_scan.elapsed() >= Duration::from_millis(500) {
-                    last_scan = Instant::now();
-                    sync_session_cache();
-                    pending_rescan = false;
-                }
-            }
+            sync_session_cache();
         });
     });
-}
-
-fn should_rescan_for_event(event: &Event) -> bool {
-    if matches!(event.kind, EventKind::Access(_)) {
-        return false;
-    }
-
-    let is_relevant_kind = matches!(
-        event.kind,
-        EventKind::Create(_) | EventKind::Remove(_) | EventKind::Modify(_)
-    );
-    if !is_relevant_kind {
-        return false;
-    }
-
-    event.paths.iter().any(|path| is_session_jsonl(path))
-}
-
-fn is_session_jsonl(path: &Path) -> bool {
-    if path.extension().and_then(|ext| ext.to_str()) != Some("jsonl") {
-        return false;
-    }
-
-    let file_name = path.file_name().and_then(|name| name.to_str()).unwrap_or("");
-    !file_name.starts_with("agent-")
 }
 
 pub fn sync_project_session_cache(directory: &str, include_worktrees: bool) -> Result<(), String> {
