@@ -156,10 +156,11 @@ pub(crate) async fn api_cc_delete_session(
     Ok(StatusCode::OK)
 }
 
-pub(crate) async fn api_cc_get_session_file_path(
+pub(crate) async fn api_cc_get_session_messages(
     Json(params): Json<CcSessionIdParams>,
-) -> Result<Json<Option<String>>, ErrorResponse> {
-    Ok(Json(crate::cc::scan::find_session_file(&params.session_id)))
+) -> Result<Json<Vec<claude_agent_sdk_rs::types::sessions::SessionMessage>>, ErrorResponse> {
+    let messages = claude_agent_sdk_rs::sessions::get_session_messages(&params.session_id, None, None, 0);
+    Ok(Json(messages))
 }
 
 pub(crate) async fn api_cc_resolve_permission(

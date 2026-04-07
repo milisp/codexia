@@ -115,8 +115,10 @@ pub fn cc_delete_session(session_id: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn cc_get_session_file_path(session_id: String) -> Result<Option<String>, String> {
-    Ok(crate::cc::scan::find_session_file(&session_id))
+pub fn cc_get_session_messages(
+    session_id: String,
+) -> Result<Vec<claude_agent_sdk_rs::types::sessions::SessionMessage>, String> {
+    Ok(claude_agent_sdk_rs::sessions::get_session_messages(&session_id, None, None, 0))
 }
 
 #[tauri::command]

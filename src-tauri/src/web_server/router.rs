@@ -13,7 +13,7 @@ use super::{
         api_cc_list_projects, api_cc_mcp_add, api_cc_mcp_disable, api_cc_mcp_enable,
         api_cc_mcp_get, api_cc_mcp_list, api_cc_mcp_remove,
         api_cc_connect, api_cc_disconnect, api_cc_get_installed_skills,
-        api_cc_delete_session, api_cc_get_session_file_path, api_cc_list_sessions, api_cc_get_settings, api_cc_get_slash_commands,
+        api_cc_delete_session, api_cc_get_session_messages, api_cc_list_sessions, api_cc_get_settings, api_cc_get_slash_commands,
         api_cc_interrupt,
         api_cc_new_session, api_cc_resolve_permission, api_cc_resume_session,
         api_cc_send_message, api_cc_set_permission_mode, api_cc_update_settings,
@@ -243,7 +243,7 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/cc/slash-commands", get(api_cc_get_slash_commands))
         .route("/api/cc/settings", get(api_cc_get_settings).post(api_cc_update_settings))
         .route("/api/cc/sessions", get(api_cc_list_sessions))
-        .route("/api/cc/session-file-path", post(api_cc_get_session_file_path))
+        .route("/api/cc/session-messages", post(api_cc_get_session_messages))
         .route("/api/cc/delete-session", post(api_cc_delete_session))
         .route("/api/cc/mcp/list", post(api_cc_mcp_list))
         .route("/api/cc/mcp/get", post(api_cc_mcp_get))

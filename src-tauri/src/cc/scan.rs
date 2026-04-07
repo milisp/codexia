@@ -124,17 +124,3 @@ pub fn sync_session_cache() {
         }
     }
 }
-
-/// Find the JSONL file path for a session ID by scanning ~/.claude/projects/.
-/// Worktree sessions are discovered because all project dirs are searched.
-pub fn find_session_file(session_id: &str) -> Option<String> {
-    let projects_dir = dirs::home_dir()?.join(".claude").join("projects");
-    let file_name = format!("{}.jsonl", session_id);
-    for entry in std::fs::read_dir(&projects_dir).ok()?.flatten() {
-        let path = entry.path().join(&file_name);
-        if path.exists() {
-            return Some(path.to_string_lossy().into_owned());
-        }
-    }
-    None
-}

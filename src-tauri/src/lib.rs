@@ -192,7 +192,7 @@ pub fn run() {
                 crate::cc::cc_resume_session,
                 crate::cc::cc_list_sessions,
                 crate::cc::cc_delete_session,
-                crate::cc::cc_get_session_file_path,
+                crate::cc::cc_get_session_messages,
                 crate::cc::cc_get_installed_skills,
                 crate::cc::cc_get_slash_commands,
                 crate::cc::cc_get_settings,

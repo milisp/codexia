@@ -163,11 +163,19 @@ export async function ccDeleteSession(sessionId: string): Promise<void> {
   await postNoContent('/api/cc/delete-session', { session_id: sessionId });
 }
 
-export async function ccGetSessionFilePath(sessionId: string): Promise<string | null> {
+export interface SdkSessionMessage {
+  type: 'user' | 'assistant';
+  uuid: string;
+  session_id: string;
+  message?: Record<string, unknown> | null;
+  parent_tool_use_id?: string | null;
+}
+
+export async function ccGetSessionMessages(sessionId: string): Promise<SdkSessionMessage[]> {
   if (isDesktopTauri()) {
-    return await invokeTauri<string | null>('cc_get_session_file_path', { sessionId });
+    return await invokeTauri<SdkSessionMessage[]>('cc_get_session_messages', { sessionId });
   }
-  return await postJson<string | null>('/api/cc/session-file-path', { session_id: sessionId });
+  return await postJson<SdkSessionMessage[]>('/api/cc/session-messages', { session_id: sessionId });
 }
 
 export async function ccResolvePermission(requestId: string, decision: string): Promise<void> {

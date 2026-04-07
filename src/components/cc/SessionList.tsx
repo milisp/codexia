@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useCCStore } from '@/stores/cc';
 import { listSessions, type SdkSessionInfo } from '@/lib/sessions';
-import { ccGetSessionFilePath, ccDeleteSession } from '@/services/tauri/cc';
-import { readTextFileLines } from '@/services/tauri/filesystem';
-import { parseSessionJsonl } from '@/components/cc/utils/parseSessionJsonl';
+import { ccGetSessionMessages, ccDeleteSession } from '@/services/tauri/cc';
+import { fromSdkMessages } from '@/components/cc/utils/fromSdkMessages';
 import { MoreVertical, Copy, Loader2, Trash2, FolderX } from 'lucide-react';
 import { gitRemoveWorktree } from '@/services/tauri/git';
 import {
@@ -130,10 +129,8 @@ export function ClaudeCodeSessionList({ directory, sessions, onSelectSession }: 
     const sid = session.session_id;
     if (!sessionMessagesMap[sid]?.length) {
       void (async () => {
-        const filePath = await ccGetSessionFilePath(sid);
-        if (!filePath) return;
-        const lines = await readTextFileLines(filePath);
-        for (const msg of parseSessionJsonl(lines, sid)) {
+        const sdkMessages = await ccGetSessionMessages(sid);
+        for (const msg of fromSdkMessages(sdkMessages, sid)) {
           addMessageToSession(sid, msg);
         }
         setSessionLoading(sid, false);

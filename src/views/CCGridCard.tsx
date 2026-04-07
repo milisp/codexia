@@ -1,8 +1,7 @@
 import { useEffect, useState, useMemo, lazy, Suspense } from 'react';
 import { useCCStore } from '@/stores/cc';
-import { ccGetSessionFilePath, ccInterrupt, ccResumeSession } from '@/services/tauri/cc';
-import { readTextFileLines } from '@/services/tauri/filesystem';
-import { parseSessionJsonl } from '@/components/cc/utils/parseSessionJsonl';
+import { ccGetSessionMessages, ccInterrupt, ccResumeSession } from '@/services/tauri/cc';
+import { fromSdkMessages } from '@/components/cc/utils/fromSdkMessages';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Check, GitCommitHorizontal, RotateCcw, Square } from 'lucide-react';
@@ -109,12 +108,9 @@ export function CCGridCard({ card, onRemove: _onRemove, header, isSelected }: CC
   const handleResume = async () => {
     setIsResumingSession(true);
     try {
-      const filePath = await ccGetSessionFilePath(card.id);
-      if (filePath) {
-        const lines = await readTextFileLines(filePath);
-        for (const msg of parseSessionJsonl(lines, card.id)) {
-          addMessageToSession(card.id, msg);
-        }
+      const sdkMessages = await ccGetSessionMessages(card.id);
+      for (const msg of fromSdkMessages(sdkMessages, card.id)) {
+        addMessageToSession(card.id, msg);
       }
       await ccResumeSession(card.id, {
         cwd,
