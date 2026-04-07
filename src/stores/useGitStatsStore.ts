@@ -16,7 +16,7 @@ interface GitStats {
 interface GitStatsStore {
   stats: GitStats | null;
   setStats: (stats: GitStats | null) => void;
-  refreshStats: (cwd: string) => Promise<void>;
+  refreshStats: (cwd: string, silent?: boolean) => Promise<void>;
 }
 
 const initialStats: GitStats = {
@@ -36,15 +36,17 @@ export const useGitStatsStore = create<GitStatsStore>((set) => ({
 
   setStats: (stats) => set({ stats }),
 
-  refreshStats: async (cwd: string) => {
+  refreshStats: async (cwd: string, silent = false) => {
     if (!cwd) {
       set({ stats: null });
       return;
     }
 
-    set((state) => ({
-      stats: state.stats ? { ...state.stats, isLoading: true } : { ...initialStats, isLoading: true },
-    }));
+    if (!silent) {
+      set((state) => ({
+        stats: state.stats ? { ...state.stats, isLoading: true } : { ...initialStats, isLoading: true },
+      }));
+    }
 
     try {
       const [status, diffStats] = await Promise.all([gitStatus(cwd), gitDiffStats(cwd)]);
@@ -63,24 +65,40 @@ export const useGitStatsStore = create<GitStatsStore>((set) => ({
       const totalAdditions = stagedAdditions + unstagedAdditions;
       const totalDeletions = stagedDeletions + unstagedDeletions;
 
-      set({
-        stats: {
-          stagedFiles: stagedEntries.length,
-          unstagedFiles: unstagedEntries.length,
-          stagedAdditions,
-          stagedDeletions,
-          unstagedAdditions,
-          unstagedDeletions,
-          totalAdditions,
-          totalDeletions,
-          isLoading: false,
-        },
+      const nextStats: GitStats = {
+        stagedFiles: stagedEntries.length,
+        unstagedFiles: unstagedEntries.length,
+        stagedAdditions,
+        stagedDeletions,
+        unstagedAdditions,
+        unstagedDeletions,
+        totalAdditions,
+        totalDeletions,
+        isLoading: false,
+      };
+
+      set((state) => {
+        const prev = state.stats;
+        // Skip update if nothing changed during silent background refresh
+        if (silent && prev &&
+          prev.stagedFiles === nextStats.stagedFiles &&
+          prev.unstagedFiles === nextStats.unstagedFiles &&
+          prev.totalAdditions === nextStats.totalAdditions &&
+          prev.totalDeletions === nextStats.totalDeletions &&
+          prev.stagedAdditions === nextStats.stagedAdditions &&
+          prev.stagedDeletions === nextStats.stagedDeletions
+        ) {
+          return state;
+        }
+        return { stats: nextStats };
       });
     } catch (error) {
       console.error('Failed to refresh git stats:', error);
-      set((state) => ({
-        stats: state.stats ? { ...state.stats, isLoading: false } : { ...initialStats, isLoading: false },
-      }));
+      if (!silent) {
+        set((state) => ({
+          stats: state.stats ? { ...state.stats, isLoading: false } : { ...initialStats, isLoading: false },
+        }));
+      }
     }
   },
 }));

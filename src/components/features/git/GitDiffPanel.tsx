@@ -39,23 +39,27 @@ export function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
     [toPosix]
   );
 
-  const refreshGitStatus = useCallback(async () => {
+  const refreshGitStatus = useCallback(async (silent = false) => {
     if (!cwd) return;
-    setGitLoading(true);
+    if (!silent) setGitLoading(true);
     setGitError(null);
     try {
       const status = await gitStatus(cwd);
-      setGitData(status);
+      setGitData((prev) => {
+        if (JSON.stringify(prev) === JSON.stringify(status)) return prev;
+        return status;
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       setGitError(message);
       setGitData(null);
     } finally {
-      setGitLoading(false);
+      if (!silent) setGitLoading(false);
     }
   }, [cwd]);
 
-  useGitWatch(cwd, refreshGitStatus, isActive);
+  const silentRefresh = useCallback(() => { void refreshGitStatus(true); }, [refreshGitStatus]);
+  useGitWatch(cwd, silentRefresh, isActive);
 
   useEffect(() => {
     if (cwd) return;

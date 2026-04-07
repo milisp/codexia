@@ -26,11 +26,15 @@ export function RightPanelHeader() {
     void refreshStats(cwd);
   }, [cwd, refreshStats]);
 
+  const silentRefreshGitStats = useCallback(() => {
+    void refreshStats(cwd, true);
+  }, [cwd, refreshStats]);
+
   useEffect(() => {
     refreshGitStats();
   }, [cwd, refreshGitStats]);
 
-  useGitWatch(cwd || null, refreshGitStats, Boolean(cwd));
+  useGitWatch(cwd || null, silentRefreshGitStats, Boolean(cwd));
 
   const {
     showHeaderWebPreviewButton,

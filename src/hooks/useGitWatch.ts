@@ -67,7 +67,7 @@ export function useGitWatch(cwd: string | null, onRefresh: () => void, enabled =
     // Keep a low-frequency fallback for platforms where file events may be missed.
     pollingRef.current = setInterval(() => {
       debouncedRefresh();
-    }, 2500);
+    }, 5000);
 
     setupWatcher();
 
