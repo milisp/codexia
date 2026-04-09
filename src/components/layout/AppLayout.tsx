@@ -18,7 +18,7 @@ const SettingsView = lazy(() =>
   import('@/components/settings').then((module) => ({ default: module.SettingsView })),
 );
 const PluginsView = lazy(() => import('@/views/PluginsView'));
-const AgentsView = lazy(() => import('@/views/AgentsView'));
+const AgentsMdView = lazy(() => import('@/views/agents-md-view'));
 const AgentView = lazy(() => import('@/views/AgentView'));
 const LoginView = lazy(() => import('@/views/LoginView'));
 const AutoMationsView = lazy(() =>
@@ -164,13 +164,13 @@ export function AppLayout() {
     <div className="flex flex-col min-w-0 h-full">
       <div className="min-h-0 flex-1">
         <Suspense fallback={<ViewLoadingFallback />}>
-          {view === 'agents' && <AgentsView />}
+          {view === 'agents-md' && <AgentsMdView />}
           {view === 'agent' && <AgentView />}
           {view === 'automations' && <AutoMationsView />}
           {view === 'history' && <History />}
           {view === 'login' && <LoginView />}
           {view === 'plugins' && <PluginsView />}
-{view === 'insights' && (isPro || inTrial || import.meta.env.DEV ? <InsightsView /> : (
+          {view === 'insights' && (isPro || inTrial || import.meta.env.DEV ? <InsightsView /> : (
             <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-8">
               <div className="text-4xl">📊</div>
               <h2 className="text-lg font-semibold">Insights is a Pro feature</h2>

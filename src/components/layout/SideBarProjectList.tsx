@@ -29,7 +29,7 @@ export function SideBarProjectList({ onNewAction, newActionTitle, renderList }: 
 
   const openAgentInstructions = (project: string) => {
     setCwd(project);
-    setView('agents');
+    setView('agents-md');
     setInstructionType('project');
   };
 
@@ -43,11 +43,10 @@ export function SideBarProjectList({ onNewAction, newActionTitle, renderList }: 
           className="rounded-lg border border-sidebar-border bg-sidebar/30"
         >
           <div
-            className={`flex items-center gap-1 rounded-t-lg px-2 py-1.5 text-xs transition-colors ${
-              cwd === project
+            className={`flex items-center gap-1 rounded-t-lg px-2 py-1.5 text-xs transition-colors ${cwd === project
                 ? 'bg-accent text-foreground'
                 : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
-            }`}
+              }`}
             title={project}
           >
             <CollapsibleTrigger className="flex min-w-0 flex-1 items-center gap-1 text-left">
