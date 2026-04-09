@@ -50,7 +50,8 @@ use super::{
         api_terminal_write, api_toggle_favorite, api_turn_interrupt, api_turn_start,
         api_unified_add_mcp_server, api_unified_disable_mcp_server,
         api_unified_enable_mcp_server, api_unified_read_mcp_config,
-        api_unified_remove_mcp_server, api_update_note, api_write_file, health_check,
+        api_unified_remove_mcp_server, api_update_note, api_write_file,
+        api_get_settings_file, api_save_settings_file, health_check,
     },
     types::WebServerState,
     websocket::{sse_handler, ws_handler},
@@ -257,6 +258,7 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/insights/filter-options", post(api_get_insight_filter_options))
         .route("/api/sleep/prevent", post(api_prevent_sleep))
         .route("/api/sleep/allow", post(api_allow_sleep))
+        .route("/api/settings", get(api_get_settings_file).post(api_save_settings_file))
         .fallback_service(static_site)
         .layer(
             CorsLayer::new()

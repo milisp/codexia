@@ -11,7 +11,7 @@ import { HistoryProjectsDialog } from '@/components/project-selector';
 import { AnalyticsConsentDialog } from '@/components/settings/AnalyticsConsentDialog';
 import { initializeCodexAsync } from '@/services/tauri';
 import type { InitializeResponse } from './bindings';
-import { loadSettings, initSettingsSync } from '@/lib/settings';
+import { loadSettings, initSettingsSync, loadRemoteSettings } from '@/lib/settings';
 import { StoreErrorBoundary } from '@/components/StoreErrorBoundary';
 import { useP2PConnection } from '@/hooks/useP2PConnection';
 import { toast } from 'sonner';
@@ -51,6 +51,7 @@ function AppShell() {
     prevP2PState.current = p2pState;
 
     if (p2pState === 'connected') {
+      void loadRemoteSettings();
       toast.success('Connected to desktop');
     } else if (p2pState === 'offline') {
       toast.error('Desktop offline', {

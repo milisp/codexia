@@ -8,6 +8,7 @@
  */
 
 import { getHomeDirectory, readFile, writeFile } from '@/services/tauri';
+import { fetchRemoteSettings } from '@/services/tauri/settings';
 import type { SandboxMode, AskForApproval } from '@/bindings/v2';
 import type { ReasoningEffort } from '@/bindings';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
@@ -104,10 +105,7 @@ async function readSettingsFile(): Promise<SettingsFile | null> {
 
 // ── Hydration ─────────────────────────────────────────────────────────────────
 
-export async function loadSettings(): Promise<void> {
-  const data = await readSettingsFile();
-  if (!data) return;
-
+function applySettings(data: SettingsFile): void {
   if (data.workspace) {
     const ws = data.workspace;
     useWorkspaceStore.setState({
@@ -138,6 +136,22 @@ export async function loadSettings(): Promise<void> {
 
   if (data.codexConfig) {
     useConfigStore.setState(data.codexConfig as never);
+  }
+}
+
+export async function loadSettings(): Promise<void> {
+  const data = await readSettingsFile();
+  if (!data) return;
+  applySettings(data);
+}
+
+/** Load settings from the connected desktop via P2P API. Used on iOS. */
+export async function loadRemoteSettings(): Promise<void> {
+  try {
+    const data = await fetchRemoteSettings();
+    await applySettings(data as SettingsFile);
+  } catch (err) {
+    console.error('[settings] loadRemoteSettings failed:', err);
   }
 }
 
