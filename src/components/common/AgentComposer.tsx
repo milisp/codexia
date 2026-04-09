@@ -37,7 +37,7 @@ export function AgentComposer() {
       {/* Agent tabs */}
       <div className="flex items-center justify-between gap-2 shrink-0">
           <AgentSwitcher variant="tab" />
-          <TunnelIndicator variant="switch" />
+          <TunnelIndicator />
       </div>
 
       {/* Input area */}

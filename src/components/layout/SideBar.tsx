@@ -30,7 +30,6 @@ import { SideBarCodexTab } from './SideBarCodexTab';
 import { SideBarClaudeTab } from './SideBarClaudeTab';
 import { AgentSwitcher } from '@/components/common/AgentSwitcher';
 import { SessionManagerDialog } from './SessionManagerDialog';
-import { TunnelIndicator } from '@/components/features/TunnelIndicator';
 import { FeedbackDialog } from '../dialogs/FeedbackDialog';
 
 const focusCCInput = () => window.dispatchEvent(new Event('cc-input-focus-request'));
@@ -186,7 +185,6 @@ export function SideBar() {
             <UserInfo />
           </div>
           <div className="flex-shrink-0 pr-2 flex items-center gap-2">
-            <TunnelIndicator />
             <UpdateButton />
             <FeedbackDialog />
           </div>
