@@ -154,7 +154,7 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps = {}) {
               onCompositionEnd={() => { setTimeout(() => { isComposing.current = false; }, 50); }}
               placeholder="Ask Claude to do anything..."
               rows={1}
-              className="w-full resize-none overflow-y-auto bg-transparent px-3 pt-3 pb-11 text-sm outline-none placeholder:text-muted-foreground min-h-16 max-h-48"
+              className="w-full resize-none overflow-y-auto bg-transparent px-3 pt-3 pb-11 text-base md:text-sm outline-none placeholder:text-muted-foreground min-h-16 max-h-48"
             />
           </div>
 
