@@ -21,8 +21,8 @@ import type { AgentCenterCard } from "@/stores/useAgentCenterStore";
 import { AgentIcon } from "@/components/common/AgentIcon";
 import { AgentComposer } from "@/components/agent";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CodexGridCard } from "./CodexGridCard";
-import { CCGridCard } from "./CCGridCard";
+import { CodexCard } from "./CodexCard";
+import { CCCard } from "./CCCard";
 
 const ChatInterface = lazy(() =>
   import("@/components/codex/ChatInterface").then((m) => ({
@@ -117,14 +117,14 @@ export function CardHeader({
   );
 }
 
-interface GridCardProps {
+interface AgentCardProps {
   card: AgentCenterCard;
   onExpand: () => void;
   onRemove: () => void;
   isSelected: boolean;
 }
 
-function GridCard({ card, onExpand, onRemove, isSelected }: GridCardProps) {
+function AgentCard({ card, onExpand, onRemove, isSelected }: AgentCardProps) {
   const { setCurrentAgentCardId } = useAgentCenterStore();
   const { sessionLoadingMap, sessionMessagesMap, activeSessionIds } =
     useCCStore();
@@ -142,10 +142,10 @@ function GridCard({ card, onExpand, onRemove, isSelected }: GridCardProps) {
     card.kind === "codex"
       ? codexStatus?.type === "active" && codexStatus.activeFlags.length > 0
       : (sessionMessagesMap[card.id] ?? []).some(
-          (m) => m.type === "permission_request" && !(m as any).resolved,
-        ) ||
-        pendingApprovals.some((a) => (a as any).threadId === card.id) ||
-        pendingRequests.some((r) => r.threadId === card.id);
+        (m) => m.type === "permission_request" && !(m as any).resolved,
+      ) ||
+      pendingApprovals.some((a) => (a as any).threadId === card.id) ||
+      pendingRequests.some((r) => r.threadId === card.id);
 
   const status: CardStatus = running ? "running" : pending ? "pending" : "idle";
 
@@ -164,7 +164,7 @@ function GridCard({ card, onExpand, onRemove, isSelected }: GridCardProps) {
 
   if (card.kind === "codex") {
     return (
-      <CodexGridCard
+      <CodexCard
         card={card as AgentCenterCard & { kind: "codex" }}
         onRemove={onRemove}
         header={header}
@@ -174,7 +174,7 @@ function GridCard({ card, onExpand, onRemove, isSelected }: GridCardProps) {
   }
 
   return (
-    <CCGridCard
+    <CCCard
       card={card as AgentCenterCard & { kind: "cc" }}
       onRemove={onRemove}
       header={header}
@@ -204,7 +204,7 @@ function AgentFullscreen() {
   );
 }
 
-// ─── Column label ────────────────────────────────────────────────────────────
+// ─── ColumnLabel ────────────────────────────────────────────────────────────
 
 function ColumnLabel({
   dot,
@@ -232,9 +232,9 @@ function ColumnLabel({
   );
 }
 
-// ─── AgentGrid ────────────────────────────────────────────────────────────────
+// ─── AgentList ────────────────────────────────────────────────────────────────
 
-function AgentGrid() {
+function AgentList() {
   const { cards, removeCard, setCurrentAgentCardId, currentAgentCardId } =
     useAgentCenterStore();
   const { setIsAgentExpanded } = useLayoutStore();
@@ -336,20 +336,20 @@ function AgentGrid() {
           }
           className="w-full"
         >
-          <TabsList className="grid h-auto w-full grid-cols-3">
-            <TabsTrigger value="all" className="text-xs">
+          <TabsList className="flex h-auto w-full">
+            <TabsTrigger value="all" className="flex-1 text-xs">
               All {cards.length}
             </TabsTrigger>
             <TabsTrigger
               value="idle"
-              className="text-xs flex items-center gap-1"
+              className="flex-1 text-xs flex items-center justify-center gap-1"
             >
               <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-muted-foreground/40" />
               Idle {idleCards.length}
             </TabsTrigger>
             <TabsTrigger
               value="running"
-              className="text-xs flex items-center gap-1"
+              className="flex-1 text-xs flex items-center justify-center gap-1"
             >
               <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-green-500" />
               Running {runningCards.length}
@@ -362,20 +362,17 @@ function AgentGrid() {
               No {mobileTab} agents.
             </div>
           ) : (
-            <div
-              className="grid gap-3"
-              style={{
-                gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-              }}
-            >
+            <div className="flex flex-wrap gap-3">
               {mobileCards.map((card) => (
-                <GridCard
-                  key={card.id}
-                  card={card}
-                  onExpand={() => void expand(card)}
-                  onRemove={() => handleRemove(card)}
-                  isSelected={card.id === currentAgentCardId}
-                />
+                <div key={card.id} className="w-full sm:w-[320px] flex-grow">
+                  <AgentCard
+                    key={card.id}
+                    card={card}
+                    onExpand={() => void expand(card)}
+                    onRemove={() => handleRemove(card)}
+                    isSelected={card.id === currentAgentCardId}
+                  />
+                </div>
               ))}
             </div>
           )}
@@ -427,7 +424,7 @@ function AgentGrid() {
       {showSidePanels && (
         <>
           {/* Middle: running */}
-          <div className="flex-1 flex flex-col min-h-0 border-r overflow-hidden">
+          <div className="w-80 flex-none flex flex-col min-h-0 border-r overflow-hidden">
             <ColumnLabel
               dot="green"
               label="Running"
@@ -445,7 +442,7 @@ function AgentGrid() {
                     onClick={() => selectCard(card)}
                     className="cursor-pointer"
                   >
-                    <GridCard
+                    <AgentCard
                       card={card}
                       onExpand={() => void expand(card)}
                       onRemove={() => handleRemove(card)}
@@ -458,7 +455,7 @@ function AgentGrid() {
           </div>
 
           {/* Right: idle */}
-          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="w-80 flex-none flex flex-col min-h-0 overflow-hidden">
             <ColumnLabel dot="muted" label="Idle" count={idleCards.length} />
             <div className="flex-1 min-h-0 overflow-y-auto p-2 flex flex-col gap-2">
               {idleCards.length === 0 ? (
@@ -472,7 +469,7 @@ function AgentGrid() {
                     onClick={() => selectCard(card)}
                     className="cursor-pointer"
                   >
-                    <GridCard
+                    <AgentCard
                       card={card}
                       onExpand={() => void expand(card)}
                       onRemove={() => handleRemove(card)}
@@ -491,5 +488,5 @@ function AgentGrid() {
 
 export default function AgentView() {
   const { isAgentExpanded } = useLayoutStore();
-  return isAgentExpanded ? <AgentFullscreen /> : <AgentGrid />;
+  return isAgentExpanded ? <AgentFullscreen /> : <AgentList />;
 }

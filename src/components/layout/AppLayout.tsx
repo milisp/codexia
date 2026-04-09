@@ -19,7 +19,7 @@ const SettingsView = lazy(() =>
 );
 const PluginsView = lazy(() => import('@/views/PluginsView'));
 const AgentsMdView = lazy(() => import('@/views/agents-md-view'));
-const AgentView = lazy(() => import('@/views/AgentView'));
+const AgentView = lazy(() => import('@/components/agent/AgentView'));
 const LoginView = lazy(() => import('@/views/LoginView'));
 const AutoMationsView = lazy(() =>
   import('../features/automations').then((module) => ({ default: module.AutoMationsView })),
