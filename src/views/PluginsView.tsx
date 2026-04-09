@@ -26,7 +26,7 @@ import {
 } from '@/services';
 import { ProjectSelector } from '@/components/project-selector';
 import { cn } from '@/lib/utils';
-import { AgentSwitcher } from '@/components/common/AgentSwitcher';
+import { AgentSwitcher } from '@/components/agent';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 type ActiveTab = 'MCP' | 'Skills' | 'Plugins' | 'manage' | 'add';

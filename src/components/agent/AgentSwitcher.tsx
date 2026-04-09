@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useLayoutStore } from '@/stores';
-import { AgentIcon } from './AgentIcon';
+import { AgentIcon } from '../common/AgentIcon';
 
 const AGENT_TYPES = ['cc', 'codex'] as const;
 
@@ -23,11 +23,10 @@ export function AgentSwitcher({ variant = 'icon', className }: AgentSwitcherProp
           <button
             key={agent}
             onClick={() => setSelectedAgent(agent)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
-              selectedAgent === agent
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${selectedAgent === agent
                 ? 'bg-muted text-foreground'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-            }`}
+              }`}
           >
             <AgentIcon agent={agent} />
             <span>{agent === 'cc' ? 'Claude Code' : 'Codex'}</span>

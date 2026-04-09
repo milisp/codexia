@@ -1,27 +1,39 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import { useAgentCenterStore } from '@/stores';
-import { useLayoutStore } from '@/stores';
-import { useCodexStore, useApprovalStore, useRequestUserInputStore } from '@/stores/codex';
-import { useCCStore } from '@/stores/cc';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { codexService } from '@/services/codexService';
-import { gitRemoveWorktree } from '@/services/tauri/git';
-import { ArrowLeft, X, Maximize2, PanelRightClose, PanelRightOpen } from 'lucide-react';
-import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
-import { AgentIcon } from '@/components/common/AgentIcon';
-import { AgentComposer } from '@/components/common';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CodexGridCard } from './CodexGridCard';
-import { CCGridCard } from './CCGridCard';
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { useAgentCenterStore } from "@/stores";
+import { useLayoutStore } from "@/stores";
+import {
+  useCodexStore,
+  useApprovalStore,
+  useRequestUserInputStore,
+} from "@/stores/codex";
+import { useCCStore } from "@/stores/cc";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { codexService } from "@/services/codexService";
+import { gitRemoveWorktree } from "@/services/tauri/git";
+import {
+  ArrowLeft,
+  X,
+  Maximize2,
+  PanelRightClose,
+  PanelRightOpen,
+} from "lucide-react";
+import type { AgentCenterCard } from "@/stores/useAgentCenterStore";
+import { AgentIcon } from "@/components/common/AgentIcon";
+import { AgentComposer } from "@/components/agent";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CodexGridCard } from "./CodexGridCard";
+import { CCGridCard } from "./CCGridCard";
 
 const ChatInterface = lazy(() =>
-  import('@/components/codex/ChatInterface').then((m) => ({ default: m.ChatInterface }))
+  import("@/components/codex/ChatInterface").then((m) => ({
+    default: m.ChatInterface,
+  })),
 );
-const CCView = lazy(() => import('@/components/cc/CCView'));
+const CCView = lazy(() => import("@/components/cc/CCView"));
 
 // CardHeader
 
-type CardStatus = 'running' | 'pending' | 'idle';
+type CardStatus = "running" | "pending" | "idle";
 
 interface CardHeaderProps {
   card: AgentCenterCard;
@@ -32,25 +44,37 @@ interface CardHeaderProps {
   status?: CardStatus;
 }
 
-export function CardHeader({ card, onClose, onBack, onSelect, onExpand, status = 'idle' }: CardHeaderProps) {
+export function CardHeader({
+  card,
+  onClose,
+  onBack,
+  onSelect,
+  onExpand,
+  status = "idle",
+}: CardHeaderProps) {
   const title = card.preview?.slice(0, 60) || card.id.slice(0, 12);
 
   const dotColor =
-    status === 'running' ? 'bg-green-500' :
-      status === 'pending' ? 'bg-amber-500' :
-        'bg-muted-foreground/40';
+    status === "running"
+      ? "bg-green-500"
+      : status === "pending"
+        ? "bg-amber-500"
+        : "bg-muted-foreground/40";
 
-  const dotAnimate = status !== 'idle' ? 'animate-pulse' : '';
+  const dotAnimate = status !== "idle" ? "animate-pulse" : "";
 
   return (
     <div
       className="flex items-center gap-2 px-2 py-1.5 border-b bg-muted/30 shrink-0"
       onClick={onSelect}
-      style={onSelect ? { cursor: 'pointer' } : undefined}
+      style={onSelect ? { cursor: "pointer" } : undefined}
     >
       {onBack && (
         <button
-          onClick={(e) => { e.stopPropagation(); onBack(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onBack();
+          }}
           className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
           aria-label="Back"
         >
@@ -60,19 +84,29 @@ export function CardHeader({ card, onClose, onBack, onSelect, onExpand, status =
       {onClose && (
         // Shows a status dot by default; reveals the X button on hover.
         <button
-          onClick={(e) => { e.stopPropagation(); onClose(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
           className="group relative h-3.5 w-3.5 flex items-center justify-center shrink-0"
           aria-label="Remove"
         >
-          <span className={`absolute h-2 w-2 rounded-full transition-opacity duration-150 group-hover:opacity-0 ${dotColor} ${dotAnimate}`} />
+          <span
+            className={`absolute h-2 w-2 rounded-full transition-opacity duration-150 group-hover:opacity-0 ${dotColor} ${dotAnimate}`}
+          />
           <X className="h-3.5 w-3.5 text-destructive/60 hover:text-destructive absolute opacity-0 group-hover:opacity-100 transition-opacity duration-150" />
         </button>
       )}
       <AgentIcon agent={card.kind} />
-      <span className="text-xs text-muted-foreground truncate flex-1 min-w-0">{title}</span>
+      <span className="text-xs text-muted-foreground truncate flex-1 min-w-0">
+        {title}
+      </span>
       {onExpand && (
         <button
-          onClick={(e) => { e.stopPropagation(); onExpand(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onExpand();
+          }}
           className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
           aria-label="Expand"
         >
@@ -92,26 +126,28 @@ interface GridCardProps {
 
 function GridCard({ card, onExpand, onRemove, isSelected }: GridCardProps) {
   const { setCurrentAgentCardId } = useAgentCenterStore();
-  const { sessionLoadingMap, sessionMessagesMap, activeSessionIds } = useCCStore();
+  const { sessionLoadingMap, sessionMessagesMap, activeSessionIds } =
+    useCCStore();
   const { threadStatusMap } = useCodexStore();
   const { pendingApprovals } = useApprovalStore();
   const { pendingRequests } = useRequestUserInputStore();
-  const codexStatus = card.kind === 'codex' ? threadStatusMap[card.id] : undefined;
+  const codexStatus =
+    card.kind === "codex" ? threadStatusMap[card.id] : undefined;
   const running =
-    card.kind === 'codex'
-      ? codexStatus?.type === 'active' && codexStatus.activeFlags.length === 0
+    card.kind === "codex"
+      ? codexStatus?.type === "active" && codexStatus.activeFlags.length === 0
       : activeSessionIds.includes(card.id) && !!sessionLoadingMap[card.id];
 
   const pending =
-    card.kind === 'codex'
-      ? codexStatus?.type === 'active' && codexStatus.activeFlags.length > 0
+    card.kind === "codex"
+      ? codexStatus?.type === "active" && codexStatus.activeFlags.length > 0
       : (sessionMessagesMap[card.id] ?? []).some(
-        (m) => m.type === 'permission_request' && !(m as any).resolved
-      ) ||
-      pendingApprovals.some((a) => (a as any).threadId === card.id) ||
-      pendingRequests.some((r) => r.threadId === card.id);
+          (m) => m.type === "permission_request" && !(m as any).resolved,
+        ) ||
+        pendingApprovals.some((a) => (a as any).threadId === card.id) ||
+        pendingRequests.some((r) => r.threadId === card.id);
 
-  const status: CardStatus = running ? 'running' : pending ? 'pending' : 'idle';
+  const status: CardStatus = running ? "running" : pending ? "pending" : "idle";
 
   const header = (
     <CardHeader
@@ -119,17 +155,17 @@ function GridCard({ card, onExpand, onRemove, isSelected }: GridCardProps) {
       onClose={onRemove}
       onSelect={() => {
         setCurrentAgentCardId(card.id);
-        if (card.kind === 'codex') void codexService.setCurrentThread(card.id);
+        if (card.kind === "codex") void codexService.setCurrentThread(card.id);
       }}
       onExpand={onExpand}
       status={status}
     />
   );
 
-  if (card.kind === 'codex') {
+  if (card.kind === "codex") {
     return (
       <CodexGridCard
-        card={card as AgentCenterCard & { kind: 'codex' }}
+        card={card as AgentCenterCard & { kind: "codex" }}
         onRemove={onRemove}
         header={header}
         isSelected={isSelected}
@@ -139,7 +175,7 @@ function GridCard({ card, onExpand, onRemove, isSelected }: GridCardProps) {
 
   return (
     <CCGridCard
-      card={card as AgentCenterCard & { kind: 'cc' }}
+      card={card as AgentCenterCard & { kind: "cc" }}
       onRemove={onRemove}
       header={header}
       isSelected={isSelected}
@@ -154,14 +190,14 @@ function AgentFullscreen() {
 
   const card = cards.find((c) => c.id === currentAgentCardId);
   // Fallback for new thread/session (no card yet): show blank header with correct agent kind
-  const headerCard: AgentCenterCard = card ?? { kind: selectedAgent, id: '' };
+  const headerCard: AgentCenterCard = card ?? { kind: selectedAgent, id: "" };
 
   return (
     <div className="flex flex-col h-full min-h-0">
       <CardHeader card={headerCard} onBack={() => setIsAgentExpanded(false)} />
       <div className="flex flex-col flex-1 min-h-0 h-full overflow-hidden">
         <Suspense fallback={null}>
-          {selectedAgent === 'codex' ? <ChatInterface /> : <CCView />}
+          {selectedAgent === "codex" ? <ChatInterface /> : <CCView />}
         </Suspense>
       </div>
     </div>
@@ -170,14 +206,28 @@ function AgentFullscreen() {
 
 // ─── Column label ────────────────────────────────────────────────────────────
 
-function ColumnLabel({ dot, label, count }: { dot?: 'green' | 'muted'; label: string; count: number }) {
+function ColumnLabel({
+  dot,
+  label,
+  count,
+}: {
+  dot?: "green" | "muted";
+  label: string;
+  count: number;
+}) {
   return (
     <div className="flex items-center gap-1.5 px-2 py-1 border-b shrink-0 bg-muted/20">
       {dot && (
-        <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${dot === 'green' ? 'bg-green-500' : 'bg-muted-foreground/40'}`} />
+        <span
+          className={`h-1.5 w-1.5 rounded-full shrink-0 ${dot === "green" ? "bg-green-500" : "bg-muted-foreground/40"}`}
+        />
       )}
-      <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">{label}</span>
-      <span className="text-[10px] text-muted-foreground/50 ml-auto">{count}</span>
+      <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+        {label}
+      </span>
+      <span className="text-[10px] text-muted-foreground/50 ml-auto">
+        {count}
+      </span>
     </div>
   );
 }
@@ -185,15 +235,21 @@ function ColumnLabel({ dot, label, count }: { dot?: 'green' | 'muted'; label: st
 // ─── AgentGrid ────────────────────────────────────────────────────────────────
 
 function AgentGrid() {
-  const { cards, removeCard, setCurrentAgentCardId, currentAgentCardId } = useAgentCenterStore();
+  const { cards, removeCard, setCurrentAgentCardId, currentAgentCardId } =
+    useAgentCenterStore();
   const { setIsAgentExpanded } = useLayoutStore();
-  const { switchToSession, sessionLoadingMap, activeSessionId, setActiveSessionId } = useCCStore();
+  const {
+    switchToSession,
+    sessionLoadingMap,
+    activeSessionId,
+    setActiveSessionId,
+  } = useCCStore();
   const { threadStatusMap, currentThreadId } = useCodexStore();
   const { setSelectedAgent, selectedAgent } = useWorkspaceStore();
 
   const isRunning = (card: AgentCenterCard) =>
-    card.kind === 'codex'
-      ? threadStatusMap[card.id]?.type === 'active'
+    card.kind === "codex"
+      ? threadStatusMap[card.id]?.type === "active"
       : !!sessionLoadingMap[card.id];
 
   const handleRemove = (card: AgentCenterCard) => {
@@ -201,7 +257,7 @@ function AgentGrid() {
     if (card.id === currentAgentCardId) {
       setCurrentAgentCardId(null);
     }
-    if (card.kind === 'codex') {
+    if (card.kind === "codex") {
       if (card.id === currentThreadId) {
         void codexService.setCurrentThread(null);
       }
@@ -212,7 +268,7 @@ function AgentGrid() {
     }
     if (card.worktreePath) {
       const { cwd } = useWorkspaceStore.getState();
-      const worktreeKey = card.worktreePath.split('/').pop() ?? '';
+      const worktreeKey = card.worktreePath.split("/").pop() ?? "";
       if (cwd && worktreeKey) {
         void gitRemoveWorktree(cwd, worktreeKey);
       }
@@ -223,7 +279,7 @@ function AgentGrid() {
     setCurrentAgentCardId(card.id);
     setSelectedAgent(card.kind);
     setIsAgentExpanded(true);
-    if (card.kind === 'codex') {
+    if (card.kind === "codex") {
       await codexService.setCurrentThread(card.id);
     } else {
       switchToSession(card.id);
@@ -233,53 +289,68 @@ function AgentGrid() {
   const selectCard = (card: AgentCenterCard) => {
     setCurrentAgentCardId(card.id);
     setSelectedAgent(card.kind);
-    if (card.kind === 'codex') void codexService.setCurrentThread(card.id);
+    if (card.kind === "codex") void codexService.setCurrentThread(card.id);
     else switchToSession(card.id);
   };
 
   const [showSidePanels, setShowSidePanels] = useState(true);
-  const [mobileTab, setMobileTab] = useState<'all' | 'idle' | 'running'>('all');
+  const [mobileTab, setMobileTab] = useState<"all" | "idle" | "running">("all");
   const [isDesktop, setIsDesktop] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return window.matchMedia('(min-width: 768px)').matches;
+    if (typeof window === "undefined") return true;
+    return window.matchMedia("(min-width: 768px)").matches;
   });
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mediaQuery = window.matchMedia('(min-width: 768px)');
-    const handleChange = (event: MediaQueryListEvent) => setIsDesktop(event.matches);
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(min-width: 768px)");
+    const handleChange = (event: MediaQueryListEvent) =>
+      setIsDesktop(event.matches);
     setIsDesktop(mediaQuery.matches);
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
   const runningCards = useMemo(
     () => cards.filter((c) => isRunning(c)),
-    [cards, threadStatusMap, sessionLoadingMap]
+    [cards, threadStatusMap, sessionLoadingMap],
   );
 
   const idleCards = useMemo(
     () => cards.filter((c) => !isRunning(c)),
-    [cards, threadStatusMap, sessionLoadingMap]
+    [cards, threadStatusMap, sessionLoadingMap],
   );
 
   const mobileCards = useMemo(() => {
-    if (mobileTab === 'running') return runningCards;
-    if (mobileTab === 'idle') return idleCards;
+    if (mobileTab === "running") return runningCards;
+    if (mobileTab === "idle") return idleCards;
     return cards;
   }, [cards, idleCards, mobileTab, runningCards]);
 
   if (!isDesktop) {
     return (
       <div className="flex flex-col h-full min-h-0 overflow-hidden">
-        <Tabs value={mobileTab} onValueChange={(value) => setMobileTab(value as 'all' | 'idle' | 'running')} className="w-full">
+        <Tabs
+          value={mobileTab}
+          onValueChange={(value) =>
+            setMobileTab(value as "all" | "idle" | "running")
+          }
+          className="w-full"
+        >
           <TabsList className="grid h-auto w-full grid-cols-3">
-            <TabsTrigger value="all" className="text-xs">All {cards.length}</TabsTrigger>
-            <TabsTrigger value="idle" className="text-xs flex items-center gap-1">
+            <TabsTrigger value="all" className="text-xs">
+              All {cards.length}
+            </TabsTrigger>
+            <TabsTrigger
+              value="idle"
+              className="text-xs flex items-center gap-1"
+            >
               <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-muted-foreground/40" />
               Idle {idleCards.length}
             </TabsTrigger>
-            <TabsTrigger value="running" className="text-xs flex items-center gap-1">
+            <TabsTrigger
+              value="running"
+              className="text-xs flex items-center gap-1"
+            >
               <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-green-500" />
               Running {runningCards.length}
             </TabsTrigger>
@@ -293,7 +364,9 @@ function AgentGrid() {
           ) : (
             <div
               className="grid gap-3"
-              style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}
+              style={{
+                gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+              }}
             >
               {mobileCards.map((card) => (
                 <GridCard
@@ -324,18 +397,24 @@ function AgentGrid() {
           <button
             onClick={() => setShowSidePanels((v) => !v)}
             className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-            aria-label={showSidePanels ? 'Hide side panels' : 'Show side panels'}
+            aria-label={
+              showSidePanels ? "Hide side panels" : "Show side panels"
+            }
           >
-            {showSidePanels
-              ? <PanelRightClose className="h-3.5 w-3.5" />
-              : <PanelRightOpen className="h-3.5 w-3.5" />}
+            {showSidePanels ? (
+              <PanelRightClose className="h-3.5 w-3.5" />
+            ) : (
+              <PanelRightOpen className="h-3.5 w-3.5" />
+            )}
           </button>
         </div>
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
           <Suspense fallback={null}>
-            {selectedAgent === 'codex'
-              ? <ChatInterface hideComposer />
-              : <CCView hideComposer />}
+            {selectedAgent === "codex" ? (
+              <ChatInterface hideComposer />
+            ) : (
+              <CCView hideComposer />
+            )}
           </Suspense>
         </div>
         <div className="shrink-0 flex justify-center">
@@ -349,7 +428,11 @@ function AgentGrid() {
         <>
           {/* Middle: running */}
           <div className="flex-1 flex flex-col min-h-0 border-r overflow-hidden">
-            <ColumnLabel dot="green" label="Running" count={runningCards.length} />
+            <ColumnLabel
+              dot="green"
+              label="Running"
+              count={runningCards.length}
+            />
             <div className="flex-1 min-h-0 overflow-y-auto p-2 flex flex-col gap-2">
               {runningCards.length === 0 ? (
                 <div className="flex h-full items-center justify-center text-xs text-muted-foreground/50 py-4">
@@ -357,7 +440,11 @@ function AgentGrid() {
                 </div>
               ) : (
                 runningCards.map((card) => (
-                  <div key={card.id} onClick={() => selectCard(card)} className="cursor-pointer">
+                  <div
+                    key={card.id}
+                    onClick={() => selectCard(card)}
+                    className="cursor-pointer"
+                  >
                     <GridCard
                       card={card}
                       onExpand={() => void expand(card)}
@@ -380,7 +467,11 @@ function AgentGrid() {
                 </div>
               ) : (
                 idleCards.map((card) => (
-                  <div key={card.id} onClick={() => selectCard(card)} className="cursor-pointer">
+                  <div
+                    key={card.id}
+                    onClick={() => selectCard(card)}
+                    className="cursor-pointer"
+                  >
                     <GridCard
                       card={card}
                       onExpand={() => void expand(card)}
