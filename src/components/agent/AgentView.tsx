@@ -299,14 +299,6 @@ function AgentList() {
     if (typeof window === "undefined") return true;
     return window.matchMedia("(min-width: 768px)").matches;
   });
-  // On mobile, track the visual viewport so the container stays pinned to the
-  // visible area when the on-screen keyboard appears (iOS WKWebView scrolls the
-  // document on input focus, which hides the composer behind the keyboard).
-  const [mobileVP, setMobileVP] = useState<{
-    top: number;
-    height: number;
-    width: number;
-  } | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -317,21 +309,6 @@ function AgentList() {
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
-
-  useEffect(() => {
-    if (isDesktop) return;
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const update = () =>
-      setMobileVP({ top: vv.offsetTop, height: vv.height, width: vv.width });
-    update();
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
-    return () => {
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
-    };
-  }, [isDesktop]);
 
   const runningCards = useMemo(
     () => cards.filter((c) => isRunning(c)),
@@ -351,20 +328,7 @@ function AgentList() {
 
   if (!isDesktop) {
     return (
-      <div
-        className="flex flex-col overflow-hidden bg-background"
-        style={
-          mobileVP
-            ? {
-                position: "fixed",
-                top: mobileVP.top,
-                left: 0,
-                width: mobileVP.width,
-                height: mobileVP.height,
-              }
-            : { height: "100%" }
-        }
-      >
+      <div className="flex flex-col h-full overflow-hidden bg-background">
         <Tabs
           value={mobileTab}
           onValueChange={(value) =>

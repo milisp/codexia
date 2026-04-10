@@ -253,8 +253,19 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* Prevent iOS WKWebView from scrolling the document when an input is focused.
+     Without this, tapping a textarea pushes the header off-screen. All scrolling
+     is handled internally by overflow-y-auto containers. */
+  html {
+    height: 100%;
+    overflow: hidden;
+  }
   body {
     @apply bg-background text-foreground;
+    position: fixed;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
   }
 
   /* Custom scrollbar for webkit browsers */
