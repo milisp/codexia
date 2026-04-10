@@ -1,9 +1,7 @@
 import { Suspense, lazy, useEffect, useRef } from 'react';
 import type { ImperativePanelHandle } from 'react-resizable-panels';
 import { useLayoutStore } from '@/stores';
-import { SideBar } from '@/components/layout/SideBar';
-import { RightPanel } from '@/components/layout/RightPanel';
-import { AppHeader } from '@/components/layout';
+import { AppSideBar, RightPanel, AppHeader } from '@/components/layout';
 import { History } from '@/components/codex/history';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { SidebarInset, SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
@@ -205,7 +203,7 @@ export function AppLayout() {
           onOpenChange={setSidebarOpen}
           className="h-full min-h-0"
         >
-          <SideBar />
+          <AppSideBar />
           {/* Single layout component for both mobile and desktop.
               Keeping mainContent at a stable tree position prevents lazy views
               from unmounting/remounting when the viewport crosses the mobile breakpoint. */}

@@ -40,7 +40,7 @@ const navBtnActive = 'border-border bg-accent/70 text-foreground';
 const navBtnInactive = 'border-transparent hover:border-border/60';
 const navBtnCls = (active: boolean) => `${navBtnBase} ${active ? navBtnActive : navBtnInactive}`;
 
-export function SideBar() {
+export function AppSideBar() {
   const { cwd, setCwd, setSelectedAgent } = useWorkspaceStore();
   const { isPro } = useAgentLimit();
   const { setView, view, activeSidebarTab, setActiveSidebarTab } = useLayoutStore();
