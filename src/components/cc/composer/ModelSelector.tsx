@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 export function ModelSelector() {
   const { options, updateOptions } = useCCStore();
-  const { model } = options;
+  const model = options.model ?? 'sonnet';
 
   const handleModelChange = (value: string) => {
     const modelValue = value as ModelType | undefined;
@@ -13,14 +13,11 @@ export function ModelSelector() {
 
   return (
     <div className="flex gap-2 items-center">
-      <Select value={model ?? ''} onValueChange={handleModelChange}>
+      <Select value={model} onValueChange={handleModelChange}>
         <SelectTrigger className="w-32">
           <SelectValue placeholder="Select model" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="default" className="text-xs">
-            Auto
-          </SelectItem>
           <SelectItem value="sonnet">Sonnet</SelectItem>
           <SelectItem value="haiku">Haiku</SelectItem>
           <SelectItem value="opus">Opus</SelectItem>

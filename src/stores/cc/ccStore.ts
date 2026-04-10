@@ -78,7 +78,7 @@ export const useCCStore = create<CCStoreState>()(
       sessionLoadingMap: {},
       sessionStartTimeMap: {},
       options: {
-        model: undefined,
+        model: 'sonnet',
         permissionMode: 'default',
       },
       isConnected: false,
