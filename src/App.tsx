@@ -42,7 +42,7 @@ function AppShell() {
     return initSettingsSync();
   }, []);
   // Mobile: auto-connect to desktop via Quinn P2P
-  const { state: p2pState, error: p2pError, retry: p2pRetry } = useP2PConnection();
+  const { state: p2pState, error: p2pError, retry: p2pRetry, dismiss: p2pDismiss } = useP2PConnection();
 
   const prevP2PState = useRef(p2pState);
   useEffect(() => {
@@ -101,11 +101,13 @@ function AppShell() {
   return (
     <>
       <AppLayout />
-      <HistoryProjectsDialog />
-      <AnalyticsConsentDialog />
-      {isPhone && (
-        <P2PStatusDialog state={p2pState} error={p2pError} onRetry={p2pRetry} />
-      )}
+      {/* On mobile, suppress other dialogs while P2P dialog is active to avoid Radix DismissableLayer conflicts */}
+      {!(isPhone && (p2pState === 'connecting' || p2pState === 'offline' || p2pState === 'error')) && <HistoryProjectsDialog />}
+      {isPhone ? (
+        <P2PStatusDialog state={p2pState} error={p2pError} onRetry={p2pRetry} onClose={p2pDismiss} />
+      ) :
+        <AnalyticsConsentDialog />
+      }
       <AlertDialog open={quitDialogOpen} onOpenChange={setQuitDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

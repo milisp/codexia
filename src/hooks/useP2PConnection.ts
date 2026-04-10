@@ -55,17 +55,24 @@ export function useP2PConnection() {
     if (import.meta.env.DEV) setLogs(prev => [...prev.slice(-49), `${new Date().toISOString().slice(11, 23)} ${msg}`])
   }
 
+  const dismiss = useCallback(() => {
+    stateRef.current = 'idle'
+    setState('idle')
+    setError(null)
+  }, [])
+
   const connect = useCallback(async () => {
     if (connecting.current) { log('already connecting, skipping'); return }
     if (stateRef.current === 'connected') { log('already connected, skipping'); return }
     connecting.current = true
+    try {
     const isPhone = await getIsPhone()
-    if (!isPhone || !supabase) { connecting.current = false; return }
+    if (!isPhone || !supabase) { return }
 
     const {
       data: { session },
     } = await supabase.auth.getSession()
-    if (!session) { log('no session'); connecting.current = false; return }
+    if (!session) { log('no session'); return }
 
     stateRef.current = 'connecting'
     setState('connecting')
@@ -155,6 +162,7 @@ export function useP2PConnection() {
       stateRef.current = 'error'
       setState('error')
       setError(msg)
+    }
     } finally {
       connecting.current = false
     }
@@ -183,5 +191,5 @@ export function useP2PConnection() {
     }
   }, [connect])
 
-  return { state, error, logs, retry: connect }
+  return { state, error, logs, retry: connect, dismiss }
 }
