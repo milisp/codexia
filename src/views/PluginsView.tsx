@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { MCP } from '@lobehub/icons';
+import { MCP } from '@/components/icons';
 import { ArrowLeft, Blocks, MoreHorizontal, Package2, Plus, RotateCcw, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {

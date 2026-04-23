@@ -1,13 +1,13 @@
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { Codex, ClaudeCode } from '@lobehub/icons';
+import { Codex, ClaudeCode } from '@/components/icons';
 
-type agent = 'codex' | 'cc'
+type agent = 'codex' | 'cc';
 
 export const AgentIcon = ({ agent }: { agent: agent }) => {
-    const { resolvedTheme } = useThemeContext();
-    if (agent === 'codex') {
-        return resolvedTheme === 'dark' ? <Codex /> : <Codex.Color />;
-    } else if (agent === 'cc') {
-        return resolvedTheme === 'dark' ? <ClaudeCode /> : <ClaudeCode.Color />;
-    }
-}
+  const { resolvedTheme } = useThemeContext();
+  if (agent === 'codex') {
+    return resolvedTheme === 'dark' ? <Codex /> : <Codex />;
+  } else if (agent === 'cc') {
+    return resolvedTheme === 'dark' ? <ClaudeCode /> : <ClaudeCode />;
+  }
+};
