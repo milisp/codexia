@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import DxtView from '@/components/features/dxt/DxtView';
-import { PluginsCatalogView } from '@/components/features/plugins/PluginsCatalogView';
+import { RecommendToolsView } from '@/components/features/tools/RecommendToolsView';
 import SkillsViewContent from '@/components/features/skills/SkillsView';
 import { Clone } from '@/components/features/skills/Clone';
 import { CodexMcpView } from '@/components/features/mcp/CodexMcpView';
@@ -29,7 +29,7 @@ import { cn } from '@/lib/utils';
 import { AgentSwitcher } from '@/components/agent';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-type ActiveTab = 'MCP' | 'Skills' | 'Plugins' | 'manage' | 'add';
+type ActiveTab = 'MCP' | 'Skills' | 'Tools' | 'manage' | 'add';
 type ManageTab = 'Skills' | 'MCPs';
 type AddTab = 'MCP' | 'Skill';
 type SkillScope = 'user' | 'project';
@@ -55,7 +55,7 @@ function TabSwitcher<T extends string>({
           onClick={() => onChange(t)}
           className={`h-7 ${active === t ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'}`}
         >
-          {t.startsWith('MCP') ? <MCP className="h-3.5 w-3.5" /> : t === 'Plugins' ? <Blocks className="h-4 w-4" /> : <Package2 className="h-4 w-4" />}
+          {t.startsWith('MCP') ? <MCP className="h-3.5 w-3.5" /> : t === 'Tools' ? <Blocks className="h-4 w-4" /> : <Package2 className="h-4 w-4" />}
           {showLabel && ` ${t}`}
         </Button>
       ))}
@@ -65,7 +65,7 @@ function TabSwitcher<T extends string>({
 
 export default function PluginsView() {
   const isMobile = useIsMobile();
-  const [tab, setTab] = useState<ActiveTab>('Plugins');
+  const [tab, setTab] = useState<ActiveTab>('Tools');
   const [manageTab, setManageTab] = useState<ManageTab>('MCPs');
   const [addTab, setAddTab] = useState<AddTab>('MCP');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -115,7 +115,7 @@ export default function PluginsView() {
         ) : (
           <>
             {tab !== 'add' && !selectedDxt && (
-              <TabSwitcher tabs={['Plugins', 'Skills', 'MCP'] as const} active={tab as 'MCP' | 'Skills' | 'Plugins'} onChange={(t) => { setTab(t); }} showLabel={!isMobile} />
+              <TabSwitcher tabs={['Tools', 'Skills', 'MCP'] as const} active={tab as 'MCP' | 'Skills' | 'Tools'} onChange={(t) => { setTab(t); }} showLabel={!isMobile} />
             )}
             {tab === 'add' && (
               <TabSwitcher tabs={['MCP', 'Skill'] as const} active={addTab} onChange={setAddTab} showLabel={!isMobile} />
@@ -161,7 +161,7 @@ export default function PluginsView() {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setRefreshTrigger((k) => k + 1)}>
                   <RotateCcw className="h-3.5 w-3.5 mr-2" />
-                  {tab === 'MCP' ? 'Reload extensions' : tab === 'Skills' ? 'Refresh skills' : tab === 'Plugins' ? 'Refresh plugins' : 'Refresh'}
+                  {tab === 'MCP' ? 'Reload extensions' : tab === 'Skills' ? 'Refresh skills' : tab === 'Tools' ? 'Refresh tools' : 'Refresh'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -171,7 +171,7 @@ export default function PluginsView() {
 
       {/* Content */}
       <div className="flex-1 min-h-0 overflow-hidden">
-        {tab === 'Plugins' && <PluginsCatalogView />}
+        {tab === 'Tools' && <RecommendToolsView />}
         {tab === 'MCP' && <DxtView refreshTrigger={refreshTrigger} />}
         {tab === 'Skills' && <SkillsViewContent />}
 

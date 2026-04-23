@@ -3,9 +3,9 @@ import { openUrl } from '@tauri-apps/plugin-opener';
 import { ExternalLink, Terminal, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import pluginsData from '@/assets/plugins.json';
+import recommendData from '@/assets/recommend.json';
 
-interface Plugin {
+interface Tool {
   name: string;
   description: string;
   url: string;
@@ -43,37 +43,37 @@ function SetupPopover({ setup }: { setup: string }) {
   );
 }
 
-function PluginCard({ plugin }: { plugin: Plugin }) {
+function ToolCard({ tool }: { tool: Tool }) {
   return (
     <div className="flex items-start gap-3 rounded-lg border bg-card p-3 hover:bg-accent/30 transition-colors">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-1">
-          <span className="text-sm font-medium truncate">{plugin.name}</span>
+          <span className="text-sm font-medium truncate">{tool.name}</span>
         </div>
         <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-          {plugin.description}
+          {tool.description}
         </p>
         <button
           type="button"
           className="mt-1.5 flex items-center gap-1 text-[11px] text-primary/70 hover:text-primary transition-colors"
-          onClick={() => void openUrl(plugin.url)}
+          onClick={() => void openUrl(tool.url)}
         >
           <ExternalLink className="h-3 w-3" />
-          <span className="truncate max-w-[200px]">{plugin.url}</span>
+          <span className="truncate max-w-[200px]">{tool.url}</span>
         </button>
       </div>
-      <SetupPopover setup={plugin.setup} />
+      <SetupPopover setup={tool.setup} />
     </div>
   );
 }
 
-export function PluginsCatalogView() {
-  const plugins = (pluginsData as { tools: Plugin[] }).tools;
+export function RecommendToolsView() {
+  const tools = (recommendData as { tools: Tool[] }).tools;
 
   return (
     <div className="flex flex-col gap-2 p-4">
-      {plugins.map((plugin) => (
-        <PluginCard key={plugin.name} plugin={plugin} />
+      {tools.map((tool) => (
+        <ToolCard key={tool.name} tool={tool} />
       ))}
     </div>
   );
