@@ -14,6 +14,7 @@ import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useSettingsStore } from '@/stores/settings/useSettingsStore';
 import { useThemeStore } from '@/stores/settings/useThemeStore';
 import { useLocaleStore } from '@/stores/settings/useLocaleStore';
+import { useLayoutStore } from '@/stores/settings/useLayoutStore';
 import { useConfigStore } from '@/stores/codex/useConfigStore';
 
 const SETTINGS_FILE = '/.codexia/settings.json';
@@ -33,6 +34,10 @@ type WorkspaceData = {
 type ThemeData = {
   theme: string;
   accent: string;
+};
+
+type LayoutData = {
+  activeSidebarTab: string;
 };
 
 type AppData = {
@@ -76,6 +81,7 @@ interface SettingsFile {
   version: number;
   workspace?: Partial<WorkspaceData>;
   theme?: Partial<ThemeData>;
+  layout?: Partial<LayoutData>;
   locale?: { locale?: string };
   app?: Partial<AppData>;
   codexConfig?: Partial<CodexConfigData>;
@@ -128,6 +134,10 @@ export async function loadSettings(): Promise<void> {
     });
   }
 
+  if (data.layout?.activeSidebarTab !== undefined) {
+    useLayoutStore.setState({ activeSidebarTab: data.layout.activeSidebarTab as never });
+  }
+
   if (data.locale?.locale !== undefined) {
     useLocaleStore.setState({ locale: data.locale.locale as never });
   }
@@ -146,6 +156,7 @@ export async function loadSettings(): Promise<void> {
 function snapshot(): SettingsFile {
   const ws = useWorkspaceStore.getState();
   const theme = useThemeStore.getState();
+  const layout = useLayoutStore.getState();
   const locale = useLocaleStore.getState();
   const app = useSettingsStore.getState();
   const config = useConfigStore.getState();
@@ -163,6 +174,9 @@ function snapshot(): SettingsFile {
     theme: {
       theme: theme.theme,
       accent: theme.accent,
+    },
+    layout: {
+      activeSidebarTab: layout.activeSidebarTab,
     },
     locale: {
       locale: locale.locale,
@@ -229,6 +243,7 @@ export function initSettingsSync(): () => void {
   const unsubs = [
     useWorkspaceStore.subscribe(scheduleWrite),
     useThemeStore.subscribe(scheduleWrite),
+    useLayoutStore.subscribe(scheduleWrite),
     useLocaleStore.subscribe(scheduleWrite),
     useSettingsStore.subscribe(scheduleWrite),
     useConfigStore.subscribe(scheduleWrite),
