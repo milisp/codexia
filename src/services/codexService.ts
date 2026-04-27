@@ -174,9 +174,15 @@ export const codexService = {
       throw error;
     }
   },
-  async setCurrentThread(threadId: string | null, options?: { resume?: boolean }) {
+  async setCurrentThread(threadId: string | null, _options?: { resume?: boolean }) {
+    // Review-first behavior: setting the current thread no longer auto-resumes
+    // the agent process. Live threads (already in activeThreadIds with cached
+    // events) just switch view + derive activeTurnId. Dormant threads switch
+    // view but stay disconnected — ChatInterface renders an explicit Resume
+    // button to spawn the agent on demand. Lets users peek at history without
+    // paying the agent-spawn cost. The `options.resume` parameter is preserved
+    // for API compat but no longer triggers a resume.
     const set = useCodexStore.setState;
-    const shouldResume = options?.resume ?? true;
     try {
       if (!threadId) {
         set((state) => ({
@@ -187,29 +193,11 @@ export const codexService = {
         return;
       }
 
-      if (!shouldResume) {
-        set((state) => ({
-          currentThreadId: threadId,
-          currentTurnId: null,
-          inputFocusTrigger: state.inputFocusTrigger + 1,
-        }));
-        return;
-      }
-
       const { activeThreadIds, events } = useCodexStore.getState();
 
-      if (!activeThreadIds.includes(threadId) || !events[threadId]) {
-        // Optimistically set currentThreadId before the async resume so ChatInterface
-        // renders with the correct (empty) event list instead of a stale thread's state.
-        set((state) => ({
-          currentThreadId: threadId,
-          currentTurnId: null,
-          inputFocusTrigger: state.inputFocusTrigger + 1,
-        }));
-        await codexService.threadResume(threadId);
-      } else {
-        // Derive the active turn ID from the thread's live events so the Stop button
-        // works correctly when the thread is still processing.
+      if (activeThreadIds.includes(threadId) && events[threadId]) {
+        // Live thread — derive the active turn id from streaming events so the
+        // Stop button works correctly when a turn is in progress.
         const threadEvents = events[threadId] ?? [];
         let activeTurnId: string | null = null;
         for (let i = threadEvents.length - 1; i >= 0; i--) {
@@ -225,6 +213,13 @@ export const codexService = {
         set((state) => ({
           currentThreadId: threadId,
           currentTurnId: activeTurnId,
+          inputFocusTrigger: state.inputFocusTrigger + 1,
+        }));
+      } else {
+        // Dormant — view-only. User clicks Resume in ChatInterface to connect.
+        set((state) => ({
+          currentThreadId: threadId,
+          currentTurnId: null,
           inputFocusTrigger: state.inputFocusTrigger + 1,
         }));
       }

@@ -1,4 +1,4 @@
-import { useRef, useEffect, type ReactNode } from 'react';
+import { useRef, useEffect, useState, type ReactNode } from 'react';
 import { useCodexStore } from '@/stores/codex';
 import { useIsProcessing } from '@/hooks/codex';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -9,10 +9,13 @@ import { Markdown } from '@/components/Markdown';
 import { Composer } from './Composer';
 import { CodexAuth } from './CodexAuth';
 import { useSettingsStore } from '@/stores/settings';
+import { codexService } from '@/services/codexService';
+import { Button } from '@/components/ui/button';
 
 export function ChatInterface({ hideComposer = false }: { hideComposer?: boolean } = {}) {
-  const { currentThreadId, events, hasAccount } = useCodexStore();
+  const { currentThreadId, events, hasAccount, activeThreadIds } = useCodexStore();
   const { taskDetail, showReasoning } = useSettingsStore();
+  const isLive = !!currentThreadId && activeThreadIds.includes(currentThreadId);
   const isProcessing = useIsProcessing();
   const bottomAnchorRef = useRef<HTMLDivElement>(null);
 
@@ -171,9 +174,37 @@ export function ChatInterface({ hideComposer = false }: { hideComposer?: boolean
       {/* Input Area */}
       {!hideComposer && (
         <div className="absolute bottom-0 left-0 right-0 px-2 sm:px-0 max-w-3xl mx-auto">
-          <Composer />
+          {currentThreadId && !isLive ? (
+            <ResumeThreadButton threadId={currentThreadId} />
+          ) : (
+            <Composer />
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+function ResumeThreadButton({ threadId }: { threadId: string }) {
+  const [busy, setBusy] = useState(false);
+  const onClick = async () => {
+    setBusy(true);
+    try {
+      await codexService.threadResume(threadId);
+    } catch (err) {
+      console.error('[ResumeThreadButton] threadResume failed:', err);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="flex items-center justify-between gap-3 p-4 mb-2 rounded-lg border border-border bg-muted/40 text-sm">
+      <span className="text-muted-foreground">
+        Reviewing history. Resume to send messages.
+      </span>
+      <Button onClick={onClick} disabled={busy} size="sm">
+        {busy ? 'Resuming…' : 'Resume session'}
+      </Button>
     </div>
   );
 }
