@@ -66,6 +66,20 @@ export async function gitBranchInfo(cwd: string) {
   return await postJson<GitBranchInfoResponse>('/api/git/branch-info', { cwd });
 }
 
+// Returns true iff `cwd` is a git working tree. Used by useGitWatch to gate
+// polling — non-git cwds otherwise loop on errors every 2.5s. Single
+// gitBranchInfo round-trip; result is not cached because cwd changes are
+// rare and the call is cheap.
+export async function isGitRepo(cwd: string): Promise<boolean> {
+  if (!cwd) return false;
+  try {
+    await gitBranchInfo(cwd);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function gitListBranches(cwd: string) {
   if (isDesktopTauri()) {
     return await invokeTauri<GitBranchListResponse>('git_list_branches', { cwd });

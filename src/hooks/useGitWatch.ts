@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { startWatchFile, stopWatchFile } from '@/services/tauri/filesystem';
+import { isGitRepo } from '@/services/tauri/git';
 import { isDesktopTauri } from '@/hooks/runtime';
 
 /**
@@ -24,6 +25,7 @@ export function useGitWatch(cwd: string | null, onRefresh: () => void, enabled =
   useEffect(() => {
     if (!cwd || !enabled) return;
 
+    let cancelled = false;
     const gitIndexPath = `${cwd}/.git/index`;
     const normalizedGitIndexPath = gitIndexPath.replace(/\\/g, '/');
 
@@ -64,14 +66,22 @@ export function useGitWatch(cwd: string | null, onRefresh: () => void, enabled =
       }
     };
 
-    // Keep a low-frequency fallback for platforms where file events may be missed.
-    pollingRef.current = setInterval(() => {
-      debouncedRefresh();
-    }, 2500);
+    // Preflight: if cwd isn't a git repo, skip polling and watcher entirely.
+    // Otherwise consumers' refresh callbacks loop on errors every 2.5s.
+    const initialize = async () => {
+      if (!(await isGitRepo(cwd))) return;
+      if (cancelled) return;
+      // Keep a low-frequency fallback for platforms where file events may be missed.
+      pollingRef.current = setInterval(() => {
+        debouncedRefresh();
+      }, 2500);
+      void setupWatcher();
+    };
 
-    setupWatcher();
+    void initialize();
 
     return () => {
+      cancelled = true;
       if (unlistenRef.current) {
         unlistenRef.current();
         unlistenRef.current = null;
