@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCCSessionListener, useCCPermissionListener } from './hooks';
 
 import { useCCStore } from '@/stores/cc';
@@ -11,6 +11,7 @@ import { CCMessage } from '@/components/cc/messages';
 import { PermissionRequestCard } from '@/components/cc/messages/PermissionRequestCard';
 import { Composer } from '@/components/cc/composer/Composer';
 import { CCScrollControls } from '@/components/cc/CCScrollControls';
+import { Button } from '@/components/ui/button';
 import { buildMessageGroups, CCExploredMessageGroup } from './messages/group';
 import { buildInlineErrorsMap } from './messages/inlineErrors';
 import type { PermissionRequestMessage } from './types/messages';
@@ -67,28 +68,21 @@ export default function CCView({ sessionId, hideComposer = false, disableListene
     setLoading(false);
   }, [cwd, activeSessionId, clearMessages, setConnected, setLoading, isEmbedded]);
 
-  // Auto-resume when entering full-screen for a session not yet active (standalone only).
+  // Load JSONL history for the active session (always, independent of resume).
+  // Review-first: spawning the agent is gated behind an explicit Resume button
+  // (rendered below) so peeking at history doesn't pay the agent-spawn cost.
   useEffect(() => {
     if (isEmbedded) return;
-    if (!activeSessionId || activeSessionIds.includes(activeSessionId) || !cwd) return;
+    if (!activeSessionId || activeSessionIds.includes(activeSessionId)) return;
     const sid = activeSessionId;
     void (async () => {
       const filePath = await ccGetSessionFilePath(sid);
-      if (filePath) {
-        const lines = await readTextFileLines(filePath);
-        for (const msg of parseSessionJsonl(lines, sid)) {
-          addMessageToSession(sid, msg);
-        }
-        setSessionLoading(sid, false);
+      if (!filePath) return;
+      const lines = await readTextFileLines(filePath);
+      for (const msg of parseSessionJsonl(lines, sid)) {
+        addMessageToSession(sid, msg);
       }
-      await ccResumeSession(sid, {
-        cwd,
-        permissionMode: options.permissionMode,
-        resume: sid,
-        continueConversation: true,
-        ...(options.model ? { model: options.model } : {}),
-      });
-      addActiveSessionId(sid);
+      setSessionLoading(sid, false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSessionId, isEmbedded]);
@@ -203,7 +197,66 @@ export default function CCView({ sessionId, hideComposer = false, disableListene
           onResolve={handleResolvePermission}
         />
       )}
-      {!isEmbedded && !hideComposer && pendingPermissionIdx === -1 && <Composer />}
+      {!isEmbedded && !hideComposer && pendingPermissionIdx === -1 && (
+        activeSessionId && !activeSessionIds.includes(activeSessionId) ? (
+          <ResumeSessionButton
+            sessionId={activeSessionId}
+            cwd={cwd}
+            permissionMode={options.permissionMode}
+            model={options.model}
+            onResumed={() => addActiveSessionId(activeSessionId)}
+          />
+        ) : (
+          <Composer />
+        )
+      )}
+    </div>
+  );
+}
+
+function ResumeSessionButton({
+  sessionId,
+  cwd,
+  permissionMode,
+  model,
+  onResumed,
+}: {
+  sessionId: string;
+  cwd: string;
+  permissionMode?: string;
+  model?: string;
+  onResumed: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const onClick = async () => {
+    if (!cwd) {
+      console.warn('[ResumeSessionButton] no cwd set; pick a project first');
+      return;
+    }
+    setBusy(true);
+    try {
+      await ccResumeSession(sessionId, {
+        cwd,
+        permissionMode,
+        resume: sessionId,
+        continueConversation: true,
+        ...(model ? { model } : {}),
+      });
+      onResumed();
+    } catch (err) {
+      console.error('[ResumeSessionButton] ccResumeSession failed:', err);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="flex items-center justify-between gap-3 p-4 m-2 rounded-lg border border-border bg-muted/40 text-sm">
+      <span className="text-muted-foreground">
+        {cwd ? 'Reviewing history. Resume to send messages.' : 'Pick a project to resume this session.'}
+      </span>
+      <Button onClick={onClick} disabled={busy || !cwd} size="sm">
+        {busy ? 'Resuming…' : 'Resume session'}
+      </Button>
     </div>
   );
 }
