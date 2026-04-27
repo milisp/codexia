@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { gitDiffStats, gitStatus } from '@/services/tauri';
+import { isGitRepo } from '@/services/tauri/git';
 
 interface GitStats {
   stagedFiles: number;
@@ -38,6 +39,13 @@ export const useGitStatsStore = create<GitStatsStore>((set) => ({
 
   refreshStats: async (cwd: string) => {
     if (!cwd) {
+      set({ stats: null });
+      return;
+    }
+
+    // Non-git cwds (e.g. claude session that lived in $HOME) — render empty
+    // instead of error-flashing. Same gate as useGitWatch's polling.
+    if (!(await isGitRepo(cwd))) {
       set({ stats: null });
       return;
     }
