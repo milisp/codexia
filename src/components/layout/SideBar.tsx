@@ -1,4 +1,4 @@
-import { BarChart2, ListFilter, Lock, Package2, Timer, Trash2 } from 'lucide-react';
+import { BarChart2, History, ListFilter, Lock, Package2, Timer } from 'lucide-react';
 import { useAgentLimit } from '@/hooks/useAgentLimit';
 import { useCallback, useState } from 'react';
 import { useLayoutStore } from '@/stores';
@@ -144,7 +144,7 @@ export function SideBar() {
                 title="Manage sessions & threads"
                 onClick={() => setSessionManagerOpen(true)}
               >
-                <Trash2 className="h-4 w-4" />
+                <History className="h-4 w-4" />
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

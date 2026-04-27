@@ -4,6 +4,7 @@ import { invoke } from '@tauri-apps/api/core';
 import './App.css';
 import { useCodexEvents } from '@/hooks/codex';
 import { useDeepLink } from '@/hooks/useDeepLink';
+import { useUrlParamThread } from '@/hooks/useUrlParamThread';
 import { AppLayout } from '@/components/layout';
 import { isTauri, getIsPhone } from '@/hooks/runtime';
 const LoginView = lazy(() => import('@/views/LoginView'));
@@ -105,6 +106,9 @@ function AppShell() {
 
   // Listen to codex events only after backend is initialized
   useCodexEvents(codexReady);
+
+  // Web-mode deep link: ?agent=codex&thread=<id>&cwd=<path> (or agent=cc&session=<id>)
+  useUrlParamThread(codexReady);
 
   // Wait for platform detection and settings load before rendering
   if (isPhone === null || !settingsReady) return null;
