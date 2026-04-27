@@ -7,6 +7,7 @@ import { readTextFileLines } from '@/services/tauri/filesystem';
 import { parseSessionJsonl } from '@/components/cc/utils/parseSessionJsonl';
 import type { ThreadListItem } from '@/types/codex/ThreadListItem';
 import { codexService } from '@/services/codexService';
+import { isGitRepo } from '@/services/tauri/git';
 import { useCodexStore, useThreadListStore } from '@/stores/codex';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useCCStore } from '@/stores/cc';
@@ -100,9 +101,13 @@ function CCSessionManager({ onClose }: { onClose: () => void }) {
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
   const { sessionMessagesMap, addMessageToSession, setSessionLoading } = useCCStore();
 
-  const handleOpenSession = (session: SessionData) => {
+  const handleOpenSession = async (session: SessionData) => {
     if (session.project && session.project !== cwd) {
-      setCwd(session.project);
+      if (await isGitRepo(session.project)) {
+        setCwd(session.project);
+      } else {
+        toast({ description: `Session cwd '${session.project}' isn't a git repo — keeping current project.` });
+      }
     }
     setSelectedAgent('cc');
     addAgentCard({ kind: 'cc', id: session.sessionId, preview: session.display, cwd: session.project || cwd });
@@ -211,11 +216,11 @@ function CCSessionManager({ onClose }: { onClose: () => void }) {
               role="button"
               tabIndex={0}
               className="flex items-center gap-3 px-2 py-1.5 rounded-md hover:bg-accent/40 group cursor-pointer"
-              onClick={() => handleOpenSession(session)}
+              onClick={() => void handleOpenSession(session)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  handleOpenSession(session);
+                  void handleOpenSession(session);
                 }
               }}
             >
@@ -279,7 +284,11 @@ function CodexThreadManager({ onClose }: { onClose: () => void }) {
   const handleOpenThread = async (thread: ThreadListItem) => {
     const targetCwd = thread.cwd || cwd;
     if (targetCwd && targetCwd !== cwd) {
-      setCwd(targetCwd);
+      if (await isGitRepo(targetCwd)) {
+        setCwd(targetCwd);
+      } else {
+        toast({ description: `Thread cwd '${targetCwd}' isn't a git repo — keeping current project.` });
+      }
     }
     addAgentCard({ kind: 'codex', id: thread.id, preview: thread.preview, cwd: targetCwd });
     setCurrentAgentCardId(thread.id);
