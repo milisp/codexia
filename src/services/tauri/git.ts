@@ -66,19 +66,6 @@ export async function gitBranchInfo(cwd: string) {
   return await postJson<GitBranchInfoResponse>('/api/git/branch-info', { cwd });
 }
 
-// Returns true iff `cwd` is a git working tree. Used to gate setCwd in
-// session-open handlers so non-project sessions (e.g. claude launched from
-// $HOME) don't trip the git-status pollers in useGitWatch consumers.
-export async function isGitRepo(cwd: string): Promise<boolean> {
-  if (!cwd) return false;
-  try {
-    await gitBranchInfo(cwd);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export async function gitListBranches(cwd: string) {
   if (isDesktopTauri()) {
     return await invokeTauri<GitBranchListResponse>('git_list_branches', { cwd });

@@ -6,7 +6,6 @@ import { useCCStore } from '@/stores/cc';
 import { ccGetSessionFilePath } from '@/services/tauri/cc';
 import { readTextFileLines } from '@/services/tauri/filesystem';
 import { parseSessionJsonl } from '@/components/cc/utils/parseSessionJsonl';
-import { isGitRepo } from '@/services/tauri/git';
 
 let processed = false;
 
@@ -41,32 +40,25 @@ export function useUrlParamThread(enabled: boolean): void {
 
     if (!hasAgentNav) return;
 
-    void (async () => {
-      // Only switch cwd if the target is a git repo. Otherwise codexia's
-      // git pollers (useGitWatch consumers) loop on errors. Sessions can
-      // still open into the user's current project context.
-      if (await isGitRepo(cwd!)) {
-        addProject(cwd!);
-        setCwd(cwd!);
-      } else {
-        console.warn(`[useUrlParamThread] cwd '${cwd}' isn't a git repo — keeping current cwd.`);
-      }
+    addProject(cwd!);
+    setCwd(cwd!);
 
-      if (agent === 'codex' && threadId) {
-        setSelectedAgent('codex');
-        setActiveSidebarTab('codex');
-        addAgentCard({ kind: 'codex', id: threadId, cwd });
-        setCurrentAgentCardId(threadId);
-        setView('agent');
-        void codexService.setCurrentThread(threadId, { resume: true });
-      } else if (agent === 'cc' && sessionId) {
-        setSelectedAgent('cc');
-        setActiveSidebarTab('cc');
-        addAgentCard({ kind: 'cc', id: sessionId, cwd });
-        setCurrentAgentCardId(sessionId);
-        setView('agent');
-        const { sessionMessagesMap, addMessageToSession, setSessionLoading } = useCCStore.getState();
-        if (!sessionMessagesMap[sessionId]?.length) {
+    if (agent === 'codex' && threadId) {
+      setSelectedAgent('codex');
+      setActiveSidebarTab('codex');
+      addAgentCard({ kind: 'codex', id: threadId, cwd });
+      setCurrentAgentCardId(threadId);
+      setView('agent');
+      void codexService.setCurrentThread(threadId, { resume: true });
+    } else if (agent === 'cc' && sessionId) {
+      setSelectedAgent('cc');
+      setActiveSidebarTab('cc');
+      addAgentCard({ kind: 'cc', id: sessionId, cwd });
+      setCurrentAgentCardId(sessionId);
+      setView('agent');
+      const { sessionMessagesMap, addMessageToSession, setSessionLoading } = useCCStore.getState();
+      if (!sessionMessagesMap[sessionId]?.length) {
+        void (async () => {
           const filePath = await ccGetSessionFilePath(sessionId);
           if (!filePath) return;
           const lines = await readTextFileLines(filePath);
@@ -74,8 +66,8 @@ export function useUrlParamThread(enabled: boolean): void {
             addMessageToSession(sessionId, msg);
           }
           setSessionLoading(sessionId, false);
-        }
+        })();
       }
-    })();
+    }
   }, [enabled]);
 }
