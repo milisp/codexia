@@ -1,4 +1,4 @@
-import { invokeTauri, isDesktopTauri, postJson, postNoContent } from './shared';
+import { invokeTauri, isDesktopTauri, postJson, postJsonWithOptions, postNoContent } from './shared';
 
 export type GitStatusEntry = {
   path: string;
@@ -64,6 +64,30 @@ export async function gitBranchInfo(cwd: string) {
     return await invokeTauri<GitBranchInfoResponse>('git_branch_info', { cwd });
   }
   return await postJson<GitBranchInfoResponse>('/api/git/branch-info', { cwd });
+}
+
+// Returns true iff `cwd` is a git working tree. Used by useGitWatch and
+// downstream consumers to gate polling — non-git cwds otherwise loop on
+// errors. Hits the same backend endpoint as gitBranchInfo but passes
+// suppressToast so the shared API helper doesn't render a "Request failed"
+// toast on the (expected) non-git case. Result is not cached because cwd
+// changes are rare and the call is cheap.
+export async function isGitRepo(cwd: string): Promise<boolean> {
+  if (!cwd) return false;
+  try {
+    if (isDesktopTauri()) {
+      await invokeTauri<GitBranchInfoResponse>('git_branch_info', { cwd });
+    } else {
+      await postJsonWithOptions<GitBranchInfoResponse>(
+        '/api/git/branch-info',
+        { cwd },
+        { suppressToast: true },
+      );
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function gitListBranches(cwd: string) {

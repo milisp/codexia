@@ -6,6 +6,7 @@ import {
   gitUnstageFiles,
   type GitStatusResponse,
 } from '@/services/tauri';
+import { isGitRepo } from '@/services/tauri/git';
 import { useGitWatch } from '@/hooks/useGitWatch';
 import { useWorkspaceStore } from '@/stores';
 import { useLayoutStore } from '@/stores/settings';
@@ -41,6 +42,13 @@ export function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
 
   const refreshGitStatus = useCallback(async () => {
     if (!cwd) return;
+    // Non-git cwd: clear, don't error-flash. Same gate as useGitWatch.
+    if (!(await isGitRepo(cwd))) {
+      setGitData(null);
+      setGitError(null);
+      setGitLoading(false);
+      return;
+    }
     setGitLoading(true);
     setGitError(null);
     try {
