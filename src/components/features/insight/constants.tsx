@@ -1,4 +1,4 @@
-import { Codex, ClaudeCode, Gemini } from '@lobehub/icons';
+import { Codex, ClaudeCode, Gemini } from '@/components/icons';
 import type { ReactNode } from 'react';
 
 export type Range = 'day' | 'week' | 'month' | 'year' | 'all';
@@ -13,9 +13,9 @@ export const RANGES: { label: string; value: Range }[] = [
 ];
 
 export const AGENT_CONFIG: Record<AgentKey, { label: string; color: string; icon: ReactNode }> = {
-  claude: { label: 'Claude', color: '#a78bfa', icon: <ClaudeCode.Color /> },
-  codex: { label: 'Codex', color: '#34d399', icon: <Codex.Color /> },
-  gemini: { label: 'Gemini', color: '#60a5fa', icon: <Gemini.Color /> },
+  claude: { label: 'Claude', color: '#a78bfa', icon: <ClaudeCode /> },
+  codex: { label: 'Codex', color: '#34d399', icon: <Codex /> },
+  gemini: { label: 'Gemini', color: '#60a5fa', icon: <Gemini /> },
 };
 
 export interface ModelPricing {

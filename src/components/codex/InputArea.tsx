@@ -137,7 +137,7 @@ export function InputArea({
             onCompositionEnd={() => { setTimeout(() => { isComposing.current = false; }, 50); }}
             placeholder="Ask anything... @file /command $skills"
             rows={1}
-            className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            className="w-full resize-none bg-transparent text-base md:text-sm outline-none placeholder:text-muted-foreground"
           />
         </div>
 

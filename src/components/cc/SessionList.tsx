@@ -1,10 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { listen } from '@tauri-apps/api/event';
+import { useCallback, useEffect, useState } from 'react';
 import { useCCStore } from '@/stores/cc';
-import { getSessions, SessionData } from '@/lib/sessions';
-import { ccGetSessionFilePath, ccDeleteSession } from '@/services/tauri/cc';
-import { readTextFileLines } from '@/services/tauri/filesystem';
-import { parseSessionJsonl } from '@/components/cc/utils/parseSessionJsonl';
+import { listSessions, type SdkSessionInfo } from '@/lib/sessions';
+import { ccGetSessionMessages, ccDeleteSession } from '@/services/tauri/cc';
+import { fromSdkMessages } from '@/components/cc/utils/fromSdkMessages';
 import { MoreVertical, Copy, Loader2, Trash2, FolderX } from 'lucide-react';
 import { gitRemoveWorktree } from '@/services/tauri/git';
 import {
@@ -27,32 +25,46 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { useLayoutStore, useAgentCenterStore } from '@/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { isDesktopTauri } from '@/hooks/runtime';
 import { formatThreadAge } from '@/utils/formatThreadAge';
 
+const DEFAULT_VISIBLE = 3;
+const LOAD_MORE_SIZE = 20;
+
 interface Props {
-  project?: string;
-  sessions?: SessionData[];
+  directory: string;
+  sessions?: SdkSessionInfo[];
   onSelectSession?: (sessionId: string, project?: string) => void;
 }
 
-export function ClaudeCodeSessionList({ project, sessions, onSelectSession }: Props) {
-  const [loadedSessions, setLoadedSessions] = useState<SessionData[]>([]);
+export function ClaudeCodeSessionList({ directory, sessions, onSelectSession }: Props) {
+  const [loadedSessions, setLoadedSessions] = useState<SdkSessionInfo[]>([]);
   const [loading, setLoading] = useState(sessions === undefined);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { cwd, setCwd, setSelectedAgent } = useWorkspaceStore();
+  const { setCwd, setSelectedAgent } = useWorkspaceStore();
   const { setView } = useLayoutStore();
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
-  const { activeSessionIds, activeSessionId, isLoading, addMessageToSession, setSessionLoading, sessionMessagesMap } = useCCStore();
+  const { activeSessionIds, activeSessionId, isLoading, addMessageToSession, setSessionLoading, sessionMessagesMap, pendingNewSession, setPendingNewSession } = useCCStore();
   const { toast } = useToast();
 
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-
+  const [totalCount, setTotalCount] = useState(0);
   const loadSessions = useCallback(async () => {
+    if (!directory) {
+      setLoadedSessions([]);
+      setLoading(false);
+      return;
+    }
     setError(null);
     try {
-      const fetched = await getSessions();
+      const { sessions: fetched, total } = await listSessions(directory, {
+        limit: DEFAULT_VISIBLE,
+        includeWorktrees: true,
+      });
       setLoadedSessions(fetched);
+      setTotalCount(total);
+      // Once the real list is fetched, clear the optimistic pending session
+      setPendingNewSession(null);
     } catch (err) {
       console.error('Failed to load sessions:', err);
       const message = err instanceof Error ? err.message : 'Failed to load sessions';
@@ -60,7 +72,23 @@ export function ClaudeCodeSessionList({ project, sessions, onSelectSession }: Pr
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [directory]);
+
+  const loadMoreSessions = useCallback(async () => {
+    if (!directory) return;
+    setLoadingMore(true);
+    try {
+      const { sessions: extra } = await listSessions(directory, {
+        limit: LOAD_MORE_SIZE,
+        offset: loadedSessions.length,
+        includeWorktrees: true,
+      });
+      setLoadedSessions((prev) => [...prev, ...extra]);
+      setExpanded(true);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [directory, loadedSessions.length]);
 
   useEffect(() => {
     if (sessions !== undefined) {
@@ -71,57 +99,20 @@ export function ClaudeCodeSessionList({ project, sessions, onSelectSession }: Pr
     void loadSessions();
   }, [loadSessions, sessions]);
 
-  useEffect(() => {
-    if (sessions !== undefined) {
-      return;
-    }
-
-    const debounceMs = 150;
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-    const scheduleReload = () => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-      }
-      debounceTimer = setTimeout(() => {
-        void loadSessions();
-      }, debounceMs);
-    };
-
-    if (isDesktopTauri()) {
-      let unlisten: (() => void) | null = null;
-      void listen('session/list-updated', scheduleReload).then((dispose) => {
-        unlisten = dispose;
-      });
-      return () => {
-        if (debounceTimer) {
-          clearTimeout(debounceTimer);
-        }
-        unlisten?.();
-      };
-    }
-
-    window.addEventListener('session/list-updated', scheduleReload);
-    return () => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-      }
-      window.removeEventListener('session/list-updated', scheduleReload);
-    };
-  }, [loadSessions, sessions]);
-
   const [expanded, setExpanded] = useState(false);
-  const DEFAULT_VISIBLE = 3;
 
-  const normalizedProject = useMemo(() => project?.replace(/\\/g, '/'), [project]);
-  const allSessions = sessions ?? loadedSessions;
-  const filteredSessions = useMemo(() => {
-    if (!normalizedProject) {
-      return allSessions;
-    }
-    return allSessions.filter((session) => session.project.replace(/\\/g, '/') === normalizedProject);
-  }, [allSessions, normalizedProject]);
-  const visibleSessions = expanded ? filteredSessions : filteredSessions.slice(0, DEFAULT_VISIBLE);
-  const hasMore = filteredSessions.length > DEFAULT_VISIBLE;
+  const baseList = sessions ?? loadedSessions;
+  // Prepend the optimistic pending session if it belongs to this directory and isn't in the list yet
+  const allSessions =
+    pendingNewSession &&
+    !baseList.some((s) => s.session_id === pendingNewSession.session_id) &&
+    (pendingNewSession.cwd === directory || (!pendingNewSession.cwd && !directory))
+      ? [pendingNewSession, ...baseList]
+      : baseList;
+  const visibleSessions = expanded ? allSessions : allSessions.slice(0, DEFAULT_VISIBLE);
+  const effectiveTotal = sessions !== undefined ? sessions.length : totalCount;
+  const allLoaded = allSessions.length >= effectiveTotal;
+  const hasMore = effectiveTotal > DEFAULT_VISIBLE;
 
   if (loading) {
     return <div className="text-sm text-muted-foreground p-2">Loading sessions...</div>;
@@ -131,25 +122,24 @@ export function ClaudeCodeSessionList({ project, sessions, onSelectSession }: Pr
     return <div className="text-sm text-destructive p-2">Error: {error}</div>;
   }
 
-  const handleSessionClick = (session: SessionData) => {
-    if (session.project && session.project !== cwd) {
-      setCwd(session.project);
+  const handleSessionClick = (session: SdkSessionInfo) => {
+    const sessionProject = session.cwd ?? '';
+    if (sessionProject && sessionProject !== directory) {
+      setCwd(sessionProject);
     }
     setSelectedAgent('cc');
-    addAgentCard({ kind: 'cc', id: session.sessionId, preview: session.display, cwd: session.project || cwd });
-    setCurrentAgentCardId(session.sessionId);
+    addAgentCard({ kind: 'cc', id: session.session_id, preview: session.summary, cwd: sessionProject || directory });
+    setCurrentAgentCardId(session.session_id);
     setView('agent');
     if (onSelectSession) {
-      onSelectSession(session.sessionId, session.project);
+      onSelectSession(session.session_id, sessionProject);
     }
     // Load JSONL history immediately so the card shows messages without requiring "Resume".
-    const sid = session.sessionId;
+    const sid = session.session_id;
     if (!sessionMessagesMap[sid]?.length) {
       void (async () => {
-        const filePath = await ccGetSessionFilePath(sid);
-        if (!filePath) return;
-        const lines = await readTextFileLines(filePath);
-        for (const msg of parseSessionJsonl(lines, sid)) {
+        const sdkMessages = await ccGetSessionMessages(sid);
+        for (const msg of fromSdkMessages(sdkMessages, sid)) {
           addMessageToSession(sid, msg);
         }
         setSessionLoading(sid, false);
@@ -160,15 +150,16 @@ export function ClaudeCodeSessionList({ project, sessions, onSelectSession }: Pr
   const doDeleteSession = async (sessionId: string) => {
     try {
       await ccDeleteSession(sessionId);
-      setLoadedSessions((prev) => prev.filter((s) => s.sessionId !== sessionId));
+      setLoadedSessions((prev) => prev.filter((s) => s.session_id !== sessionId));
     } catch {
       toast({ description: 'Failed to delete session', variant: 'destructive' });
     }
   };
 
-  const doDeleteWorktree = async (session: SessionData) => {
-    if (!session.project.includes('/.codexia/worktrees/')) return;
-    const worktreeKey = session.project.split('/').pop() ?? '';
+  const doDeleteWorktree = async (session: SdkSessionInfo) => {
+    const sessionProject = session.cwd ?? '';
+    if (!sessionProject.includes('/.codexia/worktrees/')) return;
+    const worktreeKey = sessionProject.split('/').pop() ?? '';
     const mainCwd = useWorkspaceStore.getState().cwd;
     if (!mainCwd) return;
     try {
@@ -187,7 +178,7 @@ export function ClaudeCodeSessionList({ project, sessions, onSelectSession }: Pr
     });
   };
 
-  if (filteredSessions.length === 0) {
+  if (allSessions.length === 0) {
     return <div className="text-sm text-muted-foreground p-2">No sessions in this project</div>;
   }
 
@@ -195,11 +186,11 @@ export function ClaudeCodeSessionList({ project, sessions, onSelectSession }: Pr
     <div className="flex min-h-0 flex-1 flex-col pr-2">
       <div className="min-h-0 flex-1">
         {visibleSessions.map((session) => {
-          const isSelected = activeSessionId === session.sessionId;
-          const isActive = activeSessionIds.includes(session.sessionId);
+          const isSelected = activeSessionId === session.session_id;
+          const isActive = activeSessionIds.includes(session.session_id);
           return (
             <div
-              key={session.sessionId}
+              key={session.session_id}
               role="button"
               tabIndex={0}
               className={`group relative grid grid-cols-[0.5rem_1fr_auto] items-center gap-3 w-full text-left p-2 rounded-lg transition-colors cursor-pointer ${isSelected ? 'bg-zinc-700/50' : 'hover:bg-zinc-800/30'
@@ -217,11 +208,11 @@ export function ClaudeCodeSessionList({ project, sessions, onSelectSession }: Pr
               <div
                 className={`text-sm font-medium truncate min-w-0 ${isSelected ? 'text-primary' : 'text-inherit'}`}
               >
-                {session.display}
+                {session.summary}
               </div>
 
               <div className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap">
-                <span className="group-hover:hidden">{formatThreadAge(session.timestamp)}</span>
+                <span className="group-hover:hidden">{formatThreadAge(Math.floor(session.last_modified / 1000))}</span>
               </div>
 
               <div className="absolute right-0">
@@ -237,11 +228,11 @@ export function ClaudeCodeSessionList({ project, sessions, onSelectSession }: Pr
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={(e) => copySessionId(e, session.sessionId)}>
+                    <DropdownMenuItem onClick={(e) => copySessionId(e, session.session_id)}>
                       <Copy className="h-3 w-3" />
                       <span>Copy Session ID</span>
                     </DropdownMenuItem>
-                    {session.project.includes('/.codexia/worktrees/') && (
+                    {(session.cwd ?? '').includes('/.codexia/worktrees/') && (
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
@@ -255,7 +246,7 @@ export function ClaudeCodeSessionList({ project, sessions, onSelectSession }: Pr
                     <DropdownMenuItem
                       onClick={(e) => {
                         e.stopPropagation();
-                        setPendingDeleteId(session.sessionId);
+                        setPendingDeleteId(session.session_id);
                       }}
                       className="text-destructive focus:text-destructive"
                     >
@@ -272,9 +263,19 @@ export function ClaudeCodeSessionList({ project, sessions, onSelectSession }: Pr
       {hasMore && (
         <button
           className="w-full text-xs text-muted-foreground hover:text-foreground py-1 transition-colors"
-          onClick={() => setExpanded((v) => !v)}
+          onClick={() => {
+            if (expanded && allLoaded) {
+              setExpanded(false);
+              return;
+            }
+            void loadMoreSessions();
+          }}
         >
-          {expanded ? `Show less` : `Show ${filteredSessions.length - DEFAULT_VISIBLE} more`}
+          {loadingMore
+            ? 'Loading...'
+            : expanded && allLoaded
+              ? 'Show less'
+              : `Show ${Math.min(LOAD_MORE_SIZE, effectiveTotal - allSessions.length)} more`}
         </button>
       )}
 

@@ -12,9 +12,9 @@ use super::{
         api_account_rate_limits, api_allow_sleep, api_archive_thread, api_canonicalize_path,
         api_cc_list_projects, api_cc_mcp_add, api_cc_mcp_disable, api_cc_mcp_enable,
         api_cc_mcp_get, api_cc_mcp_list, api_cc_mcp_remove,
-        api_cc_connect, api_cc_disconnect, api_cc_get_installed_skills, api_cc_get_projects,
-        api_cc_delete_session, api_cc_get_session_file_path, api_cc_get_sessions, api_cc_get_settings, api_cc_get_slash_commands,
-        api_cc_interrupt, api_cc_list_sessions,
+        api_cc_connect, api_cc_disconnect, api_cc_get_installed_skills,
+        api_cc_delete_session, api_cc_get_session_messages, api_cc_list_sessions, api_cc_get_settings, api_cc_get_slash_commands,
+        api_cc_interrupt,
         api_cc_new_session, api_cc_resolve_permission, api_cc_resume_session,
         api_cc_send_message, api_cc_set_permission_mode, api_cc_update_settings,
         api_create_automation, api_delete_automation, api_list_automation_runs, api_list_automations, api_run_automation_now, api_set_automation_paused,
@@ -50,7 +50,8 @@ use super::{
         api_terminal_write, api_toggle_favorite, api_turn_interrupt, api_turn_start,
         api_unified_add_mcp_server, api_unified_disable_mcp_server,
         api_unified_enable_mcp_server, api_unified_read_mcp_config,
-        api_unified_remove_mcp_server, api_update_note, api_write_file, health_check,
+        api_unified_remove_mcp_server, api_update_note, api_write_file,
+        api_get_settings_file, api_save_settings_file, health_check,
     },
     types::WebServerState,
     websocket::{sse_handler, ws_handler},
@@ -236,16 +237,14 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/cc/disconnect", post(api_cc_disconnect))
         .route("/api/cc/new-session", post(api_cc_new_session))
         .route("/api/cc/interrupt", post(api_cc_interrupt))
-        .route("/api/cc/list-sessions", get(api_cc_list_sessions))
         .route("/api/cc/resume-session", post(api_cc_resume_session))
         .route("/api/cc/resolve-permission", post(api_cc_resolve_permission))
         .route("/api/cc/set-permission-mode", post(api_cc_set_permission_mode))
-        .route("/api/cc/projects", get(api_cc_get_projects))
         .route("/api/cc/installed-skills", get(api_cc_get_installed_skills))
         .route("/api/cc/slash-commands", get(api_cc_get_slash_commands))
         .route("/api/cc/settings", get(api_cc_get_settings).post(api_cc_update_settings))
-        .route("/api/cc/sessions", get(api_cc_get_sessions))
-        .route("/api/cc/session-file-path", post(api_cc_get_session_file_path))
+        .route("/api/cc/sessions", get(api_cc_list_sessions))
+        .route("/api/cc/session-messages", post(api_cc_get_session_messages))
         .route("/api/cc/delete-session", post(api_cc_delete_session))
         .route("/api/cc/mcp/list", post(api_cc_mcp_list))
         .route("/api/cc/mcp/get", post(api_cc_mcp_get))
@@ -259,6 +258,7 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/insights/filter-options", post(api_get_insight_filter_options))
         .route("/api/sleep/prevent", post(api_prevent_sleep))
         .route("/api/sleep/allow", post(api_allow_sleep))
+        .route("/api/settings", get(api_get_settings_file).post(api_save_settings_file))
         .fallback_service(static_site)
         .layer(
             CorsLayer::new()

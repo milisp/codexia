@@ -1,45 +1,41 @@
-import { ccGetProjects, ccGetSessions } from '@/services';
+import { ccListSessions } from '@/services';
 
-export interface SessionData {
-  project: string;
-  display: string;
-  timestamp: number;
-  sessionId: string;
-  filePath: string;
-}
+type GetSessionsOptions = {
+  limit?: number;
+  offset?: number;
+  includeWorktrees?: boolean;
+};
 
-type SessionDataRaw = SessionData & { session_id?: string };
+export type SdkSessionInfo = {
+  session_id: string;
+  summary: string;
+  last_modified: number;
+  cwd?: string | null;
+  file_size?: number | null;
+  custom_title?: string | null;
+  first_prompt?: string | null;
+  git_branch?: string | null;
+  tag?: string | null;
+  created_at?: number | null;
+};
 
-function normalizeSession(data: SessionDataRaw): SessionData {
-  return {
-    project: data.project,
-    display: data.display,
-    timestamp: data.timestamp,
-    sessionId: data.sessionId ?? data.session_id ?? '',
-    filePath: data.filePath ?? '',
-  };
-}
+export type SessionListResult = {
+  sessions: SdkSessionInfo[];
+  total: number;
+};
 
-export async function getProjects(): Promise<string[]> {
+export async function listSessions(
+  directory?: string | null,
+  options: GetSessionsOptions = {},
+): Promise<SessionListResult> {
   try {
-    return await ccGetProjects();
-  } catch (err) {
-    console.debug('Failed to get projects:', err);
-    return [];
-  }
-}
-
-/**
- * Get all parsed sessions from backend database
- */
-export async function getSessions(): Promise<SessionData[]> {
-  try {
-    const sessions = await ccGetSessions<SessionDataRaw[]>();
-    return sessions
-      .map(normalizeSession)
-      .filter((session) => Boolean(session.sessionId));
+    const result = await ccListSessions<SdkSessionInfo>(directory, options);
+    return {
+      sessions: result.sessions.filter((s) => Boolean(s.session_id)),
+      total: result.total,
+    };
   } catch (err) {
     console.debug('Failed to get sessions:', err);
-    return [];
+    return { sessions: [], total: 0 };
   }
 }

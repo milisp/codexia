@@ -5,7 +5,7 @@ import { posthog } from '@/lib/posthog';
 
 export type viewType =
   | 'automations'
-  | 'agents'
+  | 'agents-md'
   | 'agent'
   | 'history'
   | 'learn'

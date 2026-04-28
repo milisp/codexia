@@ -1,4 +1,3 @@
-use super::db::SessionData;
 use super::mcp::{
     ClaudeCodeMcpServer, ClaudeCodeResponse, cc_list_projects as mcp_cc_list_projects,
     cc_mcp_add as mcp_cc_mcp_add, cc_mcp_disable as mcp_cc_mcp_disable,
@@ -6,10 +5,11 @@ use super::mcp::{
     cc_mcp_list as mcp_cc_mcp_list, cc_mcp_remove as mcp_cc_mcp_remove,
 };
 use super::services::{
-    message_service, project_service, session_service, settings_service, skill_service,
+    message_service, session_service, settings_service, skill_service,
 };
 use super::state::CCState;
 use super::types::{AgentOptions, CCConnectParams};
+use session_service::SessionListResult;
 use tauri::State;
 
 #[tauri::command]
@@ -51,20 +51,14 @@ pub async fn cc_disconnect(session_id: String, state: State<'_, CCState>) -> Res
 #[tauri::command]
 pub async fn cc_new_session(
     options: AgentOptions,
-    initial_message: String,
     state: State<'_, CCState>,
 ) -> Result<String, String> {
-    session_service::new_session_and_send(options, initial_message, &state).await
+    session_service::new_session(options, &state).await
 }
 
 #[tauri::command]
 pub async fn cc_interrupt(session_id: String, state: State<'_, CCState>) -> Result<(), String> {
     session_service::interrupt(&session_id, &state).await
-}
-
-#[tauri::command]
-pub async fn cc_list_sessions(state: State<'_, CCState>) -> Result<Vec<String>, String> {
-    session_service::list_sessions(&state).await
 }
 
 #[tauri::command]
@@ -74,11 +68,6 @@ pub async fn cc_resume_session(
     state: State<'_, CCState>,
 ) -> Result<(), String> {
     session_service::resume_session(session_id, options, &state).await
-}
-
-#[tauri::command]
-pub fn cc_get_projects() -> Result<Vec<String>, String> {
-    project_service::get_projects()
 }
 
 #[tauri::command]
@@ -102,26 +91,33 @@ pub fn cc_update_settings(settings: serde_json::Value) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn cc_get_sessions() -> Result<Vec<SessionData>, String> {
-    session_service::get_sessions()
+pub fn cc_list_sessions(
+    directory: Option<String>,
+    limit: Option<usize>,
+    offset: Option<usize>,
+    include_worktrees: Option<bool>,
+) -> Result<SessionListResult, String> {
+    session_service::list_sessions(
+        directory.as_deref(),
+        limit,
+        offset.unwrap_or(0),
+        include_worktrees.unwrap_or(true),
+    )
 }
 
 #[tauri::command]
 pub fn cc_delete_session(session_id: String) -> Result<(), String> {
-    use crate::cc::db::SessionDB;
-    let db = SessionDB::new().map_err(|e| e.to_string())?;
-    let file_path = db.delete_session(&session_id).map_err(|e| e.to_string())?;
-    if let Some(path) = file_path {
-        let _ = std::fs::remove_file(&path);
-    }
+    claude_agent_sdk_rs::session_mutations::delete_session(&session_id, None)
+        .map_err(|e| e.to_string())?;
+    super::db::SessionCache::new()?.delete_session(&session_id)?;
     Ok(())
 }
 
 #[tauri::command]
-pub fn cc_get_session_file_path(session_id: String) -> Result<Option<String>, String> {
-    use crate::cc::db::SessionDB;
-    let db = SessionDB::new().map_err(|e| e.to_string())?;
-    db.get_file_path(&session_id).map_err(|e| e.to_string())
+pub fn cc_get_session_messages(
+    session_id: String,
+) -> Result<Vec<claude_agent_sdk_rs::types::sessions::SessionMessage>, String> {
+    Ok(claude_agent_sdk_rs::sessions::get_session_messages(&session_id, None, None, 0))
 }
 
 #[tauri::command]

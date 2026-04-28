@@ -1,10 +1,10 @@
 import { invokeTauri, isDesktopTauri, postNoContent, postJson, getJson } from './shared';
 
-export async function ccNewSession(options: Record<string, unknown>, initialMessage: string) {
+export async function ccNewSession(options: Record<string, unknown>) {
   if (isDesktopTauri()) {
-    return await invokeTauri<string>('cc_new_session', { options, initialMessage });
+    return await invokeTauri<string>('cc_new_session', { options });
   }
-  return await postJson<string>('/api/cc/new-session', { options, initial_message: initialMessage });
+  return await postJson<string>('/api/cc/new-session', { options });
 }
 
 export async function ccSendMessage(sessionId: string, message: string, imagePaths: string[] = []) {
@@ -26,13 +26,6 @@ export async function ccInterrupt(sessionId: string) {
     return;
   }
   await postNoContent('/api/cc/interrupt', { session_id: sessionId });
-}
-
-export async function ccListSessions() {
-  if (isDesktopTauri()) {
-    return await invokeTauri<string[]>('cc_list_sessions');
-  }
-  return await getJson<string[]>('/api/cc/list-sessions');
 }
 
 export async function ccResumeSession(sessionId: string, options: Record<string, unknown>) {
@@ -58,18 +51,40 @@ export async function ccGetSlashCommands(cwd?: string) {
   return await getJson<string[]>(`/api/cc/slash-commands${qs}`);
 }
 
-export async function ccGetProjects() {
-  if (isDesktopTauri()) {
-    return await invokeTauri<string[]>('cc_get_projects');
-  }
-  return await getJson<string[]>('/api/cc/projects');
-}
+type CcListSessionsOptions = {
+  limit?: number;
+  offset?: number;
+  includeWorktrees?: boolean;
+};
 
-export async function ccGetSessions<T = unknown>() {
+export type CcSessionListResult<T> = { sessions: T[]; total: number };
+
+export async function ccListSessions<T = unknown>(directory?: string | null, options: CcListSessionsOptions = {}) {
+  const {
+    offset = 0,
+    includeWorktrees = true,
+    limit,
+  } = options;
+
   if (isDesktopTauri()) {
-    return await invokeTauri<T>('cc_get_sessions');
+    return await invokeTauri<CcSessionListResult<T>>('cc_list_sessions', {
+      directory: directory ?? null,
+      limit,
+      offset,
+      includeWorktrees,
+    });
   }
-  return await getJson<T>('/api/cc/sessions');
+  const params = new URLSearchParams({
+    offset: String(offset),
+    includeWorktrees: String(includeWorktrees),
+  });
+  if (directory) {
+    params.set('directory', directory);
+  }
+  if (limit !== undefined) {
+    params.set('limit', String(limit));
+  }
+  return await getJson<CcSessionListResult<T>>(`/api/cc/sessions?${params.toString()}`);
 }
 
 export async function ccGetSettings<T = unknown>() {
@@ -148,28 +163,26 @@ export async function ccDeleteSession(sessionId: string): Promise<void> {
   await postNoContent('/api/cc/delete-session', { session_id: sessionId });
 }
 
-export async function ccGetSessionFilePath(sessionId: string): Promise<string | null> {
+export interface SdkSessionMessage {
+  type: 'user' | 'assistant';
+  uuid: string;
+  session_id: string;
+  message?: Record<string, unknown> | null;
+  parent_tool_use_id?: string | null;
+}
+
+export async function ccGetSessionMessages(sessionId: string): Promise<SdkSessionMessage[]> {
   if (isDesktopTauri()) {
-    return await invokeTauri<string | null>('cc_get_session_file_path', { sessionId });
+    return await invokeTauri<SdkSessionMessage[]>('cc_get_session_messages', { sessionId });
   }
-  return await postJson<string | null>('/api/cc/session-file-path', { session_id: sessionId });
+  return await postJson<SdkSessionMessage[]>('/api/cc/session-messages', { session_id: sessionId });
 }
 
 export async function ccResolvePermission(requestId: string, decision: string): Promise<void> {
   if (isDesktopTauri()) {
     return invokeTauri('cc_resolve_permission', { requestId, decision });
-  } else {
-    const port = import.meta.env.VITE_WEB_PORT || 8094;
-    const response = await fetch(`http://127.0.0.1:${port}/api/cc/resolve-permission`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ request_id: requestId, decision }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to resolve permission: ${response.statusText}`);
-    }
   }
+  await postNoContent('/api/cc/resolve-permission', { request_id: requestId, decision });
 }
 
 export async function ccSetPermissionMode(sessionId: string, mode: string) {

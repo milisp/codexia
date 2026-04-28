@@ -201,6 +201,18 @@ pub(crate) struct CcSessionIdParams {
 }
 
 #[derive(Deserialize)]
+pub(crate) struct CcGetSessionsParams {
+    #[serde(default)]
+    pub(crate) directory: Option<String>,
+    #[serde(default)]
+    pub(crate) limit: Option<usize>,
+    #[serde(default)]
+    pub(crate) offset: Option<usize>,
+    #[serde(default, rename = "include_worktrees", alias = "includeWorktrees")]
+    pub(crate) include_worktrees: Option<bool>,
+}
+
+#[derive(Deserialize)]
 pub(crate) struct CcSendMessageParams {
     #[serde(rename = "session_id", alias = "sessionId")]
     pub(crate) session_id: String,
@@ -212,7 +224,6 @@ pub(crate) struct CcSendMessageParams {
 #[derive(Deserialize)]
 pub(crate) struct CcNewSessionParams {
     pub(crate) options: AgentOptions,
-    pub(crate) initial_message: String,
 }
 
 #[derive(Deserialize)]

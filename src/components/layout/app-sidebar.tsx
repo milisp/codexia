@@ -28,9 +28,8 @@ import { UpdateButton } from '../features/UpdateButton';
 import { useTrafficLightConfig } from '@/hooks';
 import { SideBarCodexTab } from './SideBarCodexTab';
 import { SideBarClaudeTab } from './SideBarClaudeTab';
-import { AgentSwitcher } from '@/components/common/AgentSwitcher';
+import { AgentSwitcher } from '@/components/agent';
 import { SessionManagerDialog } from './SessionManagerDialog';
-import { TunnelIndicator } from '@/components/features/TunnelIndicator';
 import { FeedbackDialog } from '../dialogs/FeedbackDialog';
 
 const focusCCInput = () => window.dispatchEvent(new Event('cc-input-focus-request'));
@@ -41,7 +40,7 @@ const navBtnActive = 'border-border bg-accent/70 text-foreground';
 const navBtnInactive = 'border-transparent hover:border-border/60';
 const navBtnCls = (active: boolean) => `${navBtnBase} ${active ? navBtnActive : navBtnInactive}`;
 
-export function SideBar() {
+export function AppSideBar() {
   const { cwd, setCwd, setSelectedAgent } = useWorkspaceStore();
   const { isPro } = useAgentLimit();
   const { setView, view, activeSidebarTab, setActiveSidebarTab } = useLayoutStore();
@@ -65,11 +64,11 @@ export function SideBar() {
   );
 
   const handleStartNewCcSessionForProject = useCallback(
-    async (project: string) => {
+    async (directory: string) => {
       setSelectedAgent('cc');
       setActiveSidebarTab('cc');
       setView('agent');
-      setCwd(project);
+      setCwd(directory);
       await handleNewSession();
       focusCCInput();
     },
@@ -186,7 +185,6 @@ export function SideBar() {
             <UserInfo />
           </div>
           <div className="flex-shrink-0 pr-2 flex items-center gap-2">
-            <TunnelIndicator />
             <UpdateButton />
             <FeedbackDialog />
           </div>

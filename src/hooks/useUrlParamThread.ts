@@ -2,10 +2,6 @@ import { useEffect } from 'react';
 import { codexService } from '@/services/codexService';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useLayoutStore, useAgentCenterStore } from '@/stores';
-import { useCCStore } from '@/stores/cc';
-import { ccGetSessionFilePath } from '@/services/tauri/cc';
-import { readTextFileLines } from '@/services/tauri/filesystem';
-import { parseSessionJsonl } from '@/components/cc/utils/parseSessionJsonl';
 
 let processed = false;
 
@@ -56,18 +52,6 @@ export function useUrlParamThread(enabled: boolean): void {
       addAgentCard({ kind: 'cc', id: sessionId, cwd });
       setCurrentAgentCardId(sessionId);
       setView('agent');
-      const { sessionMessagesMap, addMessageToSession, setSessionLoading } = useCCStore.getState();
-      if (!sessionMessagesMap[sessionId]?.length) {
-        void (async () => {
-          const filePath = await ccGetSessionFilePath(sessionId);
-          if (!filePath) return;
-          const lines = await readTextFileLines(filePath);
-          for (const msg of parseSessionJsonl(lines, sessionId)) {
-            addMessageToSession(sessionId, msg);
-          }
-          setSessionLoading(sessionId, false);
-        })();
-      }
     }
   }, [enabled]);
 }

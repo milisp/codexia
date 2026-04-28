@@ -962,8 +962,8 @@ checksum = "3a822ea5bc7590f9d40f1ba12c0dc3c2760f3482c6984db1573ad11031420831"
 
 [[package]]
 name = "claude-agent-sdk-rs"
-version = "0.6.4"
-source = "git+https://github.com/milisp/claude-agent-sdk-rs#52751b51b481b469f953a18d598df26f49f57bc4"
+version = "0.6.6"
+source = "git+https://github.com/milisp/claude-agent-sdk-rs?tag=v0.6.6#f86d8bd3731af02ba6e93f5b29d05eaa2f7e877f"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -974,6 +974,7 @@ dependencies = [
  "paste",
  "path-absolutize",
  "pin-project",
+ "regex",
  "serde",
  "serde_json",
  "thiserror 2.0.18",

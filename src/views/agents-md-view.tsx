@@ -12,7 +12,7 @@ import { readFile, writeFile } from '@/services';
 const CODEX_INSTRUCTIONS_FILE_NAME = 'AGENTS.md';
 const CC_INSTRUCTIONS_FILE_NAME = 'CLAUDE.md';
 
-export default function AgentsView() {
+export default function AgentsMdView() {
   const { selectedAgent, setSelectedAgent, cwd, instructionType, setInstructionType } =
     useWorkspaceStore();
 

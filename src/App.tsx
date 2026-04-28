@@ -12,10 +12,9 @@ import { HistoryProjectsDialog } from '@/components/project-selector';
 import { AnalyticsConsentDialog } from '@/components/settings/AnalyticsConsentDialog';
 import { initializeCodexAsync } from '@/services/tauri';
 import type { InitializeResponse } from './bindings';
-import { loadSettings, initSettingsSync } from '@/lib/settings';
+import { loadSettings, initSettingsSync, loadRemoteSettings } from '@/lib/settings';
 import { StoreErrorBoundary } from '@/components/StoreErrorBoundary';
 import { useP2PConnection } from '@/hooks/useP2PConnection';
-import { toast } from 'sonner';
 import { useTunnel } from '@/hooks/useTunnel'
 import { useSettingsStore } from '@/stores/settings/useSettingsStore';
 import {
@@ -28,6 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { P2PStatusDialog } from '@/components/dialogs/P2PStatusDialog';
 
 function AppShell() {
   const [quitDialogOpen, setQuitDialogOpen] = useState(false);
@@ -43,30 +43,14 @@ function AppShell() {
     return initSettingsSync();
   }, []);
   // Mobile: auto-connect to desktop via Quinn P2P
-  const { state: p2pState, error: p2pError, retry: p2pRetry } = useP2PConnection();
+  const { state: p2pState, error: p2pError, retry: p2pRetry, dismiss: p2pDismiss } = useP2PConnection();
 
-  // Toast on P2P state changes so the user always sees what's happening
   const prevP2PState = useRef(p2pState);
   useEffect(() => {
     if (!isPhone || prevP2PState.current === p2pState) return;
     prevP2PState.current = p2pState;
-
-    if (p2pState === 'connected') {
-      toast.success('Connected to desktop');
-    } else if (p2pState === 'offline') {
-      toast.error('Desktop offline', {
-        description: p2pError ?? 'Open Codexia on your Mac and enable P2P',
-        action: { label: 'Retry', onClick: p2pRetry },
-        duration: Infinity,
-      });
-    } else if (p2pState === 'error') {
-      toast.error('P2P connection failed', {
-        description: p2pError ?? 'Unknown error',
-        action: { label: 'Retry', onClick: p2pRetry },
-        duration: Infinity,
-      });
-    }
-  }, [p2pState, p2pError, p2pRetry, isPhone]);
+    if (p2pState === 'connected') void loadRemoteSettings();
+  }, [p2pState, isPhone]);
 
   // Desktop: auto-start P2P server on login only if user has opted in
   const { start: p2pStart, status: p2pStatus } = useTunnel();
@@ -121,8 +105,13 @@ function AppShell() {
   return (
     <>
       <AppLayout />
-      <HistoryProjectsDialog />
-      <AnalyticsConsentDialog />
+      {/* On mobile, suppress other dialogs while P2P dialog is active to avoid Radix DismissableLayer conflicts */}
+      {!(isPhone && (p2pState === 'connecting' || p2pState === 'offline' || p2pState === 'error')) && <HistoryProjectsDialog />}
+      {isPhone ? (
+        <P2PStatusDialog state={p2pState} error={p2pError} onRetry={p2pRetry} onClose={p2pDismiss} />
+      ) :
+        <AnalyticsConsentDialog />
+      }
       <AlertDialog open={quitDialogOpen} onOpenChange={setQuitDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

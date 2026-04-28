@@ -1,11 +1,11 @@
 import { ChevronRight } from 'lucide-react';
-import { MCP } from '@lobehub/icons';
+import { MCP } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 
 // DxtCard component to display manifest info
 export function DxtCard({ dxt, onClick }: { dxt: any; onClick?: () => void }) {
   return (
-    <div 
+    <div
       className="flex flex-col p-3 rounded-xl border bg-card text-card-foreground shadow-sm hover:shadow-lg transition-shadow cursor-pointer"
       onClick={onClick}
     >

@@ -36,23 +36,17 @@ export function AgentComposer() {
     <div className="flex flex-col">
       {/* Agent tabs */}
       <div className="flex items-center justify-between gap-2 shrink-0">
-          <AgentSwitcher variant="tab" />
-          <TunnelIndicator variant="switch" />
+        <AgentSwitcher variant="tab" />
+        <TunnelIndicator />
       </div>
 
       {/* Input area */}
       <div className="shrink-0">
-          {selectedAgent === 'cc' ? (
-            <CCComposer />
-          ) : (
-            <CodexComposer showControls={false} />
-          )}
+        {selectedAgent === 'cc' ? <CCComposer /> : <CodexComposer showControls={false} />}
       </div>
 
       {/* Bottom bar */}
-      <div className="shrink-0">
-          {selectedAgent === 'codex' && <ComposerControls />}
-      </div>
+      <div className="shrink-0">{selectedAgent === 'codex' && <ComposerControls />}</div>
     </div>
   );
 }

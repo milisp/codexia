@@ -49,11 +49,13 @@ export function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
       setGitLoading(false);
       return;
     }
-    setGitLoading(true);
     setGitError(null);
     try {
       const status = await gitStatus(cwd);
-      setGitData(status);
+      setGitData((prev) => {
+        if (JSON.stringify(prev) === JSON.stringify(status)) return prev;
+        return status;
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       setGitError(message);
@@ -63,7 +65,8 @@ export function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
     }
   }, [cwd]);
 
-  useGitWatch(cwd, refreshGitStatus, isActive);
+  const silentRefresh = useCallback(() => { void refreshGitStatus(); }, [refreshGitStatus]);
+  useGitWatch(cwd, silentRefresh, isActive);
 
   useEffect(() => {
     if (cwd) return;

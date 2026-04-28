@@ -32,7 +32,6 @@
 		133BF4777B5B2261106B4477 /* state.rs */ = {isa = PBXFileReference; path = state.rs; sourceTree = "<group>"; };
 		19B16A6FDE53C85863855F04 /* mod.rs */ = {isa = PBXFileReference; path = mod.rs; sourceTree = "<group>"; };
 		1A322F4A4F37BF35BA64CEED /* terminal.rs */ = {isa = PBXFileReference; path = terminal.rs; sourceTree = "<group>"; };
-		1AE443528391758A6237E9B4 /* project_service.rs */ = {isa = PBXFileReference; path = project_service.rs; sourceTree = "<group>"; };
 		1C5D5A91035E3467ECAB7304 /* worktree.rs */ = {isa = PBXFileReference; path = worktree.rs; sourceTree = "<group>"; };
 		1F89549E574FDC91C850A7CC /* mod.rs */ = {isa = PBXFileReference; path = mod.rs; sourceTree = "<group>"; };
 		24A03F6166ED4BC3AF2CB52A /* mod.rs */ = {isa = PBXFileReference; path = mod.rs; sourceTree = "<group>"; };
@@ -325,7 +324,6 @@
 				8802AA411F34C85CFE41C5D3 /* message_service.rs */,
 				24A03F6166ED4BC3AF2CB52A /* mod.rs */,
 				C3B486A049F8614C3C4E4606 /* permission_storage.rs */,
-				1AE443528391758A6237E9B4 /* project_service.rs */,
 				37D5A415D7857FB98AA9775D /* session_service.rs */,
 				9DCF4FCFEBD323F8202A12C4 /* settings_service.rs */,
 				84BAB6D2665BBB760ECB0461 /* skill_service.rs */,

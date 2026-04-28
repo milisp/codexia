@@ -3,9 +3,8 @@ import { useCCSessionListener, useCCPermissionListener } from './hooks';
 
 import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { ccGetSessionFilePath, ccResumeSession } from '@/services/tauri/cc';
-import { readTextFileLines } from '@/services/tauri/filesystem';
-import { parseSessionJsonl } from './utils/parseSessionJsonl';
+import { ccGetSessionMessages, ccResumeSession } from '@/services/tauri/cc';
+import { fromSdkMessages } from './utils/fromSdkMessages';
 
 import { CCMessage } from '@/components/cc/messages';
 import { PermissionRequestCard } from '@/components/cc/messages/PermissionRequestCard';
@@ -76,13 +75,19 @@ export default function CCView({ sessionId, hideComposer = false, disableListene
     if (!activeSessionId || activeSessionIds.includes(activeSessionId)) return;
     const sid = activeSessionId;
     void (async () => {
-      const filePath = await ccGetSessionFilePath(sid);
-      if (!filePath) return;
-      const lines = await readTextFileLines(filePath);
-      for (const msg of parseSessionJsonl(lines, sid)) {
+      const sdkMessages = await ccGetSessionMessages(sid);
+      for (const msg of fromSdkMessages(sdkMessages, sid)) {
         addMessageToSession(sid, msg);
       }
       setSessionLoading(sid, false);
+      await ccResumeSession(sid, {
+        cwd,
+        permissionMode: options.permissionMode,
+        resume: sid,
+        continueConversation: true,
+        ...(options.model ? { model: options.model } : {}),
+      });
+      addActiveSessionId(sid);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSessionId, isEmbedded]);

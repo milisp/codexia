@@ -73,6 +73,19 @@ const isExperimentalRawEventsCapabilityError = (error: unknown): boolean =>
   getErrorMessage(error).includes('experimentalRawEvents requires experimentalApi capability');
 
 type ThreadLike = Thread & { updatedAt?: number };
+const getThreadPreviewFromInput = (userInputs: UserInput[]): string => {
+  for (const item of userInputs) {
+    if (item.type !== 'text') {
+      continue;
+    }
+    const text = item.text.trim();
+    if (text) {
+      return text;
+    }
+  }
+  return '';
+};
+
 const threadSourceToString = (source: ThreadLike['source']): string => {
   if (typeof source === 'string') {
     return source;
@@ -480,7 +493,22 @@ export const codexService = {
         collaborationMode: collaborationModeParam,
       });
 
-      set({ currentTurnId: response.turn.id });
+      const preview = getThreadPreviewFromInput(userInputs);
+      set((state) => ({
+        currentTurnId: response.turn.id,
+        threads: state.threads.map((thread) => {
+          if (thread.id !== threadId) {
+            return thread;
+          }
+          if (thread.preview.trim() || !preview) {
+            return thread;
+          }
+          return {
+            ...thread,
+            preview,
+          };
+        }),
+      }));
       return response.turn;
     } catch (error: unknown) {
       console.error('[CodexService] turnStart error:', error);

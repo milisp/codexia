@@ -1,9 +1,7 @@
 import { Suspense, lazy, useEffect, useRef } from 'react';
 import type { ImperativePanelHandle } from 'react-resizable-panels';
 import { useLayoutStore } from '@/stores';
-import { SideBar } from '@/components/layout/SideBar';
-import { RightPanel } from '@/components/layout/RightPanel';
-import { AppHeader } from '@/components/layout';
+import { AppSideBar, RightPanel, AppHeader } from '@/components/layout';
 import { History } from '@/components/codex/history';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { SidebarInset, SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
@@ -18,8 +16,8 @@ const SettingsView = lazy(() =>
   import('@/components/settings').then((module) => ({ default: module.SettingsView })),
 );
 const PluginsView = lazy(() => import('@/views/PluginsView'));
-const AgentsView = lazy(() => import('@/views/AgentsView'));
-const AgentView = lazy(() => import('@/views/AgentView'));
+const AgentsMdView = lazy(() => import('@/views/agents-md-view'));
+const AgentView = lazy(() => import('@/components/agent/AgentView'));
 const LoginView = lazy(() => import('@/views/LoginView'));
 const AutoMationsView = lazy(() =>
   import('../features/automations').then((module) => ({ default: module.AutoMationsView })),
@@ -164,13 +162,13 @@ export function AppLayout() {
     <div className="flex flex-col min-w-0 h-full">
       <div className="min-h-0 flex-1">
         <Suspense fallback={<ViewLoadingFallback />}>
-          {view === 'agents' && <AgentsView />}
+          {view === 'agents-md' && <AgentsMdView />}
           {view === 'agent' && <AgentView />}
           {view === 'automations' && <AutoMationsView />}
           {view === 'history' && <History />}
           {view === 'login' && <LoginView />}
           {view === 'plugins' && <PluginsView />}
-{view === 'insights' && (isPro || inTrial || import.meta.env.DEV ? <InsightsView /> : (
+          {view === 'insights' && (isPro || inTrial || import.meta.env.DEV ? <InsightsView /> : (
             <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-8">
               <div className="text-4xl">📊</div>
               <h2 className="text-lg font-semibold">Insights is a Pro feature</h2>
@@ -205,7 +203,7 @@ export function AppLayout() {
           onOpenChange={setSidebarOpen}
           className="h-full min-h-0"
         >
-          <SideBar />
+          <AppSideBar />
           {/* Single layout component for both mobile and desktop.
               Keeping mainContent at a stable tree position prevents lazy views
               from unmounting/remounting when the viewport crosses the mobile breakpoint. */}
