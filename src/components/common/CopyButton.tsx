@@ -10,8 +10,11 @@ type CopyButtonProps = {
 export const CopyButton = ({ text, className }: CopyButtonProps) => {
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = async () => {
+  const handleCopy = async (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!text.length) return;
+    // Blur immediately so the button doesn't hold focus and keep the parent
+    // group in a hover-like visible state after the mouse leaves.
+    (e.currentTarget as HTMLButtonElement).blur();
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);

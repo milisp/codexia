@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Check, Copy } from 'lucide-react';
+import { useWindowFocus } from '@/hooks/useWindowFocus';
+import { CopyButton } from '@/components/common';
 import { Markdown } from '@/components/Markdown';
 
 type AgentMessageItemProps = {
@@ -7,18 +7,7 @@ type AgentMessageItemProps = {
 };
 
 export const AgentMessageItem = ({ text }: AgentMessageItemProps) => {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    if (!text.length) return;
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  };
+  const isWindowFocused = useWindowFocus();
 
   if (!text.length) return null;
 
@@ -28,19 +17,14 @@ export const AgentMessageItem = ({ text }: AgentMessageItemProps) => {
         <Markdown value={text} />
       </div>
       <div
-        className={`flex items-center gap-1 px-1 transition-opacity ${
-          copied ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'
+        className={`flex h-7 items-center gap-1 px-1 ${
+          isWindowFocused ? 'invisible group-hover:visible group-focus-within:visible' : 'invisible'
         }`}
       >
-        <button
-          type="button"
-          onClick={handleCopy}
-          disabled={!text.length}
-          aria-label={copied ? 'Copied' : 'Copy message'}
-          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-        </button>
+        <CopyButton
+          text={text}
+          className="h-7 w-7 text-muted-foreground"
+        />
       </div>
     </div>
   );

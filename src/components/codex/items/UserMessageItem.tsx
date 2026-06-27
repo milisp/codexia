@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useWindowFocus } from '@/hooks/useWindowFocus';
 import type { UserInput } from '@/bindings/v2';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { Pencil } from 'lucide-react';
@@ -11,6 +11,7 @@ import { useEventPreferencesStore } from '@/components/codex/stores';
 import { toast } from '@/components/ui/use-toast';
 import { getErrorMessage } from '@/utils/errorUtils';
 import { EditRollbackConfirmDialog } from './EditRollbackConfirmDialog';
+import { useState } from 'react';
 
 type UserMessageItemProps = {
   content: Array<UserInput>;
@@ -19,6 +20,7 @@ type UserMessageItemProps = {
 };
 
 export const UserMessageItem = ({ content, onEdit, editDisabled = false }: UserMessageItemProps) => {
+  const isWindowFocused = useWindowFocus();
   const images = content.filter((m) => m.type === 'image').map((m) => m.url);
   const localImages = content
     .filter((m) => m.type === 'localImage')
@@ -60,7 +62,10 @@ export const UserMessageItem = ({ content, onEdit, editDisabled = false }: UserM
           )}
           {text.length > 0 && <Markdown className="min-w-0 max-w-full" value={text} />}
         </div>
-        <div className="flex min-w-0 items-center gap-1 px-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+        <div
+          className={`flex min-w-0 items-center gap-1 px-1 ${isWindowFocused ? 'invisible group-hover:visible group-focus-within:visible' : 'invisible'
+            }`}
+        >
           {onEdit && (
             <Button
               variant="ghost"
