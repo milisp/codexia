@@ -16,7 +16,7 @@ import type { ServerNotification } from '@/bindings';
 // Intermediate render item: either a raw event or an aggregated command group.
 type RenderItem =
   | { kind: 'event'; event: ServerNotification; index: number }
-  | { kind: 'cmdGroup'; actions: CommandAction[]; key: string; commandItemId?: string | null; aggregatedOutput?: string | null };
+  | { kind: 'cmdGroup'; actions: CommandAction[]; key: string; commandItemId?: string | null; aggregatedOutput?: string | null; completed: boolean };
 
 /** Pre-process events into render items, grouping commandExecution runs between agentMessages. */
 function deriveRenderItems(events: ServerNotification[]): RenderItem[] {
@@ -26,9 +26,9 @@ function deriveRenderItems(events: ServerNotification[]): RenderItem[] {
   let cmdItemId: string | null = null;
   let cmdAggregatedOutput: string | null = null;
 
-  const flushCmdBuffer = () => {
+  const flushCmdBuffer = (completed: boolean) => {
     if (cmdBuffer.length === 0) return;
-    items.push({ kind: 'cmdGroup', actions: cmdBuffer, key: cmdBufferKey, commandItemId: cmdItemId, aggregatedOutput: cmdAggregatedOutput });
+    items.push({ kind: 'cmdGroup', actions: cmdBuffer, key: cmdBufferKey, commandItemId: cmdItemId, aggregatedOutput: cmdAggregatedOutput, completed });
     cmdBuffer = [];
     cmdBufferKey = '';
     cmdItemId = null;
@@ -60,12 +60,12 @@ function deriveRenderItems(events: ServerNotification[]): RenderItem[] {
       continue;
     }
 
-    // agentMessage started = flush commands that came before it.
+    // agentMessage started = flush commands that came before it (completed).
     if (
       event.method === 'item/started' &&
       event.params.item.type === 'agentMessage'
     ) {
-      flushCmdBuffer();
+      flushCmdBuffer(true);
       items.push({ kind: 'event', event, index: i });
       continue;
     }
@@ -81,7 +81,7 @@ function deriveRenderItems(events: ServerNotification[]): RenderItem[] {
 
     // turn/completed = boundary, flush then push.
     if (event.method === 'turn/completed') {
-      flushCmdBuffer();
+      flushCmdBuffer(true);
       items.push({ kind: 'event', event, index: i });
       continue;
     }
@@ -90,8 +90,8 @@ function deriveRenderItems(events: ServerNotification[]): RenderItem[] {
     items.push({ kind: 'event', event, index: i });
   }
 
-  // Flush trailing buffer (agent still running).
-  flushCmdBuffer();
+  // Flush trailing buffer (agent still running — not completed yet).
+  flushCmdBuffer(false);
   return items;
 }
 
@@ -121,7 +121,14 @@ export function CodexThread({ hideComposer = false }: { hideComposer?: boolean }
     if (item.kind === 'cmdGroup') {
       renderedEvents.push({
         key: item.key,
-        content: <CommandActionSummaryItem actions={item.actions} commandItemId={item.commandItemId} aggregatedOutput={item.aggregatedOutput} />,
+        content: (
+          <CommandActionSummaryItem
+            actions={item.actions}
+            commandItemId={item.commandItemId}
+            aggregatedOutput={item.aggregatedOutput}
+            completed={item.completed}
+          />
+        ),
       });
       continue;
     }
