@@ -10,8 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useRequestUserInputStore } from '@/stores/codex';
-import { useConfigStore } from '@/stores/codex/useConfigStore';
+import { useRequestUserInputStore } from '@/components/codex/stores';
+import { useConfigStore } from '@/components/codex/stores/useConfigStore';
 import { codexService } from '@/services/codexService';
 
 type RequestUserInputItemProps = {

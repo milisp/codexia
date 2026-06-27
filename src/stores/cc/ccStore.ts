@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { CCMessage } from '@/components/cc/types/messages';
 import type { CCMcpServers } from '@/types/cc/cc-mcp';
-import type { ThreadCwdMode } from '@/stores/codex/useConfigStore';
+import type { ThreadCwdMode } from '@/components/codex/stores/useConfigStore';
 import type { SdkSessionInfo } from '@/lib/sessions';
 
 export type PermissionMode = 'default' | 'acceptEdits' | 'plan' | 'bypassPermissions';

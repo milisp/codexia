@@ -3,7 +3,7 @@ import { PlusIcon, Globe, Image as ImageIcon, Check, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScreenshotPopover } from '@/components/codex/selector/ScreenshotPopover';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useConfigStore } from '@/stores/codex';
+import { useConfigStore } from '@/components/codex/stores';
 import { cn } from '@/lib/utils';
 import { open } from '@tauri-apps/plugin-dialog';
 

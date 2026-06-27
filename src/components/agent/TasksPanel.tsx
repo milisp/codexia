@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useAgentCenterStore, useLayoutStore } from '@/stores';
-import { useCodexStore } from '@/stores/codex';
+import { useCodexStore } from '@/components/codex/stores';
 import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { codexService } from '@/services/codexService';

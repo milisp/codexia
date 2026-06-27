@@ -18,7 +18,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { UserInfo } from './UserInfo';
-import { useThreadList } from '@/hooks/codex';
+import { useThreadList } from '@/components/codex/hooks';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
 import { UpdateButton } from '../features/UpdateButton';

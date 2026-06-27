@@ -7,7 +7,7 @@ import { Markdown } from '@/components/Markdown';
 import { CopyButton, AddToNote } from '@/components/common';
 import { codexService } from '@/services/codexService';
 import { useInputStore } from '@/stores';
-import { useEventPreferencesStore } from '@/stores/codex';
+import { useEventPreferencesStore } from '@/components/codex/stores';
 import { toast } from '@/components/ui/use-toast';
 import { getErrorMessage } from '@/utils/errorUtils';
 import { EditRollbackConfirmDialog } from './EditRollbackConfirmDialog';

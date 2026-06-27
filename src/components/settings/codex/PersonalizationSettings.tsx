@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useConfigStore, type Personality } from '@/stores/codex';
+import { useConfigStore, type Personality } from '@/components/codex/stores';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,

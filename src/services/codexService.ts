@@ -26,7 +26,7 @@ import type {
   SandboxPolicy,
 } from '@/bindings/v2';
 import type { ThreadListItem } from '@/types/codex/ThreadListItem';
-import { useCodexStore, useConfigStore } from '@/stores/codex';
+import { useCodexStore, useConfigStore } from '@/components/codex/stores';
 import { useWorkspaceStore } from '@/stores';
 import { useSettingsStore } from '@/stores/settings';
 import { convertThreadHistoryToEvents } from '@/utils/threadHistoryConverter';
@@ -282,11 +282,11 @@ export const codexService = {
           // Inject plan mode when selected.
           ...(collaborationMode === 'plan'
             ? {
-                collaboration_mode: {
-                  mode: 'plan',
-                  settings: { model, reasoning_effort: reasoningEffort, developer_instructions: null },
-                },
-              }
+              collaboration_mode: {
+                mode: 'plan',
+                settings: { model, reasoning_effort: reasoningEffort, developer_instructions: null },
+              },
+            }
             : {}),
         },
       };

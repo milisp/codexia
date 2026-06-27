@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import './App.css';
-import { useCodexEvents } from '@/hooks/codex';
+import { useCodexEvents } from '@/components/codex/hooks';
 import { useDeepLink } from '@/hooks/useDeepLink';
 import { useUrlParamThread } from '@/hooks/useUrlParamThread';
 import { AppLayout } from '@/components/layout';

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { Archive, GitFork, FolderX, Loader2 } from 'lucide-react';
-import { useThreadFilter } from '@/hooks/codex/useThreadFilter';
+import { useThreadFilter } from '@/components/codex/hooks/useThreadFilter';
 import { codexService } from '@/services/codexService';
-import { useCodexStore, useThreadListStore } from '@/stores/codex';
+import { useCodexStore, useThreadListStore } from '@/components/codex/stores';
 import { deleteFile, readSessionMetaFile, threadList, writeSessionMetaFile } from '@/services/tauri';
 import {
   Dialog,

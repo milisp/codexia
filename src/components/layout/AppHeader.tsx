@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { codexService } from '@/services/codexService';
 import { useLayoutStore, useAgentCenterStore } from '@/stores';
-import { useCodexStore, useCurrentThread } from '@/stores/codex';
+import { useCodexStore, useCurrentThread } from '@/components/codex/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { RightPanelHeader } from './RightPanelHeader';
 import { useCCStore } from '@/stores/cc';

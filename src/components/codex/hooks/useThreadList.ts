@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { codexService } from '@/services/codexService';
-import { useThreadListStore } from '@/stores/codex';
+import { useThreadListStore } from '@/components/codex/stores';
 import { useAgentCenterStore, useLayoutStore, useNoteStore, useWorkspaceStore } from '@/stores';
 
 interface UseThreadListOptions {

@@ -1,4 +1,4 @@
-import { useApprovalStore } from '@/stores/codex';
+import { useApprovalStore } from '@/components/codex/stores';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';

@@ -15,7 +15,7 @@ import {
   replaceAtTrigger,
   applyEditorReplacement,
 } from '@/components/common/useComposerPopover';
-import { useCodexStore } from '@/stores/codex';
+import { useCodexStore } from '@/components/codex/stores';
 
 const SLASH_COMMANDS = [{ id: 'review', description: 'Review uncommitted changes' }];
 const detectSlash = detectWordBoundaryTrigger('/');

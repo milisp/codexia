@@ -36,7 +36,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { CodexModelSelector } from '@/components/codex/selector';
-import { useConfigStore } from '@/stores/codex';
+import { useConfigStore } from '@/components/codex/stores';
 import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { toast } from '@/components/ui/use-toast';

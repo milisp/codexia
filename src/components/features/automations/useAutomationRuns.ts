@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { listen } from '@tauri-apps/api/event';
-import { useCodexStore } from '@/stores/codex';
+import { useCodexStore } from '@/components/codex/stores';
 import { listAutomationRuns } from '@/services/tauri';
 import type { ServerNotification } from '@/bindings';
 import { buildWsUrl, isDesktopTauri } from '@/hooks/runtime';

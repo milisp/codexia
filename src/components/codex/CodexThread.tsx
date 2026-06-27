@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useMemo, type ReactNode } from 'react';
-import { useCodexStore } from '@/stores/codex';
-import { useIsProcessing } from '@/hooks/codex';
+import { useCodexStore } from '@/components/codex/stores';
+import { useIsProcessing } from '@/components/codex/hooks';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { renderEvent } from './items';
 import { ApprovalItem } from './items/ApprovalItem';

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Copy, Check, ChevronDown, ChevronRight } from 'lucide-react';
 import { CheckCircle2, XCircle, AlertCircle, Loader2, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useCodexStore } from '@/stores/codex';
+import { useCodexStore } from '@/components/codex/stores';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from 'react-i18next';
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Monitor, Split, ChevronDown, Check } from 'lucide-react';
-import type { ThreadCwdMode } from '@/stores/codex';
+import type { ThreadCwdMode } from '@/components/codex/stores';
 import { RateLimitTrigger, RateLimitContent, useRateLimits } from '../codex/widget/RateLimitWidget';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';

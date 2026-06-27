@@ -6,7 +6,7 @@ import {
   useRequestUserInputStore,
   type ApprovalRequest,
   type RequestUserInputRequest,
-} from '@/stores/codex';
+} from '@/components/codex/stores';
 import { useLayoutStore } from '@/stores';
 import { useSettingsStore } from '@/stores/settings';
 import type { ServerNotification } from '@/bindings/ServerNotification';

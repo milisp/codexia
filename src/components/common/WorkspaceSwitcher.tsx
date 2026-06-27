@@ -13,7 +13,7 @@ import { BrowserProjects } from '@/components/project-selector';
 import { isDesktopTauri } from '@/hooks/runtime';
 import { BranchSwitcher } from './BranchSwitcher';
 import { AgentWorkspaceSelect } from './AgentWorkspaceSelect';
-import { ThreadCwdMode, useConfigStore } from '@/stores/codex';
+import { ThreadCwdMode, useConfigStore } from '@/components/codex/stores';
 import { useCCStore } from '@/stores';
 
 export function WorkspaceSwitcher() {

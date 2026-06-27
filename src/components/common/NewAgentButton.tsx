@@ -5,7 +5,7 @@ import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useAgentCenterStore } from '@/stores';
 import { useLayoutStore } from '@/stores';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
-import { useThreadList } from '@/hooks/codex';
+import { useThreadList } from '@/components/codex/hooks';
 
 const focusCCInput = () => window.dispatchEvent(new Event('cc-input-focus-request'));
 

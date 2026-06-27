@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { useAgentCenterStore } from '@/stores';
 import { useLayoutStore } from '@/stores';
-import { useCodexStore, useApprovalStore, useRequestUserInputStore } from '@/stores/codex';
+import { useCodexStore, useApprovalStore, useRequestUserInputStore } from '@/components/codex/stores';
 import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { codexService } from '@/services/codexService';

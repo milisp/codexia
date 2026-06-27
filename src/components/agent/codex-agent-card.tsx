@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
-import { useCodexStore } from '@/stores/codex';
-import { useApprovalStore, useRequestUserInputStore } from '@/stores/codex';
+import { useCodexStore } from '@/components/codex/stores';
+import { useApprovalStore, useRequestUserInputStore } from '@/components/codex/stores';
 import { codexService } from '@/services/codexService';
 import { gitApplyWorktreeChanges, gitRemoveWorktree, gitHasWorktreeChanges } from '@/services/tauri/git';
 import { renderEvent } from '@/components/codex/items';

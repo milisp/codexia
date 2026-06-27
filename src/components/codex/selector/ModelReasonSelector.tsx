@@ -4,11 +4,11 @@ import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from '@/compone
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { ReasoningEffort } from '@/bindings';
 import { useCallback, useEffect, useState, useMemo } from 'react';
-import { useConfigStore, useCodexStore } from '@/stores/codex';
+import { useConfigStore, useCodexStore } from '@/components/codex/stores';
 import { codexService } from '@/services/codexService';
 import type { Provider } from '@/stores/settings';
 import { ModelList } from './ModelList';
-import { useModels } from '../hooks';
+import { useModels } from '../hooks/useModels';
 import { Input } from '@/components/ui/input';
 import { EnvKeysDialog } from './EnvKeysDialog';
 import { ProviderIcons } from '@/components/ProviderIcons';

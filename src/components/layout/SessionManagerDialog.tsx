@@ -5,7 +5,7 @@ import { ccDeleteSession } from '@/services/tauri/cc';
 import { deleteFile } from '@/services/tauri';
 import type { ThreadListItem } from '@/types/codex/ThreadListItem';
 import { codexService } from '@/services/codexService';
-import { useCodexStore, useThreadListStore } from '@/stores/codex';
+import { useCodexStore, useThreadListStore } from '@/components/codex/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useLayoutStore, useAgentCenterStore } from '@/stores';
 import { AgentIcon } from '@/components/common/AgentIcon';

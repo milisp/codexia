@@ -3,7 +3,7 @@ import { useState } from 'react';
 import type { SandboxMode } from '@/bindings/v2';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useConfigStore, useCodexStore } from '@/stores/codex';
+import { useConfigStore, useCodexStore } from '@/components/codex/stores';
 
 
 const ACCESS_MODE_OPTIONS: Array<{

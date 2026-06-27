@@ -5,10 +5,10 @@ import { convertFileSrc } from '@tauri-apps/api/core';
 import { SlashCommandPopover, SkillsInputPopover, ModelReasonSelector, AttachmentSelector, AccessModePopover } from './selector';
 import { FileMentionPopover } from '@/components/common';
 import { useInputStore } from '@/stores/useInputStore';
-import { useCodexStore } from '@/stores/codex';
+import { useCodexStore } from '@/components/codex/stores';
 import { useAgentCenterStore } from '@/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { useThreadStatus } from '@/hooks/codex';
+import { useThreadStatus } from '@/components/codex/hooks';
 import { codexService } from '@/services/codexService';
 
 interface ComposerProps {

@@ -7,7 +7,7 @@ import { DiffViewer } from '@/components/features/DiffViewer';
 import { AccordionMsg } from '@/components/codex/history/AccordionMsg';
 import HistoryExecCommandItem from './HistoryExecCommandItem';
 import { HistoryPatchOutputIcon } from './HistoryPatchOutputIcon';
-import { useCurrentThread } from '@/stores/codex/useCodexStore';
+import { useCurrentThread } from '@/components/codex/stores/useCodexStore';
 import { RawMessage } from './type';
 import { aggregateMessages } from './aggregateMessages';
 import { PlanDisplay, SimplePlanStep } from './PlanDisplay';
