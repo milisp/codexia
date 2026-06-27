@@ -14,6 +14,7 @@ import {
   getDiffViewerProps,
   type RenderEventContext,
 } from './fileChangeLogic';
+import { McpToolCallItem } from './McpToolCallItem';
 
 type CollapsedJsonItemProps = {
   label: string;
@@ -126,10 +127,10 @@ export const renderEvent = (event: ServerNotification, context?: RenderEventCont
         case 'collabAgentToolCall':
           // Render the multi-agent sub-agent operation card.
           return <CollabAgentToolCallItem item={item as unknown as CollabAgentToolCallItemData} />;
+        case 'mcpToolCall':
+          return <McpToolCallItem item={item} />
         default:
-          return (
-            <CollapsedJsonItem label={item.type} value={item} />
-          );
+          return <CollapsedJsonItem label={item.type} value={item} />
       }
     case 'turn/completed':
       if (event.params.turn.status === 'interrupted') {
