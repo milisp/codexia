@@ -26,7 +26,9 @@ export function GitActions() {
   const [activeAction, setActiveAction] = useState<'commit' | 'push'>('commit');
 
   const refreshGitStats = useCallback(() => {
-    void refreshStats(cwd);
+    const currentCwd = cwd;
+    if (!currentCwd) return;
+    void refreshStats(currentCwd);
   }, [cwd, refreshStats]);
 
   const handleGitCommit = async () => {
@@ -82,7 +84,9 @@ export function GitActions() {
           ) : (
             <CloudUpload className="size-4 text-primary" />
           )}
-          <span className="hidden md:inline text-xs font-semibold capitalize tracking-tight">{activeAction}</span>
+          <span className="hidden md:inline text-xs font-semibold capitalize tracking-tight">
+            {activeAction}
+          </span>
         </Button>
         <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
           <PopoverTrigger asChild>
@@ -99,9 +103,7 @@ export function GitActions() {
             className="w-40 p-1 bg-popover/95 backdrop-blur-md border-border rounded-xl shadow-2xl"
             align="end"
           >
-            <div className="p-2 text-sm">
-              Git actions
-            </div>
+            <div className="p-2 text-sm">Git actions</div>
             <div className="flex flex-col gap-0.5">
               <Button
                 variant="ghost"

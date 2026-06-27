@@ -38,18 +38,19 @@ export const useInputStore = create<InputStore>()(
       appendFileLinks: (paths) => {
         const { selectedAgent, cwd } = useWorkspaceStore.getState();
         if (selectedAgent === 'cc') {
-          useCCInputStore.getState().appendFileLinks(paths, cwd);
+          useCCInputStore.getState().appendFileLinks(paths, cwd ?? undefined);
           return;
         }
 
         set((state) => {
           const toPosix = (value: string) => value.replace(/\\/g, '/');
-          const normalizedCwd = toPosix(cwd).replace(/\/+$/, '');
+          const normalizedCwd = toPosix(cwd ?? '').replace(/\/+$/, '');
           const links = paths.map((path) => {
             const normalizedPath = toPosix(path);
-            const relativePath = normalizedCwd && normalizedPath.startsWith(`${normalizedCwd}/`)
-              ? normalizedPath.slice(normalizedCwd.length + 1)
-              : normalizedPath;
+            const relativePath =
+              normalizedCwd && normalizedPath.startsWith(`${normalizedCwd}/`)
+                ? normalizedPath.slice(normalizedCwd.length + 1)
+                : normalizedPath;
             const fileName = normalizedPath.split('/').filter(Boolean).pop() ?? normalizedPath;
             return `[${fileName}](${relativePath})`;
           });

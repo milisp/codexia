@@ -10,7 +10,14 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu';
-import { gitListBranches, gitCheckoutBranch, gitCreateBranch, gitBranchInfo, gitStatus, type GitBranchInfoResponse } from '@/services/tauri/git';
+import {
+  gitListBranches,
+  gitCheckoutBranch,
+  gitCreateBranch,
+  gitBranchInfo,
+  gitStatus,
+  type GitBranchInfoResponse,
+} from '@/services/tauri/git';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +32,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-export function BranchSwitcher({ cwd }: { cwd: string }) {
+export function BranchSwitcher({ cwd }: { cwd: string | null }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [branches, setBranches] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -49,20 +56,23 @@ export function BranchSwitcher({ cwd }: { cwd: string }) {
   }, [cwd]);
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen || !cwd) return;
     setLoading(true);
-    gitListBranches(cwd)
+    const currentCwd = cwd;
+    gitListBranches(currentCwd)
       .then((res) => setBranches(res.branches))
       .catch(() => setBranches([]))
       .finally(() => setLoading(false));
   }, [menuOpen, cwd]);
 
   async function doCheckoutBranch(branch: string) {
+    const currentCwd = cwd;
+    if (!currentCwd) return;
     setSwitching(branch);
     try {
-      await gitCheckoutBranch(cwd, branch);
+      await gitCheckoutBranch(currentCwd, branch);
       setMenuOpen(false);
-      gitBranchInfo(cwd)
+      gitBranchInfo(currentCwd)
         .then(setBranchInfo)
         .catch(() => setBranchInfo(null));
     } catch {
@@ -73,9 +83,11 @@ export function BranchSwitcher({ cwd }: { cwd: string }) {
   }
 
   async function handleSelectBranch(branch: string) {
+    const currentCwd = cwd;
+    if (!currentCwd) return;
     if (branch === branchInfo?.branch || switching) return;
     try {
-      const status = await gitStatus(cwd);
+      const status = await gitStatus(currentCwd);
       if (status.entries.length > 0) {
         setDirtyCount(status.entries.length);
         setDirtyBranch(branch);
@@ -88,17 +100,19 @@ export function BranchSwitcher({ cwd }: { cwd: string }) {
   }
 
   async function handleCreateBranch() {
+    const currentCwd = cwd;
+    if (!currentCwd) return;
     const name = newBranchName.trim();
     if (!name || newBranchCreating) return;
     setNewBranchError(null);
     setNewBranchCreating(true);
     try {
-      await gitCreateBranch(cwd, name);
+      await gitCreateBranch(currentCwd, name);
       setBranches((prev) => [...prev, name].sort());
       setNewBranchSubOpen(false);
       setNewBranchName('');
       setMenuOpen(false);
-      gitBranchInfo(cwd)
+      gitBranchInfo(currentCwd)
         .then(setBranchInfo)
         .catch(() => setBranchInfo(null));
     } catch (e) {
@@ -117,20 +131,24 @@ export function BranchSwitcher({ cwd }: { cwd: string }) {
 
   return (
     <>
-      <AlertDialog open={dirtyBranch !== null} onOpenChange={(open) => { if (!open) setDirtyBranch(null); }}>
+      <AlertDialog
+        open={dirtyBranch !== null}
+        onOpenChange={(open) => {
+          if (!open) setDirtyBranch(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Discard Uncommitted Changes?</AlertDialogTitle>
             <AlertDialogDescription>
-              You have {dirtyCount} uncommitted {dirtyCount === 1 ? 'change' : 'changes'}.
-              If you switch to Branch <span className="font-mono font-semibold text-foreground">{dirtyBranch}</span>,
-              your local changes will be permanently lost.
+              You have {dirtyCount} uncommitted {dirtyCount === 1 ? 'change' : 'changes'}. If you
+              switch to Branch{' '}
+              <span className="font-mono font-semibold text-foreground">{dirtyBranch}</span>, your
+              local changes will be permanently lost.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDirtyBranch(null)}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setDirtyBranch(null)}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
@@ -156,7 +174,11 @@ export function BranchSwitcher({ cwd }: { cwd: string }) {
         }}
       >
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-auto gap-1 px-1.5 py-0.5 text-xs text-muted-foreground">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-auto gap-1 px-1.5 py-0.5 text-xs text-muted-foreground"
+          >
             <GitBranch className="h-3 w-3 shrink-0" />
             <span>{branchInfo.branch}</span>
             <ChevronDown className="h-3 w-3 shrink-0 opacity-50" />
@@ -219,7 +241,10 @@ export function BranchSwitcher({ cwd }: { cwd: string }) {
                       autoFocus
                       placeholder="New branch name..."
                       value={newBranchName}
-                      onChange={(e) => { setNewBranchName(e.target.value); setNewBranchError(null); }}
+                      onChange={(e) => {
+                        setNewBranchName(e.target.value);
+                        setNewBranchError(null);
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
@@ -232,7 +257,9 @@ export function BranchSwitcher({ cwd }: { cwd: string }) {
                       }}
                       className="h-7 text-xs font-mono"
                     />
-                    {newBranchError && <p className="text-[10px] text-destructive px-1">{newBranchError}</p>}
+                    {newBranchError && (
+                      <p className="text-[10px] text-destructive px-1">{newBranchError}</p>
+                    )}
                     <div className="flex gap-1">
                       <Button
                         size="sm"
@@ -240,7 +267,11 @@ export function BranchSwitcher({ cwd }: { cwd: string }) {
                         onClick={handleCreateBranch}
                         disabled={!newBranchName.trim() || newBranchCreating}
                       >
-                        {newBranchCreating ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Create'}
+                        {newBranchCreating ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          'Create'
+                        )}
                       </Button>
                       <Button
                         size="sm"

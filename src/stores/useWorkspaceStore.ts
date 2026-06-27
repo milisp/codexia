@@ -23,7 +23,10 @@ function dedupeProjects(projects: string[]): string[] {
   return next;
 }
 
-function pushRecentProject(history: string[], project: string): string[] {
+function pushRecentProject(history: string[], project: string | null): string[] {
+  if (!project) {
+    return history;
+  }
   const normalized = normalizeProjectPath(project);
   if (!normalized) {
     return history;
@@ -63,8 +66,8 @@ interface WorkspaceStore {
   setProjectSort: (sortKey: ProjectSortKey) => void;
   historyMode: boolean;
   setHistoryMode: (historyMode: boolean) => void;
-  cwd: string;
-  setCwd: (path: string) => void;
+  cwd: string | null;
+  setCwd: (path: string | null) => void;
   // Multi-file tab state
   openFiles: string[];
   activeFile: string | null;
@@ -104,7 +107,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       const normalized = normalizeProjectPath(project);
       const projects = state.projects.filter((p) => p !== normalized);
       const shouldClearCwd = state.cwd === normalized;
-      const nextCwd = shouldClearCwd ? (projects[0] ?? '') : state.cwd;
+      const nextCwd = shouldClearCwd ? (projects[0] ?? null) : state.cwd;
 
       return {
         projects,
@@ -136,15 +139,17 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   setProjectSort: (sortKey) => set({ projectSort: sortKey }),
   historyMode: false,
   setHistoryMode: (historyMode) => set({ historyMode }),
-  cwd: '',
+  cwd: null,
   setCwd: (path) => {
-    const normalized = normalizeProjectPath(path);
+    const normalized = path ? normalizeProjectPath(path) : null;
     set((state) => ({
       cwd: normalized,
       openFiles: [],
       activeFile: null,
       selectedFilePath: null,
-      historyProjects: pushRecentProject(state.historyProjects, normalized),
+      historyProjects: normalized
+        ? pushRecentProject(state.historyProjects, normalized)
+        : state.historyProjects,
     }));
   },
   // Multi-file tab state

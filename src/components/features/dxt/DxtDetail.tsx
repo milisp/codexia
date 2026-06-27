@@ -127,13 +127,7 @@ function sanitizeManifest(raw: any) {
   return filtered;
 }
 
-export default function DxtDetail({
-  user,
-  repo,
-}: {
-  user: string;
-  repo: string;
-}) {
+export default function DxtDetail({ user, repo }: { user: string; repo: string }) {
   const { cwd, selectedAgent } = useWorkspaceStore();
   const { mcpScope: selectedScope } = usePluginStore();
   const [manifest, setManifest] = useState<z.infer<typeof DxtManifestSchema> | null>(null);
@@ -216,7 +210,7 @@ export default function DxtDetail({
     // For CC, path is required and comes from cwd
     const _item = {
       clientName: selectedAgent,
-      path: selectedAgent === 'codex' ? undefined : cwd,
+      path: selectedAgent === 'codex' ? undefined : (cwd ?? undefined),
       serverName: manifest.name,
       serverConfig: mergedConfig,
       scope: selectedAgent === 'cc' ? selectedScope : undefined,
@@ -234,14 +228,14 @@ export default function DxtDetail({
   async function removeMcpServer() {
     if (!manifest) return;
 
-    const configPath = selectedAgent === 'codex' ? undefined : cwd;
+    const configPath = selectedAgent === 'codex' ? undefined : (cwd ?? undefined);
 
     try {
       await unifiedRemoveMcpServer({
         clientName: selectedAgent,
         path: configPath,
         serverName: manifest.name,
-        scope: selectedAgent === 'cc' ? installedScope ?? undefined : undefined,
+        scope: selectedAgent === 'cc' ? (installedScope ?? undefined) : undefined,
       });
       // Trigger refresh
       checkInstallation();
@@ -252,7 +246,7 @@ export default function DxtDetail({
 
   function checkInstallation() {
     if (!manifest) return;
-    const configPath = selectedAgent === 'codex' ? undefined : cwd;
+    const configPath = selectedAgent === 'codex' ? undefined : (cwd ?? undefined);
     if (selectedAgent === 'cc' && !configPath) {
       setIsInstalled(false);
       setEnabled(false);
@@ -289,7 +283,7 @@ export default function DxtDetail({
 
     // For Codex, path is always undefined (uses ~/.codex/config.toml)
     // For CC, path is required and comes from cwd
-    const configPath = selectedAgent === 'codex' ? undefined : cwd;
+    const configPath = selectedAgent === 'codex' ? undefined : (cwd ?? undefined);
 
     if (checked) {
       unifiedDisableMcpServer({
@@ -305,7 +299,7 @@ export default function DxtDetail({
       };
       try {
         await unifiedEnableMcpServer(_serverItem);
-      } catch (error) { }
+      } catch (error) {}
     }
   }
 
@@ -354,7 +348,8 @@ export default function DxtDetail({
                       disabled={selectedAgent === 'cc' && !cwd}
                       className="px-8"
                     >
-                      <Plus className="h-4 w-4" /> Add to {selectedAgent === 'codex' ? 'Codex' : 'Claude Code'}
+                      <Plus className="h-4 w-4" /> Add to{' '}
+                      {selectedAgent === 'codex' ? 'Codex' : 'Claude Code'}
                     </Button>
                     {selectedAgent === 'cc' && !cwd && (
                       <p className="text-[10px] text-destructive font-medium underline underline-offset-2">

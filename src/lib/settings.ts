@@ -20,7 +20,7 @@ type WorkspaceData = {
   projects: string[];
   historyProjects: string[];
   selectedAgent: string;
-  cwd: string;
+  cwd: string | undefined;
   projectSort: string;
   instructionType: string;
 };
@@ -94,7 +94,7 @@ function snapshot(): SettingsFile {
       projects: ws.projects,
       historyProjects: ws.historyProjects,
       selectedAgent: ws.selectedAgent,
-      cwd: ws.cwd,
+      cwd: ws.cwd ?? undefined,
       projectSort: ws.projectSort,
       instructionType: ws.instructionType,
     },

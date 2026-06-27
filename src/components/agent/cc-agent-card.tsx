@@ -73,12 +73,11 @@ export function CCAgentCard({ card, onRemove: _onRemove, header, isSelected }: C
   }, [messages]);
 
   const tokens = resultMsg?.usage
-    ? ((resultMsg.usage.input_tokens ?? 0) + (resultMsg.usage.output_tokens ?? 0))
+    ? (resultMsg.usage.input_tokens ?? 0) + (resultMsg.usage.output_tokens ?? 0)
     : null;
 
-  const cost: number | null = typeof resultMsg?.total_cost_usd === 'number'
-    ? resultMsg.total_cost_usd
-    : null;
+  const cost: number | null =
+    typeof resultMsg?.total_cost_usd === 'number' ? resultMsg.total_cost_usd : null;
 
   // Live elapsed counter — derived from store start time so it survives remounts.
   const startTime = sessionStartTimeMap[card.id] ?? null;
@@ -95,7 +94,9 @@ export function CCAgentCard({ card, onRemove: _onRemove, header, isSelected }: C
   // Live counter while running; frozen result duration once done.
   const displaySecs: number | null = processing
     ? elapsed
-    : resultMsg ? resultMsg.duration_ms / 1000 : null;
+    : resultMsg
+      ? resultMsg.duration_ms / 1000
+      : null;
 
   const handleStop = async () => {
     await ccInterrupt(card.id);
@@ -149,7 +150,9 @@ export function CCAgentCard({ card, onRemove: _onRemove, header, isSelected }: C
       : 'border';
 
   return (
-    <div className={`flex flex-col ${attentionBorder} rounded-lg bg-background overflow-hidden h-72 transition-shadow`}>
+    <div
+      className={`flex flex-col ${attentionBorder} rounded-lg bg-background overflow-hidden h-72 transition-shadow`}
+    >
       {header}
 
       {/* Message area — CCSession owns its own listener and display */}
@@ -166,7 +169,9 @@ export function CCAgentCard({ card, onRemove: _onRemove, header, isSelected }: C
       <div className="flex items-center justify-between px-2 py-1 border-t bg-muted/20 shrink-0">
         <div className="flex items-center gap-2">
           {displaySecs !== null && !isResumingSession && (
-            <span className={`text-[10px] font-mono tabular-nums ${processing ? 'text-green-500' : 'text-muted-foreground/60'}`}>
+            <span
+              className={`text-[10px] font-mono tabular-nums ${processing ? 'text-green-500' : 'text-muted-foreground/60'}`}
+            >
               {fmtElapsed(displaySecs)}
             </span>
           )}
@@ -179,7 +184,10 @@ export function CCAgentCard({ card, onRemove: _onRemove, header, isSelected }: C
           {hasPending && !processing && (
             <span className="text-[10px] text-amber-500">needs input</span>
           )}
-          <span className="text-[10px] text-muted-foreground/60 truncate max-w-[80px]" title={card.cwd}>
+          <span
+            className="text-[10px] text-muted-foreground/60 truncate max-w-[80px]"
+            title={card.cwd ?? ''}
+          >
             {getFilename(card.cwd)}
           </span>
         </div>
@@ -196,7 +204,10 @@ export function CCAgentCard({ card, onRemove: _onRemove, header, isSelected }: C
                 variant="outline"
                 className="h-6 px-2 text-[10px] gap-1"
                 disabled={isApplyingWorktree || isResumingSession}
-                onClick={(e) => { e.stopPropagation(); void handleApplyWorktree(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void handleApplyWorktree();
+                }}
               >
                 <Check className={`h-3 w-3 ${isApplyingWorktree ? 'animate-pulse' : ''}`} />
                 {isApplyingWorktree ? 'Applying…' : 'Apply'}
@@ -209,7 +220,10 @@ export function CCAgentCard({ card, onRemove: _onRemove, header, isSelected }: C
               variant="outline"
               className="h-6 px-2 text-[10px] gap-1"
               disabled={isResumingSession || isApplyingWorktree}
-              onClick={(e) => { e.stopPropagation(); void handleResume(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                void handleResume();
+              }}
             >
               <RotateCcw className={`h-3 w-3 ${isResumingSession ? 'animate-spin' : ''}`} />
               {isResumingSession ? 'Loading…' : 'Resume'}

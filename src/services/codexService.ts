@@ -114,10 +114,13 @@ export const codexService = {
     };
   },
   async loadThreads(
-    cwd: string,
+    cwd: string | null,
     archived: boolean = false,
     sortKey: 'created_at' | 'updated_at' = 'updated_at'
   ) {
+    if (!cwd) {
+      return;
+    }
     try {
       const params: ThreadListParams = {
         cursor: null,
@@ -148,7 +151,10 @@ export const codexService = {
       useCodexStore.getState().setThreads([]);
     }
   },
-  async loadMoreThreads(cwd: string, sortKey: 'created_at' | 'updated_at' = 'updated_at') {
+  async loadMoreThreads(cwd: string | null, sortKey: 'created_at' | 'updated_at' = 'updated_at') {
+    if (!cwd) {
+      return;
+    }
     const { threadListNextCursor, appendThreads, setThreadListNextCursor } =
       useCodexStore.getState();
     if (!threadListNextCursor) {
@@ -251,16 +257,27 @@ export const codexService = {
   async threadStart() {
     const set = useCodexStore.setState;
     try {
-      const { model, modelProvider, approvalPolicy, sandbox, reasoningEffort, webSearchRequest, threadCwdMode, collaborationMode } =
-        useConfigStore.getState();
+      const {
+        model,
+        modelProvider,
+        approvalPolicy,
+        sandbox,
+        reasoningEffort,
+        webSearchRequest,
+        threadCwdMode,
+        collaborationMode,
+      } = useConfigStore.getState();
       const { cwd } = useWorkspaceStore.getState();
       let threadCwd = cwd;
-      if (threadCwdMode === 'worktree' && cwd.trim()) {
+      if (threadCwdMode === 'worktree' && cwd) {
         try {
           const prepared = await gitCreateWorktree(cwd, generateWorktreeKey());
           threadCwd = prepared.worktree_path;
         } catch (error) {
-          console.warn('[CodexService] Failed to prepare thread worktree, fallback to workspace cwd', error);
+          console.warn(
+            '[CodexService] Failed to prepare thread worktree, fallback to workspace cwd',
+            error
+          );
         }
       }
       const params: ThreadStartParams = {
@@ -282,11 +299,15 @@ export const codexService = {
           // Inject plan mode when selected.
           ...(collaborationMode === 'plan'
             ? {
-              collaboration_mode: {
-                mode: 'plan',
-                settings: { model, reasoning_effort: reasoningEffort, developer_instructions: null },
-              },
-            }
+                collaboration_mode: {
+                  mode: 'plan',
+                  settings: {
+                    model,
+                    reasoning_effort: reasoningEffort,
+                    developer_instructions: null,
+                  },
+                },
+              }
             : {}),
         },
       };
@@ -354,14 +375,8 @@ export const codexService = {
   async threadFork(threadId: string) {
     const set = useCodexStore.setState;
     try {
-      const {
-        model,
-        modelProvider,
-        approvalPolicy,
-        sandbox,
-        reasoningEffort,
-        webSearchRequest,
-      } = useConfigStore.getState();
+      const { model, modelProvider, approvalPolicy, sandbox, reasoningEffort, webSearchRequest } =
+        useConfigStore.getState();
       const params: ThreadForkParams = {
         threadId,
         model,
@@ -441,11 +456,7 @@ export const codexService = {
     }
   },
 
-  async turnStart(
-    threadId: string,
-    input: string,
-    images: string[] = []
-  ) {
+  async turnStart(threadId: string, input: string, images: string[] = []) {
     const set = useCodexStore.setState;
     try {
       const userInputs: UserInput[] = [];
@@ -512,7 +523,8 @@ export const codexService = {
     }
   },
 
-  async listSkills(cwd: string) {
+  async listSkills(cwd: string | null) {
+    if (!cwd) return [];
     try {
       const response = await skillList(cwd);
       console.log('[CodexService] listSkills response:', response.data);

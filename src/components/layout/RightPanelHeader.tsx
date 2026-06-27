@@ -6,7 +6,7 @@ import { useGitWatch } from '@/hooks/useGitWatch';
 import { useGitStatsStore } from '@/stores/useGitStatsStore';
 import { useWorkspaceStore } from '@/stores';
 import { GitActions, GitStatsIndicator } from '@/components/features/git';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 type RightPanelTab = 'diff' | 'tasks' | 'note' | 'files' | 'webpreview';
 
@@ -17,10 +17,10 @@ interface TabConfig {
 }
 
 const TAB_BUTTONS: TabConfig[] = [
-  { tab: 'webpreview', icon: Chrome,     title: 'Web Preview' },
-  { tab: 'tasks',      icon: ListTodo,   title: 'Tasks' },
-  { tab: 'note',       icon: StickyNote, title: 'Notes' },
-  { tab: 'files',      icon: Files,      title: 'Files' },
+  { tab: 'webpreview', icon: Chrome, title: 'Web Preview' },
+  { tab: 'tasks', icon: ListTodo, title: 'Tasks' },
+  { tab: 'note', icon: StickyNote, title: 'Notes' },
+  { tab: 'files', icon: Files, title: 'Files' },
 ];
 
 export function RightPanelHeader() {
@@ -37,23 +37,35 @@ export function RightPanelHeader() {
   const { cwd } = useWorkspaceStore();
   const { refreshStats } = useGitStatsStore();
 
-  const makeRefresher = useCallback(
-    (silent = false) => () => void refreshStats(cwd, silent),
-    [cwd, refreshStats],
-  );
+  // Use refs to avoid stale closures without adding them to effect deps.
+  const cwdRef = useRef(cwd);
+  const refreshStatsRef = useRef(refreshStats);
+  cwdRef.current = cwd;
+  refreshStatsRef.current = refreshStats;
 
-  // Eagerly refresh on cwd change; silent=false shows loading state
+  // Eagerly refresh (with loading state) whenever cwd changes.
   useEffect(() => {
-    makeRefresher()();
-  }, [makeRefresher]);
+    if (!cwd) return;
+    void refreshStats(cwd, false);
+    // Only re-run when cwd actually changes — refreshStats is stable from zustand.
+  }, [cwd, refreshStats]);
 
-  const silentRefresher = useCallback(() => void refreshStats(cwd, true), [cwd, refreshStats]);
-  useGitWatch(cwd || null, silentRefresher, Boolean(cwd));
+  // Stable silent refresher for git watch — never changes identity so useGitWatch
+  // doesn't teardown/recreate its fs watcher on every render.
+  const silentRefresher = useCallback(() => {
+    const currentCwd = cwdRef.current;
+    if (currentCwd) void refreshStatsRef.current(currentCwd, true);
+  }, []); // empty deps — reads latest values via refs
 
-  const openRightPanelTab = useCallback((tab: RightPanelTab) => {
-    setActiveRightPanelTab(tab);
-    setRightPanelOpen(true);
-  }, [setActiveRightPanelTab, setRightPanelOpen]);
+  useGitWatch(cwd, silentRefresher, Boolean(cwd));
+
+  const openRightPanelTab = useCallback(
+    (tab: RightPanelTab) => {
+      setActiveRightPanelTab(tab);
+      setRightPanelOpen(true);
+    },
+    [setActiveRightPanelTab, setRightPanelOpen]
+  );
 
   return (
     <div className="flex items-center gap-2">
@@ -101,7 +113,6 @@ export function RightPanelHeader() {
       >
         <PanelRight className="size-4" />
       </Button>
-
     </div>
   );
 }

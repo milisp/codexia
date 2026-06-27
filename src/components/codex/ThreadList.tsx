@@ -4,7 +4,12 @@ import { Archive, GitFork, FolderX, Loader2 } from 'lucide-react';
 import { useThreadFilter } from '@/components/codex/hooks/useThreadFilter';
 import { codexService } from '@/services/codexService';
 import { useCodexStore, useThreadListStore } from '@/components/codex/stores';
-import { deleteFile, readSessionMetaFile, threadList, writeSessionMetaFile } from '@/services/tauri';
+import {
+  deleteFile,
+  readSessionMetaFile,
+  threadList,
+  writeSessionMetaFile,
+} from '@/services/tauri';
 import {
   Dialog,
   DialogContent,
@@ -44,6 +49,8 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
   const { searchTerm, sortKey } = useThreadListStore();
   const isProjectScoped = !!cwdOverride;
   const listCwd = cwdOverride ?? cwd;
+  // If no cwd available, disable scoped mode and show nothing
+  const hasValidCwd = isProjectScoped && !!listCwd;
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [scopedThreads, setScopedThreads] = useState<ThreadListItem[]>([]);
   const [scopedNextCursor, setScopedNextCursor] = useState<string | null>(null);
@@ -98,13 +105,15 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
   }, [loadSessionMeta]);
 
   useEffect(() => {
-    if (!isProjectScoped) {
+    if (!hasValidCwd) {
       reloadScopedThreadsRef.current = null;
       return;
     }
     let cancelled = false;
 
     const loadScopedThreads = async () => {
+      const currentCwd = listCwd;
+      if (!currentCwd) return;
       try {
         const params = {
           cursor: null,
@@ -114,7 +123,7 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
           archived: false,
           sourceKinds: null,
         };
-        const response = await threadList(params, listCwd);
+        const response = await threadList(params, currentCwd);
         if (cancelled) {
           return;
         }
@@ -179,7 +188,6 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
     });
   }, [cwd, currentThreadId, isProjectScoped, listCwd, threads]);
 
-
   const handleSelectThread = useCallback(
     async (threadId: string, options?: { resume?: boolean }) => {
       if (threadId === currentThreadId) {
@@ -203,12 +211,21 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
       }
 
       setHistoryMode(false);
-      addAgentCard({ kind: 'codex', id: threadId, preview, cwd: listCwd });
+      const currentCwd = listCwd;
+      addAgentCard({ kind: 'codex', id: threadId, preview, cwd: currentCwd });
       setCurrentAgentCardId(threadId);
       setView('agent');
       await handleSelectThread(threadId, { resume: true });
     },
-    [handleSelectThread, historyMode, setHistoryMode, setView, setCurrentAgentCardId, addAgentCard]
+    [
+      handleSelectThread,
+      historyMode,
+      setHistoryMode,
+      setView,
+      setCurrentAgentCardId,
+      addAgentCard,
+      listCwd,
+    ]
   );
 
   const handleArchiveThread = useCallback(
@@ -223,14 +240,17 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
           archived: false,
           sourceKinds: null,
         };
-        const response = await threadList(params, listCwd);
-        const loadedThreads = response.data.map((t) => codexService.normalizeThreadItem(t));
-        const next =
-          (response as { nextCursor?: string | null }).nextCursor ??
-          (response as { next_cursor?: string | null }).next_cursor ??
-          null;
-        setScopedThreads(loadedThreads);
-        setScopedNextCursor(next);
+        const currentCwd = listCwd;
+        if (currentCwd) {
+          const response = await threadList(params, currentCwd);
+          const loadedThreads = response.data.map((t) => codexService.normalizeThreadItem(t));
+          const next =
+            (response as { nextCursor?: string | null }).nextCursor ??
+            (response as { next_cursor?: string | null }).next_cursor ??
+            null;
+          setScopedThreads(loadedThreads);
+          setScopedNextCursor(next);
+        }
       } else {
         await codexService.loadThreads(cwd, false, sortKey);
       }
@@ -242,14 +262,15 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
     async (threadId: string) => {
       const preview = mergedThreads.find((t) => t.id === threadId)?.preview;
       await codexService.threadFork(threadId);
-      addAgentCard({ kind: 'codex', id: threadId, preview, cwd: listCwd });
+      const currentCwd = listCwd;
+      addAgentCard({ kind: 'codex', id: threadId, preview, cwd: currentCwd });
       setCurrentAgentCardId(threadId);
       setView('agent');
       if (isProjectScoped) {
         await reloadScopedThreadsRef.current?.();
       }
     },
-    [isProjectScoped, setView, mergedThreads, addAgentCard, setCurrentAgentCardId]
+    [isProjectScoped, setView, mergedThreads, addAgentCard, setCurrentAgentCardId, listCwd]
   );
 
   const handleDeleteWorktree = useCallback(async (thread: ThreadListItem) => {
@@ -291,27 +312,22 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
           archived: false,
           sourceKinds: null,
         };
-        const response = await threadList(params, listCwd);
-        const loadedThreads = response.data.map((t) => codexService.normalizeThreadItem(t));
-        const next =
-          (response as { nextCursor?: string | null }).nextCursor ??
-          (response as { next_cursor?: string | null }).next_cursor ??
-          null;
-        setScopedThreads(loadedThreads);
-        setScopedNextCursor(next);
+        const currentCwd = listCwd;
+        if (currentCwd) {
+          const response = await threadList(params, currentCwd);
+          const loadedThreads = response.data.map((t) => codexService.normalizeThreadItem(t));
+          const next =
+            (response as { nextCursor?: string | null }).nextCursor ??
+            (response as { next_cursor?: string | null }).next_cursor ??
+            null;
+          setScopedThreads(loadedThreads);
+          setScopedNextCursor(next);
+        }
       } else {
         await codexService.loadThreads(cwd, false, sortKey);
       }
     },
-    [
-      currentThreadId,
-      cwd,
-      isProjectScoped,
-      listCwd,
-      sessionMeta,
-      sortKey,
-      writeSessionMeta,
-    ]
+    [currentThreadId, cwd, isProjectScoped, listCwd, sessionMeta, sortKey, writeSessionMeta]
   );
 
   const handleLoadMore = useCallback(async () => {
@@ -329,24 +345,27 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
           archived: false,
           sourceKinds: null,
         };
-        const response = await threadList(params, listCwd);
-        const loadedThreads = response.data.map((t) => codexService.normalizeThreadItem(t));
-        const next =
-          (response as { nextCursor?: string | null }).nextCursor ??
-          (response as { next_cursor?: string | null }).next_cursor ??
-          null;
-        setScopedThreads((prev) => {
-          const seen = new Set(prev.map((thread) => thread.id));
-          const merged = [...prev];
-          for (const thread of loadedThreads) {
-            if (!seen.has(thread.id)) {
-              seen.add(thread.id);
-              merged.push(thread);
+        const currentCwd = listCwd;
+        if (currentCwd) {
+          const response = await threadList(params, currentCwd);
+          const loadedThreads = response.data.map((t) => codexService.normalizeThreadItem(t));
+          const next =
+            (response as { nextCursor?: string | null }).nextCursor ??
+            (response as { next_cursor?: string | null }).next_cursor ??
+            null;
+          setScopedThreads((prev) => {
+            const seen = new Set(prev.map((thread) => thread.id));
+            const merged = [...prev];
+            for (const thread of loadedThreads) {
+              if (!seen.has(thread.id)) {
+                seen.add(thread.id);
+                merged.push(thread);
+              }
             }
-          }
-          return merged;
-        });
-        setScopedNextCursor(next);
+            return merged;
+          });
+          setScopedNextCursor(next);
+        }
       } else {
         await codexService.loadMoreThreads(cwd, sortKey);
       }
@@ -407,8 +426,9 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
                 onKeyDown={(event) => handleRowKeyDown(event, thread)}
                 role="button"
                 tabIndex={0}
-                className={`group grid grid-cols-[1fr_auto] items-center gap-2 w-full text-left p-2 rounded-lg transition-colors ${currentThreadId === thread.id ? 'bg-zinc-700/50' : 'hover:bg-zinc-800/30'
-                  }`}
+                className={`group grid grid-cols-[1fr_auto] items-center gap-2 w-full text-left p-2 rounded-lg transition-colors ${
+                  currentThreadId === thread.id ? 'bg-zinc-700/50' : 'hover:bg-zinc-800/30'
+                }`}
               >
                 <div className="text-sm font-medium truncate min-w-0 pr-2 flex items-center gap-1.5">
                   {threadStatusMap[thread.id]?.type === 'active' && (
@@ -435,9 +455,7 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
               </div>
             </ContextMenuTrigger>
             <ContextMenuContent className="w-44">
-              <ContextMenuItem onSelect={() => openRenameDialog(thread.id)}>
-                Rename
-              </ContextMenuItem>
+              <ContextMenuItem onSelect={() => openRenameDialog(thread.id)}>Rename</ContextMenuItem>
               <ContextMenuItem onSelect={() => void handleForkThread(thread.id)}>
                 <GitFork className="mr-2 h-4 w-4" />
                 Fork
@@ -446,9 +464,7 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
                 Archive
               </ContextMenuItem>
               {thread.cwd.includes('/.codexia/worktrees/') && (
-                <ContextMenuItem
-                  onSelect={() => void handleDeleteWorktree(thread)}
-                >
+                <ContextMenuItem onSelect={() => void handleDeleteWorktree(thread)}>
                   <FolderX className="mr-2 h-4 w-4" />
                   Delete Worktree
                 </ContextMenuItem>

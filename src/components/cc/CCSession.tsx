@@ -16,7 +16,6 @@ import { buildInlineErrorsMap } from './messages/inlineErrors';
 import type { PermissionRequestMessage } from './types/messages';
 import type { PermissionDecision } from './types/permission';
 
-
 interface CCSessionProps {
   /** When provided, renders in embedded (grid-card) mode for this specific session. */
   sessionId?: string;
@@ -29,7 +28,11 @@ interface CCSessionProps {
   disableListener?: boolean;
 }
 
-export default function CCSession({ sessionId, hideComposer = false, disableListener = false }: CCSessionProps = {}) {
+export default function CCSession({
+  sessionId,
+  hideComposer = false,
+  disableListener = false,
+}: CCSessionProps = {}) {
   const isEmbedded = !!sessionId;
 
   const {
@@ -120,15 +123,9 @@ export default function CCSession({ sessionId, hideComposer = false, disableList
     return () => clearTimeout(timer);
   }, [messages, isLoading]);
 
-  const inlineErrorsMap = useMemo(
-    () => buildInlineErrorsMap(messages),
-    [messages],
-  );
+  const inlineErrorsMap = useMemo(() => buildInlineErrorsMap(messages), [messages]);
 
-  const messageGroups = useMemo(
-    () => buildMessageGroups(messages),
-    [messages],
-  );
+  const messageGroups = useMemo(() => buildMessageGroups(messages), [messages]);
 
   const pendingPermissionIdx = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -164,7 +161,6 @@ export default function CCSession({ sessionId, hideComposer = false, disableList
           className="h-full overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:display-none"
         >
           <div className="flex flex-col gap-2 p-4">
-
             {/* Message list */}
             {messageGroups.map((group) =>
               group.kind === 'explored' ? (
@@ -202,8 +198,10 @@ export default function CCSession({ sessionId, hideComposer = false, disableList
           onResolve={handleResolvePermission}
         />
       )}
-      {!isEmbedded && !hideComposer && pendingPermissionIdx === -1 && (
-        activeSessionId && !activeSessionIds.includes(activeSessionId) ? (
+      {!isEmbedded &&
+        !hideComposer &&
+        pendingPermissionIdx === -1 &&
+        (activeSessionId && !activeSessionIds.includes(activeSessionId) ? (
           <ResumeSessionButton
             sessionId={activeSessionId}
             cwd={cwd}
@@ -213,8 +211,7 @@ export default function CCSession({ sessionId, hideComposer = false, disableList
           />
         ) : (
           <Composer />
-        )
-      )}
+        ))}
     </div>
   );
 }
@@ -227,7 +224,7 @@ function ResumeSessionButton({
   onResumed,
 }: {
   sessionId: string;
-  cwd: string;
+  cwd: string | null;
   permissionMode?: string;
   model?: string;
   onResumed: () => void;
@@ -257,7 +254,9 @@ function ResumeSessionButton({
   return (
     <div className="flex items-center justify-between gap-3 p-4 m-2 rounded-lg border border-border bg-muted/40 text-sm">
       <span className="text-muted-foreground">
-        {cwd ? 'Reviewing history. Resume to send messages.' : 'Pick a project to resume this session.'}
+        {cwd
+          ? 'Reviewing history. Resume to send messages.'
+          : 'Pick a project to resume this session.'}
       </span>
       <Button onClick={onClick} disabled={busy || !cwd} size="sm">
         {busy ? 'Resuming…' : 'Resume session'}

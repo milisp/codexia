@@ -46,6 +46,7 @@ export function FileMentionPopover({
   const handleSelect = useCallback(
     (file: FileItem) => {
       const { cwd: currentCwd } = useWorkspaceStore.getState();
+      if (!currentCwd) return;
       const toPosix = (v: string) => v.replace(/\\/g, '/');
       const normalizedCwd = toPosix(currentCwd).replace(/\/+$/, '');
       const normalizedPath = toPosix(file.path);
@@ -58,7 +59,7 @@ export function FileMentionPopover({
       if (newValue !== null) applyEditorReplacement(newValue, setInput, editorRef);
       else editorRef.current?.focus();
     },
-    [input, setInput, editorRef],
+    [input, setInput, editorRef]
   );
 
   const { open, setOpen, query, filteredItems, selectedIndex, setSelectedIndex, itemRefs } =
@@ -88,7 +89,7 @@ export function FileMentionPopover({
               ? normalizedPath.slice(normalizedCwd.length + 1)
               : normalizedPath;
             return { name: e.name, path: e.path, relativePath };
-          }),
+          })
         );
       } catch (error) {
         console.error('Failed to search files:', error);
@@ -97,8 +98,16 @@ export function FileMentionPopover({
       }
     };
 
-    const timer = setTimeout(() => { void doSearch(); }, query ? 150 : 0);
-    return () => { isActive = false; clearTimeout(timer); };
+    const timer = setTimeout(
+      () => {
+        void doSearch();
+      },
+      query ? 150 : 0
+    );
+    return () => {
+      isActive = false;
+      clearTimeout(timer);
+    };
   }, [open, cwd, query]);
 
   // Pin trigger span to the editor wrapper position
@@ -146,7 +155,9 @@ export function FileMentionPopover({
               return (
                 <Button
                   key={file.path}
-                  ref={(el) => { itemRefs.current[index] = el; }}
+                  ref={(el) => {
+                    itemRefs.current[index] = el;
+                  }}
                   variant={index === selectedIndex ? 'secondary' : 'ghost'}
                   className="w-full justify-start gap-2 h-auto py-1.5 px-3 text-xs rounded-none"
                   onClick={() => handleSelect(file)}

@@ -24,7 +24,7 @@ function isAbsolutePath(path: string) {
   );
 }
 
-function normalizeFileLinkPath(path: string, cwd: string) {
+function normalizeFileLinkPath(path: string, cwd: string | null | undefined) {
   if (!path) {
     return path;
   }
@@ -34,7 +34,7 @@ function normalizeFileLinkPath(path: string, cwd: string) {
 
   const separator = cwd.includes('\\') && !cwd.includes('/') ? '\\' : '/';
   const cleanCwd = cwd.replace(/[\\/]+$/, '');
-  const cleanPath = path.replace(/^[.][/\\]/, '').replace(/^[\\/]+/, '');
+  const cleanPath = path.replace(/^[.][\/\\]/, '').replace(/^[\/\\]+/, '');
   return `${cleanCwd}${separator}${cleanPath}`;
 }
 
@@ -68,17 +68,19 @@ export const Markdown = memo<MarkdownProps>(({ value, className = '', inline = f
             className={cn(
               className,
               (isExternal || isInternalFileLink) &&
-              'text-blue-600 dark:text-blue-400 underline underline-offset-2 hover:text-blue-700 dark:hover:text-blue-300'
+                'text-blue-600 dark:text-blue-400 underline underline-offset-2 hover:text-blue-700 dark:hover:text-blue-300'
             )}
             title={normalizedHref || undefined}
             onClick={async (event) => {
               if (isInternalFileLink && normalizedHref) {
                 event.preventDefault();
                 event.stopPropagation();
-                let candidatePath = hrefPath;
+                let candidatePath: string = hrefPath ?? '';
 
-                if (isFileProtocol) {
-                  candidatePath = decodeURIComponent(hrefPath.replace(/^file:\/\//i, ''));
+                if (isFileProtocol && hrefPath) {
+                  candidatePath = decodeURIComponent(
+                    hrefPath.replace(new RegExp('^file://', 'i'), '')
+                  );
                 }
 
                 const resolvedPath = normalizeFileLinkPath(candidatePath, cwd);
@@ -100,7 +102,8 @@ export const Markdown = memo<MarkdownProps>(({ value, className = '', inline = f
   );
 
   return (
-    <div dir="auto"
+    <div
+      dir="auto"
       className={cn(
         'w-full min-w-0 max-w-full text-sm leading-relaxed text-foreground prose prose-sm break-words [overflow-wrap:anywhere] select-text [&_p]:max-w-full [&_p]:break-words [&_li]:break-words [&_a]:break-all [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_pre_code]:whitespace-pre-wrap [&_pre_code]:break-all [&_code]:break-all [&_table]:block [&_table]:w-full [&_table]:max-w-full [&_table]:table-fixed [&_table]:overflow-x-auto',
         resolvedTheme === 'dark' && 'prose-invert',

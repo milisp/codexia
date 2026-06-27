@@ -19,7 +19,7 @@ import { useCCStore } from '@/stores';
 export function WorkspaceSwitcher() {
   const [projectOpen, setProjectOpen] = useState(false);
   const [browseMode, setBrowseMode] = useState(false);
-  const { cwd, projects, addProject, setCwd, selectedAgent } = useWorkspaceStore()
+  const { cwd, projects, addProject, setCwd, selectedAgent } = useWorkspaceStore();
   const { options, updateOptions } = useCCStore();
   const { threadCwdMode, setThreadCwdMode } = useConfigStore();
 
@@ -50,14 +50,24 @@ export function WorkspaceSwitcher() {
     }
   }, [addProject, setCwd, cwd]);
 
-  const repoLabel = (cwd.split('/').filter(Boolean).pop() ?? cwd);
+  const repoLabel = cwd ? (cwd.split('/').filter(Boolean).pop() ?? cwd) : 'No project';
 
   return (
     <div className="flex items-center gap-1 font-mono py-2">
       {/* Left: Project selector */}
-      <DropdownMenu open={projectOpen} onOpenChange={(o) => { setProjectOpen(o); if (!o) setBrowseMode(false); }}>
+      <DropdownMenu
+        open={projectOpen}
+        onOpenChange={(o) => {
+          setProjectOpen(o);
+          if (!o) setBrowseMode(false);
+        }}
+      >
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-auto gap-1 px-1.5 py-0.5 text-xs text-muted-foreground">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-auto gap-1 px-1.5 py-0.5 text-xs text-muted-foreground"
+          >
             <FolderOpen className="h-3 w-3 shrink-0" />
             <span>{repoLabel}</span>
             <ChevronDown className="h-3 w-3 shrink-0 opacity-50" />
@@ -65,10 +75,7 @@ export function WorkspaceSwitcher() {
         </DropdownMenuTrigger>
         <DropdownMenuContent side="top" align="start" className="w-fix">
           {browseMode ? (
-            <BrowserProjects
-              cwd={cwd}
-              onAddProject={handleSelectBrowseProject}
-            />
+            <BrowserProjects cwd={cwd} onAddProject={handleSelectBrowseProject} />
           ) : (
             <>
               <div className="max-h-60 overflow-y-auto p-1">
@@ -125,16 +132,17 @@ export function WorkspaceSwitcher() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {selectedAgent === 'cc' ?
+      {selectedAgent === 'cc' ? (
         <AgentWorkspaceSelect
           value={options.worktreeMode ?? 'local'}
           onValueChange={(v: ThreadCwdMode) => updateOptions({ worktreeMode: v })}
-        /> :
+        />
+      ) : (
         <AgentWorkspaceSelect
           value={threadCwdMode}
           onValueChange={(v: ThreadCwdMode) => setThreadCwdMode(v)}
         />
-      }
+      )}
 
       <BranchSwitcher cwd={cwd} />
     </div>

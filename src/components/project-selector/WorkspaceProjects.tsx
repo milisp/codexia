@@ -5,7 +5,7 @@ import { getFilename } from '@/utils/getFilename';
 
 type WorkspaceProjectsProps = {
   projects: string[];
-  cwd: string;
+  cwd: string | null;
   onSelectProject: (path: string) => void | Promise<void>;
 };
 

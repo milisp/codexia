@@ -2,7 +2,11 @@ import { useRef, useEffect, useState, useMemo } from 'react';
 import { useCodexStore } from '@/components/codex/stores';
 import { useApprovalStore, useRequestUserInputStore } from '@/components/codex/stores';
 import { codexService } from '@/services/codexService';
-import { gitApplyWorktreeChanges, gitRemoveWorktree, gitHasWorktreeChanges } from '@/services/tauri/git';
+import {
+  gitApplyWorktreeChanges,
+  gitRemoveWorktree,
+  gitHasWorktreeChanges,
+} from '@/services/tauri/git';
 import { renderEvent } from '@/components/codex/items';
 import { Button } from '@/components/ui/button';
 import { Check, RotateCcw, Square } from 'lucide-react';
@@ -67,11 +71,13 @@ export function fmtElapsed(s: number): string {
 
 export function ContextWindowBar({ used, window: win }: { used: number; window: number }) {
   const pct = Math.min(used / win, 1);
-  const color =
-    pct > 0.85 ? 'bg-red-500' : pct > 0.65 ? 'bg-amber-400' : 'bg-emerald-500';
+  const color = pct > 0.85 ? 'bg-red-500' : pct > 0.65 ? 'bg-amber-400' : 'bg-emerald-500';
   return (
     <div className="h-0.5 w-full bg-muted/30 shrink-0">
-      <div className={`h-full ${color} transition-all duration-500`} style={{ width: `${pct * 100}%` }} />
+      <div
+        className={`h-full ${color} transition-all duration-500`}
+        style={{ width: `${pct * 100}%` }}
+      />
     </div>
   );
 }
@@ -85,7 +91,12 @@ interface CodexAgentCardProps {
   isSelected?: boolean;
 }
 
-export function CodexAgentCard({ card, onRemove: _onRemove, header, isSelected }: CodexAgentCardProps) {
+export function CodexAgentCard({
+  card,
+  onRemove: _onRemove,
+  header,
+  isSelected,
+}: CodexAgentCardProps) {
   const { events, threadStatusMap, activeThreadIds } = useCodexStore();
   const { pendingApprovals } = useApprovalStore();
   const { pendingRequests } = useRequestUserInputStore();
@@ -98,7 +109,8 @@ export function CodexAgentCard({ card, onRemove: _onRemove, header, isSelected }
 
   const threadEvents = events[card.id] ?? [];
   const processing = threadStatusMap[card.id]?.type === 'active';
-  const needsResume = !activeThreadIds.includes(card.id) && threadEvents.length === 0 && !processing;
+  const needsResume =
+    !activeThreadIds.includes(card.id) && threadEvents.length === 0 && !processing;
 
   const hasPending =
     pendingApprovals.some((a) => (a as any).threadId === card.id) ||
@@ -106,7 +118,8 @@ export function CodexAgentCard({ card, onRemove: _onRemove, header, isSelected }
 
   const tokens = getCodexTokens(threadEvents);
   const ctxWindow = getCodexContextWindow(threadEvents);
-  const canApplyWorktree = !!card.worktreePath && !!cwd && !processing && !hasPending && worktreeHasChanges;
+  const canApplyWorktree =
+    !!card.worktreePath && !!cwd && !processing && !hasPending && worktreeHasChanges;
 
   const [elapsed, setElapsed] = useState(0);
   const processingStartRef = useRef<number | null>(null);
@@ -205,13 +218,12 @@ export function CodexAgentCard({ card, onRemove: _onRemove, header, isSelected }
       : 'border';
 
   return (
-    <div className={`flex flex-col ${attentionBorder} rounded-lg bg-background overflow-hidden h-72 transition-shadow`}>
+    <div
+      className={`flex flex-col ${attentionBorder} rounded-lg bg-background overflow-hidden h-72 transition-shadow`}
+    >
       {header}
 
-      <div
-        ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto [scrollbar-width:thin]"
-      >
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto [scrollbar-width:thin]">
         {codexItems.length === 0 ? (
           <p className="text-xs text-muted-foreground p-3">No messages yet.</p>
         ) : (
@@ -234,7 +246,10 @@ export function CodexAgentCard({ card, onRemove: _onRemove, header, isSelected }
           {hasPending && !processing && (
             <span className="text-[10px] text-amber-500 animate-pulse">needs input</span>
           )}
-          <span className="text-[10px] text-muted-foreground/60 truncate max-w-[80px]" title={card.cwd}>
+          <span
+            className="text-[10px] text-muted-foreground/60 truncate max-w-[80px]"
+            title={card.cwd ?? ''}
+          >
             {getFilename(card.cwd)}
           </span>
         </div>
@@ -249,7 +264,10 @@ export function CodexAgentCard({ card, onRemove: _onRemove, header, isSelected }
             variant="outline"
             className="h-6 px-2 text-[10px] gap-1"
             disabled={isApplyingWorktree}
-            onClick={(e) => { e.stopPropagation(); void handleApplyWorktree(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              void handleApplyWorktree();
+            }}
           >
             <Check className={`h-3 w-3 ${isApplyingWorktree ? 'animate-pulse' : ''}`} />
             {isApplyingWorktree ? 'Applying…' : 'Apply'}
@@ -261,7 +279,10 @@ export function CodexAgentCard({ card, onRemove: _onRemove, header, isSelected }
             variant="outline"
             className="h-6 px-2 text-[10px] gap-1"
             disabled={resuming || isApplyingWorktree}
-            onClick={(e) => { e.stopPropagation(); void handleResume(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              void handleResume();
+            }}
           >
             <RotateCcw className={`h-3 w-3 ${resuming ? 'animate-spin' : ''}`} />
             {resuming ? 'Loading…' : 'Resume'}
