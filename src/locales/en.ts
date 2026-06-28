@@ -14,6 +14,7 @@ export const en = {
     codexVersion: 'Version',
     language: 'Language',
     changeLanguage: 'Change language',
+    autoDetect: 'Auto-detect',
     menu: 'Menu',
     remoteControl: 'Remote control',
     donate: 'Donate',

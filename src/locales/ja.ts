@@ -14,6 +14,7 @@ export const ja = {
     codexVersion: 'バージョン',
     language: '言語',
     changeLanguage: '言語を変更',
+    autoDetect: '自動検出',
     menu: 'メニュー',
     remoteControl: 'リモートコントロール',
     donate: '寄付する',

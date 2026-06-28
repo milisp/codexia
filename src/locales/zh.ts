@@ -14,6 +14,7 @@ export const zh = {
     codexVersion: '版本',
     language: '语言',
     changeLanguage: '切换语言',
+    autoDetect: '自动检测',
     menu: '菜单',
     remoteControl: '远程控制',
     donate: '捐助',

@@ -14,18 +14,23 @@ export function LanguageSelector() {
   const { t } = useTranslation("header");
   const { locale, setLocale } = useLocaleStore();
 
+  const options = [
+    { code: 'auto', label: t('autoDetect') },
+    ...supportedLocales.map(({ code, label }) => ({ code, label }))
+  ];
+
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="space-y-0.5">
         <div className="text-sm font-medium">{t('language')}</div>
         <div className="text-xs text-muted-foreground">{t('changeLanguage')}</div>
       </div>
-      <Select value={locale} onValueChange={(value) => setLocale(value as AppLocale)}>
+      <Select value={locale} onValueChange={(value) => setLocale(value as AppLocale | 'auto')}>
         <SelectTrigger className="h-8 w-[180px] text-xs" aria-label={t('changeLanguage')}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent align="end">
-          {supportedLocales.map(({ code, label }) => (
+          {options.map(({ code, label }) => (
             <SelectItem key={code} value={code} className="text-xs">
               {label}
             </SelectItem>

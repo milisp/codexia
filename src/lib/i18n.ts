@@ -4,7 +4,27 @@ import { AppLocale, localeLabels, localeResources } from '@/locales';
 import { useLocaleStore } from '@/stores/settings/useLocaleStore';
 
 const fallbackLocale: AppLocale = 'en';
-const initialLocale = useLocaleStore.getState().locale ?? fallbackLocale;
+
+// Helper to detect locale from navigator
+const detectLocale = (): AppLocale => {
+  if (typeof navigator === 'undefined') {
+    return fallbackLocale;
+  }
+  const lang = navigator.language.slice(0, 2).toLowerCase();
+  // Check if the detected language is supported
+  if (['en', 'zh', 'ja'].includes(lang as AppLocale)) {
+    return lang as AppLocale;
+  }
+  return fallbackLocale;
+};
+
+const getInitialLocale = (): AppLocale | 'auto' => {
+  const stored = useLocaleStore.getState().locale;
+  return stored;
+};
+
+const initialLocaleValue = getInitialLocale();
+const initialLocale = initialLocaleValue === 'auto' ? detectLocale() : initialLocaleValue;
 
 if (!i18n.isInitialized) {
   void i18n.use(initReactI18next).init({
@@ -19,8 +39,14 @@ if (!i18n.isInitialized) {
 
 // Keep the active i18next language in sync with the persisted locale store.
 useLocaleStore.subscribe((state) => {
-  if (i18n.language !== state.locale) {
-    void i18n.changeLanguage(state.locale);
+  let newLocale: AppLocale;
+  if (state.locale === 'auto') {
+    newLocale = detectLocale();
+  } else {
+    newLocale = state.locale;
+  }
+  if (i18n.language !== newLocale) {
+    void i18n.changeLanguage(newLocale);
   }
 });
 
