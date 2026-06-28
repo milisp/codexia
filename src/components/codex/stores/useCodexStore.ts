@@ -3,19 +3,12 @@ import type { ServerNotification } from '@/bindings';
 import type { ThreadStatus, CommandExecutionStatus, Thread, ThreadTokenUsage } from '@/bindings/v2';
 import { codexService } from '@/services/codexService';
 
-type DeltaMethod =
-  | 'item/agentMessage/delta'
-  | 'item/reasoning/textDelta'
-  | 'item/reasoning/summaryTextDelta';
+type DeltaMethod = 'item/agentMessage/delta';
 
 type DeltaEvent = Extract<ServerNotification, { method: DeltaMethod }>;
 
 const isDeltaEvent = (event: ServerNotification): event is DeltaEvent => {
-  return (
-    event.method === 'item/agentMessage/delta' ||
-    event.method === 'item/reasoning/textDelta' ||
-    event.method === 'item/reasoning/summaryTextDelta'
-  );
+  return event.method === 'item/agentMessage/delta';
 };
 
 const canCompactDeltaEvents = (previous: DeltaEvent, incoming: DeltaEvent): boolean => {
@@ -29,24 +22,6 @@ const canCompactDeltaEvents = (previous: DeltaEvent, incoming: DeltaEvent): bool
         previous.params.threadId === incoming.params.threadId &&
         previous.params.turnId === incoming.params.turnId &&
         previous.params.itemId === incoming.params.itemId
-      );
-    case 'item/reasoning/textDelta':
-      const previousReasoning = previous as Extract<DeltaEvent, { method: 'item/reasoning/textDelta' }>;
-      const incomingReasoning = incoming as Extract<DeltaEvent, { method: 'item/reasoning/textDelta' }>;
-      return (
-        previousReasoning.params.threadId === incomingReasoning.params.threadId &&
-        previousReasoning.params.turnId === incomingReasoning.params.turnId &&
-        previousReasoning.params.itemId === incomingReasoning.params.itemId &&
-        previousReasoning.params.contentIndex === incomingReasoning.params.contentIndex
-      );
-    case 'item/reasoning/summaryTextDelta':
-      const previousSummary = previous as Extract<DeltaEvent, { method: 'item/reasoning/summaryTextDelta' }>;
-      const incomingSummary = incoming as Extract<DeltaEvent, { method: 'item/reasoning/summaryTextDelta' }>;
-      return (
-        previousSummary.params.threadId === incomingSummary.params.threadId &&
-        previousSummary.params.turnId === incomingSummary.params.turnId &&
-        previousSummary.params.itemId === incomingSummary.params.itemId &&
-        previousSummary.params.summaryIndex === incomingSummary.params.summaryIndex
       );
     default:
       return true;
