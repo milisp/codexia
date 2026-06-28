@@ -21,6 +21,8 @@ import type {
   TurnInterruptParams,
   TurnStartParams,
   TurnStartResponse,
+  TurnSteerParams,
+  TurnSteerResponse,
 } from '@/bindings/v2';
 import type {
   CommandExecutionApprovalDecision,
@@ -93,6 +95,13 @@ export async function turnStart(params: TurnStartParams) {
     return await invokeTauri<TurnStartResponse>('turn_start', { params });
   }
   return await postJson<TurnStartResponse>('/api/codex/turn/start', params);
+}
+
+export async function turnSteer(params: TurnSteerParams) {
+  if (isDesktopTauri()) {
+    return await invokeTauri<TurnSteerResponse>('turn_steer', { params });
+  }
+  return await postJson<TurnSteerResponse>('/api/codex/turn/steer', params);
 }
 
 export async function turnInterrupt(params: TurnInterruptParams) {

@@ -55,7 +55,21 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const text = inputValue.trim();
-    if ((!text && images.length === 0) || threadStatus?.type === 'active') return;
+    if ((!text && images.length === 0)) {
+      return;
+    }
+
+    // If thread is active and we have a turnId, steer the existing turn.
+    if (threadStatus?.type === 'active' && currentThreadId && currentTurnId) {
+      try {
+        await codexService.turnSteer(currentThreadId, currentTurnId, text, images);
+        setInputValue('');
+        setImages([]);
+      } catch (error) {
+        console.error(error);
+      }
+      return;
+    }
 
     if (overrideSend) {
       overrideSend(text);

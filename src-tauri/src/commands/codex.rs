@@ -5,7 +5,7 @@ use codex_app_server_protocol::{
     LoginAccountParams, LoginAccountResponse, ModelListResponse, RequestId, ReviewStartParams,
     ReviewStartResponse, SkillsListResponse, ThreadForkParams, ThreadListParams,
     ThreadSetNameParams, ThreadResumeParams, ThreadRollbackParams, ThreadStartParams, TurnInterruptParams,
-    TurnStartParams,
+    TurnStartParams, TurnSteerParams,
 };
 use serde_json::Value;
 use serde_json::json;
@@ -168,6 +168,16 @@ pub async fn turn_start(
 ) -> Result<Value, String> {
     let params_value = to_value(params)?;
     let result = state.codex.send_request("turn/start", params_value).await?;
+    Ok(from_value(result)?)
+}
+
+#[tauri::command]
+pub async fn turn_steer(
+    params: TurnSteerParams,
+    state: State<'_, AppState>,
+) -> Result<Value, String> {
+    let params_value = to_value(params)?;
+    let result = state.codex.send_request("turn/steer", params_value).await?;
     Ok(from_value(result)?)
 }
 

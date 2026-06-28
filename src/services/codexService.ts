@@ -5,6 +5,7 @@ import {
   threadResume,
   turnStart,
   turnInterrupt,
+  turnSteer,
   threadList,
   threadArchive,
   skillList,
@@ -107,7 +108,7 @@ const syncThreadToStore = (
       [threadId]: historicalEvents,
     },
     inputFocusTrigger: inputFocusTrigger + 1,
-    ...(resetCurrentTurnId ? { currentTurnId: null } : {})
+    ...(resetCurrentTurnId ? { currentTurnId: null } : {}),
   };
 };
 
@@ -203,7 +204,6 @@ export const codexService = {
       throw error;
     }
   },
-
   async threadStart() {
     const set = useCodexStore.setState;
     try {
@@ -256,7 +256,7 @@ export const codexService = {
                   reasoning_effort: reasoningEffort,
                   developer_instructions: null,
                 },
-              },
+              }
             }
             : {}),
         },
@@ -273,7 +273,6 @@ export const codexService = {
       throw error;
     }
   },
-
   async threadResume(threadId: string) {
     const set = useCodexStore.setState;
     try {
@@ -291,7 +290,6 @@ export const codexService = {
       throw error;
     }
   },
-
   async threadFork(threadId: string) {
     const set = useCodexStore.setState;
     try {
@@ -310,7 +308,6 @@ export const codexService = {
       throw error;
     }
   },
-
   async threadRollback(threadId: string, numTurns: number) {
     const set = useCodexStore.setState;
     try {
@@ -329,7 +326,6 @@ export const codexService = {
       throw error;
     }
   },
-
   async turnStart(threadId: string, input: string, images: string[] = []) {
     const set = useCodexStore.setState;
     try {
@@ -383,7 +379,35 @@ export const codexService = {
       throw error;
     }
   },
+  async turnSteer(threadId: string, expectedTurnId: string, input: string, images: string[] = []) {
+    try {
+      const userInputs: UserInput[] = [];
 
+      if (input.trim()) {
+        userInputs.push({ type: 'text', text: input, text_elements: [] });
+      }
+
+      for (const imagePath of images) {
+        userInputs.push({ type: 'localImage', path: imagePath });
+      }
+
+      // If both are empty? Assuming input area checks this, but if so, send empty text?
+      if (userInputs.length === 0) {
+        userInputs.push({ type: 'text', text: '', text_elements: [] });
+      }
+
+      const response = await turnSteer({
+        threadId,
+        expectedTurnId,
+        input: userInputs
+      });
+
+      return response;
+    } catch (error: unknown) {
+      console.error('[CodexService] turnSteer error:', error);
+      throw error;
+    }
+  },
   async turnInterrupt(threadId: string, turnId: string) {
     const set = useCodexStore.setState;
     try {
@@ -394,7 +418,6 @@ export const codexService = {
       throw error;
     }
   },
-
   async listSkills(cwd: string | null) {
     if (!cwd) return [];
     try {
@@ -405,5 +428,5 @@ export const codexService = {
       console.error('[CodexService] listSkills error:', error);
       throw error;
     }
-  },
+  }
 };

@@ -66,6 +66,7 @@ pub fn run() {
                 commands::codex::delete_thread,
                 commands::codex::rename_thread,
                 commands::codex::turn_start,
+                commands::codex::turn_steer,
                 commands::codex::turn_interrupt,
                 commands::codex::model_list,
                 commands::codex::account_rate_limits,

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { ServerNotification } from '@/bindings';
 import type { ThreadStatus, CommandExecutionStatus, Thread, ThreadTokenUsage } from '@/bindings/v2';
+import { codexService } from '@/services/codexService';
 
 type DeltaMethod =
   | 'item/agentMessage/delta'
@@ -9,10 +10,13 @@ type DeltaMethod =
 
 type DeltaEvent = Extract<ServerNotification, { method: DeltaMethod }>;
 
-const isDeltaEvent = (event: ServerNotification): event is DeltaEvent =>
-  event.method === 'item/agentMessage/delta' ||
-  event.method === 'item/reasoning/textDelta' ||
-  event.method === 'item/reasoning/summaryTextDelta';
+const isDeltaEvent = (event: ServerNotification): event is DeltaEvent => {
+  return (
+    event.method === 'item/agentMessage/delta' ||
+    event.method === 'item/reasoning/textDelta' ||
+    event.method === 'item/reasoning/summaryTextDelta'
+  );
+};
 
 const canCompactDeltaEvents = (previous: DeltaEvent, incoming: DeltaEvent): boolean => {
   if (previous.method !== incoming.method) {
@@ -36,14 +40,8 @@ const canCompactDeltaEvents = (previous: DeltaEvent, incoming: DeltaEvent): bool
         previousReasoning.params.contentIndex === incomingReasoning.params.contentIndex
       );
     case 'item/reasoning/summaryTextDelta':
-      const previousSummary = previous as Extract<
-        DeltaEvent,
-        { method: 'item/reasoning/summaryTextDelta' }
-      >;
-      const incomingSummary = incoming as Extract<
-        DeltaEvent,
-        { method: 'item/reasoning/summaryTextDelta' }
-      >;
+      const previousSummary = previous as Extract<DeltaEvent, { method: 'item/reasoning/summaryTextDelta' }>;
+      const incomingSummary = incoming as Extract<DeltaEvent, { method: 'item/reasoning/summaryTextDelta' }>;
       return (
         previousSummary.params.threadId === incomingSummary.params.threadId &&
         previousSummary.params.turnId === incomingSummary.params.turnId &&
@@ -95,6 +93,10 @@ interface CodexStore {
   threadListNextCursor: string | null;
   /** Per-thread token usage from thread/tokenUsage/updated */
   tokenUsageMap: Record<string, ThreadTokenUsage>;
+  /** Queue for messages that arrived while thread was busy */
+  queuedMessages: Array<{ text: string; images: string[] }>;
+  /** Flag to prevent processing multiple queued messages simultaneously */
+  isProcessingQueued: boolean;
 
   // Basic Setters
   setCurrentThreadId: (id: string | null) => void;
@@ -105,9 +107,18 @@ interface CodexStore {
   addEvent: (threadId: string, event: ServerNotification) => void;
   triggerInputFocus: () => void;
   setTokenUsage: (threadId: string, data: ThreadTokenUsage) => void;
+  // Queue management
+  queueMessage: (text: string, images: string[]) => void;
+  getQueuedMessages: () => Array<{ text: string; images: string[] }>;
+  clearQueue: () => void;
+  removeQueuedMessage: (index: number) => void;
+  processQueue: () => Promise<void>;
+  setProcessingQueued: (isProcessing: boolean) => void;
+  // Selectors
+  getCurrentThread: () => Thread | null;
 }
 
-export const useCodexStore = create<CodexStore>((set) => ({
+export const useCodexStore = create<CodexStore>((set, get) => ({
   threads: [],
   currentThreadId: null,
   currentTurnId: null,
@@ -119,6 +130,8 @@ export const useCodexStore = create<CodexStore>((set) => ({
   inputFocusTrigger: 0,
   threadListNextCursor: null,
   tokenUsageMap: {},
+  queuedMessages: [],
+  isProcessingQueued: false,
 
   setCurrentThreadId: (id) => {
     set({ currentThreadId: id });
@@ -153,8 +166,8 @@ export const useCodexStore = create<CodexStore>((set) => ({
     set({ hasAccount });
   },
 
-  addEvent: (threadId, event) => {
-    set((state) => {
+  addEvent: (threadId: string, event: ServerNotification) => {
+    set((state: CodexStore) => {
       const existingEvents = state.events[threadId] || [];
 
       // Deduplicate turn/diff/updated events
@@ -178,16 +191,7 @@ export const useCodexStore = create<CodexStore>((set) => ({
 
       let threadStatusMap = state.threadStatusMap;
       if (event.method === 'thread/status/changed') {
-        // Authoritative: use the exact status from the server
         threadStatusMap = { ...threadStatusMap, [threadId]: event.params.status };
-      } else if (event.method === 'turn/started') {
-        // Fallback: synthesize active status until thread/status/changed arrives
-        threadStatusMap = {
-          ...threadStatusMap,
-          [threadId]: { type: 'active', activeFlags: [] },
-        };
-      } else if (event.method === 'turn/completed' || event.method === 'error') {
-        threadStatusMap = { ...threadStatusMap, [threadId]: { type: 'idle' } };
       }
 
       // Update command status map
@@ -204,22 +208,106 @@ export const useCodexStore = create<CodexStore>((set) => ({
         };
       }
 
-      return { events: newEvents, threadStatusMap, commandStatusMap };
+      return {
+        events: newEvents,
+        threadStatusMap,
+        commandStatusMap,
+      };
     });
   },
 
   triggerInputFocus: () => {
-    set((state) => ({ inputFocusTrigger: state.inputFocusTrigger + 1 }));
+    set((state: CodexStore) => ({ inputFocusTrigger: state.inputFocusTrigger + 1 }));
   },
 
-  setTokenUsage: (threadId, data) => {
-    set((state) => ({
-      tokenUsageMap: { ...state.tokenUsageMap, [threadId]: data },
+  setTokenUsage: (threadId: string, data: ThreadTokenUsage) => {
+    set((state: CodexStore) => ({
+      tokenUsageMap: {
+        ...state.tokenUsageMap,
+        [threadId]: data,
+      },
     }));
+  },
+
+  // Queue management
+  queueMessage: (text: string, images: string[]) => {
+    set((state: CodexStore) => ({
+      queuedMessages: [...state.queuedMessages, { text, images }],
+    }));
+  },
+
+  getQueuedMessages: () => {
+    return get().queuedMessages;
+  },
+
+  clearQueue: () => {
+    set({ queuedMessages: [] });
+  },
+
+  removeQueuedMessage: (index: number) => {
+    set((state: CodexStore) => {
+      const newQueue = [...state.queuedMessages];
+      newQueue.splice(index, 1);
+      return { queuedMessages: newQueue };
+    });
+  },
+
+  processQueue: async () => {
+    // Prevent concurrent processing
+    if (get().isProcessingQueued) {
+      return;
+    }
+
+    set({ isProcessingQueued: true });
+
+    try {
+      // Process all queued messages
+      while (get().queuedMessages.length > 0) {
+        const { text, images } = get().queuedMessages[0];
+
+        // Remove from queue
+        set((state: CodexStore) => ({
+          queuedMessages: state.queuedMessages.slice(1),
+        }));
+
+        // Skip if empty
+        if (!text.trim() && images.length === 0) {
+          continue;
+        }
+
+        // Get current thread ID
+        const { currentThreadId } = get();
+        if (!currentThreadId) {
+          // No active thread, start a new one
+          const thread = await codexService.threadStart();
+
+          // Start turn with the message
+          await codexService.turnStart(thread.id, text, images);
+        } else {
+          // We have an active thread, just start the turn
+          await codexService.turnStart(currentThreadId, text, images);
+        }
+
+        // Small delay to prevent overwhelming the system
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    } catch (error) {
+      console.error('Error processing queued messages:', error);
+    } finally {
+      set({ isProcessingQueued: false });
+    }
+  },
+
+  setProcessingQueued: (isProcessing) => {
+    set({ isProcessingQueued: isProcessing });
+  },
+
+  // Selectors
+  getCurrentThread: () => {
+    const { currentThreadId, threads } = get();
+    if (!currentThreadId) return null;
+    return threads.find(t => t.id === currentThreadId) || null;
   },
 }));
 
-export const useCurrentThread = () =>
-  useCodexStore(
-    (state) => state.threads.find((thread) => thread.id === state.currentThreadId) ?? null
-  );
+export const useCurrentThread = () => useCodexStore(state => state.getCurrentThread());
