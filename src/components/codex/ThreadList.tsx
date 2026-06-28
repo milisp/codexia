@@ -28,6 +28,7 @@ import type { ServerNotification } from '@/bindings/ServerNotification';
 interface ThreadListProps {
   cwd: string;
 }
+const modelProviders = ["openai", "atlascloud", "ollama", "openrouter", "nvidia", "custom"];
 
 const EMPTY_LIST: ThreadListResponse = { data: [], nextCursor: null, backwardsCursor: null };
 
@@ -53,7 +54,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
     const params: ThreadListParams = {
       cursor: null,
       limit: refreshCounter > 0 ? 20 : 3,
-      modelProviders: ['ollama', 'openai'],
+      modelProviders: modelProviders,
       sortKey,
       archived: false,
       cwd,
@@ -174,7 +175,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
       const params: ThreadListParams = {
         cursor: nextCursor,
         limit: 20,
-        modelProviders: ['ollama', 'openai'],
+        modelProviders: modelProviders,
         useStateDbOnly: true,
         sortKey,
         archived: false,
