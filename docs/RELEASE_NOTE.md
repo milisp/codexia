@@ -1,10 +1,17 @@
-# What's New
+## What's New in v0.37.0
 
-### 🚀 Features & Improvements
-- Aggregated Shell Commands: Your command executions are now neatly grouped into expandable summary items within the codex thread. This keeps your workspace clean while still displaying the aggregated output directly in the action items.
-- Command Status Tracking: Added clear execution status tracking and visibility for shell commands so you always know exactly how your tasks are progressing.
-- Redesigned BrowserProjects UI: Overhauled the interface to make navigation smoother. This update breadcrumb navigation, handy keyboard shortcuts, and much better file path handling.
+### 🚀 New Features
+* **Language Auto-Detection:** Added an auto-detect locale option to the language settings.
+* **MCP Tool Integration:** Implemented the `McpToolCallItem` component and integrated it into the EventItem renderer.
+* **Action Streaming:** Tracked command group completion status to support streaming visibility for active actions.
 
-### 🧹 Cleanups & Optimizations
-- Streamlined UI & Logging: Removed outdated reasoning-related interface components and server-side logging to optimize performance and declutter the app.
-- Smoother Event Filtering: Improved background logic for event filtering to ensure a faster and more stable experience.
+### 🎨 Improvements & Refactoring
+* **Privacy & Settings:** Implemented `PrivacySettings` to replace `QuoteSettings`, and fully internationalized the settings menu, sidebar, and composer components.
+* **UI & Experience:** Upgraded `AccessModePopover` to a sleek `DropdownMenu` and added a `useWindowFocus` hook to improve focus handling and UI responsiveness.
+* **Codebase Optimization:** Reorganized Codex components, migrated thread management to Tauri commands, and streamlined platform detection logic.
+
+### 🐛 Bug Fixes
+* **Environment Variables:** Fixed incorrect error returns and suppressed unused variable warnings for unsupported platforms in `set_var`.
+
+### 📦 Maintenance
+* Dependency updates and centralized workspace management.
