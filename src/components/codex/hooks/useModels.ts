@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { listModels, listOtherModels } from '@/services/tauri';
 import type { Model } from '@/bindings/v2';
 import { useModelSettingsStore } from '@/stores/settings';
-import type { FrontendProviderModels } from '../selector/ModelList';
-import { ModelListItem } from '../selector/ModelList';
+import type { FrontendProviderModels } from '../composer/ModelList';
+import { ModelListItem } from '../composer/ModelList';
 
 export function useModels() {
   const [openAiModels, setOpenAiModels] = useState<Model[]>([]);

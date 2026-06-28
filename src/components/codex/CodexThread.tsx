@@ -6,7 +6,7 @@ import { renderEvent } from './items';
 import { ApprovalItem } from './items/ApprovalItem';
 import { RequestUserInputItem } from './items/RequestUserInputItem';
 import { CommandActionSummaryItem } from './items/CommandActionSummaryItem';
-import { Composer } from './Composer';
+import { Composer } from './composer';
 import { CodexAuth } from './CodexAuth';
 import { codexService } from '@/services/codexService';
 import { Button } from '@/components/ui/button';

@@ -39,7 +39,7 @@ import {
   postNoContent,
   toast,
 } from './shared';
-import type { FrontendProviderModels, EnvStatusItem } from '@/components/codex/selector/ModelList';
+import type { FrontendProviderModels, EnvStatusItem } from '@/components/codex/composer/ModelList';
 export * from './mcp';
 export * from './skills';
 

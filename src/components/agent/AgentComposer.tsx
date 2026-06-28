@@ -3,7 +3,7 @@ import { Composer as CCComposer } from '@/components/cc/composer';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { AgentSwitcher } from './AgentSwitcher';
 import { useAgentCenterStore } from '@/stores';
-import { Composer as CodexComposer } from '@/components/codex/Composer';
+import { Composer as CodexComposer } from '@/components/codex/composer';
 import { WorkspaceSwitcher } from '../common';
 
 const focusCCInput = () => window.dispatchEvent(new Event('cc-input-focus-request'));

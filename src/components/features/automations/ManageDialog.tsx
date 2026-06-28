@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { CodexModelSelector } from '@/components/codex/selector';
+import { CodexModelSelector } from '@/components/codex/composer/index';
 import { useConfigStore } from '@/components/codex/stores';
 import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';

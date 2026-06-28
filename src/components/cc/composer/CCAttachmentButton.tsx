@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Plus } from 'lucide-react';
 import { useInputStore } from '@/stores/useInputStore';
-import { SelectFilesMenuItem } from '@/components/codex/selector/AttachmentSelector';
+import { SelectFilesMenuItem } from '@/components/codex/composer/AttachmentSelector';
 import { open } from '@tauri-apps/plugin-dialog';
 import { Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';

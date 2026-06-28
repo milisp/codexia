@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { PlusIcon, Globe, Image as ImageIcon, Check, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ScreenshotPopover } from '@/components/codex/selector/ScreenshotPopover';
+import { ScreenshotPopover } from '@/components/codex/composer/ScreenshotPopover';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useConfigStore } from '@/components/codex/stores';
 import { cn } from '@/lib/utils';
