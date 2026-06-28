@@ -8,6 +8,7 @@ import type { SkillsListEntry } from '@/bindings/v2/SkillsListEntry';
 import { Switch } from '@/components/ui/switch';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { detectWordBoundaryTrigger, replaceAtTrigger, applyEditorReplacement } from '@/components/common/useComposerPopover';
+import { skillsConfigWrite } from '@/services';
 
 type SkillWithEnabled = SkillsListEntry['skills'][number] & { enabled?: boolean };
 
@@ -120,7 +121,7 @@ export function SkillsInputPopover({
                       <Switch
                         checked={typedSkill.enabled ?? false}
                         onCheckedChange={(checked) => {
-                          codexService.skillsConfigWrite(skill.path, checked).catch(console.error);
+                          skillsConfigWrite(skill.path, checked).catch(console.error);
                           setSkillsList((prev) =>
                             prev.map((entry) => {
                               if (entry.skills.some((s) => s.path === skill.path)) {

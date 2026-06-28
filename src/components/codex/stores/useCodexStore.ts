@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import type { ServerNotification } from '@/bindings';
-import type { ThreadStatus } from '@/bindings/v2/ThreadStatus';
-import type { CommandExecutionStatus } from '@/bindings/v2/CommandExecutionStatus';
-import type { ThreadListItem } from '@/types/codex/ThreadListItem';
+import type { ThreadStatus, CommandExecutionStatus, Thread } from '@/bindings/v2';
 
 type DeltaMethod =
   | 'item/agentMessage/delta'
@@ -83,7 +81,7 @@ const compactDeltaEvents = (
 
 interface CodexStore {
   // State
-  threads: ThreadListItem[];
+  threads: Thread[];
   currentThreadId: string | null;
   currentTurnId: string | null;
   hasAccount: boolean | null;
@@ -98,8 +96,8 @@ interface CodexStore {
 
   // Basic Setters
   setCurrentThreadId: (id: string | null) => void;
-  setThreads: (threads: ThreadListItem[]) => void;
-  appendThreads: (threads: ThreadListItem[]) => void;
+  setThreads: (threads: Thread[]) => void;
+  appendThreads: (threads: Thread[]) => void;
   setThreadListNextCursor: (cursor: string | null) => void;
   setHasAccount: (hasAccount: boolean | null) => void;
   addEvent: (threadId: string, event: ServerNotification) => void;

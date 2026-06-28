@@ -16,6 +16,7 @@ import {
   applyEditorReplacement,
 } from '@/components/common/useComposerPopover';
 import { useCodexStore } from '@/components/codex/stores';
+import { startReview } from '@/services';
 
 const SLASH_COMMANDS = [{ id: 'review', description: 'Review uncommitted changes' }];
 const detectSlash = detectWordBoundaryTrigger('/');
@@ -57,7 +58,7 @@ export function SlashCommandPopover({
           }
         }
         try {
-          await codexService.startReview({
+          await startReview({
             threadId: targetThreadId,
             target: { type: 'uncommittedChanges' },
             delivery: null,

@@ -1,22 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { KeyboardEvent } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Archive, GitFork, FolderX, Loader2 } from 'lucide-react';
-import { useThreadFilter } from '@/components/codex/hooks/useThreadFilter';
+import { listen } from '@tauri-apps/api/event';
 import { codexService } from '@/services/codexService';
 import { useCodexStore, useThreadListStore } from '@/components/codex/stores';
 import {
-  deleteFile,
-  readSessionMetaFile,
   threadList,
-  writeSessionMetaFile,
+  deleteThread,
+  renameThread,
 } from '@/services/tauri';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import {
   ContextMenu,
@@ -25,428 +16,227 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import { Input } from '@/components/ui/input';
 import { formatThreadAge } from '@/utils/formatThreadAge';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import type { ThreadListItem } from '@/types/codex/ThreadListItem';
 import { useLayoutStore, useAgentCenterStore } from '@/stores';
 import { gitRemoveWorktree } from '@/services/tauri/git';
 import { toast } from '@/components/ui/use-toast';
-
-type SessionMetaEntry = {
-  text?: string;
-};
+import { RenameThreadDialog } from '@/components/codex/RenameThreadDialog';
+import type { Thread, ThreadListParams, ThreadListResponse, ThreadNameUpdatedNotification } from '@/bindings/v2';
+import type { ServerNotification } from '@/bindings/ServerNotification';
 
 interface ThreadListProps {
-  cwdOverride?: string;
+  cwd: string;
 }
 
-export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
-  const { cwd, historyMode, setCwd, setHistoryMode } = useWorkspaceStore();
+const EMPTY_LIST: ThreadListResponse = { data: [], nextCursor: null, backwardsCursor: null };
+
+export function ThreadList({ cwd }: ThreadListProps) {
+  const { cwd: workspaceCwd, historyMode, setCwd, setHistoryMode } = useWorkspaceStore();
   const { setView } = useLayoutStore();
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
-  const { threads, currentThreadId, threadListNextCursor, threadStatusMap } = useCodexStore();
+  const { currentThreadId, threadStatusMap, threads: storeThreads } = useCodexStore();
   const { searchTerm, sortKey } = useThreadListStore();
-  const isProjectScoped = !!cwdOverride;
-  const listCwd = cwdOverride ?? cwd;
-  // If no cwd available, disable scoped mode and show nothing
-  const hasValidCwd = isProjectScoped && !!listCwd;
+  const [response, setResponse] = useState<ThreadListResponse>(EMPTY_LIST);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [scopedThreads, setScopedThreads] = useState<ThreadListItem[]>([]);
-  const [scopedNextCursor, setScopedNextCursor] = useState<string | null>(null);
-  const reloadScopedThreadsRef = useRef<(() => Promise<void>) | null>(null);
-  const [sessionMeta, setSessionMeta] = useState<Record<string, SessionMetaEntry>>({});
   const [renameThreadId, setRenameThreadId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
-  const sourceThreads = isProjectScoped ? scopedThreads : threads;
-  const nextCursor = isProjectScoped ? scopedNextCursor : threadListNextCursor;
-  const mergedThreads = useMemo(
-    () =>
-      sourceThreads.map((thread) => ({
-        ...thread,
-        preview: sessionMeta[thread.id]?.text ?? thread.preview,
-      })),
-    [sessionMeta, sourceThreads]
-  );
-  const filteredThreads = useThreadFilter(mergedThreads, searchTerm);
-  const sortedThreads = useMemo(() => {
-    return filteredThreads.map((thread) => thread);
-  }, [filteredThreads]);
-  const loadSessionMeta = useCallback(async () => {
-    try {
-      const raw = await readSessionMetaFile();
-      const parsed = JSON.parse(raw) as Record<string, SessionMetaEntry>;
-      if (parsed && typeof parsed === 'object') {
-        setSessionMeta(parsed);
-      } else {
-        setSessionMeta({});
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      const normalized = message.toLowerCase();
-      if (
-        normalized.includes('no such file or directory') ||
-        normalized.includes('os error 2') ||
-        normalized.includes('file does not exist')
-      ) {
-        setSessionMeta({});
-      } else {
-        console.error('Failed to load session meta:', err);
-      }
-    }
-  }, []);
-  const writeSessionMeta = useCallback(async (nextMeta: Record<string, SessionMetaEntry>) => {
-    await writeSessionMetaFile(JSON.stringify(nextMeta, null, 2));
-    setSessionMeta(nextMeta);
-  }, []);
+  const [refreshCounter, setRefreshCounter] = useState(0);
+
+  const threads = response.data;
+  const nextCursor = response.nextCursor;
+
+  // --- Thread loading (search + sort delegated to backend) ---
 
   useEffect(() => {
-    void loadSessionMeta();
-  }, [loadSessionMeta]);
-
-  useEffect(() => {
-    if (!hasValidCwd) {
-      reloadScopedThreadsRef.current = null;
-      return;
-    }
     let cancelled = false;
-
-    const loadScopedThreads = async () => {
-      const currentCwd = listCwd;
-      if (!currentCwd) return;
+    const params: ThreadListParams = {
+      cursor: null,
+      limit: refreshCounter > 0 ? 20 : 3,
+      modelProviders: ['ollama', 'openai'],
+      sortKey,
+      archived: false,
+      cwd,
+      useStateDbOnly: true,
+      searchTerm: searchTerm || null,
+    };
+    const load = async () => {
       try {
-        const params = {
-          cursor: null,
-          limit: 3,
-          modelProviders: null,
-          sortKey,
-          archived: false,
-          sourceKinds: null,
-        };
-        const response = await threadList(params, currentCwd);
-        if (cancelled) {
-          return;
-        }
-        const loadedThreads = response.data.map((t) => codexService.normalizeThreadItem(t));
-        const next =
-          (response as { nextCursor?: string | null }).nextCursor ??
-          (response as { next_cursor?: string | null }).next_cursor ??
-          null;
-        setScopedThreads(loadedThreads);
-        setScopedNextCursor(next);
-      } catch (error) {
-        if (!cancelled) {
-          console.error('Failed to load scoped thread list:', error);
-        }
+        const res = await threadList(params);
+        if (cancelled) return;
+        setResponse(res);
+      } catch (err) {
+        if (!cancelled) console.error('Failed to load threads:', err);
       }
     };
+    void load();
+    return () => { cancelled = true; };
+  }, [cwd, sortKey, searchTerm, refreshCounter]);
 
-    reloadScopedThreadsRef.current = loadScopedThreads;
+  const refresh = useCallback(() => setRefreshCounter((n) => n + 1), []);
 
-    void loadScopedThreads();
-    return () => {
-      cancelled = true;
-    };
-  }, [isProjectScoped, listCwd, sortKey]);
-
+  // When a new thread is created in the store (e.g. after threadStart), refresh
+  // the list so the sidebar reflects it immediately.
   useEffect(() => {
-    if (!isProjectScoped) {
-      return;
-    }
+    if (storeThreads.length === 0) return;
+    const localIds = new Set(response.data.map((t) => t.id));
+    const hasNew = storeThreads.some((t) => t.cwd === cwd && !localIds.has(t.id));
+    if (hasNew) refresh();
+  }, [storeThreads, cwd, response.data, refresh]);
 
-    setScopedThreads((prev) => {
-      const globalById = new Map(threads.map((thread) => [thread.id, thread]));
-      let changed = false;
-      const next = prev.map((thread) => {
-        const globalThread = globalById.get(thread.id);
-        if (!globalThread) {
-          return thread;
-        }
-        if (
-          globalThread.preview === thread.preview &&
-          globalThread.cwd === thread.cwd &&
-          globalThread.path === thread.path &&
-          globalThread.source === thread.source &&
-          globalThread.createdAt === thread.createdAt &&
-          globalThread.updatedAt === thread.updatedAt
-        ) {
-          return thread;
-        }
-        changed = true;
-        return globalThread;
-      });
-
-      if (listCwd === cwd && currentThreadId) {
-        const activeThread = globalById.get(currentThreadId);
-        if (activeThread && !next.some((thread) => thread.id === activeThread.id)) {
-          changed = true;
-          next.unshift(activeThread);
-        }
-      }
-
-      return changed ? next : prev;
+  // Patch thread name when thread/name/updated notification arrives.
+  useEffect(() => {
+    const unlisten = listen<ServerNotification>('codex:notification', (event) => {
+      const { method, params } = event.payload;
+      if (method !== 'thread/name/updated') return;
+      const { threadId, threadName } = params as ThreadNameUpdatedNotification;
+      setResponse((prev) => ({
+        ...prev,
+        data: prev.data.map((t) =>
+          t.id === threadId ? { ...t, name: threadName ?? null } : t
+        ),
+      }));
     });
-  }, [cwd, currentThreadId, isProjectScoped, listCwd, threads]);
+    return () => { void unlisten.then((fn) => fn()); };
+  }, []);
+
+  // --- Thread actions ---
 
   const handleSelectThread = useCallback(
     async (threadId: string, options?: { resume?: boolean }) => {
-      if (threadId === currentThreadId) {
-        return;
-      }
-      if (listCwd && listCwd !== cwd) {
-        setCwd(listCwd);
-      }
-      const shouldResume = options?.resume ?? !historyMode;
-      await codexService.setCurrentThread(threadId, { resume: shouldResume });
+      if (threadId === currentThreadId) return;
+      if (cwd !== workspaceCwd) setCwd(cwd);
+      await codexService.setCurrentThread(threadId, { resume: options?.resume ?? !historyMode });
     },
-    [currentThreadId, cwd, historyMode, listCwd, setCwd]
+    [currentThreadId, cwd, historyMode, workspaceCwd, setCwd]
   );
 
-  const handleOpenThreadFromList = useCallback(
+  const handleOpenThread = useCallback(
     async (threadId: string, preview?: string) => {
       if (historyMode) {
         setView('history');
         await handleSelectThread(threadId, { resume: false });
         return;
       }
-
       setHistoryMode(false);
-      const currentCwd = listCwd;
-      addAgentCard({ kind: 'codex', id: threadId, preview, cwd: currentCwd });
+      addAgentCard({ kind: 'codex', id: threadId, preview, cwd });
       setCurrentAgentCardId(threadId);
       setView('agent');
       await handleSelectThread(threadId, { resume: true });
     },
-    [
-      handleSelectThread,
-      historyMode,
-      setHistoryMode,
-      setView,
-      setCurrentAgentCardId,
-      addAgentCard,
-      listCwd,
-    ]
+    [handleSelectThread, historyMode, setHistoryMode, setView, setCurrentAgentCardId, addAgentCard, cwd]
   );
 
-  const handleArchiveThread = useCallback(
-    async (threadId: string) => {
-      await codexService.archiveThread(threadId);
-      if (isProjectScoped) {
-        const params = {
-          cursor: null,
-          limit: 20,
-          modelProviders: null,
-          sortKey,
-          archived: false,
-          sourceKinds: null,
-        };
-        const currentCwd = listCwd;
-        if (currentCwd) {
-          const response = await threadList(params, currentCwd);
-          const loadedThreads = response.data.map((t) => codexService.normalizeThreadItem(t));
-          const next =
-            (response as { nextCursor?: string | null }).nextCursor ??
-            (response as { next_cursor?: string | null }).next_cursor ??
-            null;
-          setScopedThreads(loadedThreads);
-          setScopedNextCursor(next);
-        }
-      } else {
-        await codexService.loadThreads(cwd, false, sortKey);
-      }
-    },
-    [cwd, isProjectScoped, listCwd, sortKey]
-  );
+  const handleArchive = useCallback(async (threadId: string) => {
+    await codexService.archiveThread(threadId);
+    refresh();
+  }, [refresh]);
 
-  const handleForkThread = useCallback(
+  const handleFork = useCallback(
     async (threadId: string) => {
-      const preview = mergedThreads.find((t) => t.id === threadId)?.preview;
+      const thread = threads.find((t) => t.id === threadId);
       await codexService.threadFork(threadId);
-      const currentCwd = listCwd;
-      addAgentCard({ kind: 'codex', id: threadId, preview, cwd: currentCwd });
+      addAgentCard({ kind: 'codex', id: threadId, preview: thread?.preview, cwd });
       setCurrentAgentCardId(threadId);
       setView('agent');
-      if (isProjectScoped) {
-        await reloadScopedThreadsRef.current?.();
-      }
+      refresh();
     },
-    [isProjectScoped, setView, mergedThreads, addAgentCard, setCurrentAgentCardId, listCwd]
+    [cwd, threads, addAgentCard, setCurrentAgentCardId, setView, refresh]
   );
 
-  const handleDeleteWorktree = useCallback(async (thread: ThreadListItem) => {
+  const handleDeleteWorktree = useCallback(async (thread: Thread) => {
     const { cwd: mainCwd } = useWorkspaceStore.getState();
     if (!mainCwd || !thread.cwd.includes('/.codexia/worktrees/')) return;
-    const worktreeKey = thread.cwd.split('/').pop() ?? '';
+    const key = thread.cwd.split('/').pop() ?? '';
     try {
-      await gitRemoveWorktree(mainCwd, worktreeKey);
+      await gitRemoveWorktree(mainCwd, key);
       toast.success('Worktree deleted');
     } catch (err) {
       toast.error('Failed to delete worktree', { description: String(err) });
     }
   }, []);
 
-  const handleDeleteThreadByPath = useCallback(
-    async (threadId: string, threadPath: string) => {
-      if (!threadPath) {
-        return;
-      }
-
-      await deleteFile(threadPath);
-
-      if (sessionMeta[threadId]) {
-        const nextMeta = { ...sessionMeta };
-        delete nextMeta[threadId];
-        await writeSessionMeta(nextMeta);
-      }
-
+  const handleDelete = useCallback(
+    async (threadId: string) => {
+      await deleteThread(threadId);
       if (currentThreadId === threadId) {
         await codexService.setCurrentThread(null, { resume: false });
       }
-
-      if (isProjectScoped) {
-        const params = {
-          cursor: null,
-          limit: 20,
-          modelProviders: null,
-          sortKey,
-          archived: false,
-          sourceKinds: null,
-        };
-        const currentCwd = listCwd;
-        if (currentCwd) {
-          const response = await threadList(params, currentCwd);
-          const loadedThreads = response.data.map((t) => codexService.normalizeThreadItem(t));
-          const next =
-            (response as { nextCursor?: string | null }).nextCursor ??
-            (response as { next_cursor?: string | null }).next_cursor ??
-            null;
-          setScopedThreads(loadedThreads);
-          setScopedNextCursor(next);
-        }
-      } else {
-        await codexService.loadThreads(cwd, false, sortKey);
-      }
+      refresh();
     },
-    [currentThreadId, cwd, isProjectScoped, listCwd, sessionMeta, sortKey, writeSessionMeta]
+    [currentThreadId, refresh]
   );
 
   const handleLoadMore = useCallback(async () => {
-    if (!nextCursor || isLoadingMore) {
-      return;
-    }
+    if (!nextCursor || isLoadingMore) return;
     setIsLoadingMore(true);
     try {
-      if (isProjectScoped) {
-        const params = {
-          cursor: nextCursor,
-          limit: 20,
-          modelProviders: null,
-          sortKey,
-          archived: false,
-          sourceKinds: null,
+      const params: ThreadListParams = {
+        cursor: nextCursor,
+        limit: 20,
+        modelProviders: ['ollama', 'openai'],
+        useStateDbOnly: true,
+        sortKey,
+        archived: false,
+        cwd,
+        searchTerm: searchTerm || null,
+      };
+      const res = await threadList(params);
+      setResponse((prev) => {
+        const seen = new Set(prev.data.map((t) => t.id));
+        return {
+          ...res,
+          data: [...prev.data, ...res.data.filter((t) => !seen.has(t.id))],
         };
-        const currentCwd = listCwd;
-        if (currentCwd) {
-          const response = await threadList(params, currentCwd);
-          const loadedThreads = response.data.map((t) => codexService.normalizeThreadItem(t));
-          const next =
-            (response as { nextCursor?: string | null }).nextCursor ??
-            (response as { next_cursor?: string | null }).next_cursor ??
-            null;
-          setScopedThreads((prev) => {
-            const seen = new Set(prev.map((thread) => thread.id));
-            const merged = [...prev];
-            for (const thread of loadedThreads) {
-              if (!seen.has(thread.id)) {
-                seen.add(thread.id);
-                merged.push(thread);
-              }
-            }
-            return merged;
-          });
-          setScopedNextCursor(next);
-        }
-      } else {
-        await codexService.loadMoreThreads(cwd, sortKey);
-      }
+      });
     } finally {
       setIsLoadingMore(false);
     }
-  }, [cwd, isLoadingMore, isProjectScoped, listCwd, nextCursor, sortKey]);
+  }, [cwd, isLoadingMore, nextCursor, sortKey, searchTerm]);
 
   const openRenameDialog = useCallback(
-    (threadId: string) => {
-      const meta = sessionMeta[threadId];
-      const matchedThread = mergedThreads.find((t) => t.id === threadId);
-      const displayName = meta?.text ?? matchedThread?.preview ?? '';
-      setRenameThreadId(threadId);
-      setRenameValue(displayName);
+    (thread: Thread) => {
+      // Prefer explicit name, fall back to preview (first message).
+      setRenameThreadId(thread.id);
+      setRenameValue(thread.name ?? thread.preview);
     },
-    [mergedThreads, sessionMeta]
-  );
-
-  const handleRowKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLDivElement>, thread: { id: string; preview?: string }) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        void handleOpenThreadFromList(thread.id, thread.preview);
-      }
-    },
-    [handleOpenThreadFromList]
+    []
   );
 
   const handleRenameSubmit = useCallback(async () => {
-    if (!renameThreadId) {
-      return;
-    }
-    const trimmed = renameValue.trim();
-    const nextMeta = { ...sessionMeta };
-    if (!trimmed) {
-      delete nextMeta[renameThreadId];
-    } else {
-      nextMeta[renameThreadId] = {
-        ...(nextMeta[renameThreadId] ?? {}),
-        text: trimmed,
-      };
-    }
-    await writeSessionMeta(nextMeta);
+    if (!renameThreadId || !renameValue.trim()) return;
+    await renameThread(renameThreadId, renameValue.trim());
     setRenameThreadId(null);
-  }, [renameThreadId, renameValue, sessionMeta, writeSessionMeta]);
+    // thread/name/updated notification patches response.data directly.
+  }, [renameThreadId, renameValue]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col pr-2">
+    <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1">
-        {sortedThreads.map((thread) => (
+        {threads.map((thread) => (
           <ContextMenu key={thread.id}>
             <ContextMenuTrigger asChild>
               <div
-                onClick={() => {
-                  void handleOpenThreadFromList(thread.id, thread.preview);
-                }}
-                onKeyDown={(event) => handleRowKeyDown(event, thread)}
+                onClick={() => void handleOpenThread(thread.id, thread.preview)}
                 role="button"
                 tabIndex={0}
-                className={`group grid grid-cols-[1fr_auto] items-center gap-2 w-full text-left p-2 rounded-lg transition-colors ${
-                  currentThreadId === thread.id ? 'bg-zinc-700/50' : 'hover:bg-zinc-800/30'
-                }`}
+                className={`group grid grid-cols-[1fr_auto] items-center gap-2 w-full text-left p-2 rounded-lg transition-colors ${currentThreadId === thread.id ? 'bg-zinc-700/50' : 'hover:bg-zinc-800/30'
+                  }`}
               >
                 <div className="text-sm font-medium truncate min-w-0 pr-2 flex items-center gap-1.5">
                   {threadStatusMap[thread.id]?.type === 'active' && (
                     <Loader2 className="h-3 w-3 shrink-0 animate-spin text-muted-foreground" />
                   )}
-                  {thread.preview}
+                  {thread.name ?? thread.preview}
                 </div>
                 <div className="flex items-center justify-end h-6 w-12 relative">
                   <span className="text-xs text-muted-foreground whitespace-nowrap group-hover:hidden">
-                    {formatThreadAge(thread.createdAt ?? 0)}
+                    {formatThreadAge(thread.createdAt)}
                   </span>
                   <button
                     type="button"
                     aria-label="Archive thread"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      void handleArchiveThread(thread.id);
-                    }}
+                    onClick={(e) => { e.stopPropagation(); void handleArchive(thread.id); }}
                     className="absolute right-0 inline-flex items-center justify-center h-6 w-6 rounded hover:bg-accent/50 transition-colors text-muted-foreground opacity-0 group-hover:opacity-100 max-md:opacity-100"
                   >
                     <Archive className="h-3.5 w-3.5" />
@@ -455,14 +245,12 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
               </div>
             </ContextMenuTrigger>
             <ContextMenuContent className="w-44">
-              <ContextMenuItem onSelect={() => openRenameDialog(thread.id)}>Rename</ContextMenuItem>
-              <ContextMenuItem onSelect={() => void handleForkThread(thread.id)}>
+              <ContextMenuItem onSelect={() => openRenameDialog(thread)}>Rename</ContextMenuItem>
+              <ContextMenuItem onSelect={() => void handleFork(thread.id)}>
                 <GitFork className="mr-2 h-4 w-4" />
                 Fork
               </ContextMenuItem>
-              <ContextMenuItem onSelect={() => void handleArchiveThread(thread.id)}>
-                Archive
-              </ContextMenuItem>
+              <ContextMenuItem onSelect={() => void handleArchive(thread.id)}>Archive</ContextMenuItem>
               {thread.cwd.includes('/.codexia/worktrees/') && (
                 <ContextMenuItem onSelect={() => void handleDeleteWorktree(thread)}>
                   <FolderX className="mr-2 h-4 w-4" />
@@ -471,7 +259,7 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
               )}
               <ContextMenuItem
                 variant="destructive"
-                onSelect={() => void handleDeleteThreadByPath(thread.id, thread.path ?? '')}
+                onSelect={() => void handleDelete(thread.id)}
               >
                 Delete
               </ContextMenuItem>
@@ -482,13 +270,13 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
             </ContextMenuContent>
           </ContextMenu>
         ))}
-        {filteredThreads.length === 0 && (
+        {threads.length === 0 && (
           <div className="text-center text-sm text-sidebar-foreground/50 py-8 px-4">
             {searchTerm ? 'No matching tasks.' : 'No tasks yet.'}
           </div>
         )}
       </div>
-      {nextCursor ? (
+      {nextCursor && (
         <Button
           variant="ghost"
           size="sm"
@@ -498,29 +286,14 @@ export function ThreadList({ cwdOverride }: ThreadListProps = {}) {
         >
           {isLoadingMore ? 'Loading more…' : 'Load more'}
         </Button>
-      ) : null}
-      <Dialog
+      )}
+      <RenameThreadDialog
         open={!!renameThreadId}
-        onOpenChange={(open) => (!open ? setRenameThreadId(null) : null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Rename thread</DialogTitle>
-          </DialogHeader>
-          <Input
-            value={renameValue}
-            onChange={(event) => setRenameValue(event.target.value)}
-            placeholder="Thread name"
-            autoFocus
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRenameThreadId(null)}>
-              Cancel
-            </Button>
-            <Button onClick={handleRenameSubmit}>Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={(open) => !open && setRenameThreadId(null)}
+        renameValue={renameValue}
+        setRenameValue={setRenameValue}
+        handleRenameSubmit={handleRenameSubmit}
+      />
     </div>
   );
 }

@@ -1,76 +1,37 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
-import { useCodexStore } from '@/components/codex/stores';
-import { useApprovalStore, useRequestUserInputStore } from '@/components/codex/stores';
-import { codexService } from '@/services/codexService';
 import {
   gitApplyWorktreeChanges,
   gitRemoveWorktree,
   gitHasWorktreeChanges,
 } from '@/services/tauri/git';
+import { useCodexStore } from '@/components/codex/stores';
+import { useApprovalStore, useRequestUserInputStore } from '@/components/codex/stores';
+import { codexService } from '@/services/codexService';
 import { renderEvent } from '@/components/codex/items';
 import { Button } from '@/components/ui/button';
 import { Check, RotateCcw, Square } from 'lucide-react';
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import type { ServerNotification } from '@/bindings';
 import { toast } from 'sonner';
 import { getFilename } from '@/utils/getFilename';
-
-// ─── helpers ────────────────────────────────────────────────────────────────
-
-export function getCodexActiveTurnId(events: ServerNotification[]): string | null {
-  for (let i = events.length - 1; i >= 0; i--) {
-    const e = events[i];
-    if (e.method === 'turn/started') return (e.params as { turn: { id: string } }).turn.id;
-    if (e.method === 'turn/completed' || e.method === 'error') return null;
-  }
-  return null;
-}
-
-export function getCodexTokens(events: ServerNotification[]): number | null {
-  for (let i = events.length - 1; i >= 0; i--) {
-    const e = events[i];
-    if (e.method === 'thread/tokenUsage/updated') {
-      const total = (e.params as any).tokenUsage?.total?.totalTokens;
-      return typeof total === 'number' ? total : null;
-    }
-  }
-  return null;
-}
-
-export function getCodexContextWindow(
-  events: ServerNotification[]
-): { used: number; window: number } | null {
-  for (let i = events.length - 1; i >= 0; i--) {
-    const e = events[i];
-    if (e.method === 'thread/tokenUsage/updated') {
-      const tu = (e.params as any).tokenUsage;
-      const used = tu?.total?.totalTokens;
-      const win = tu?.modelContextWindow;
-      if (typeof used === 'number' && typeof win === 'number' && win > 0) {
-        return { used, window: win };
-      }
-      return null;
-    }
-  }
-  return null;
-}
-
-export function fmtTokens(n: number): string {
-  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
-}
-
-export function fmtElapsed(s: number): string {
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return m > 0 ? `${m}:${String(sec).padStart(2, '0')}` : `0:${String(sec).padStart(2, '0')}`;
-}
+import {
+  getCodexActiveTurnId,
+  getCodexTokens,
+  getCodexContextWindow,
+  fmtTokens,
+  fmtElapsed,
+} from './utils';
 
 // ─── ContextWindowBar ────────────────────────────────────────────────────────
 
-export function ContextWindowBar({ used, window: win }: { used: number; window: number }) {
-  const pct = Math.min(used / win, 1);
+interface ContextWindowBarProps {
+  used: number;
+  window: number;
+}
+
+export function ContextWindowBar({ used, window }: ContextWindowBarProps) {
+  const pct = Math.min(used / window, 1);
   const color = pct > 0.85 ? 'bg-red-500' : pct > 0.65 ? 'bg-amber-400' : 'bg-emerald-500';
   return (
     <div className="h-0.5 w-full bg-muted/30 shrink-0">
@@ -82,7 +43,7 @@ export function ContextWindowBar({ used, window: win }: { used: number; window: 
   );
 }
 
-// ─── CodexAgentCard ───────────────────────────────────────────────────────────────
+// ─── CodexAgentCard ────────────────────────────────────────────────────────
 
 interface CodexAgentCardProps {
   card: AgentCenterCard & { kind: 'codex' };
@@ -113,8 +74,8 @@ export function CodexAgentCard({
     !activeThreadIds.includes(card.id) && threadEvents.length === 0 && !processing;
 
   const hasPending =
-    pendingApprovals.some((a) => (a as any).threadId === card.id) ||
-    pendingRequests.some((r) => r.threadId === card.id);
+    pendingApprovals.some((a: any) => a.threadId === card.id) ||
+    pendingRequests.some((r: any) => r.threadId === card.id);
 
   const tokens = getCodexTokens(threadEvents);
   const ctxWindow = getCodexContextWindow(threadEvents);
@@ -126,16 +87,7 @@ export function CodexAgentCard({
 
   useEffect(() => {
     if (processing) {
-      if (processingStartRef.current === null) {
-        processingStartRef.current = Date.now();
-      }
-      const id = setInterval(() => {
-        setElapsed(Math.floor((Date.now() - (processingStartRef.current ?? Date.now())) / 1000));
-      }, 1000);
-      return () => clearInterval(id);
-    } else {
-      processingStartRef.current = null;
-      setElapsed(0);
+      setElapsed(Date.now() - (processingStartRef.current ?? 0));
     }
   }, [processing]);
 
@@ -264,7 +216,7 @@ export function CodexAgentCard({
             variant="outline"
             className="h-6 px-2 text-[10px] gap-1"
             disabled={isApplyingWorktree}
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
               void handleApplyWorktree();
             }}
@@ -279,7 +231,7 @@ export function CodexAgentCard({
             variant="outline"
             className="h-6 px-2 text-[10px] gap-1"
             disabled={resuming || isApplyingWorktree}
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
               void handleResume();
             }}

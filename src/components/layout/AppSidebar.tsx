@@ -25,7 +25,7 @@ import { UpdateButton } from '../features/UpdateButton';
 import { useTrafficLightConfig } from '@/hooks';
 import { SideBarCodexTab, SideBarClaudeTab } from './SideBarTab';
 import { AgentSwitcher } from '@/components/agent';
-import { SessionManagerDialog } from './SessionManagerDialog';
+import { SessionManagerDialog } from '../common/SessionManagerDialog';
 import { SideBarAddProjectButton } from './SideBarAddProjectButton';
 import { NewAgentButton } from '../common/NewAgentButton';
 

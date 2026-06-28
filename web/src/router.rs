@@ -30,7 +30,7 @@ use super::{
         api_git_diff_stats, api_git_file_diff, api_git_file_diff_meta, api_git_list_branches,
         api_git_create_worktree, api_git_reverse_files, api_git_stage_files,
         api_git_status, api_git_unstage_files, api_git_commit, api_git_push,
-        api_list_archived_threads, api_list_threads, api_load_manifest, api_load_manifests,
+        api_list_threads, api_load_manifest, api_load_manifests,
         api_mark_notes_synced, api_prevent_sleep,
         api_login_account, api_model_list, api_model_list_post, api_read_directory, api_read_file,
         api_read_dxt_setting,
@@ -107,10 +107,6 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/codex/thread/fork", post(api_fork_thread))
         .route("/api/codex/thread/rollback", post(api_rollback_thread))
         .route("/api/codex/thread/list", post(api_list_threads))
-        .route(
-            "/api/codex/thread/list-archived",
-            post(api_list_archived_threads),
-        )
         .route("/api/codex/thread/archive", post(api_archive_thread))
         .route("/api/codex/turn/start", post(api_turn_start))
         .route("/api/codex/turn/interrupt", post(api_turn_interrupt))

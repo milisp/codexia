@@ -3,7 +3,6 @@ import { Trash2, Search, CheckSquare, Square } from 'lucide-react';
 import { listSessions, type SdkSessionInfo } from '@/lib/sessions';
 import { ccDeleteSession } from '@/services/tauri/cc';
 import { deleteFile } from '@/services/tauri';
-import type { ThreadListItem } from '@/types/codex/ThreadListItem';
 import { codexService } from '@/services/codexService';
 import { useCodexStore, useThreadListStore } from '@/components/codex/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
@@ -11,6 +10,7 @@ import { useLayoutStore, useAgentCenterStore } from '@/stores';
 import { AgentIcon } from '@/components/common/AgentIcon';
 import { formatThreadAge } from '@/utils/formatThreadAge';
 import { getFilename } from '@/utils/getFilename';
+import type { Thread } from '@/bindings/v2';
 import {
   Dialog,
   DialogContent,
@@ -299,10 +299,10 @@ function CodexThreadManager({ onClose }: { onClose: () => void }) {
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [pendingDeleteItems, setPendingDeleteItems] = useState<ThreadListItem[] | null>(null);
+  const [pendingDeleteItems, setPendingDeleteItems] = useState<Thread[] | null>(null);
   const { toast } = useToast();
 
-  const handleOpenThread = async (thread: ThreadListItem) => {
+  const handleOpenThread = async (thread: Thread) => {
     const targetCwd = thread.cwd || cwd;
     if (targetCwd && targetCwd !== cwd) {
       setCwd(targetCwd);
@@ -316,7 +316,7 @@ function CodexThreadManager({ onClose }: { onClose: () => void }) {
 
   // Load full thread list on mount
   useEffect(() => {
-    void codexService.loadThreads(cwd, false, sortKey);
+    void codexService.loadThreads(null, false, sortKey);
   }, [cwd, sortKey]);
 
   const filtered = useMemo(() => {
@@ -347,7 +347,7 @@ function CodexThreadManager({ onClose }: { onClose: () => void }) {
     });
   };
 
-  const doDelete = async (items: ThreadListItem[]) => {
+  const doDelete = async (items: Thread[]) => {
     let failed = 0;
     for (const item of items) {
       if (!item.path) { failed++; continue; }
@@ -413,22 +413,22 @@ function CodexThreadManager({ onClose }: { onClose: () => void }) {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium truncate">{thread.preview || thread.id}</div>
-                <div className="text-xs text-muted-foreground truncate">{getFilename(thread.cwd) || thread.cwd}</div>
+                <div className="flex gap-2 text-xs text-muted-foreground truncate">
+                  <span>{getFilename(thread.cwd) || thread.cwd}</span>
+                  {formatThreadAge(thread.createdAt ?? 0)}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPendingDeleteItems([thread]);
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
-              <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
-                {formatThreadAge(thread.createdAt ?? 0)}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive shrink-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPendingDeleteItems([thread]);
-                }}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
             </div>
           ))
         )}

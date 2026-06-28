@@ -44,35 +44,39 @@ const extractThreadId = (payload: ServerNotification): string | undefined => {
 };
 
 export function useCodexEvents(enabled = true) {
-  const { addEvent, setHasAccount } = useCodexStore();
-  const { addApproval } = useApprovalStore();
-  const { addRequest } = useRequestUserInputStore();
-  const { preventSleepDuringTasks } = useSettingsStore();
-  const taskCompleteBeepMode = useSettingsStore((state) => state.enableTaskCompleteBeep);
-  const isCodexThreadActive = useLayoutStore((state) => state.view === 'agent');
+  // Read volatile values via refs so the effect never needs to re-run when
+  // they change — re-registering Tauri listeners on every store update or
+  // layout change (e.g. window resize) was causing listeners to drop.
+  const isCodexThreadActiveRef = useRef(false);
+  const taskCompleteBeepModeRef = useRef<'never' | 'unfocused' | 'always'>('unfocused');
+  const preventSleepDuringTasksRef = useRef(false);
 
-  // Use refs for values that change but are only read inside callbacks.
-  // This avoids re-registering all Tauri listeners whenever the user switches
-  // views or settings change — listener accumulation was the cause of 100% CPU.
-  const isCodexThreadActiveRef = useRef(isCodexThreadActive);
-  isCodexThreadActiveRef.current = isCodexThreadActive;
-  const taskCompleteBeepModeRef = useRef(taskCompleteBeepMode);
-  taskCompleteBeepModeRef.current = taskCompleteBeepMode;
-  const preventSleepDuringTasksRef = useRef(preventSleepDuringTasks);
-  preventSleepDuringTasksRef.current = preventSleepDuringTasks;
+  // Keep refs in sync with current store values on every render (cheap).
+  isCodexThreadActiveRef.current = useLayoutStore((state) => state.view === 'agent');
+  taskCompleteBeepModeRef.current = useSettingsStore((state) => state.enableTaskCompleteBeep);
+  preventSleepDuringTasksRef.current = useSettingsStore((state) => state.preventSleepDuringTasks);
 
   useEffect(() => {
     if (!enabled) {
       return;
     }
 
+    // Access store actions via getState() — these are stable function references
+    // defined once in the Zustand store initializer, so they don't need to be in
+    // the dependency array. Subscribing to them via useCodexStore() was causing
+    // the effect to re-run (and drop/re-register listeners) on every store update
+    // or layout change such as a window resize.
+    const getAddEvent = () => useCodexStore.getState().addEvent;
+    const getAddApproval = () => useApprovalStore.getState().addApproval;
+    const getAddRequest = () => useRequestUserInputStore.getState().addRequest;
+
     const syncAccountState = async (refreshToken: boolean) => {
       try {
         const response = await getAccountWithParams({ refreshToken });
-        setHasAccount(Boolean(response.account));
+        useCodexStore.getState().setHasAccount(Boolean(response.account));
       } catch (error) {
         console.error('[useCodexEvents] Failed to sync account state:', error);
-        setHasAccount(false);
+        useCodexStore.getState().setHasAccount(false);
       }
     };
 
@@ -110,7 +114,7 @@ export function useCodexEvents(enabled = true) {
 
       if (threadId) {
         if (['thread/settings/updated', 'serverRequest/resolved', 'mcpServer/startupStatus/updated'].includes(method)) {
-          return
+          return;
         }
 
         if (method === 'thread/started') {
@@ -163,7 +167,7 @@ export function useCodexEvents(enabled = true) {
           });
         }
 
-        addEvent(threadId, payload);
+        getAddEvent()(threadId, payload);
       } else {
         if (
           !['account/rateLimits/updated', 'account/updated', 'error', 'account/login/completed'].includes(method)
@@ -194,11 +198,11 @@ export function useCodexEvents(enabled = true) {
       };
 
       void registerListener<ApprovalRequest>('codex/approval-request', (event) => {
-        addApproval(event.payload);
+        getAddApproval()(event.payload);
       });
 
       void registerListener<RequestUserInputRequest>('codex/request-user-input', (event) => {
-        addRequest(event.payload);
+        getAddRequest()(event.payload);
       });
 
       void registerListener<ServerNotification>('codex:notification', (event) => {
@@ -231,11 +235,11 @@ export function useCodexEvents(enabled = true) {
           return;
         }
         if (envelope.event === 'codex/approval-request') {
-          addApproval(envelope.payload as ApprovalRequest);
+          getAddApproval()(envelope.payload as ApprovalRequest);
           return;
         }
         if (envelope.event === 'codex/request-user-input') {
-          addRequest(envelope.payload as RequestUserInputRequest);
+          getAddRequest()(envelope.payload as RequestUserInputRequest);
           return;
         }
         if (envelope.event === 'codex:notification') {
@@ -254,5 +258,5 @@ export function useCodexEvents(enabled = true) {
     return () => {
       es.close();
     };
-  }, [addEvent, addApproval, addRequest, setHasAccount, enabled]);
+  }, [enabled]);
 }

@@ -1,29 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import type { ThreadListItem } from '@/types/codex/ThreadListItem';
-import type { Thread, ThreadListParams } from '@/bindings/v2';
-import { threadListArchived, threadUnarchive } from '@/services/tauri';
+import type { ThreadListParams, ThreadListResponse } from '@/bindings/v2';
+import { threadList, threadUnarchive } from '@/services/tauri';
 import { ThreadId } from '@/bindings';
 import { getFilename } from '@/utils/getFilename';
 import { formatThreadAge } from '@/utils/formatThreadAge';
 
-type ThreadLike = Thread & { updatedAt?: number };
-
-const threadSourceToString = (source: ThreadLike['source']): string => {
-  if (typeof source === 'string') {
-    return source;
-  }
-  if (!source) {
-    return '';
-  }
-  return JSON.stringify(source);
-};
+const EMPTY_LIST: ThreadListResponse = { data: [], nextCursor: null, backwardsCursor: null };
 
 export function ArchivedThreadSettings() {
-  const [threads, setThreads] = useState<ThreadListItem[]>([]);
+  const [response, setResponse] = useState<ThreadListResponse>(EMPTY_LIST);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const threads = response.data;
 
   const loadArchivedThreads = useCallback(async () => {
     setIsLoading(true);
@@ -33,21 +24,10 @@ export function ArchivedThreadSettings() {
         cursor: null,
         limit: 50,
         modelProviders: null,
-        sortKey: 'updated_at',
         archived: true,
-        sourceKinds: null,
       };
-      const response = await threadListArchived(params);
-      const normalized = response.data.map((thread: ThreadLike) => ({
-        createdAt: thread.createdAt ?? 0,
-        updatedAt: thread.updatedAt ?? 0,
-        id: thread.id,
-        preview: thread.preview ?? '',
-        cwd: thread.cwd ?? '',
-        path: thread.path ?? '',
-        source: threadSourceToString(thread.source),
-      }));
-      setThreads(normalized);
+      const resp = await threadList(params);
+      setResponse(resp);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);

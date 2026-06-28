@@ -30,7 +30,7 @@ export function SideBarCodexTab({ onCreateNewThread }: SideBarCodexTabProps) {
     <SideBarProjectList
       onNewAction={onCreateNewThread}
       newActionTitle={(name) => `Start new thread in ${name}`}
-      renderList={(project) => <ThreadList cwdOverride={project} />}
+      renderList={(project) => <ThreadList cwd={project} />}
     />
   );
 }

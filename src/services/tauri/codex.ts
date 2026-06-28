@@ -102,18 +102,11 @@ export async function turnInterrupt(params: TurnInterruptParams) {
   return await postJson('/api/codex/turn/interrupt', params);
 }
 
-export async function threadList(params: ThreadListParams, cwd?: string) {
+export async function threadList(params: ThreadListParams) {
   if (isDesktopTauri()) {
-    return await invokeTauri<ThreadListResponse>('list_threads', { params, cwd });
+    return await invokeTauri<ThreadListResponse>('list_threads', { params });
   }
-  return await postJson<ThreadListResponse>('/api/codex/thread/list', { ...params, cwd });
-}
-
-export async function threadListArchived(params: ThreadListParams) {
-  if (isDesktopTauri()) {
-    return await invokeTauri<ThreadListResponse>('list_archived_threads', { params });
-  }
-  return await postJson<ThreadListResponse>('/api/codex/thread/list-archived', params);
+  return await postJson<ThreadListResponse>('/api/codex/thread/list', { ...params });
 }
 
 export async function threadArchive(threadId: ThreadId) {
@@ -123,11 +116,26 @@ export async function threadArchive(threadId: ThreadId) {
   return await postJson('/api/codex/thread/archive', { threadId });
 }
 
+export async function deleteThread(threadId: ThreadId) {
+  if (isDesktopTauri()) {
+    return await invokeTauri('delete_thread', { threadId });
+  }
+  return await postJson('/api/codex/thread/delete', { threadId });
+}
+
+export async function renameThread(threadId: ThreadId, name: string) {
+  const params = { threadId, name }
+  if (isDesktopTauri()) {
+    return await invokeTauri('rename_thread', { params });
+  }
+  return await postJson('/api/codex/thread/delete', { params });
+}
+
 export async function threadUnarchive(threadId: ThreadId) {
   if (isDesktopTauri()) {
     return await invokeTauri('thread_unarchive', { threadId });
   }
-  return await postJson('/api/codex/thread/unarchive', { thread_id: threadId });
+  return await postJson('/api/codex/thread/unarchive', { threadId });
 }
 
 export async function loginChatGpt() {
@@ -159,7 +167,7 @@ export async function loginAccount(params: LoginAccountParams) {
   return await postJson<LoginAccountResponse>('/api/codex/account/login', params);
 }
 
-export async function reviewStart(params: ReviewStartParams) {
+export async function startReview(params: ReviewStartParams) {
   if (isDesktopTauri()) {
     return await invokeTauri<ReviewStartResponse>('start_review', { params });
   }

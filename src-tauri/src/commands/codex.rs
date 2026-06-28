@@ -4,7 +4,7 @@ use codex_app_server_protocol::{
     GetAccountRateLimitsResponse, GetAccountResponse,
     LoginAccountParams, LoginAccountResponse, ModelListResponse, RequestId, ReviewStartParams,
     ReviewStartResponse, SkillsListResponse, ThreadForkParams, ThreadListParams,
-    ThreadResumeParams, ThreadRollbackParams, ThreadStartParams, TurnInterruptParams,
+    ThreadSetNameParams, ThreadResumeParams, ThreadRollbackParams, ThreadStartParams, TurnInterruptParams,
     TurnStartParams,
 };
 use serde_json::Value;
@@ -12,10 +12,9 @@ use serde_json::json;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
-use std::time::Instant;
 use tauri::State;
 
-use codexia_codex::{AppState, CodexInitializationState, initialize_codex, scan};
+use codexia_codex::{AppState, CodexInitializationState, initialize_codex};
 
 fn to_value<T: serde::Serialize>(value: T) -> Result<Value, String> {
     serde_json::to_value(value).map_err(|e| e.to_string())
@@ -56,24 +55,14 @@ pub async fn initialize_codex_async(
         return Ok(());
     }
 
-    let started_at = Instant::now();
     initialize_codex(&state.codex, Arc::clone(&init_state.event_sink)).await?;
-    log::info!(
-        "codex startup timing: initialize_codex_async finished initialize in {:?}",
-        started_at.elapsed()
-    );
 
-    let automation_started_at = Instant::now();
     codexia_cc::automation::initialize_automation_runtime(
         Some(state.codex.clone()),
         cc_state.inner().clone(),
         Arc::clone(&init_state.event_sink),
     )
     .await?;
-    log::info!(
-        "codex startup timing: initialize_codex_async finished automation runtime in {:?}",
-        automation_started_at.elapsed()
-    );
 
     init_state.initialized.store(true, Ordering::SeqCst);
     Ok(())
@@ -129,15 +118,13 @@ pub async fn rollback_thread(
 }
 
 #[tauri::command]
-pub async fn list_threads(params: ThreadListParams, cwd: Option<String>) -> Result<Value, String> {
+pub async fn list_threads(
+    params: ThreadListParams,
+    state: State<'_, AppState>,
+) -> Result<Value, String> {
     let params_value = to_value(params)?;
-    scan::list_threads_payload(params_value, cwd.as_deref()).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-pub async fn list_archived_threads(params: ThreadListParams) -> Result<Value, String> {
-    let params_value = to_value(params)?;
-    scan::list_archived_threads_payload(params_value).map_err(|e| e.to_string())
+    let result = state.codex.send_request("thread/list", params_value).await?;
+    Ok(from_value(result)?)
 }
 
 #[tauri::command]
@@ -149,6 +136,28 @@ pub async fn archive_thread(
         "threadId": thread_id
     });
     let result = state.codex.send_request("thread/archive", params).await?;
+    Ok(from_value(result)?)
+}
+
+#[tauri::command]
+pub async fn delete_thread(
+    thread_id: String,
+    state: State<'_, AppState>,
+) -> Result<Value, String> {
+    let params = json!({
+        "threadId": thread_id
+    });
+    let result = state.codex.send_request("thread/delete", params).await?;
+    Ok(from_value(result)?)
+}
+
+#[tauri::command]
+pub async fn rename_thread(
+    params: ThreadSetNameParams,
+    state: State<'_, AppState>,
+) -> Result<Value, String> {
+    let params_value = to_value(params)?;
+    let result = state.codex.send_request("thread/name/set", params_value).await?;
     Ok(from_value(result)?)
 }
 
