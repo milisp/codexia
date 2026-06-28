@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { ServerNotification } from '@/bindings';
-import type { ThreadStatus, CommandExecutionStatus, Thread } from '@/bindings/v2';
+import type { ThreadStatus, CommandExecutionStatus, Thread, ThreadTokenUsage } from '@/bindings/v2';
 
 type DeltaMethod =
   | 'item/agentMessage/delta'
@@ -93,6 +93,8 @@ interface CodexStore {
   activeThreadIds: string[]; // Track resumed/active threads
   inputFocusTrigger: number; // Increment to trigger focus in InputArea
   threadListNextCursor: string | null;
+  /** Per-thread token usage from thread/tokenUsage/updated */
+  tokenUsageMap: Record<string, ThreadTokenUsage>;
 
   // Basic Setters
   setCurrentThreadId: (id: string | null) => void;
@@ -102,6 +104,7 @@ interface CodexStore {
   setHasAccount: (hasAccount: boolean | null) => void;
   addEvent: (threadId: string, event: ServerNotification) => void;
   triggerInputFocus: () => void;
+  setTokenUsage: (threadId: string, data: ThreadTokenUsage) => void;
 }
 
 export const useCodexStore = create<CodexStore>((set) => ({
@@ -115,6 +118,7 @@ export const useCodexStore = create<CodexStore>((set) => ({
   activeThreadIds: [],
   inputFocusTrigger: 0,
   threadListNextCursor: null,
+  tokenUsageMap: {},
 
   setCurrentThreadId: (id) => {
     set({ currentThreadId: id });
@@ -206,6 +210,12 @@ export const useCodexStore = create<CodexStore>((set) => ({
 
   triggerInputFocus: () => {
     set((state) => ({ inputFocusTrigger: state.inputFocusTrigger + 1 }));
+  },
+
+  setTokenUsage: (threadId, data) => {
+    set((state) => ({
+      tokenUsageMap: { ...state.tokenUsageMap, [threadId]: data },
+    }));
   },
 }));
 

@@ -7,6 +7,7 @@ import {
   type ApprovalRequest,
   type RequestUserInputRequest,
 } from '@/components/codex/stores';
+import type { ThreadTokenUsage } from '@/bindings/v2';
 import { useLayoutStore } from '@/stores';
 import { useSettingsStore } from '@/stores/settings';
 import type { ServerNotification } from '@/bindings/ServerNotification';
@@ -104,7 +105,6 @@ export function useCodexEvents(enabled = true) {
           'item/fileChange/outputDelta',
           'item/commandExecution/outputDelta',
           'item/commandExecution/terminalInteraction',
-          'thread/tokenUsage/updated',
         ].includes(method)
       ) {
         console.log(`[useCodexEvents] ${method}:`, payload.params);
@@ -139,6 +139,14 @@ export function useCodexEvents(enabled = true) {
                 : thread
             ),
           }));
+        }
+
+        if (method === 'thread/tokenUsage/updated') {
+          const { threadId: usageThreadId, tokenUsage } = payload.params as {
+            threadId: string;
+            tokenUsage: ThreadTokenUsage;
+          };
+          useCodexStore.getState().setTokenUsage(usageThreadId, tokenUsage);
         }
 
         if (preventSleepDuringTasksRef.current && method === 'turn/started') {

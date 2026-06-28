@@ -5,6 +5,7 @@ import { convertFileSrc } from '@tauri-apps/api/core';
 import { SlashCommandPopover } from './SlashCommandsSelector';
 import { SkillsInputPopover } from './SkillsPopover';
 import { ModelReasonSelector } from './ModelReasonSelector';
+import { ContextWindowWidget } from '@/components/codex/widget';
 import { AttachmentSelector } from './AttachmentSelector';
 import { AccessModePopover } from './AccessModePopover';
 import { FileMentionPopover } from '@/components/common';
@@ -142,6 +143,7 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
               <AccessModePopover />
             </div>
             <div className='flex items-center gap-2'>
+              <ContextWindowWidget />
               <ModelReasonSelector />
               {threadStatus?.type === 'active' ? (
                 <Button onClick={handleStop} variant="destructive" size="icon" className="h-10 w-10 md:h-8 md:w-8 rounded-full">
