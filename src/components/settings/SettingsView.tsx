@@ -28,11 +28,12 @@ import {
 } from './codex';
 import { ClaudeSettings } from './ClaudeSettings';
 import { CodexAuth } from '../codex/CodexAuth';
-import { QuoteSettings } from './QuoteSettings';
 import { ProjectsSettings } from './ProjectsSettings';
 import { TaskSettings } from './codex';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { isTauri } from '@/hooks/runtime';
+import { PrivacySettings } from './PrivacySettings';
+import { useTranslation } from 'react-i18next';
 
 type SettingsSection =
   | 'general'
@@ -40,31 +41,18 @@ type SettingsSection =
   | 'codexauth'
   | 'config'
   | 'personalization'
+  | 'privacy'
   | 'archived'
   | 'explorer'
-  | 'quote'
   | 'task'
   | 'agents'
   | 'claude'
 
 const codexSections = ['codexauth', 'task', 'agents', 'config', 'personalization', 'archived'] as const;
-const topLevelSections = ['general', 'projects', 'claude', 'explorer', 'quote'] as const;
-
-const sectionLabel: Record<SettingsSection, string> = {
-  general: 'General',
-  projects: 'Projects',
-  codexauth: 'Codex auth',
-  config: 'Configuration',
-  personalization: 'Personalization',
-  archived: 'Archived threads',
-  explorer: 'Explorer',
-  quote: 'Quote',
-  task: 'Task',
-  agents: 'Multi-agent',
-  claude: 'Claude',
-};
+const topLevelSections = ['general', 'projects', 'privacy', 'claude', 'explorer'] as const;
 
 export function SettingsView() {
+  const { t } = useTranslation('settings');
   const { setView } = useLayoutStore();
   const isMobile = useIsMobile();
   const [activeSection, setActiveSection] = useState<SettingsSection>('general');
@@ -74,12 +62,12 @@ export function SettingsView() {
     <>
       {activeSection === 'general' && <GeneralSettings />}
       {activeSection === 'projects' && <ProjectsSettings />}
+      {activeSection === 'privacy' && <PrivacySettings />}
       {activeSection === 'codexauth' && <CodexAuth />}
       {activeSection === 'config' && <ConfigSettings />}
       {activeSection === 'personalization' && <PersonalizationSettings />}
       {activeSection === 'archived' && <ArchivedThreadSettings />}
       {activeSection === 'explorer' && <ExplorerSettings />}
-      {activeSection === 'quote' && <QuoteSettings />}
       {activeSection === 'task' && <TaskSettings />}
       {activeSection === 'agents' && <SettingsAgentsSection />}
       {activeSection === 'claude' && <ClaudeSettings />}
@@ -106,12 +94,12 @@ export function SettingsView() {
             <SelectContent>
               {topLevelSections.map((section) => (
                 <SelectItem key={section} value={section}>
-                  {sectionLabel[section]}
+                  {t(section)}
                 </SelectItem>
               ))}
               {codexSections.map((section) => (
                 <SelectItem key={section} value={section}>
-                  Codex: {sectionLabel[section]}
+                  Codex: {t(section)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -148,7 +136,7 @@ export function SettingsView() {
               onClick={() => setView('agent')}
             >
               <ChevronLeft className="h-4 w-4" />
-              <span className="text-xs">Back to app</span>
+              <span className="text-xs">{t('backToApp')}</span>
             </Button>
           </div>
         </SidebarHeader>
@@ -165,7 +153,7 @@ export function SettingsView() {
                       : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                       }`}
                   >
-                    {sectionLabel[section]}
+                    {t(section)}
                   </button>
                 </li>
               ))}
@@ -193,7 +181,7 @@ export function SettingsView() {
                           : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                           }`}
                       >
-                        {sectionLabel[section]}
+                        {t(section)}
                       </button>
                     ))}
                   </CollapsibleContent>

@@ -1,14 +1,10 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { Sun, Moon, Monitor, Github, Twitter } from 'lucide-react';
 import { useThemeStore, type Theme, type Accent } from '@/stores/settings';
-import { useSettingsStore } from '@/stores/settings';
 import { LanguageSelector } from './LanguageSelector';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
-import { initPosthog, posthog } from '@/lib/posthog';
 
 const ACCENT_OPTIONS: Array<{ value: Accent; label: string; colorClass: string }> = [
   { value: 'black', label: 'Noir', colorClass: 'bg-slate-800' },
@@ -19,68 +15,46 @@ const ACCENT_OPTIONS: Array<{ value: Accent; label: string; colorClass: string }
   { value: 'orange', label: 'Orange', colorClass: 'bg-orange-500' },
 ];
 
+const LINKS = {
+  GITHUB: 'https://github.com/milisp/codexia',
+  DISCORD: 'https://discord.gg/zAjtD4kf5K',
+  TWITTER: 'https://x.com/lisp_mi',
+} as const;
+
 export function GeneralSettings() {
   const { theme, setTheme, accent, setAccent } = useThemeStore();
   const handleThemeChange = (value: string) => setTheme(value as Theme);
-  const { t } = useTranslation();
-  const { analyticsEnabled, setAnalyticsEnabled } = useSettingsStore();
+  const { t } = useTranslation('settings');
 
-  function handleAnalyticsChange(enabled: boolean) {
-    setAnalyticsEnabled(enabled);
-    if (import.meta.env.DEV) return;
-    if (enabled) {
-      initPosthog();
-      posthog.opt_in_capturing();
-    } else {
-      posthog.opt_out_capturing();
-    }
-  }
+  // Shared Tailwind classes from shadcn/ui Button (variant: default, size: sm)
+  const buttonClassName = 'inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-3';
 
   return (
     <div className="space-y-6">
       <section className="space-y-3">
-        <h3 className="text-sm font-medium px-1">Analytics</h3>
-        <Card>
-          <CardContent className="px-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <div className="text-sm font-medium">Usage Analytics</div>
-                <div className="text-xs text-muted-foreground">
-                  Help improve Codexia by sending anonymous usage data.
-                </div>
-              </div>
-              <Switch
-                checked={analyticsEnabled}
-                onCheckedChange={handleAnalyticsChange}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-      <section className="space-y-3">
-        <h3 className="text-sm font-medium px-1">Appearance</h3>
+        <h3 className="text-sm font-medium px-1">{t('preferences')}</h3>
         <Card>
           <CardContent className="px-4 space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <div className="text-sm font-medium">Theme</div>
+                <div className="text-sm font-medium">{t('appearance')}</div>
                 <div className="text-xs text-muted-foreground">
-                  Select your preferred color scheme.
+                  {t('appearanceDescription')}
                 </div>
               </div>
               <Tabs value={theme} onValueChange={handleThemeChange}>
                 <TabsList className="h-8">
                   <TabsTrigger value="light" className="px-3 gap-2 text-xs">
                     <Sun className="h-3.5 w-3.5" />
-                    Light
+                    {t('light')}
                   </TabsTrigger>
                   <TabsTrigger value="dark" className="px-3 gap-2 text-xs">
                     <Moon className="h-3.5 w-3.5" />
-                    Dark
+                    {t('dark')}
                   </TabsTrigger>
                   <TabsTrigger value="system" className="px-3 gap-2 text-xs">
                     <Monitor className="h-3.5 w-3.5" />
-                    System
+                    {t('system')}
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -88,9 +62,9 @@ export function GeneralSettings() {
             <div className="h-px bg-border" />
             <div className="space-y-2">
               <div className="space-y-0.5">
-                <div className="text-sm font-medium">{t('header.accentColor')}</div>
+                <div className="text-sm font-medium">{t('accentColor')}</div>
                 <div className="text-xs text-muted-foreground">
-                  Pick a highlight color for active controls and accents.
+                  {t('accentColorDescription')}
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -124,55 +98,35 @@ export function GeneralSettings() {
         </Card>
       </section>
       <section className="space-y-3">
-        <h3 className="text-sm font-medium px-1">Keep in touch and community</h3>
+        <h3 className="text-sm font-medium px-1">{t('keepInTouch')}</h3>
         <div className="flex flex-wrap gap-2 text-balance">
-          <Button
-            onClick={() => open('https://github.com/milisp/codexia/discussions')}
-            size="sm"
-            className="flex-1 min-w-[120px]"
+          <a
+            href={LINKS.GITHUB}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(buttonClassName, 'flex-1 min-w-[100px]')}
           >
             <Github className="h-4 w-4" />
-            <span className="ml-2">Discussion</span>
-          </Button>
-          <Button
-            onClick={() => open('https://github.com/milisp/codexia/issues')}
-            size="sm"
-            className="flex-1 min-w-[100px]"
-          >
-            <Github className="h-4 w-4" />
-            <span className="ml-2">Bug</span>
-          </Button>
-          <Button
-            onClick={() => open('https://discord.gg/zAjtD4kf5K')}
-            size="sm"
-            className="flex-shrink-0"
+            <span>Github</span>
+          </a>
+          <a
+            href={LINKS.DISCORD}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(buttonClassName, 'flex-shrink-0')}
           >
             <img src="/discord.svg" height={16} width={16} alt="Discord" />
-          </Button>
-          <Button
-            onClick={() => open('https://x.com/lisp_mi')}
-            size="sm"
-            className="flex-1 min-w-[100px]"
+            <span>Discord</span>
+          </a>
+          <a
+            href={LINKS.TWITTER}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(buttonClassName, 'flex-1 min-w-[100px]')}
           >
             <Twitter className="h-4 w-4" />
-            <span className="ml-2">lisp_mi</span>
-          </Button>
-          <Button
-            onClick={() => open('https://www.reddit.com/r/codexia/')}
-            size="sm"
-            className="flex-1 min-w-[120px]"
-          >
-            <img src="/reddit.svg" height={16} width={16} alt="Reddit" />
-            <span className="ml-2">r/codexia</span>
-          </Button>
-          <Button
-            onClick={() => open('https://www.reddit.com/r/codex/')}
-            size="sm"
-            className="flex-1 min-w-[110px]"
-          >
-            <img src="/reddit.svg" height={16} width={16} alt="Reddit" />
-            <span className="ml-2">r/codex</span>
-          </Button>
+            <span>lisp_mi</span>
+          </a>
         </div>
       </section>
     </div>
