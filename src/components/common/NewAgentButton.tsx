@@ -6,6 +6,7 @@ import { useAgentCenterStore } from '@/stores';
 import { useLayoutStore } from '@/stores';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
 import { useThreadList } from '@/components/codex/hooks';
+import { useTranslation } from 'react-i18next';
 
 const focusCCInput = () => window.dispatchEvent(new Event('cc-input-focus-request'));
 
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export function NewAgentButton({ showLabel = false }: Props) {
+  const { t } = useTranslation('sidebar')
   const { selectedAgent, cwd, setCwd } = useWorkspaceStore();
   const { setCurrentAgentCardId } = useAgentCenterStore();
   const { view, setView, setActiveSidebarTab } = useLayoutStore();
@@ -71,13 +73,12 @@ export function NewAgentButton({ showLabel = false }: Props) {
       size={showLabel ? "default" : "icon"}
       variant="ghost"
       className={`group ${showLabel ? 'justify-start' : ''} relative flex items-center gap-2`}
-      title={selectedAgent === 'cc' ? 'New Session (⌘N)' : 'New Thread (⌘N)'}
+      title={`${t('newChat')} (⌘N)`}
     >
       <SquarePen size={16} />
-
       {showLabel && (
         <div className="flex items-center justify-between w-full">
-          <span>New Chat</span>
+          <span>{t('newChat')}</span>
           <span className="hidden group-hover:inline text-xs text-muted-foreground ml-2">
             ⌘N
           </span>

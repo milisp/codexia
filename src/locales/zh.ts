@@ -19,7 +19,18 @@ export const zh = {
     donate: '捐助',
     accentColor: '主题颜色',
   },
+  composer: {
+    plan: '计划',
+    planMode: '计划模式',
+    askApproval: '请示批准',
+    approvalForMe: '替我批准',
+    fullAccess: '完全访问',
+  },
   sidebar: {
+    newChat: '新聊天',
+    plugins: '插件',
+    automations: '自动化',
+    insights: '洞察',
     usage: '使用情况',
     settings: '设置',
     login: '登录',

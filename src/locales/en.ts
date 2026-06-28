@@ -19,7 +19,18 @@ export const en = {
     donate: 'Donate',
     accentColor: 'Accent Color',
   },
+  composer: {
+    plan: 'Plan',
+    planMode: 'Plan Mode',
+    askApproval: 'Ask Approval',
+    approvalForMe: 'Approval For Me',
+    fullAccess: 'Full Access',
+  },
   sidebar: {
+    newChat: 'New Chat',
+    plugins: 'Plugins',
+    automations: 'Automations',
+    insights: 'Insights',
     usage: 'Usage',
     settings: 'Settings',
     login: 'Login',

@@ -28,6 +28,7 @@ import { AgentSwitcher } from '@/components/agent';
 import { SessionManagerDialog } from '../common/SessionManagerDialog';
 import { SideBarAddProjectButton } from './SideBarAddProjectButton';
 import { NewAgentButton } from '../common/NewAgentButton';
+import { useTranslation } from 'react-i18next';
 
 const focusCCInput = () => window.dispatchEvent(new Event('cc-input-focus-request'));
 
@@ -38,6 +39,7 @@ const navBtnInactive = 'border-transparent hover:border-border/60';
 const navBtnCls = (active: boolean) => `${navBtnBase} ${active ? navBtnActive : navBtnInactive}`;
 
 export function AppSideBar() {
+  const { t } = useTranslation('sidebar')
   const { cwd, setCwd, setSelectedAgent, selectedAgent } = useWorkspaceStore();
   const { setView, view, activeSidebarTab, setActiveSidebarTab } = useLayoutStore();
   const { open: isSidebarOpen } = useSidebar();
@@ -103,7 +105,7 @@ export function AppSideBar() {
               onClick={() => setView('plugins')}
             >
               <Package2 className="h-4 w-4" />
-              Plugins
+              {t('plugins')}
             </Button>
 
             <Button
@@ -113,7 +115,7 @@ export function AppSideBar() {
               onClick={() => setView('automations')}
             >
               <Timer className="h-4 w-4" />
-              Automations
+              {t('automations')}
             </Button>
 
             <Button
@@ -123,7 +125,7 @@ export function AppSideBar() {
               onClick={() => setView('insights')}
             >
               <BarChart2 className="h-4 w-4" />
-              Insights
+              {t('insights')}
             </Button>
           </div>
 
