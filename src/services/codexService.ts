@@ -70,6 +70,26 @@ const buildAgentsConfigFragment = (): Record<string, unknown> => {
   };
 };
 
+/** Build UserInput[] from text + image paths, ensuring at least one entry. */
+const buildUserInputs = (input: string, images: string[] = []): UserInput[] => {
+  const userInputs: UserInput[] = [];
+
+  if (input.trim()) {
+    userInputs.push({ type: 'text', text: input, text_elements: [] });
+  }
+
+  for (const imagePath of images) {
+    userInputs.push({ type: 'localImage', path: imagePath });
+  }
+
+  // If both are empty, send an empty text input as a fallback.
+  if (userInputs.length === 0) {
+    userInputs.push({ type: 'text', text: '', text_elements: [] });
+  }
+
+  return userInputs;
+};
+
 const getThreadPreviewFromInput = (userInputs: UserInput[]): string => {
   for (const item of userInputs) {
     if (item.type !== 'text') {
@@ -110,6 +130,17 @@ const syncThreadToStore = (
     inputFocusTrigger: inputFocusTrigger + 1,
     ...(resetCurrentTurnId ? { currentTurnId: null } : {}),
   };
+};
+
+/** Shared logic for thread fork/rollback: sync the updated thread to the store and return it. */
+const applyThreadMutation = (
+  set: typeof useCodexStore.setState,
+  threadId: string,
+  thread: Thread
+): Thread => {
+  const historicalEvents = convertThreadHistoryToEvents(thread);
+  set({ ...syncThreadToStore(threadId, thread, historicalEvents, { resetCurrentTurnId: true }) });
+  return thread;
 };
 
 export const codexService = {
@@ -256,7 +287,7 @@ export const codexService = {
                   reasoning_effort: reasoningEffort,
                   developer_instructions: null,
                 },
-              }
+              },
             }
             : {}),
         },
@@ -276,9 +307,7 @@ export const codexService = {
   async threadResume(threadId: string) {
     const set = useCodexStore.setState;
     try {
-      const response = await threadResume({
-        threadId
-      });
+      const response = await threadResume({ threadId });
       console.log(response.thread.turns);
 
       const historicalEvents = convertThreadHistoryToEvents(response.thread);
@@ -294,15 +323,10 @@ export const codexService = {
     const set = useCodexStore.setState;
     try {
       const params: ThreadForkParams = {
-        threadId
+        threadId,
       };
       const response = await threadFork(params);
-      const forkedThreadId = response.thread.id;
-      const historicalEvents = convertThreadHistoryToEvents(response.thread);
-      const normalized = response.thread;
-
-      set({ ...syncThreadToStore(forkedThreadId, normalized, historicalEvents, { resetCurrentTurnId: true }) });
-      return normalized;
+      return applyThreadMutation(set, response.thread.id, response.thread);
     } catch (error: unknown) {
       console.error('[CodexService] threadFork error:', error);
       throw error;
@@ -316,11 +340,7 @@ export const codexService = {
         numTurns,
       };
       const response = await threadRollback(params);
-      const historicalEvents = convertThreadHistoryToEvents(response.thread);
-      const normalized = response.thread;
-
-      set({ ...syncThreadToStore(threadId, normalized, historicalEvents, { resetCurrentTurnId: true }) });
-      return normalized;
+      return applyThreadMutation(set, threadId, response.thread);
     } catch (error: unknown) {
       console.error('[CodexService] threadRollback error:', error);
       throw error;
@@ -329,20 +349,7 @@ export const codexService = {
   async turnStart(threadId: string, input: string, images: string[] = []) {
     const set = useCodexStore.setState;
     try {
-      const userInputs: UserInput[] = [];
-
-      if (input.trim()) {
-        userInputs.push({ type: 'text', text: input, text_elements: [] });
-      }
-
-      for (const imagePath of images) {
-        userInputs.push({ type: 'localImage', path: imagePath });
-      }
-
-      // If both are empty? Assuming input area checks this, but if so, send empty text?
-      if (userInputs.length === 0) {
-        userInputs.push({ type: 'text', text: '', text_elements: [] });
-      }
+      const userInputs = buildUserInputs(input, images);
 
       const { model, reasoningEffort, approvalPolicy, sandbox, webSearchRequest } =
         useConfigStore.getState();
@@ -354,7 +361,7 @@ export const codexService = {
         approvalPolicy,
         sandboxPolicy: sandboxModeToPolicy(sandbox, webSearchRequest),
         model: model || null,
-        effort: reasoningEffort ?? null
+        effort: reasoningEffort ?? null,
       });
 
       const preview = getThreadPreviewFromInput(userInputs);
@@ -381,25 +388,12 @@ export const codexService = {
   },
   async turnSteer(threadId: string, expectedTurnId: string, input: string, images: string[] = []) {
     try {
-      const userInputs: UserInput[] = [];
-
-      if (input.trim()) {
-        userInputs.push({ type: 'text', text: input, text_elements: [] });
-      }
-
-      for (const imagePath of images) {
-        userInputs.push({ type: 'localImage', path: imagePath });
-      }
-
-      // If both are empty? Assuming input area checks this, but if so, send empty text?
-      if (userInputs.length === 0) {
-        userInputs.push({ type: 'text', text: '', text_elements: [] });
-      }
+      const userInputs = buildUserInputs(input, images);
 
       const response = await turnSteer({
         threadId,
         expectedTurnId,
-        input: userInputs
+        input: userInputs,
       });
 
       return response;
@@ -422,11 +416,10 @@ export const codexService = {
     if (!cwd) return [];
     try {
       const response = await skillList(cwd);
-      console.log('[CodexService] listSkills response:', response.data);
       return response.data;
     } catch (error: unknown) {
       console.error('[CodexService] listSkills error:', error);
       throw error;
     }
-  }
+  },
 };
