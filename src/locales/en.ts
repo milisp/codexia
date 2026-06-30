@@ -46,8 +46,8 @@ export const en = {
   composer: {
     plan: 'Plan',
     planMode: 'Plan Mode',
-    askApproval: 'Ask Approval',
-    approvalForMe: 'Approval For Me',
+    askApproval: 'Ask for approval',
+    approvalForMe: 'Approval for me',
     fullAccess: 'Full Access',
   },
   sidebar: {

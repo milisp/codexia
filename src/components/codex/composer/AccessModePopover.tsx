@@ -1,4 +1,4 @@
-import { AlertTriangle, Bot, ListChecks, MessageCircle } from 'lucide-react';
+import { AlertTriangle, Bot, Hand, ListChecks, Check } from 'lucide-react';
 import type { SandboxMode } from '@/bindings/v2';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,11 +13,12 @@ import { useTranslation } from 'react-i18next';
 const ACCESS_MODE_OPTIONS: Array<{
   label: string;
   sandbox: SandboxMode;
-  icon: typeof MessageCircle;
+  icon: typeof Hand;
+  textColor: string;
 }> = [
-    { label: 'askApproval', sandbox: 'read-only', icon: MessageCircle },
-    { label: 'approvalForMe', sandbox: 'workspace-write', icon: Bot },
-    { label: 'fullAccess', sandbox: 'danger-full-access', icon: AlertTriangle },
+    { label: 'askApproval', sandbox: 'read-only', icon: Hand, textColor: 'text-muted-500' },
+    { label: 'approvalForMe', sandbox: 'workspace-write', icon: Bot, textColor: 'text-orange-400' },
+    { label: 'fullAccess', sandbox: 'danger-full-access', icon: AlertTriangle, textColor: 'text-orange-600' },
   ];
 
 export function AccessModePopover() {
@@ -34,7 +35,7 @@ export function AccessModePopover() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 gap-2 px-2">
+        <Button variant="ghost" size="sm" className={`h-8 gap-2 px-2 ${selected.textColor} hover:bg-accent`}>
           <DisplayIcon className="h-4 w-4" />
           <span className="text-xs">{t(displayLabel)}</span>
         </Button>
@@ -56,9 +57,6 @@ export function AccessModePopover() {
           {ACCESS_MODE_OPTIONS.map((option) => {
             const Icon = option.icon;
             const isActive = collaborationMode !== 'plan' && option.sandbox === sandbox;
-            const baseClass = "justify-between font-normal h-8 px-2 text-xs";
-            const activeClass = "bg-accent text-accent-foreground";
-            const className = isActive ? `${baseClass} ${activeClass}` : baseClass;
 
             return (
               <DropdownMenuItem
@@ -68,12 +66,15 @@ export function AccessModePopover() {
                   setCollaborationMode('default');
                   closeAndFocus();
                 }}
-                className={className}
+                className="font-normal h-8 px-2 text-xs"
               >
-                <span className="flex items-center gap-2">
-                  <Icon className="h-3.5 w-3.5" />
-                  <span>{t(option.label)}</span>
-                </span>
+                <div className="flex w-full items-center justify-between">
+                  <span className="flex gap-2 items-center">
+                    <Icon className="h-3.5 w-3.5" />
+                    <span>{t(option.label)}</span>
+                  </span>
+                  {isActive && <Check className="h-3.5 w-3.5" />}
+                </div>
               </DropdownMenuItem>
             );
           })}
