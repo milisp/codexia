@@ -1,6 +1,9 @@
 name: CI Windows portable
 
 on:
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
 
 env:
