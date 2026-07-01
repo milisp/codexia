@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Copy, Check, ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { CheckCircle2, XCircle, AlertCircle, Loader2, HelpCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useCodexStore } from '@/components/codex/stores';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from 'react-i18next';
 import { fmtElapsed } from '@/components/agent/utils';
+import { CopyButton } from '@/components/common';
 
 interface ShellCommandProps {
   command: string;
@@ -28,25 +28,8 @@ const STATUS_STYLE_MAP: Record<string, StatusConfig> = {
 const DEFAULT_STYLE: StatusConfig = { variant: 'secondary', icon: HelpCircle };
 
 export const ShellCommand = ({ command, commandItemId, aggregatedOutput }: ShellCommandProps) => {
-  const [copied, setCopied] = useState(false);
-  const [outputCopied, setOutputCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const { t } = useTranslation();
-
-  const handleCopy = async (
-    e: React.MouseEvent,
-    text: string,
-    setCopyState: (v: boolean) => void
-  ) => {
-    e.stopPropagation();
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopyState(true);
-      setTimeout(() => setCopyState(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  };
 
   const { commandStatusMap, commandDurationMap } = useCodexStore();
   const status = commandItemId ? commandStatusMap[commandItemId] : undefined;
@@ -61,11 +44,7 @@ export const ShellCommand = ({ command, commandItemId, aggregatedOutput }: Shell
       >
         <span className="shrink-0">Ran</span>
 
-        <code className={`
-      bg-muted/40 px-1.5 py-0.5 rounded border border-transparent group-hover:border-border
-      min-w-0 
-      ${isExpanded ? 'break-all whitespace-pre-wrap' : 'truncate'}
-    `}>
+        <code className="bg-muted/40 px-1.5 py-0.5 rounded border border-transparent group-hover:border-border min-w-0 flex-1 truncate">
           {command}
         </code>
 
@@ -81,38 +60,25 @@ export const ShellCommand = ({ command, commandItemId, aggregatedOutput }: Shell
           </div>
 
           <div className="relative flex items-start justify-between gap-4 p-2 min-h-[3rem]">
-            <code className="text-foreground flex-1 break-all whitespace-pre-wrap pt-1">
+            <code className="text-foreground flex-1 break-all whitespace-pre-wrap pt-1 max-h-48 overflow-y-auto">
               $ {command}
             </code>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 shrink-0"
-              onClick={(e) => handleCopy(e, command, setCopied)}
-              aria-label="Copy command"
-            >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-            </Button>
+            <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+              <CopyButton text={command} />
+            </div>
           </div>
 
           {aggregatedOutput && (
             <div className="relative flex items-start justify-between gap-4 bg-muted/10 group/output">
-              <div className="text-xs text-muted-foreground flex-1 break-all whitespace-pre-wrap pt-1 -ml-7 max-h-48 overflow-y-auto">
+              <div className="text-xs text-muted-foreground flex-1 break-all whitespace-pre-wrap pt-1 px-2 max-h-48 overflow-y-auto">
                 {aggregatedOutput}
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 shrink-0 opacity-0 group-hover/output:opacity-100 transition-opacity duration-150"
-                onClick={(e) => handleCopy(e, aggregatedOutput, setOutputCopied)}
-                aria-label="Copy output"
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="shrink-0 opacity-0 group-hover/output:opacity-100 transition-opacity duration-150"
               >
-                {outputCopied ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-500" />
-                ) : (
-                  <Copy className="w-3.5 h-3.5" />
-                )}
-              </Button>
+                <CopyButton text={aggregatedOutput} />
+              </div>
             </div>
           )}
 
