@@ -228,7 +228,6 @@ pub fn run() {
                     }
                 }
 
-                codex::scan::start_history_scanner(event_sink.clone());
                 cc::scan::start_session_scanner();
 
                 tauri::async_runtime::spawn(async {

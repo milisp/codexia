@@ -2,7 +2,6 @@ pub mod app_server;
 pub mod config;
 pub mod env;
 pub mod providers;
-pub mod scan;
 mod server_request;
 pub mod utils;
 
