@@ -1,4 +1,3 @@
-import { Minus, Plus } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { useGitStatsStore } from '@/stores/useGitStatsStore';
@@ -19,12 +18,10 @@ export function GitStatsIndicator() {
         className="gap-1 border-transparent bg-transparent px-0 py-0 font-mono tabular-nums"
       >
         <span className="flex items-center gap-0.5 text-emerald-400">
-          <Plus className="h-3 w-3" />
-          <AnimatedCount value={stats.totalAdditions} />
+          +<AnimatedCount value={stats.totalAdditions} />
         </span>
         <span className="flex items-center gap-0.5 text-red-400">
-          <Minus className="h-3 w-3" />
-          <AnimatedCount value={stats.totalDeletions} />
+          -<AnimatedCount value={stats.totalDeletions} />
         </span>
       </Badge>
     </div>

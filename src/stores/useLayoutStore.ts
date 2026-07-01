@@ -61,10 +61,10 @@ interface LayoutStore {
 export const useLayoutStore = create<LayoutStore>()(
   persist(
     (set) => ({
-      isSidebarOpen: true,
+      isSidebarOpen: false,
       toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
       setSidebarOpen: (open) => set({ isSidebarOpen: open }),
-      isRightPanelOpen: false,
+      isRightPanelOpen: true,
       toggleRightPanel: () => set((state) => ({ isRightPanelOpen: !state.isRightPanelOpen })),
       setRightPanelOpen: (open) => set({ isRightPanelOpen: open }),
       rightPanelSize: 45,
@@ -78,7 +78,7 @@ export const useLayoutStore = create<LayoutStore>()(
       setIsAgentExpanded: (expanded) => set({ isAgentExpanded: expanded }),
       activeSidebarTab: 'codex',
       setActiveSidebarTab: (tab) => set({ activeSidebarTab: tab }),
-      activeRightPanelTab: 'note',
+      activeRightPanelTab: 'tasks',
       setActiveRightPanelTab: (tab) => set({ activeRightPanelTab: tab }),
       selectedAutomationTaskId: null,
       setSelectedAutomationTaskId: (taskId) => set({ selectedAutomationTaskId: taskId }),

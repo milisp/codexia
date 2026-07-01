@@ -14,6 +14,7 @@ import { EnvKeysDialog } from './EnvKeysDialog';
 import { ProviderIcons } from '@/components/icons';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { useComposerToolbarNarrow } from './ComposerToolbarContext';
 
 const GENERIC_REASONING_OPTIONS: ReasoningEffort[] = ['none', 'low', 'medium', 'high', 'xhigh'];
 
@@ -42,6 +43,7 @@ function BaseModelSelector({
   const [envKeysOpen, setEnvKeysOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { openAiModels, providerItems, allProviders } = useModels();
+  const isNarrow = useComposerToolbarNarrow();
 
   const handleSelect = useCallback(
     (targetProvider: string, id: string) => {
@@ -106,7 +108,7 @@ function BaseModelSelector({
             disabled={disabled}
           >
             <div className="flex items-center gap-1.5 text-xs text-foreground">
-              {provider !== 'openai' && <span className="font-semibold tracking-wider text-muted-foreground">{provider}</span>}
+              {provider !== 'openai' && !isNarrow && <span className="font-semibold tracking-wider text-muted-foreground">{provider}</span>}
               <span className="font-medium max-w-[120px] truncate">{activeLabel}</span>
               {reasoningEffort !== undefined && reasoningEffort !== 'none' && (
                 <span className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono capitalize text-muted-foreground border">

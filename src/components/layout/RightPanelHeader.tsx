@@ -18,7 +18,6 @@ interface TabConfig {
 
 const TAB_BUTTONS: TabConfig[] = [
   { tab: 'webpreview', icon: Chrome, title: 'Web Preview' },
-  { tab: 'tasks', icon: ListTodo, title: 'Tasks' },
   { tab: 'note', icon: StickyNote, title: 'Notes' },
   { tab: 'files', icon: Files, title: 'Files' },
 ];
@@ -94,6 +93,14 @@ export function RightPanelHeader() {
         title={isTerminalOpen ? 'Hide terminal' : 'Show terminal'}
       >
         <Terminal className="size-4" />
+      </Button>
+      <Button
+        variant={activeRightPanelTab === 'tasks' ? 'secondary' : 'ghost'}
+        size="icon"
+        onClick={() => openRightPanelTab('tasks')}
+        title="Tasks"
+      >
+        <ListTodo className="size-4" />
       </Button>
       <Button
         variant={activeRightPanelTab === 'diff' ? 'secondary' : 'ghost'}

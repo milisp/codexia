@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useConfigStore, useCodexStore } from '@/components/codex/stores';
+import { useComposerToolbarNarrow } from './ComposerToolbarContext';
 import { useTranslation } from 'react-i18next';
 
 const ACCESS_MODE_OPTIONS: Array<{
@@ -25,6 +26,7 @@ export function AccessModePopover() {
   const { t } = useTranslation('composer')
   const { sandbox, setAccessMode, collaborationMode, setCollaborationMode } = useConfigStore();
   const { triggerInputFocus } = useCodexStore();
+  const isNarrow = useComposerToolbarNarrow();
 
   const closeAndFocus = () => { triggerInputFocus(); };
   const selected =
@@ -37,7 +39,7 @@ export function AccessModePopover() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className={`h-8 gap-2 px-2 ${selected.textColor} hover:bg-accent`}>
           <DisplayIcon className="h-4 w-4" />
-          <span className="text-xs">{t(displayLabel)}</span>
+          {!isNarrow && <span className="text-xs">{t(displayLabel)}</span>}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-48" align="start">

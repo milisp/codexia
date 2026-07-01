@@ -8,6 +8,7 @@ import { ModelReasonSelector } from './ModelReasonSelector';
 import { ContextWindowWidget } from '@/components/codex/widget';
 import { AttachmentSelector } from './AttachmentSelector';
 import { AccessModePopover } from './AccessModePopover';
+import { ComposerToolbarProvider } from './ComposerToolbarContext';
 import { FileMentionPopover } from '@/components/common';
 import { useInputStore } from '@/stores/useInputStore';
 import { useCodexStore } from '@/components/codex/stores';
@@ -149,26 +150,28 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
           </div>
 
           <div className="flex items-center justify-between px-1 bg-muted/20 border-t">
-            <div className="flex items-center">
-              <AttachmentSelector
-                onImagesSelected={(paths) => setImages((prev) => [...prev, ...paths])}
-                onFilesSelected={appendFileLinks}
-              />
-              <AccessModePopover />
-            </div>
-            <div className='flex items-center gap-2'>
-              <ContextWindowWidget />
-              <ModelReasonSelector />
-              {threadStatus?.type === 'active' ? (
-                <Button onClick={handleStop} variant="destructive" size="icon" className="h-10 w-10 md:h-8 md:w-8 rounded-full">
-                  <Square className="w-4 h-4" />
-                </Button>
-              ) : (
-                <Button type="submit" disabled={!inputValue.trim() && images.length === 0} size="icon" className="h-10 w-10 md:h-8 md:w-8 rounded-full">
-                  <ArrowUp className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
+            <ComposerToolbarProvider className="flex items-center justify-between w-full">
+              <div className="flex items-center">
+                <AttachmentSelector
+                  onImagesSelected={(paths) => setImages((prev) => [...prev, ...paths])}
+                  onFilesSelected={appendFileLinks}
+                />
+                <AccessModePopover />
+              </div>
+              <div className='flex items-center gap-2'>
+                <ContextWindowWidget />
+                <ModelReasonSelector />
+                {threadStatus?.type === 'active' ? (
+                  <Button onClick={handleStop} variant="destructive" size="icon" className="h-10 w-10 md:h-8 md:w-8 rounded-full">
+                    <Square className="w-4 h-4" />
+                  </Button>
+                ) : (
+                  <Button type="submit" disabled={!inputValue.trim() && images.length === 0} size="icon" className="h-10 w-10 md:h-8 md:w-8 rounded-full">
+                    <ArrowUp className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            </ComposerToolbarProvider>
           </div>
         </div>
       </form>
