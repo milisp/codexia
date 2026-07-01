@@ -1,6 +1,5 @@
 import { useRef, useEffect, useState, useMemo, type ReactNode } from 'react';
 import { useCodexStore } from '@/components/codex/stores';
-import { useIsProcessing } from '@/components/codex/hooks';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { renderEvent } from './items';
 import { ApprovalItem } from './items/ApprovalItem';
@@ -12,6 +11,7 @@ import { codexService } from '@/services/codexService';
 import { Button } from '@/components/ui/button';
 import type { CommandAction } from '@/bindings/v2';
 import type { ServerNotification } from '@/bindings';
+import { WorkingIndicator } from './widget/WorkingIndicator';
 
 // Intermediate render item: either a raw event or an aggregated command group.
 type RenderItem =
@@ -96,13 +96,13 @@ function deriveRenderItems(events: ServerNotification[]): RenderItem[] {
 }
 
 export function CodexThread({ hideComposer = false }: { hideComposer?: boolean } = {}) {
-  const { currentThreadId, events, hasAccount, activeThreadIds } = useCodexStore();
+  const { currentThreadId, events, hasAccount, activeThreadIds, turnTimingMap } = useCodexStore();
   const isLive = !!currentThreadId && activeThreadIds.includes(currentThreadId);
-  const isProcessing = useIsProcessing();
   const bottomAnchorRef = useRef<HTMLDivElement>(null);
 
   // Get events for the current thread
   const currentThreadEvents = currentThreadId ? events[currentThreadId] || [] : [];
+  const turnTiming = currentThreadId ? turnTimingMap[currentThreadId] : undefined;
 
   // Auto-scroll to bottom when new events arrive
   useEffect(() => {
@@ -165,9 +165,7 @@ export function CodexThread({ hideComposer = false }: { hideComposer?: boolean }
             ))}
             <ApprovalItem />
             {currentThreadEvents.length === 0 && hasAccount === false && <CodexAuth />}
-            {isProcessing && (
-              <div className="text-sm text-muted-foreground animate-pulse">Thinking</div>
-            )}
+            <WorkingIndicator turnTiming={turnTiming} />
             <RequestUserInputItem currentThreadId={currentThreadId} />
             <div ref={bottomAnchorRef} aria-hidden="true" />
           </div>

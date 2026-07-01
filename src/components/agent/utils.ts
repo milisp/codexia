@@ -1,22 +1,19 @@
 // ─── Codex Utilities ──────────────────────────────────────────────────────
 
 import { ServerNotification } from "@/bindings";
+import type { TurnTiming } from "@/components/codex/stores/useCodexStore";
 
 /**
- * Extracts the current active turn ID from events.
- * Returns null if no active turn found.
+ * Extracts the current active turn ID from a TurnTiming record.
+ * Returns null if there is no in-progress turn.
+ *
+ * Prefer this over scanning raw events: turnTimingMap is updated directly by
+ * turn/started + turn/completed + error, so it can't disagree with itself
+ * the way independently scanning the events array for those same methods can
+ * (e.g. when an error notification arrives without a matching turn/completed).
  */
-export function getCodexActiveTurnId(events: ServerNotification[]): string | null {
-  for (let i = events.length - 1; i >= 0; i--) {
-    const e = events[i];
-    if (e.method === 'turn/started') {
-      return (e.params as { turn: { id: string } }).turn.id;
-    }
-    if (e.method === 'turn/completed' || e.method === 'error') {
-      return null;
-    }
-  }
-  return null;
+export function getCodexActiveTurnId(timing: TurnTiming | undefined): string | null {
+  return timing?.status === 'inProgress' ? timing.turnId : null;
 }
 
 /**
@@ -66,11 +63,12 @@ export function fmtTokens(n: number): string {
 
 /**
  * Formats elapsed time into minutes:seconds.
- * @param s - Elapsed time in seconds.
+ * @param ms - Elapsed time in milliseconds.
  * @returns Formatted string like "5:30" or "0:30".
  */
-export function fmtElapsed(s: number): string {
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
+export function fmtElapsed(ms: number): string {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
   return m > 0 ? `${m}:${String(sec).padStart(2, '0')}` : `0:${String(sec).padStart(2, '0')}`;
 }

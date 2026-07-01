@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useCodexStore } from '@/components/codex/stores';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from 'react-i18next';
+import { fmtElapsed } from '@/components/agent/utils';
 
 interface ShellCommandProps {
   command: string;
@@ -47,8 +48,9 @@ export const ShellCommand = ({ command, commandItemId, aggregatedOutput }: Shell
     }
   };
 
-  const { commandStatusMap } = useCodexStore();
+  const { commandStatusMap, commandDurationMap } = useCodexStore();
   const status = commandItemId ? commandStatusMap[commandItemId] : undefined;
+  const durationMs = commandItemId ? commandDurationMap[commandItemId] : undefined;
   const { variant, icon: Icon } = STATUS_STYLE_MAP[status ?? ''] ?? DEFAULT_STYLE;
 
   return (
@@ -114,7 +116,12 @@ export const ShellCommand = ({ command, commandItemId, aggregatedOutput }: Shell
             </div>
           )}
 
-          <div className="flex justify-end p-2">
+          <div className="flex items-center justify-end gap-2 p-2">
+            {typeof durationMs === 'number' && (
+              <span className="text-xs text-muted-foreground/60 font-mono">
+                {fmtElapsed(durationMs)}
+              </span>
+            )}
             <Badge
               variant={variant}
               className="flex items-center gap-1.5 px-2.5 py-1 w-fit"

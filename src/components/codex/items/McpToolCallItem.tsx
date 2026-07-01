@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ThreadItem } from "@/bindings/v2";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, X, ChevronDown, ChevronRight } from "lucide-react";
+import { fmtElapsed } from "@/components/agent/utils";
 
 type Props = {
   item: ThreadItem
@@ -47,6 +48,12 @@ export function McpToolCallItem({ item }: Props) {
           <div className="ml-auto text-xs text-neutral-400 max-w-[150px] truncate">
             {item.mcpAppResourceUri}
           </div>
+        )}
+
+        {status !== 'inProgress' && typeof item.durationMs === 'number' && (
+          <span className="ml-auto text-xs text-neutral-400 font-mono shrink-0">
+            {fmtElapsed(item.durationMs)}
+          </span>
         )}
       </div>
 

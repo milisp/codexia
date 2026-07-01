@@ -58,7 +58,7 @@ export function CodexAgentCard({
   header,
   isSelected,
 }: CodexAgentCardProps) {
-  const { events, threadStatusMap, activeThreadIds } = useCodexStore();
+  const { events, threadStatusMap, turnTimingMap, activeThreadIds } = useCodexStore();
   const { pendingApprovals } = useApprovalStore();
   const { pendingRequests } = useRequestUserInputStore();
   const { setCurrentAgentCardId, updateCard } = useAgentCenterStore();
@@ -82,20 +82,28 @@ export function CodexAgentCard({
   const canApplyWorktree =
     !!card.worktreePath && !!cwd && !processing && !hasPending && worktreeHasChanges;
 
+  // turnTimingMap is the single source of truth for turn timing (see TurnTiming
+  // in useCodexStore) — driven directly by turn/started + turn/completed + error,
+  // so it stays correct even when a turn ends via error/interrupt, unlike scanning
+  // raw events which could disagree with threadStatusMap's active/idle flip.
+  const turnTiming = turnTimingMap[card.id];
+  const turnInProgress = turnTiming?.status === 'inProgress';
   const [elapsed, setElapsed] = useState(0);
-  const processingStartRef = useRef<number | null>(null);
-  const wasProcessingRef = useRef(processing);
 
-  if (processing && !wasProcessingRef.current) {
-    processingStartRef.current = Date.now();
-  }
-  wasProcessingRef.current = processing;
+  useEffect(() => {
+    if (!turnInProgress || !turnTiming) {
+      setElapsed(0);
+      return;
+    }
 
-  if (processing && processingStartRef.current) {
-    setElapsed(Date.now() - processingStartRef.current);
-  } else if (!processing) {
-    setElapsed(0);
-  }
+    const { startedAtMs } = turnTiming;
+    setElapsed(Date.now() - startedAtMs);
+    const intervalId = setInterval(() => {
+      setElapsed(Date.now() - startedAtMs);
+    }, 200);
+
+    return () => clearInterval(intervalId);
+  }, [turnInProgress, turnTiming]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -125,7 +133,7 @@ export function CodexAgentCard({
   }, [card.worktreePath, cwd]);
 
   const handleStop = async () => {
-    const turnId = getCodexActiveTurnId(threadEvents);
+    const turnId = getCodexActiveTurnId(turnTiming);
     if (turnId) await codexService.turnInterrupt(card.id, turnId);
   };
 
@@ -194,9 +202,9 @@ export function CodexAgentCard({
       <div className="flex items-center justify-between px-2 py-1 border-t bg-muted/20 shrink-0">
         <div className="flex items-center gap-2">
           <span
-            className={`text-[10px] font-mono tabular-nums ${processing ? 'text-green-500' : 'text-muted-foreground/50'}`}
+            className={`text-[10px] font-mono tabular-nums ${turnInProgress ? 'text-green-500' : 'text-muted-foreground/50'}`}
           >
-            {processing && fmtElapsed(elapsed)}
+            {turnInProgress && fmtElapsed(elapsed)}
           </span>
           {tokens !== null && (
             <span className="text-[10px] text-muted-foreground/40">{fmtTokens(tokens)} tok</span>
