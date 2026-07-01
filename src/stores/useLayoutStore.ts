@@ -16,7 +16,6 @@ export type viewType =
   | 'agent'
   | 'history'
   | 'learn'
-  | 'login'
   | 'plugins'
   | 'settings'
   | 'usage'

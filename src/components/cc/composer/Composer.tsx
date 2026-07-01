@@ -35,14 +35,14 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps = {}) {
   const { handleNewSession } = useCCSessionManager();
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const isComposing = useRef(false);
-  const [triggerEl, setTriggerEl] = useState<HTMLElement | null>(null);
   const [images, setImages] = useState<string[]>([]);
 
-  // Capture wrapper element after mount for popover positioning
-  useEffect(() => {
-    setTriggerEl(wrapperRef.current);
+  // Callback ref captures the wrapper element as soon as it mounts,
+  // avoiding an extra render caused by state+effect.
+  const [triggerEl, setTriggerEl] = useState<HTMLElement | null>(null);
+  const wrapperRef = useCallback((node: HTMLDivElement | null) => {
+    setTriggerEl(node);
   }, []);
 
   useEffect(() => {

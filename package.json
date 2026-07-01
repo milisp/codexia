@@ -39,7 +39,6 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-toast": "^1.2.15",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@supabase/supabase-js": "^2.95.3",
     "@tailwindcss/cli": "^4.1.18",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-virtual": "^3.13.18",

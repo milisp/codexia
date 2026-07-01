@@ -10,10 +10,8 @@ import { Toaster as Sonner } from 'sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 const AboutView = lazy(() => import('@/views/AboutView'));
-const AuthCallbackView = lazy(() => import('@/views/AuthCallbackView'));
 
 const isAboutWindow = window.location.pathname === '/about';
-const isAuthCallback = window.location.pathname === '/auth/callback';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
@@ -23,10 +21,6 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           {isAboutWindow ? (
             <Suspense>
               <AboutView />
-            </Suspense>
-          ) : isAuthCallback ? (
-            <Suspense>
-              <AuthCallbackView />
             </Suspense>
           ) : (
             <>

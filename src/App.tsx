@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import './App.css';
 
 import { useCodexEvents } from '@/components/codex/hooks';
-import { useDeepLink } from '@/hooks/useDeepLink';
+import { useAppDeepLink } from '@/hooks/useAppDeepLink';
 import { useUrlParamThread } from '@/hooks/useUrlParamThread';
 import { AppLayout } from '@/components/layout';
 import { isTauri } from '@/hooks/runtime';
@@ -75,7 +75,7 @@ function AppShell() {
 }
 
 export default function App() {
-  useDeepLink(isTauri());
+  useAppDeepLink();
 
   return (
     <StoreErrorBoundary>
