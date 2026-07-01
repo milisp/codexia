@@ -4,7 +4,7 @@ import { listen } from '@tauri-apps/api/event';
 import { codexService } from '@/services/codexService';
 import { useCodexStore, useThreadListStore } from '@/components/codex/stores';
 import {
-  threadList,
+  listThreads,
   deleteThread,
   renameThread,
 } from '@/services/tauri';
@@ -28,7 +28,7 @@ import type { ServerNotification } from '@/bindings/ServerNotification';
 interface ThreadListProps {
   cwd: string;
 }
-const modelProviders = ["openai", "atlascloud", "ollama", "openrouter", "nvidia", "custom"];
+export const modelProviders = ["openai", "atlascloud", "ollama", "openrouter", "nvidia", "custom"];
 
 const EMPTY_LIST: ThreadListResponse = { data: [], nextCursor: null, backwardsCursor: null };
 
@@ -75,7 +75,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
     };
     const load = async () => {
       try {
-        const res = await threadList(params);
+        const res = await listThreads(params);
         if (cancelled) return;
         setResponse(res);
       } catch (err) {
@@ -188,11 +188,10 @@ export function ThreadList({ cwd }: ThreadListProps) {
         modelProviders: modelProviders,
         useStateDbOnly: true,
         sortKey,
-        archived: false,
         cwd,
         searchTerm: searchTerm || null,
       };
-      const res = await threadList(params);
+      const res = await listThreads(params);
       setResponse((prev) => {
         const seen = new Set(prev.data.map((t) => t.id));
         return {

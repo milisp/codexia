@@ -111,7 +111,7 @@ export async function turnInterrupt(params: TurnInterruptParams) {
   return await postJson('/api/codex/turn/interrupt', params);
 }
 
-export async function threadList(params: ThreadListParams) {
+export async function listThreads(params: ThreadListParams) {
   if (isDesktopTauri()) {
     return await invokeTauri<ThreadListResponse>('list_threads', { params });
   }

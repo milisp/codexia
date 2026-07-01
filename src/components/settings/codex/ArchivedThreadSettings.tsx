@@ -2,10 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { ThreadListParams, ThreadListResponse } from '@/bindings/v2';
-import { threadList, threadUnarchive } from '@/services/tauri';
+import { listThreads, threadUnarchive } from '@/services/tauri';
 import { ThreadId } from '@/bindings';
 import { getFilename } from '@/utils/getFilename';
 import { formatThreadAge } from '@/utils/formatThreadAge';
+import { modelProviders } from '@/components/codex/ThreadList';
 
 const EMPTY_LIST: ThreadListResponse = { data: [], nextCursor: null, backwardsCursor: null };
 
@@ -23,10 +24,11 @@ export function ArchivedThreadSettings() {
       const params: ThreadListParams = {
         cursor: null,
         limit: 50,
-        modelProviders: null,
+        modelProviders: modelProviders,
         archived: true,
+        useStateDbOnly: true,
       };
-      const resp = await threadList(params);
+      const resp = await listThreads(params);
       setResponse(resp);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);

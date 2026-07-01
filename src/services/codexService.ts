@@ -6,7 +6,7 @@ import {
   turnStart,
   turnInterrupt,
   turnSteer,
-  threadList,
+  listThreads,
   threadArchive,
   skillList,
   gitCreateWorktree,
@@ -156,9 +156,10 @@ export const codexService = {
         modelProviders: null,
         archived,
         sortKey,
-        cwd
+        cwd,
+        useStateDbOnly: true,
       };
-      const response = await threadList(params);
+      const response = await listThreads(params);
       const workingDirThreads = response.data;
       const nextCursor = response.nextCursor ?? null;
       const { setThreads, setThreadListNextCursor } = useCodexStore.getState();
