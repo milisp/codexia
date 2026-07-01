@@ -96,6 +96,8 @@ export default defineConfig(({ mode }) => {
         ignored: [
           "**/src-tauri/**",
           "**/src-tauri/gen/apple/**",
+          "**/crates/**",
+          "**/web/**",
           "**/src/bindings/**",
           "**/target/**",
           "**/dist/**",
