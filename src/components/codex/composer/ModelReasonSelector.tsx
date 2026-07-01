@@ -11,7 +11,7 @@ import { ModelList } from './ModelList';
 import { useModels } from '../hooks/useModels';
 import { Input } from '@/components/ui/input';
 import { EnvKeysDialog } from './EnvKeysDialog';
-import { ProviderIcons } from '@/components/ProviderIcons';
+import { ProviderIcons } from '@/components/icons';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 

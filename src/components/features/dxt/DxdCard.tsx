@@ -14,7 +14,7 @@ export function DxtCard({ dxt, onClick }: { dxt: any; onClick?: () => void }) {
           <img src={dxt.icon} alt="icon" className="w-10 h-10 rounded-lg object-cover" />
         ) : (
           <div className="w-10 h-10 flex items-center justify-center bg-muted rounded-lg">
-            <MCP size={24} />
+            <MCP className='h-4 w-4' />
           </div>
         )}
 
