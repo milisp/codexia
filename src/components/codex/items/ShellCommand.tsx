@@ -57,11 +57,17 @@ export const ShellCommand = ({ command, commandItemId, aggregatedOutput }: Shell
         onClick={() => setIsExpanded(!isExpanded)}
         className="group flex gap-2 items-center text-sm font-mono text-muted-foreground hover:text-foreground transition-colors text-left w-full cursor-pointer"
       >
-        <span>Ran</span>
-        <code className="bg-muted/40 px-1.5 py-0.5 rounded border border-transparent group-hover:border-border">
+        <span className="shrink-0">Ran</span>
+
+        <code className={`
+      bg-muted/40 px-1.5 py-0.5 rounded border border-transparent group-hover:border-border
+      min-w-0 
+      ${isExpanded ? 'break-all whitespace-pre-wrap' : 'truncate'}
+    `}>
           {command}
         </code>
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+
+        <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150 ml-auto">
           {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
         </div>
       </button>
