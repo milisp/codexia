@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
 import { listen } from '@tauri-apps/api/event';
+import { useEffect, useState } from 'react';
 import './App.css';
+
 import { useCodexEvents } from '@/components/codex/hooks';
 import { useDeepLink } from '@/hooks/useDeepLink';
 import { useUrlParamThread } from '@/hooks/useUrlParamThread';
@@ -8,11 +9,11 @@ import { AppLayout } from '@/components/layout';
 import { isTauri } from '@/hooks/runtime';
 import { HistoryProjectsDialog } from '@/components/project-selector';
 import { AnalyticsConsentDialog } from '@/components/settings/AnalyticsConsentDialog';
+import { QuitDialog } from '@/components/dialogs';
 import { initializeCodexAsync } from '@/services/tauri';
 import type { InitializeResponse } from './bindings';
 import { loadSettings, initSettingsSync } from '@/lib/settings';
 import { StoreErrorBoundary } from '@/components/StoreErrorBoundary';
-import { QuitDialog } from '@/components/dialogs';
 
 function AppShell() {
   const [quitDialogOpen, setQuitDialogOpen] = useState(false);
@@ -20,15 +21,19 @@ function AppShell() {
   // True once codex backend signals it is ready; non-Tauri skips init entirely.
   const [codexReady, setCodexReady] = useState(!isTauri());
 
-  useEffect(() => { void loadSettings().finally(() => setSettingsReady(true)); } , []);
-  useEffect(() => { return initSettingsSync(); }, []);
+  useEffect(() => {
+    loadSettings().finally(() => setSettingsReady(true));
+  }, []);
+  useEffect(() => {
+    return initSettingsSync();
+  }, []);
 
   useEffect(() => {
     if (!isTauri()) {
       return;
     }
 
-    void initializeCodexAsync().catch((error) => {
+    initializeCodexAsync().catch((error) => {
       console.warn('Failed to initialize codex asynchronously', error);
     });
 

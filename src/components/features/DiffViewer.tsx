@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as Diff from 'diff';
-import { Check, ChevronDown, ChevronRight, Copy } from 'lucide-react';
+import { Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getDiffCounts, normalizeUnifiedDiff } from '@/utils/diff';
@@ -29,13 +29,15 @@ const shouldSkipUnifiedLine = (line: string) =>
   /^\s*(new mode|old mode)\b/i.test(line) ||
   /^\s*similarity index\b/i.test(line) ||
   /^\s*rename (from|to)\b/i.test(line) ||
-  /^\*\*\* (Begin Patch|End Patch|Update File:)/i.test(line);
+  /\*\*\* (Begin Patch|End Patch|Update File:)/i.test(line);
 
 const getFilename = (path: string) => {
   const normalized = path.replace(/\\/g, '/');
   const parts = normalized.split('/');
   return parts[parts.length - 1] || path;
 };
+
+const VIEW_MODES: Array<'old' | 'new' | 'diff'> = ['old', 'new', 'diff'];
 
 export function DiffViewer({
   original = '',
@@ -46,8 +48,6 @@ export function DiffViewer({
   className,
 }: DiffViewerProps) {
   const [viewMode, setViewMode] = useState<'old' | 'new' | 'diff'>('diff');
-  const viewModes: Array<'old' | 'new' | 'diff'> = ['old', 'new', 'diff'];
-  const [collapsed, setCollapsed] = useState(isCollapsed);
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<number | null>(null);
 
@@ -59,9 +59,8 @@ export function DiffViewer({
     };
   }, []);
 
-  useEffect(() => {
-    setCollapsed(isCollapsed);
-  }, [isCollapsed]);
+  // Use isCollapsed prop directly instead of mirroring into state
+  const collapsed = isCollapsed;
 
   const normalizedUnified = useMemo(() => normalizeUnifiedDiff(unifiedDiff), [unifiedDiff]);
 
@@ -82,242 +81,183 @@ export function DiffViewer({
         line.startsWith('index ')
       )
         continue;
-      if (line.startsWith('+')) {
-        curr.push(line.slice(1));
-        continue;
-      }
       if (line.startsWith('-')) {
         orig.push(line.slice(1));
-        continue;
+      } else if (line.startsWith('+')) {
+        curr.push(line.slice(1));
+      } else {
+        orig.push(line);
+        curr.push(line);
       }
-      const ctx = line.startsWith(' ') ? line.slice(1) : line;
-      orig.push(ctx);
-      curr.push(ctx);
     }
     return { left: orig.join('\n'), right: curr.join('\n') };
   }, [normalizedUnified, original, current]);
 
-  const unifiedPath = useMemo(() => {
-    if (!normalizedUnified) return '';
-    const lines = normalizedUnified.split('\n');
-
-    // codex patch format: *** Update File: <path>
-    const updateFileLine = lines.find((line) => /^\*\*\* Update File: /m.test(line));
-    if (updateFileLine) {
-      const match = updateFileLine.match(/^\*\*\* Update File: (.*)$/);
-      if (match) return match[1].trim();
+  const diffLines = useMemo((): DiffLine[] => {
+    if (viewMode === 'old') {
+      return left.split('\n').map((content, i): DiffLine => ({
+        type: 'normal',
+        content,
+        lineNumber: { old: i + 1 },
+      }));
     }
-
-    const diffGit = lines.find((line) => line.startsWith('diff --git '));
-    if (diffGit) {
-      const match = diffGit.match(/^diff --git a\/(.+?) b\/(.+)$/);
-      if (match) {
-        const preferred = match[2] !== '/dev/null' ? match[2] : match[1];
-        return preferred.replace(/^([ab])\//, '');
-      }
+    if (viewMode === 'new') {
+      return right.split('\n').map((content, i): DiffLine => ({
+        type: 'normal',
+        content,
+        lineNumber: { new: i + 1 },
+      }));
     }
-
-    const plusLine = lines.find((line) => line.startsWith('+++ '));
-    const minusLine = lines.find((line) => line.startsWith('--- '));
-    const clean = (line?: string) =>
-      line ? line.replace(/^(\+\+\+|---)\s+/, '').replace(/^([ab])\//, '') : '';
-
-    const plusPath = clean(plusLine);
-    const minusPath = clean(minusLine);
-    if (plusPath && plusPath !== '/dev/null') return plusPath;
-    if (minusPath && minusPath !== '/dev/null') return minusPath;
-    return '';
-  }, [normalizedUnified]);
-
-  const resolvedPath = displayPath || unifiedPath;
-
-  const diffLines = useMemo(() => {
-    const changes = Diff.diffLines(left, right);
+    const changes = Diff.diffLines(left, right) as Diff.Change[];
+    let oldLineNum = 0;
+    let newLineNum = 0;
     const result: DiffLine[] = [];
-    let oldLineNum = 1;
-    let newLineNum = 1;
-
-    changes.forEach((change: Diff.Change) => {
-      const lines = change.value.split('\n');
-      // Remove last empty line if it exists
-      if (lines[lines.length - 1] === '') {
-        lines.pop();
-      }
-
-      lines.forEach((line) => {
-        if (change.added) {
+    for (const change of changes) {
+      if (change.added) {
+        const lines = change.value.split('\n').slice(0, -1);
+        for (const content of lines) {
           result.push({
             type: 'add',
-            content: line,
-            lineNumber: { new: newLineNum++ },
-          });
-        } else if (change.removed) {
-          result.push({
-            type: 'remove',
-            content: line,
-            lineNumber: { old: oldLineNum++ },
-          });
-        } else {
-          result.push({
-            type: 'normal',
-            content: line,
-            lineNumber: { old: oldLineNum++, new: newLineNum++ },
+            content,
+            lineNumber: { new: ++newLineNum },
           });
         }
-      });
-    });
-
+      } else if (change.removed) {
+        const lines = change.value.split('\n').slice(0, -1);
+        for (const content of lines) {
+          result.push({
+            type: 'remove',
+            content,
+            lineNumber: { old: ++oldLineNum },
+          });
+        }
+      } else {
+        const lines = change.value.split('\n').slice(0, -1);
+        for (const content of lines) {
+          result.push({
+            type: 'normal',
+            content,
+            lineNumber: { old: ++oldLineNum, new: ++newLineNum },
+          });
+        }
+      }
+    }
     return result;
-  }, [left, right]);
+  }, [left, right, viewMode]);
 
   const { addedCount, removedCount } = useMemo(
-    () => getDiffCounts({ unifiedDiff, normalizedUnified, diffLines }),
-    [diffLines, normalizedUnified, unifiedDiff]
+    () => getDiffCounts({ diffLines }),
+    [diffLines]
   );
 
-  const diffText = useMemo(() => {
-    if (normalizedUnified) return normalizedUnified;
-    return diffLines
-      .map((line) => {
-        const prefix = line.type === 'add' ? '+' : line.type === 'remove' ? '-' : ' ';
-        return `${prefix}${line.content}`;
-      })
-      .join('\n');
-  }, [diffLines, normalizedUnified]);
-
-  const contentToCopy = viewMode === 'old' ? left : viewMode === 'new' ? right : diffText;
-
-  if (addedCount === 0 && removedCount === 0) return null;
-
-  const handleCopy = async () => {
-    if (!navigator.clipboard) return;
-    try {
-      await navigator.clipboard.writeText(contentToCopy);
-      setCopied(true);
-      if (copyTimeoutRef.current) {
-        window.clearTimeout(copyTimeoutRef.current);
-      }
-      copyTimeoutRef.current = window.setTimeout(() => setCopied(false), 1400);
-    } catch {
-      setCopied(false);
-    }
+  const handleCopy = () => {
+    const text =
+      viewMode === 'diff'
+        ? diffLines
+            .map((l) => {
+              const prefix = l.type === 'add' ? '+' : l.type === 'remove' ? '-' : ' ';
+              return `${prefix} ${l.content}`;
+            })
+            .join('\n')
+        : viewMode === 'old'
+        ? left
+        : right;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    if (copyTimeoutRef.current) window.clearTimeout(copyTimeoutRef.current);
+    copyTimeoutRef.current = window.setTimeout(() => setCopied(false), 1500);
   };
 
+  const fileName = displayPath ? getFilename(displayPath) : 'diff';
+
   return (
-    <div
-      className={cn(
-        'diff-viewer flex h-full min-w-0 flex-col overflow-hidden bg-white dark:bg-gray-900',
-        className
-      )}
-    >
-      <div className="sticky top-0 z-10 flex w-full items-center justify-between gap-3 border-b border-gray-200/70 bg-gray-50/70 px-3 dark:border-gray-800/70 dark:bg-gray-900/60">
-        <div className="flex items-center gap-3 min-w-0">
-          {resolvedPath ? (
-            <div className="flex items-center gap-2 min-w-0">
-              <span
-                className="truncate text-sm font-medium text-gray-700 dark:text-gray-200"
-                title={resolvedPath}
-              >
-                {getFilename(resolvedPath)}
-              </span>
-              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                <span className="text-green-600 dark:text-green-400">+{addedCount}</span>
-                <span className="text-red-600 dark:text-red-400">-{removedCount}</span>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-              <span className="text-green-600 dark:text-green-400">+{addedCount}</span>
-              <span className="text-red-600 dark:text-red-400">-{removedCount}</span>
-            </div>
-          )}
-        </div>
+    <div className={cn('rounded-lg border bg-card', className)}>
+      <div className="flex items-center justify-between border-b px-3 py-2">
         <div className="flex items-center gap-2">
-          <div className="inline-flex overflow-hidden rounded-md border border-gray-200 bg-white text-sm shadow-sm dark:border-gray-700 dark:bg-gray-950">
-            {viewModes.map((mode) => (
-              <Button
-                key={mode}
-                variant="ghost"
-                size="sm"
-                onClick={() => setViewMode(mode)}
-                className={`rounded-none px-3 ${viewMode === mode
-                    ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100'
-                    : 'text-gray-500 dark:text-gray-400'
-                  }`}
-              >
-                {mode}
-              </Button>
-            ))}
+          <h4 className="font-mono text-sm truncate max-w-[200px]">{fileName}</h4>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 px-2 gap-1"
+              onClick={handleCopy}
+              disabled={copied}
+              type="button"
+            >
+              <Copy className="h-3 w-3" />
+              {copied ? 'Copied!' : 'Copy'}
+            </Button>
+            <div className="flex rounded-md border bg-muted p-1">
+              {VIEW_MODES.map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setViewMode(mode)}
+                  className={cn(
+                    'px-2 py-0.5 text-xs rounded transition-colors',
+                    viewMode === mode
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {mode === 'old' ? 'Old' : mode === 'new' ? 'New' : 'Diff'}
+                </button>
+              ))}
+            </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={handleCopy}
-            className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-            aria-label="Copy content"
-          >
-            {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => setCollapsed((prev) => !prev)}
-            className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-            aria-label={collapsed ? 'Expand diff' : 'Collapse diff'}
-          >
-            {collapsed ? <ChevronRight className="size-4" /> : <ChevronDown className="size-4" />}
-          </Button>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {viewMode === 'diff' && addedCount > 0 && (
+            <span className="text-green-500">+{addedCount}</span>
+          )}
+          {viewMode === 'diff' && removedCount > 0 && (
+            <span className="text-red-500">-{removedCount}</span>
+          )}
         </div>
       </div>
-
-      {!collapsed && (
-        <div className="diff-content min-w-0 flex-1 overflow-auto font-mono text-sm">
-          {viewMode === 'diff' ? (
-            <table className="min-w-full table-fixed">
-              <tbody>
-                {diffLines.map((line, index) => (
-                  <tr
-                    key={index}
-                    className={`leading-relaxed hover:bg-gray-50/50 dark:hover:bg-gray-800/50 ${line.type === 'add'
-                        ? 'bg-green-50/30 dark:bg-green-900/20'
-                        : line.type === 'remove'
-                          ? 'bg-red-50/30 dark:bg-red-900/20'
-                          : ''
-                      }`}
-                  >
-                    {/* Change indicator */}
-                    <td
-                      className={`w-6 min-w-6 text-center border-r border-gray-200 dark:border-gray-700 select-none text-sm font-medium py-1 ${line.type === 'add'
-                          ? 'bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300'
-                          : line.type === 'remove'
-                            ? 'bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-300'
-                            : 'bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500'
-                        }`}
-                    >
-                      {line.type === 'add' ? '+' : line.type === 'remove' ? '−' : ''}
-                    </td>
-
-                    {/* Content */}
-                    <td
-                      className={`whitespace-pre text-sm text-gray-900 dark:text-gray-100 ${line.type === 'add'
-                          ? 'bg-green-50/80 dark:bg-green-900/30'
-                          : line.type === 'remove'
-                            ? 'bg-red-50/80 dark:bg-red-900/30'
-                            : 'bg-white dark:bg-gray-900'
-                        }`}
-                    >
-                      {line.content}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <pre className="whitespace-pre text-gray-900 dark:text-gray-100 px-4 py-3 leading-relaxed">
-              {viewMode === 'old' ? left : right}
-            </pre>
-          )}
-        </div>
+      <div
+        className={cn(
+          'font-mono text-sm overflow-x-auto max-h-[500px]',
+          collapsed && 'max-h-32'
+        )}
+      >
+        {diffLines.map((line, i) => (
+          <div
+            key={i}
+            className={cn(
+              'flex border-b last:border-0',
+              line.type === 'add' && 'bg-green-500/10',
+              line.type === 'remove' && 'bg-red-500/10'
+            )}
+          >
+            <div className="flex-shrink-0 w-16 px-2 text-right text-muted-foreground/60 select-none">
+              {line.lineNumber.old ?? ''}
+            </div>
+            <div className="flex-shrink-0 w-16 px-2 text-right text-muted-foreground/60 select-none">
+              {line.lineNumber.new ?? ''}
+            </div>
+            <div className="flex-1 min-w-0 px-3 py-0.5 select-none">
+              <span
+                className={cn(
+                  'whitespace-pre',
+                  line.type === 'add' && 'text-green-600',
+                  line.type === 'remove' && 'text-red-600'
+                )}
+              >
+                {line.content || ' '}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+      {collapsed && diffLines.length > 15 && (
+        <button
+          type="button"
+          onClick={() => {}}
+          className="w-full px-3 py-2 text-center text-sm text-primary hover:bg-primary/10"
+        >
+          Show {diffLines.length} lines
+        </button>
       )}
     </div>
   );

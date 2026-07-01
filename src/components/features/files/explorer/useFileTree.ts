@@ -45,11 +45,19 @@ export function useFileTree(folder: string): UseFileTreeReturn {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searchMatches, setSearchMatches] = useState<TauriFileEntry[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [folderTrigger, setFolderTrigger] = useState(0);
+  const [searchTrigger, setSearchTrigger] = useState(0);
 
   const { hiddenNames } = useSettingsStore();
   const { selectedFilePath } = useWorkspaceStore();
 
   const autoExpandedTargetRef = useRef<string | null>(null);
+  const prevFolderRef = useRef(folder);
+
+  if (folder !== prevFolderRef.current) {
+    prevFolderRef.current = folder;
+    setFolderTrigger((prev) => prev + 1);
+  }
 
   const hiddenSet = useMemo(
     () => new Set(hiddenNames.map(normalizeName)),
@@ -62,12 +70,12 @@ export function useFileTree(folder: string): UseFileTreeReturn {
       const entries = await readDirectory(resolvedDir);
       return sortNodes(
         entries
-          .filter((e) => !shouldSkipEntry(e.name, hiddenSet))
-          .map((e) => ({
-            name: e.name,
-            path: e.path,
-            kind: e.is_dir ? ('dir' as const) : ('file' as const),
-          })),
+            .filter((e) => !shouldSkipEntry(e.name, hiddenSet))
+            .map((e) => ({
+              name: e.name,
+              path: e.path,
+              kind: e.is_dir ? ('dir' as const) : ('file' as const),
+            })),
       );
     },
     [hiddenSet],
@@ -106,17 +114,42 @@ export function useFileTree(folder: string): UseFileTreeReturn {
 
   // Reset search state on folder change
   useEffect(() => {
+    if (folderTrigger === 0) return;
     setSearchError(null);
     setSearchMatches([]);
     autoExpandedTargetRef.current = null;
-  }, [folder]);
+  }, [folderTrigger]);
 
   const normalizedFilterText = filterText.trim();
   const isSearching = normalizedFilterText.length > 0;
 
+  const prevIsSearchingRef = useRef(isSearching);
+  const prevNormalizedFilterTextRef = useRef(normalizedFilterText);
+  const prevFolderForSearchRef = useRef(folder);
+  const prevHiddenNamesRef = useRef(hiddenNames);
+  const prevRootPathRef = useRef(root?.path);
+
+  if (
+    isSearching !== prevIsSearchingRef.current ||
+    normalizedFilterText !== prevNormalizedFilterTextRef.current ||
+    folder !== prevFolderForSearchRef.current ||
+    hiddenNames !== prevHiddenNamesRef.current ||
+    root?.path !== prevRootPathRef.current
+  ) {
+    prevIsSearchingRef.current = isSearching;
+    prevNormalizedFilterTextRef.current = normalizedFilterText;
+    prevFolderForSearchRef.current = folder;
+    prevHiddenNamesRef.current = hiddenNames;
+    prevRootPathRef.current = root?.path;
+    if (isSearching && folder) {
+      setSearchTrigger((prev) => prev + 1);
+    }
+  }
+
   // Search
   useEffect(() => {
     let isActive = true;
+    if (searchTrigger === 0) return;
     if (!isSearching || !folder) {
       setSearching(false);
       setSearchError(null);
@@ -145,7 +178,7 @@ export function useFileTree(folder: string): UseFileTreeReturn {
       }
     }, 200);
     return () => { isActive = false; clearTimeout(timer); };
-  }, [folder, hiddenNames, isSearching, normalizedFilterText, root?.path]);
+  }, [searchTrigger]);
 
   const displayRoot = useMemo(() => {
     if (!root) return null;

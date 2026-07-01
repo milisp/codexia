@@ -1,7 +1,7 @@
 import supabase from '@/lib/supabase';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { getCurrent, onOpenUrl } from '@tauri-apps/plugin-deep-link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
 
 const processedUrls = new Set<string>();
@@ -9,8 +9,18 @@ const processedUrls = new Set<string>();
 // useDeepLink hook: handles deep link auth
 export const useDeepLink = (enabled = true) => {
   const [isHandlingDeepLink, setIsHandlingDeepLink] = useState(false);
+  const [deepLinkTrigger, setDeepLinkTrigger] = useState(0);
+
+  const prevEnabledRef = useRef(enabled);
+  if (enabled !== prevEnabledRef.current) {
+    prevEnabledRef.current = enabled;
+    if (!enabled) {
+      setDeepLinkTrigger((prev) => prev + 1);
+    }
+  }
 
   useEffect(() => {
+    if (deepLinkTrigger === 0) return;
     if (!enabled) {
       setIsHandlingDeepLink(false);
       return;
@@ -124,7 +134,7 @@ export const useDeepLink = (enabled = true) => {
       dispose?.();
       processedUrls.clear();
     };
-  }, [enabled]);
+  }, [deepLinkTrigger]);
 
   return isHandlingDeepLink;
 };

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { Archive, GitFork, FolderX, Loader2 } from 'lucide-react';
 import { listen } from '@tauri-apps/api/event';
 import { codexService } from '@/services/codexService';
@@ -43,9 +43,21 @@ export function ThreadList({ cwd }: ThreadListProps) {
   const [renameThreadId, setRenameThreadId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [refreshCounter, setRefreshCounter] = useState(0);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const threads = response.data;
   const nextCursor = response.nextCursor;
+
+  // Track previous storeThreads to detect new threads inline during render
+  const prevStoreThreadsRef = useRef<Thread[]>([]);
+  if (storeThreads.length > 0) {
+    const localIds = new Set(response.data.map((t) => t.id));
+    const hasNew = storeThreads.some((t) => t.cwd === cwd && !localIds.has(t.id));
+    if (hasNew && storeThreads.length !== prevStoreThreadsRef.current.length) {
+      prevStoreThreadsRef.current = storeThreads;
+      setRefreshTrigger((prev) => prev + 1);
+    }
+  }
 
   // --- Thread loading (search + sort delegated to backend) ---
 
@@ -76,14 +88,12 @@ export function ThreadList({ cwd }: ThreadListProps) {
 
   const refresh = useCallback(() => setRefreshCounter((n) => n + 1), []);
 
-  // When a new thread is created in the store (e.g. after threadStart), refresh
-  // the list so the sidebar reflects it immediately.
+  // When a new thread is created in the store (e.g. after threadStart),
+  // refresh the list so the sidebar reflects it immediately.
   useEffect(() => {
-    if (storeThreads.length === 0) return;
-    const localIds = new Set(response.data.map((t) => t.id));
-    const hasNew = storeThreads.some((t) => t.cwd === cwd && !localIds.has(t.id));
-    if (hasNew) refresh();
-  }, [storeThreads, cwd, response.data, refresh]);
+    if (refreshTrigger === 0) return;
+    refresh();
+  }, [refreshTrigger, refresh]);
 
   // Patch thread name when thread/name/updated notification arrives.
   useEffect(() => {

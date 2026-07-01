@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -16,8 +16,15 @@ export default function CCMcpView({ refreshKey }: CCMcpViewProps) {
   const { cwd } = useWorkspaceStore();
   const [servers, setServers] = useState<ClaudeCodeMcpServer[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const workingDir = cwd || '';
+
+  const prevRefreshKeyRef = useRef(refreshKey);
+  if (refreshKey !== prevRefreshKeyRef.current) {
+    prevRefreshKeyRef.current = refreshKey;
+    setRefreshTrigger((prev) => prev + 1);
+  }
 
   const fetchServers = useCallback(async () => {
     if (!workingDir) return;
@@ -34,7 +41,7 @@ export default function CCMcpView({ refreshKey }: CCMcpViewProps) {
 
   useEffect(() => {
     fetchServers();
-  }, [fetchServers, refreshKey]);
+  }, [fetchServers, workingDir, refreshTrigger]);
 
   return (
     <div className="h-full flex flex-col px-4">

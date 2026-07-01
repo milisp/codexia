@@ -11,7 +11,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { Button } from '@/components/ui/button';
 import { BrowserProjects } from '@/components/project-selector';
 import { isDesktopTauri } from '@/hooks/runtime';
-import { BranchSwitcher } from './BranchSwitcher';
+import { BranchSwitcher } from '../features/branch';
 import { AgentWorkspaceSelect } from './AgentWorkspaceSelect';
 import { ThreadCwdMode, useConfigStore } from '@/components/codex/stores';
 import { useCCStore } from '@/stores';

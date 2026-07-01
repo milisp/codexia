@@ -9,6 +9,24 @@ import type { AgentHeatmaps } from '@/services/tauri/insights';
 import { type Range, type AgentKey, AGENT_CONFIG } from './constants';
 import { weeksForRange } from './utils';
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  const nonZero = payload.filter((p: any) => p.value > 0);
+  if (!nonZero.length) return null;
+  return (
+    <div className="rounded-lg border border-slate-700 bg-slate-900/95 p-2.5 text-xs shadow-xl backdrop-blur-sm">
+      <p className="mb-1.5 text-slate-400">{label}</p>
+      {nonZero.map((p: any) => (
+        <div key={p.dataKey} className="flex items-center gap-2">
+          <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: p.stroke }} />
+          <span className="capitalize text-slate-300">{p.dataKey}</span>
+          <span className="ml-auto pl-3 font-mono font-semibold text-slate-100">{p.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export function ActivityAreaChart({ heatmaps, range }: { heatmaps: AgentHeatmaps; range: Range }) {
   const weeks = weeksForRange(range);
   const today = new Date();
@@ -32,24 +50,6 @@ export function ActivityAreaChart({ heatmaps, range }: { heatmaps: AgentHeatmaps
   }, [heatmaps, weeks, startDate]);
 
   const tickInterval = Math.max(1, Math.floor(chartData.length / 7));
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload?.length) return null;
-    const nonZero = payload.filter((p: any) => p.value > 0);
-    if (!nonZero.length) return null;
-    return (
-      <div className="rounded-lg border border-slate-700 bg-slate-900/95 p-2.5 text-xs shadow-xl backdrop-blur-sm">
-        <p className="mb-1.5 text-slate-400">{label}</p>
-        {nonZero.map((p: any) => (
-          <div key={p.dataKey} className="flex items-center gap-2">
-            <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: p.stroke }} />
-            <span className="capitalize text-slate-300">{p.dataKey}</span>
-            <span className="ml-auto pl-3 font-mono font-semibold text-slate-100">{p.value}</span>
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   if (!activeKeys.length) return null;
 

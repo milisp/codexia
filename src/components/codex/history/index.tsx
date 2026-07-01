@@ -222,7 +222,7 @@ export function History() {
               let planArgs: { plan: SimplePlanStep[]; explanation: string } = JSON.parse(
                 msg.arguments
               );
-              return <PlanDisplay steps={planArgs.plan} />;
+              return <PlanDisplay key={index} steps={planArgs.plan} />;
             case 'apply_patch':
               let applyPatchArgs = JSON.parse(msg.arguments);
               return (

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { createTwoFilesPatch } from 'diff';
 import { DiffModeEnum, DiffView } from '@git-diff-view/react';
 import { ChevronDown, ChevronRight, Minus, Plus, Undo2 } from 'lucide-react';
@@ -55,10 +55,26 @@ export function GitDiffFileItem({
   const [stageLoading, setStageLoading] = useState(false);
   const [revertLoading, setRevertLoading] = useState(false);
   const [revertConfirm, setRevertConfirm] = useState(false);
+  const [diffTrigger, setDiffTrigger] = useState(0);
+
+  const prevExpandedRef = useRef(expanded);
+  const prevPathRef = useRef(entry.path);
+  const prevSectionRef = useRef(section);
+  const prevRefreshKeyRef = useRef(refreshKey);
+
+  if (expanded !== prevExpandedRef.current || entry.path !== prevPathRef.current || section !== prevSectionRef.current || refreshKey !== prevRefreshKeyRef.current) {
+    prevExpandedRef.current = expanded;
+    prevPathRef.current = entry.path;
+    prevSectionRef.current = section;
+    prevRefreshKeyRef.current = refreshKey;
+    if (expanded) {
+      setDiffTrigger((prev) => prev + 1);
+    }
+  }
 
   // Load diff meta + data when expanded or when path/section changes
   useEffect(() => {
-    if (!expanded) return;
+    if (diffTrigger === 0) return;
 
     let cancelled = false;
     setLoading(true);
@@ -88,7 +104,7 @@ export function GitDiffFileItem({
     return () => {
       cancelled = true;
     };
-  }, [expanded, cwd, entry.path, section, refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [diffTrigger]);
 
   // Load full data once user confirms large diff
   useEffect(() => {

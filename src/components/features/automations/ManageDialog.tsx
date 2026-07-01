@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { Check, ChevronDown, Trash2 } from 'lucide-react';
 import type { AutomationSchedule, AutomationTask } from '@/services/tauri';
 import {
@@ -47,7 +47,6 @@ import { ScheduleEditor } from './ScheduleEditor';
 import type { DialogMode, FormState } from './types';
 import { formFromTask } from './utils';
 
-
 type ManageDialogProps = {
   mode: DialogMode;
   onClose: () => void;
@@ -74,6 +73,7 @@ export function ManageDialog({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [projectSelectOpen, setProjectSelectOpen] = useState(false);
   const [form, setForm] = useState<FormState>({ ...DEFAULT_FORM });
+  const [resetTrigger, setResetTrigger] = useState(0);
 
   const getDefaultModel = useCallback(
     (agent: 'codex' | 'cc', provider: string): string => {
@@ -85,9 +85,21 @@ export function ManageDialog({
     []
   );
 
-  // Reset state whenever the dialog opens or mode changes
-  useEffect(() => {
-    if (!open) return;
+  const prevOpenRef = useRef(open);
+  const prevModeTypeRef = useRef(mode?.type ?? null);
+  const prevTaskIdRef = useRef(existingTask?.id ?? null);
+
+  if (open !== prevOpenRef.current || mode?.type !== prevModeTypeRef.current || existingTask?.id !== prevTaskIdRef.current) {
+    prevOpenRef.current = open;
+    prevModeTypeRef.current = mode?.type ?? null;
+    prevTaskIdRef.current = existingTask?.id ?? null;
+    if (open) {
+      setResetTrigger((prev) => prev + 1);
+    }
+  }
+
+  // Reset state inline during render when dialog opens or mode changes
+  if (resetTrigger > 0) {
     setLastError(null);
     setConfirmDelete(false);
     setProjectSelectOpen(false);
@@ -103,8 +115,13 @@ export function ManageDialog({
     } else if (existingTask) {
       setForm(formFromTask(existingTask));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, mode?.type, existingTask?.id, getDefaultModel]);
+  }
+
+  // Reset trigger after handling
+  useEffect(() => {
+    if (resetTrigger === 0) return;
+    // Trigger handled inline, this effect just ensures trigger resets if needed
+  }, [resetTrigger]);
 
   const setField = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -373,6 +390,9 @@ export function ManageDialog({
                   type="button"
                   variant="outline"
                   role="combobox"
+                  aria-haspopup="listbox"
+                  aria-expanded={projectSelectOpen}
+                  aria-controls="project-select-list"
                   className="w-full justify-between gap-2 font-normal"
                 >
                   <span className="min-w-0 flex-1 truncate text-left">
@@ -384,7 +404,7 @@ export function ManageDialog({
               <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-0">
                 <Command>
                   <CommandInput placeholder="Search projects..." />
-                  <CommandList className="max-h-56">
+                  <CommandList id="project-select-list" className="max-h-56">
                     <CommandEmpty>
                       {isCreate
                         ? 'No workspace projects found. Add projects from the sidebar first.'

@@ -2,7 +2,7 @@ import { UserConfigForm, Footer, ToolPrompt } from '@/components/features/dxt';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { DxtManifestSchema } from './schemas';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { z } from 'zod';
 import { MCPConfigType } from '@/types/cc/cc-mcp';
 import { useWorkspaceStore, usePluginStore } from '@/stores';
@@ -136,9 +136,21 @@ export default function DxtDetail({ user, repo }: { user: string; repo: string }
   const [enabled, setEnabled] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [installedScope, setInstalledScope] = useState<string | null>(null);
+  const [manifestTrigger, setManifestTrigger] = useState(0);
+
+  const prevUserRef = useRef(user);
+  const prevRepoRef = useRef(repo);
+  if (user !== prevUserRef.current || repo !== prevRepoRef.current) {
+    prevUserRef.current = user;
+    prevRepoRef.current = repo;
+    if (user && repo) {
+      setManifestTrigger((prev) => prev + 1);
+    }
+  }
 
   // First useEffect: load manifest
   useEffect(() => {
+    if (manifestTrigger === 0) return;
     if (!user || !repo) {
       console.log('Missing user or repo:', { user, repo });
       return;
@@ -171,7 +183,7 @@ export default function DxtDetail({ user, repo }: { user: string; repo: string }
         setManifest(null);
         setLoading(false);
       });
-  }, [user, repo]);
+  }, [manifestTrigger]);
 
   // Second useEffect: check mcpServers after manifest is loaded
   useEffect(() => {

@@ -65,6 +65,7 @@ export function CodeEditor({
     position: { x: number; y: number };
   } | null>(null);
   const editorContainerRef = useRef<HTMLDivElement>(null);
+  const searchMarkerRef = useRef<any>(null);
 
   // Zustand stores
   const { resolvedTheme } = useThemeContext();
@@ -85,11 +86,11 @@ export function CodeEditor({
     getCursorPosition,
   } = useEditorStore();
 
-  const getFileExtension = () => {
+  const getFileExtension = useCallback(() => {
     const fileName = filePath.split('/').pop() || filePath;
     const lastDot = fileName.lastIndexOf('.');
     return lastDot > -1 ? fileName.substring(lastDot + 1).toLowerCase() : '';
-  };
+  }, [filePath]);
 
   const getAceMode = useMemo(() => {
     const extension = getFileExtension();
@@ -316,8 +317,8 @@ export function CodeEditor({
         try {
           const Range = (window as any).ace?.require('ace/range').Range;
           if (Range) {
-            if (aceEditor._searchMarker) {
-              aceEditor.removeMarker(aceEditor._searchMarker);
+            if (searchMarkerRef.current) {
+              aceEditor.removeMarker(searchMarkerRef.current);
             }
             const currentContent = editedContent;
             const lines = currentContent.split('\n');
@@ -325,7 +326,7 @@ export function CodeEditor({
             const index = line.toLowerCase().indexOf(searchTerm.toLowerCase());
             if (index >= 0) {
               const range = new Range(targetLine, index, targetLine, index + searchTerm.length);
-              aceEditor._searchMarker = aceEditor.addMarker(range, 'ace_selected-word', 'text');
+              searchMarkerRef.current = aceEditor.addMarker(range, 'ace_selected-word', 'text');
             }
           }
         } catch (e) {

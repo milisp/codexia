@@ -15,6 +15,7 @@
 ## Common Commands
 - `bun tauri dev` - read the backend output
 - `bunx tsc --noEmit` - test frontend if frontend change
+- `bunx react-doctor@latest --no-telemetry --category Bugs` - fix frontend if frontend change
 - `bunx --bun shadcn@latest add <dep>` - add shadcn dep
 - `cargo check -p codexia` if rust code change
 - only `cargo build` when I ask
@@ -40,17 +41,9 @@ codexia/
 ├── Cargo.toml              # Workspace root Cargo.toml
 ├── crates/
 │   ├── codex/              # Codex crate
-│   │   ├── Cargo.toml      # Codex crate dependencies
-│   │   └── src/            # Codex crate source
 │   ├── cc/                 # Claude Code crate
-│   │   ├── Cargo.toml      # Claude Code crate dependencies
-│   │   └── src/            # Claude Code crate source
 │   ├── db/                 # Database crate
-│   │   ├── Cargo.toml      # Database crate dependencies
-│   │   └── src/            # Database crate source
 │   └── shared/             # Shared crate
-│       ├── Cargo.toml      # Shared crate dependencies
-│       └── src/            # Shared crate source
 - use `@/hooks` `@/types` etc.
 
 ## docs

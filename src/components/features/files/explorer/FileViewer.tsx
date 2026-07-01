@@ -34,6 +34,7 @@ export function FileViewer({ filePath }: FileViewerProps) {
   const [diskChanged, setDiskChanged] = useState(false);
   const prevWatchedDirRef = useRef<string | null>(null);
   const [canonicalFile, setCanonicalFile] = useState<string | null>(null);
+  const [fileTrigger, setFileTrigger] = useState(0);
   const { resolvedTheme } = useThemeContext();
   const { setInputValue } = useInputStore();
   const { addNote } = useNoteStore()
@@ -74,10 +75,21 @@ export function FileViewer({ filePath }: FileViewerProps) {
     }
   };
 
+  const prevFilePathRef = useRef(filePath);
+  if (filePath !== prevFilePathRef.current) {
+    prevFilePathRef.current = filePath;
+    setFileTrigger((prev) => prev + 1);
+  }
+
+  // Reset content/error inline during render when filePath becomes falsy
+  if (!filePath && (content !== '' || error !== null)) {
+    setContent('');
+    setError(null);
+  }
+
   useEffect(() => {
+    if (fileTrigger === 0) return;
     if (!filePath) {
-      setContent('');
-      setError(null);
       return;
     }
     loadFile();
@@ -89,7 +101,7 @@ export function FileViewer({ filePath }: FileViewerProps) {
         setCanonicalFile(filePath);
       }
     })();
-  }, [filePath]);
+  }, [filePath, fileTrigger]);
 
   useEffect(() => {
     setCurrentContent(content);
@@ -131,11 +143,9 @@ export function FileViewer({ filePath }: FileViewerProps) {
       return lines.slice(0, MAX_LINES).join('\n');
     })();
 
-  if (!filePath) return null;
-
   // Watch parent directory of the open file so we reliably get fs_change events
   useEffect(() => {
-    if (!isTauriRuntime) {
+    if (!filePath || !isTauriRuntime) {
       return;
     }
 
@@ -169,7 +179,7 @@ export function FileViewer({ filePath }: FileViewerProps) {
 
   // Listen to fs_change to detect disk updates for the open file
   useEffect(() => {
-    if (!isTauriRuntime) {
+    if (!filePath || !isTauriRuntime) {
       return;
     }
 
@@ -194,6 +204,8 @@ export function FileViewer({ filePath }: FileViewerProps) {
       if (unlisten) unlisten();
     };
   }, [filePath, canonicalFile, content, currentContent, isTauriRuntime]);
+
+  if (!filePath) return null;
 
   return (
     <div className="flex flex-col h-full min-w-0">

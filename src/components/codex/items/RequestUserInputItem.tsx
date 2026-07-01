@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -27,27 +27,17 @@ export function RequestUserInputItem({ currentThreadId }: RequestUserInputItemPr
     [pendingRequests, currentThreadId]
   );
 
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [otherAnswers, setOtherAnswers] = useState<Record<string, string>>({});
-  const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (!currentRequest) {
-      setAnswers({});
-      setOtherAnswers({});
-      return;
-    }
+  const [answers, setAnswers] = useState<Record<string, string>>(() => {
+    if (!currentRequest) return {};
     const initial: Record<string, string> = {};
     currentRequest.questions.forEach((question) => {
-      if (question.options && question.options.length > 0) {
-        initial[question.id] = '';
-      } else {
-        initial[question.id] = '';
-      }
+      initial[question.id] = '';
     });
-    setAnswers(initial);
-    setOtherAnswers({});
-  }, [currentRequest?.requestId]);
+    return initial;
+  });
+
+  const [otherAnswers, setOtherAnswers] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
 
   if (!currentRequest) {
     return null;

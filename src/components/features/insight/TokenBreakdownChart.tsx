@@ -4,6 +4,22 @@ import { type Range, type AgentKey, AGENT_CONFIG, RANGES } from './constants';
 import { fmtTokens } from './utils';
 import type { AgentHeatmaps } from '@/services/tauri/insights';
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-lg border border-slate-700 bg-slate-900/95 p-3 text-xs shadow-xl backdrop-blur-sm">
+      <p className="mb-2 font-semibold text-slate-200">{label}</p>
+      {payload.map((p: any) => (
+        <div key={p.dataKey} className="flex items-center gap-2 py-0.5">
+          <div className="h-2 w-2 rounded-full" style={{ backgroundColor: p.fill }} />
+          <span className="capitalize text-slate-400 w-16">{p.dataKey}</span>
+          <span className="font-mono text-slate-200">{fmtTokens(p.value)}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export function TokenBreakdownChart({ heatmaps, range }: { heatmaps: AgentHeatmaps; range: Range }) {
   const keys = (Object.keys(AGENT_CONFIG) as AgentKey[]).filter(k => !!heatmaps[k]);
   const data = keys.map(k => {
@@ -23,22 +39,6 @@ export function TokenBreakdownChart({ heatmaps, range }: { heatmaps: AgentHeatma
   if (!data.length) return null;
 
   const rangeLabel = range === 'all' ? 'All time' : `Last ${RANGES.find(r => r.value === range)?.label}`;
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload?.length) return null;
-    return (
-      <div className="rounded-lg border border-slate-700 bg-slate-900/95 p-3 text-xs shadow-xl backdrop-blur-sm">
-        <p className="mb-2 font-semibold text-slate-200">{label}</p>
-        {payload.map((p: any) => (
-          <div key={p.dataKey} className="flex items-center gap-2 py-0.5">
-            <div className="h-2 w-2 rounded-full" style={{ backgroundColor: p.fill }} />
-            <span className="capitalize text-slate-400 w-16">{p.dataKey}</span>
-            <span className="font-mono text-slate-200">{fmtTokens(p.value)}</span>
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   const LEGEND = [
     { key: 'input',    label: 'Input',         opacity: 0.95 },

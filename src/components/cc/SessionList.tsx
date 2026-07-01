@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useCCStore } from '@/stores/cc';
 import { listSessions, type SdkSessionInfo } from '@/lib/sessions';
 import { ccGetSessionMessages, ccDeleteSession } from '@/services/tauri/cc';
@@ -44,35 +44,17 @@ export function ClaudeCodeSessionList({ directory, sessions, onSelectSession }: 
   const { setCwd, setSelectedAgent } = useWorkspaceStore();
   const { setView } = useLayoutStore();
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
-  const { activeSessionIds, activeSessionId, isLoading, addMessageToSession, setSessionLoading, sessionMessagesMap, pendingNewSession, setPendingNewSession } = useCCStore();
+  const { activeSessionIds, activeSessionId, isLoading, addMessageToSession, setSessionLoading, sessionMessagesMap, pendingNewSession } = useCCStore();
   const { toast } = useToast();
 
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [totalCount, setTotalCount] = useState(0);
-  const loadSessions = useCallback(async () => {
-    if (!directory) {
-      setLoadedSessions([]);
-      setLoading(false);
-      return;
-    }
+
+  // Sync loading/error state when sessions prop changes (controlled mode)
+  if (sessions !== undefined) {
+    setLoading(false);
     setError(null);
-    try {
-      const { sessions: fetched, total } = await listSessions(directory, {
-        limit: DEFAULT_VISIBLE,
-        includeWorktrees: true,
-      });
-      setLoadedSessions(fetched);
-      setTotalCount(total);
-      // Once the real list is fetched, clear the optimistic pending session
-      setPendingNewSession(null);
-    } catch (err) {
-      console.error('Failed to load sessions:', err);
-      const message = err instanceof Error ? err.message : 'Failed to load sessions';
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  }, [directory]);
+  }
+  const [totalCount] = useState(0);
 
   const loadMoreSessions = useCallback(async () => {
     if (!directory) return;
@@ -89,15 +71,6 @@ export function ClaudeCodeSessionList({ directory, sessions, onSelectSession }: 
       setLoadingMore(false);
     }
   }, [directory, loadedSessions.length]);
-
-  useEffect(() => {
-    if (sessions !== undefined) {
-      setLoading(false);
-      setError(null);
-      return;
-    }
-    void loadSessions();
-  }, [loadSessions, sessions]);
 
   const [expanded, setExpanded] = useState(false);
 

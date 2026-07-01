@@ -84,12 +84,18 @@ export function CodexAgentCard({
 
   const [elapsed, setElapsed] = useState(0);
   const processingStartRef = useRef<number | null>(null);
+  const wasProcessingRef = useRef(processing);
 
-  useEffect(() => {
-    if (processing) {
-      setElapsed(Date.now() - (processingStartRef.current ?? 0));
-    }
-  }, [processing]);
+  if (processing && !wasProcessingRef.current) {
+    processingStartRef.current = Date.now();
+  }
+  wasProcessingRef.current = processing;
+
+  if (processing && processingStartRef.current) {
+    setElapsed(Date.now() - processingStartRef.current);
+  } else if (!processing) {
+    setElapsed(0);
+  }
 
   useEffect(() => {
     const el = scrollRef.current;

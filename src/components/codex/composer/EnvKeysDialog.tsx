@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { ExternalLink, Key, Save } from 'lucide-react';
 import {
   Dialog,
@@ -21,9 +21,18 @@ export function EnvKeysDialog({ open, onOpenChange }: EnvKeysDialogProps) {
   const [envKeys, setEnvKeys] = useState<EnvStatusItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [inputValues, setInputValues] = useState<Record<string, string>>({});
+  const [loadTrigger, setLoadTrigger] = useState(0);
+
+  const prevOpenRef = useRef(open);
+  if (open && !prevOpenRef.current) {
+    prevOpenRef.current = open;
+    setLoadTrigger((prev) => prev + 1);
+  } else if (!open) {
+    prevOpenRef.current = open;
+  }
 
   useEffect(() => {
-    if (!open) return;
+    if (loadTrigger === 0) return;
     setLoading(true);
     loadEnvKeys()
       .then((keys) => {
@@ -38,7 +47,7 @@ export function EnvKeysDialog({ open, onOpenChange }: EnvKeysDialogProps) {
       })
       .catch(() => setEnvKeys([]))
       .finally(() => setLoading(false));
-  }, [open]);
+  }, [loadTrigger]);
 
   const handleInputChange = (provider: string, value: string) => {
     setInputValues((prev) => ({ ...prev, [provider]: value }));

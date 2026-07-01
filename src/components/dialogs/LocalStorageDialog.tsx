@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -39,12 +39,22 @@ export function LocalStorageDialog({ defaultOpen = false }: { defaultOpen?: bool
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [entries, setEntries] = useState<LocalStorageEntry[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const prevIsOpenRef = useRef(isOpen);
+  if (isOpen && !prevIsOpenRef.current) {
+    prevIsOpenRef.current = isOpen;
+    setRefreshTrigger((prev) => prev + 1);
+  } else if (!isOpen) {
+    prevIsOpenRef.current = isOpen;
+  }
 
   const refresh = () => setEntries(getLocalStorageEntries());
 
   useEffect(() => {
-    if (isOpen) refresh();
-  }, [isOpen]);
+    if (refreshTrigger === 0) return;
+    refresh();
+  }, [refreshTrigger]);
 
   const handleDelete = (key: string) => {
     localStorage.removeItem(key);

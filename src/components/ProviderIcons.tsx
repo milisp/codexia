@@ -15,11 +15,11 @@ export function ProviderIcons({ providerId, size = 'md' }: { providerId: string,
 
   return (
     <div className={`${getSizeClass()} flex items-center justify-center`}>
-      {providerId === 'atlascloud' && <img src={AtlasCloudIcon} />}
-      {providerId === 'openai' && <img src={OpenAIIcon} />}
-      {providerId === 'openrouter' && <img src={OpenRouterIcon} />}
-      {providerId === 'ollama' && <img src={OllamaIcon} />}
-      {providerId === 'nvidia' && <img src={NvidiaIcon} />}
+      {providerId === 'atlascloud' && <img src={AtlasCloudIcon} alt="AtlasCloud" />}
+      {providerId === 'openai' && <img src={OpenAIIcon} alt="OpenAI" />}
+      {providerId === 'openrouter' && <img src={OpenRouterIcon} alt="OpenRouter" />}
+      {providerId === 'ollama' && <img src={OllamaIcon} alt="Ollama" />}
+      {providerId === 'nvidia' && <img src={NvidiaIcon} alt="NVIDIA" />}
     </div>
   );
 }
