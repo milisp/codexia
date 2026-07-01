@@ -497,12 +497,36 @@ pub fn git_has_worktree_changes(
     })
 }
 
+/// Guards against deleting a worktree that still has uncommitted work.
+///
+/// Runs `git status --porcelain` directly against the worktree path (no
+/// `cwd`/repo handle needed). Any error is treated as "has changes" so that
+/// an ambiguous state never results in silent data loss.
+fn worktree_has_uncommitted_changes(worktree_path: &Path) -> bool {
+    let output = std::process::Command::new("git")
+        .args(["status", "--porcelain"])
+        .arg("--")
+        .arg(".")
+        .current_dir(worktree_path)
+        .output();
+
+    match output {
+        Ok(out) if out.status.success() => !out.stdout.is_empty(),
+        // git failed to run or returned non-zero — be conservative, assume dirty.
+        _ => true,
+    }
+}
+
 /// Scans all of `~/.codexia/worktrees/` at startup and removes directories
 /// that look like worktrees (contain a `.git` file) but whose backing repo no
 /// longer has them registered — typically left over from a crash.
 ///
 /// The repo root is inferred from the worktree's own `.git` file so no `cwd`
 /// is required.
+///
+/// Safety: a worktree with uncommitted changes is never deleted, even if it
+/// otherwise looks orphaned — it is skipped and logged instead, since it may
+/// still be an active agent working directory.
 pub fn scan_all_orphan_worktrees() {
     let base = match global_worktrees_base() {
         Some(p) => p,
@@ -557,24 +581,43 @@ pub fn scan_all_orphan_worktrees() {
             };
 
             if !repo_root.exists() {
-                // Repo deleted — just remove the directory.
+                // Repo deleted. Still never touch a dir with uncommitted work —
+                // the user may want to recover it manually even without the repo.
+                if worktree_has_uncommitted_changes(&wt_path) {
+                    log::warn!(
+                        "Skipping orphan worktree at {} (repo gone, but has uncommitted changes)",
+                        wt_path.display()
+                    );
+                    continue;
+                }
                 log::warn!(
                     "Orphan worktree at {} (repo gone), removing",
                     wt_path.display()
                 );
                 let lock = acquire_path_lock(&wt_path);
-                let _guard = lock.lock().unwrap();
+                let _guard = lock.lock().unwrap_or_else(|e| e.into_inner());
                 let _ = std::fs::remove_dir_all(&wt_path);
                 continue;
             }
 
             if find_worktree_internal_name(&repo_root, &wt_path).is_none() {
+                // Metadata missing doesn't necessarily mean the directory is
+                // abandoned — it could be an active agent working directory
+                // whose git metadata was lost for an unrelated reason. Never
+                // delete a dirty worktree; skip and let the user handle it.
+                if worktree_has_uncommitted_changes(&wt_path) {
+                    log::warn!(
+                        "Skipping orphan worktree at {} (not in git metadata, but has uncommitted changes)",
+                        wt_path.display()
+                    );
+                    continue;
+                }
                 log::warn!(
                     "Orphan worktree at {} (not in git metadata), removing",
                     wt_path.display()
                 );
                 let lock = acquire_path_lock(&wt_path);
-                let _guard = lock.lock().unwrap();
+                let _guard = lock.lock().unwrap_or_else(|e| e.into_inner());
                 comprehensive_cleanup(&repo_root, &wt_path);
             }
         }
