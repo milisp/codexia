@@ -10,23 +10,22 @@ import type { TurnTiming } from '@/components/codex/stores/useCodexStore';
  * turn.durationMs so the number is accurate even on error/interrupt.
  */
 export function WorkingIndicator({ turnTiming }: { turnTiming: TurnTiming | undefined }) {
-  const [elapsed, setElapsed] = useState(0);
+  // `tick` only forces a re-render every 200ms; elapsed time itself is
+  // derived from turnTiming.startedAtMs, not synced into state.
+  const [, setTick] = useState(0);
   const inProgress = turnTiming?.status === 'inProgress';
 
   useEffect(() => {
-    if (!inProgress || !turnTiming) {
-      setElapsed(0);
-      return;
-    }
+    if (!inProgress) return;
 
-    const { startedAtMs } = turnTiming;
-    setElapsed(Date.now() - startedAtMs);
     const intervalId = setInterval(() => {
-      setElapsed(Date.now() - startedAtMs);
+      setTick((t) => t + 1);
     }, 200);
 
     return () => clearInterval(intervalId);
-  }, [inProgress, turnTiming]);
+  }, [inProgress]);
+
+  const elapsed = inProgress && turnTiming ? Date.now() - turnTiming.startedAtMs : 0;
 
   if (!turnTiming) return null;
 

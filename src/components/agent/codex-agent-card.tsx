@@ -88,22 +88,21 @@ export function CodexAgentCard({
   // raw events which could disagree with threadStatusMap's active/idle flip.
   const turnTiming = turnTimingMap[card.id];
   const turnInProgress = turnTiming?.status === 'inProgress';
-  const [elapsed, setElapsed] = useState(0);
+  // `tick` only forces a re-render every 200ms; elapsed time itself is
+  // derived from turnTiming.startedAtMs, not synced into state.
+  const [, setTick] = useState(0);
 
   useEffect(() => {
-    if (!turnInProgress || !turnTiming) {
-      setElapsed(0);
-      return;
-    }
+    if (!turnInProgress) return;
 
-    const { startedAtMs } = turnTiming;
-    setElapsed(Date.now() - startedAtMs);
     const intervalId = setInterval(() => {
-      setElapsed(Date.now() - startedAtMs);
+      setTick((t) => t + 1);
     }, 200);
 
     return () => clearInterval(intervalId);
-  }, [turnInProgress, turnTiming]);
+  }, [turnInProgress]);
+
+  const elapsed = turnInProgress && turnTiming ? Date.now() - turnTiming.startedAtMs : 0;
 
   useEffect(() => {
     const el = scrollRef.current;
