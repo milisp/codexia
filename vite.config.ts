@@ -64,8 +64,6 @@ export default defineConfig(({ mode }) => {
             ],
             // Analytics (lazy init, not on critical path)
             'vendor-analytics': ['posthog-js'],
-            // Supabase (auth + realtime)
-            'vendor-supabase': ['@supabase/supabase-js'],
             // i18n
             'vendor-i18n': ['i18next', 'react-i18next'],
             // Git diff
