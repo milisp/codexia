@@ -2,7 +2,7 @@ import {
   Chrome,
   Diff,
   Files,
-  ListTodo,
+  Kanban,
   type LucideIcon,
   Maximize2,
   Minimize2,
@@ -28,7 +28,7 @@ interface TabConfig {
 // Order tabs the way users scan them: work-in-progress first, reference last.
 const TAB_BUTTONS: TabConfig[] = [
   { tab: 'diff', icon: Diff, label: 'Review' },
-  { tab: 'tasks', icon: ListTodo, label: 'Tasks' },
+  { tab: 'tasks', icon: Kanban, label: 'Kanban' },
   { tab: 'note', icon: StickyNote, label: 'Notes' },
   { tab: 'files', icon: Files, label: 'Files' },
   { tab: 'webpreview', icon: Chrome, label: 'Preview' },
