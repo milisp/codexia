@@ -1,7 +1,5 @@
+import { ChevronDown, ChevronRight, Loader2, Package, Pencil, Tag, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { toast } from '@/components/ui/use-toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,25 +10,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { toast } from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils';
 import {
   type CentralSkillItem,
-  type SkillGroup,
-  type SkillGroupsConfig,
-  type SkillScope,
   deleteCentralSkill,
   linkSkillToAgent,
   listCentralSkills,
+  type SkillGroup,
+  type SkillGroupsConfig,
+  type SkillScope,
   uninstallInstalledSkill,
 } from '@/services';
-import { ChevronDown, ChevronRight, Loader2, Package, Pencil, Tag, Trash2, X } from 'lucide-react';
-import { AgentBadge } from './AgentBadge';
 import { useWorkspaceStore } from '@/stores';
-import { cn } from '@/lib/utils';
+import { AgentBadge } from './AgentBadge';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -77,12 +73,15 @@ function GroupAssignPopover({
                   onClick={() => onToggle(g.id, !active)}
                   className={cn(
                     'flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs transition-colors',
-                    active
-                      ? 'bg-primary/10 text-primary'
-                      : 'hover:bg-muted text-foreground'
+                    active ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-foreground'
                   )}
                 >
-                  <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', active ? 'bg-primary' : 'bg-muted-foreground/40')} />
+                  <span
+                    className={cn(
+                      'h-1.5 w-1.5 rounded-full shrink-0',
+                      active ? 'bg-primary' : 'bg-muted-foreground/40'
+                    )}
+                  />
                   <span className="truncate">{g.name}</span>
                 </button>
               );
@@ -193,8 +192,16 @@ function GroupSection({
   return (
     <div>
       <div className="flex items-center gap-1 py-1">
-        <button type="button" onClick={() => setOpen((v) => !v)} className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
-          {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {open ? (
+            <ChevronDown className="h-3.5 w-3.5" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5" />
+          )}
         </button>
         {editing ? (
           <Input
@@ -202,7 +209,10 @@ function GroupSection({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onBlur={commitRename}
-            onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setEditing(false); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitRename();
+              if (e.key === 'Escape') setEditing(false);
+            }}
             className="h-5 px-1 text-xs font-semibold w-32 border-primary/40"
           />
         ) : (
@@ -217,20 +227,29 @@ function GroupSection({
         <span className="text-[10px] text-muted-foreground/60 ml-0.5">{count}</span>
         <div className="flex-1 border-t border-muted/40 mx-2" />
         {onRename && !editing && (
-          <button type="button" onClick={() => { setDraft(title); setEditing(true); }} className="text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+          <button
+            type="button"
+            onClick={() => {
+              setDraft(title);
+              setEditing(true);
+            }}
+            className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+          >
             <Pencil className="h-3 w-3" />
           </button>
         )}
         {onDelete && (
-          <button type="button" onClick={onDelete} className="text-muted-foreground/50 hover:text-destructive transition-colors">
+          <button
+            type="button"
+            onClick={onDelete}
+            className="text-muted-foreground/50 hover:text-destructive transition-colors"
+          >
             <X className="h-3 w-3" />
           </button>
         )}
       </div>
       {open && (
-        <div className="grid grid-cols-1 gap-3 pb-2 sm:grid-cols-2 lg:grid-cols-3">
-          {children}
-        </div>
+        <div className="grid grid-cols-1 gap-3 pb-2 sm:grid-cols-2 lg:grid-cols-3">{children}</div>
       )}
     </div>
   );
@@ -275,10 +294,12 @@ export function InstalledTab({
     }
   }, [scope, cwd]);
 
-  useEffect(() => { void load(); }, [load, refreshKey]);
+  useEffect(() => {
+    void load();
+  }, [load, refreshKey]);
 
   const handleRenameGroup = async (groupId: string, name: string) => {
-    await onGroupsChange({ groups: groups.map((g) => g.id === groupId ? { ...g, name } : g) });
+    await onGroupsChange({ groups: groups.map((g) => (g.id === groupId ? { ...g, name } : g)) });
   };
 
   const handleDeleteGroup = async (groupId: string) => {
@@ -359,7 +380,10 @@ export function InstalledTab({
   );
 
   const ungrouped = useMemo(
-    () => (selectedGroupId ? [] : filtered.filter((s) => !new Set(groups.flatMap((g) => g.skillNames)).has(s.name))),
+    () =>
+      selectedGroupId
+        ? []
+        : filtered.filter((s) => !new Set(groups.flatMap((g) => g.skillNames)).has(s.name)),
     [selectedGroupId, filtered, groups]
   );
 
@@ -374,7 +398,14 @@ export function InstalledTab({
     [visibleGroups, filtered]
   );
 
-  const cardProps = { groups, togglingKey, deleting, onToggleAgent: handleToggleAgent, onDelete: setDeleteTarget, onGroupToggle: handleGroupToggle };
+  const cardProps = {
+    groups,
+    togglingKey,
+    deleting,
+    onToggleAgent: handleToggleAgent,
+    onDelete: setDeleteTarget,
+    onGroupToggle: handleGroupToggle,
+  };
 
   if (loading) {
     return (
@@ -395,7 +426,9 @@ export function InstalledTab({
           {searchQuery ? `No results for "${searchQuery}"` : 'No skills installed'}
         </h3>
         {!searchQuery && (
-          <p className="mt-1 text-sm text-muted-foreground">Browse the marketplace to install skills.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Browse the marketplace to install skills.
+          </p>
         )}
       </div>
     );
@@ -415,10 +448,11 @@ export function InstalledTab({
           >
             {groupSkills.length === 0 ? (
               <p className="col-span-full py-4 text-center text-xs text-muted-foreground">
-                No skills in this group — use the <Tag className="inline h-3 w-3" /> button on a skill to add it here.
+                No skills in this group — use the <Tag className="inline h-3 w-3" /> button on a
+                skill to add it here.
               </p>
             ) : (
-              groupSkills.map((s) => <SkillCard key={s.name} skill={s} {...cardProps} />)
+              groupSkills.map((s) => <SkillCard {...cardProps} key={s.name} skill={s} />)
             )}
           </GroupSection>
         ))}
@@ -430,14 +464,18 @@ export function InstalledTab({
             count={ungrouped.length}
             defaultOpen
           >
-            {ungrouped.map((s) => <SkillCard key={s.name} skill={s} {...cardProps} />)}
+            {ungrouped.map((s) => (
+              <SkillCard {...cardProps} key={s.name} skill={s} />
+            ))}
           </GroupSection>
         )}
       </div>
 
       <AlertDialog
         open={Boolean(deleteTarget)}
-        onOpenChange={(open) => { if (!open && !deleting) setDeleteTarget(null); }}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setDeleteTarget(null);
+        }}
       >
         <AlertDialogContent className="max-w-sm">
           <AlertDialogHeader>
@@ -446,17 +484,28 @@ export function InstalledTab({
               Delete skill
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Remove <strong className="text-foreground">{deleteTarget?.name}</strong> from the central store and all agent links?
+              Remove <strong className="text-foreground">{deleteTarget?.name}</strong> from the
+              central store and all agent links?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={(e) => { e.preventDefault(); void handleDelete(); }}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDelete();
+              }}
               disabled={deleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleting ? <><Loader2 className="mr-1.5 h-3 w-3 animate-spin" />Deleting</> : 'Delete'}
+              {deleting ? (
+                <>
+                  <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+                  Deleting
+                </>
+              ) : (
+                'Delete'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
