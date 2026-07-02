@@ -1,32 +1,31 @@
-import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { RefreshCw, Settings2, ChevronDown } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronDown, RefreshCw, Settings2 } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  type AgentHeatmaps,
+  type FilterOptions,
   getAgentHeatmaps,
   getInsightFilterOptions,
   getInsightRankings,
-  type AgentHeatmaps,
-  type FilterOptions,
   type Rankings,
 } from '@/services/tauri/insights';
-import { type Range, type AgentKey, AGENT_CONFIG, RANGES, type ModelPricing } from './constants';
-import { loadPricing, savePricing } from './utils';
-import { LoadingState, ErrorState } from './States';
-import { PricingEditor } from './PricingEditor';
 import { AgentPanel } from './AgentPanel';
+import { AGENT_CONFIG, type AgentKey, type ModelPricing, RANGES, type Range } from './constants';
 import { OverviewTab } from './OverviewTab';
+import { PricingEditor } from './PricingEditor';
 import { RankingsTab } from './RankingsTab';
+import { ErrorState, LoadingState } from './States';
+import { loadPricing, savePricing } from './utils';
 
 export default function InsightsView() {
-
   const [data, setData] = useState<AgentHeatmaps | null>(null);
   const [rankings, setRankings] = useState<Rankings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,32 +39,31 @@ export default function InsightsView() {
   const [selectedCwd, setSelectedCwd] = useState<string | null>(null);
 
   useEffect(() => {
-    getInsightFilterOptions().then(setFilterOptions).catch(() => { });
+    getInsightFilterOptions()
+      .then(setFilterOptions)
+      .catch(() => {});
   }, []);
 
-  const load = useCallback(
-    async (r: Range, cwd: string | null) => {
-      setLoading(true);
-      setError(null);
-      const filters = {
-        range: r === 'all' ? undefined : r,
-        cwd: cwd ?? undefined,
-      };
-      try {
-        const [heatmaps, ranks] = await Promise.all([
-          getAgentHeatmaps(filters),
-          getInsightRankings(filters),
-        ]);
-        setData(heatmaps);
-        setRankings(ranks);
-      } catch (e) {
-        setError(String(e));
-      } finally {
-        setLoading(false);
-      }
-    },
-    [],
-  );
+  const load = useCallback(async (r: Range, cwd: string | null) => {
+    setLoading(true);
+    setError(null);
+    const filters = {
+      range: r === 'all' ? undefined : r,
+      cwd: cwd ?? undefined,
+    };
+    try {
+      const [heatmaps, ranks] = await Promise.all([
+        getAgentHeatmaps(filters),
+        getInsightRankings(filters),
+      ]);
+      setData(heatmaps);
+      setRankings(ranks);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     void load(range, selectedCwd);
@@ -76,15 +74,12 @@ export default function InsightsView() {
     setPricing(p);
   }
 
-  const agentTabs = data
-    ? (Object.keys(AGENT_CONFIG) as AgentKey[]).filter(k => !!data[k])
-    : [];
+  const agentTabs = data ? (Object.keys(AGENT_CONFIG) as AgentKey[]).filter((k) => !!data[k]) : [];
 
   const hasFilters = !!selectedCwd;
 
   return (
     <div className="h-full overflow-auto bg-slate-950 p-5">
-
       {/* ── header ── */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
@@ -101,14 +96,15 @@ export default function InsightsView() {
 
         <div className="flex items-center gap-2">
           <div className="flex items-center rounded-lg border border-slate-800 bg-slate-900/60 p-0.5">
-            {RANGES.map(r => (
+            {RANGES.map((r) => (
               <button
                 key={r.value}
                 onClick={() => setRange(r.value)}
-                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${range === r.value
-                  ? 'bg-slate-700 text-slate-100 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-                  }`}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                  range === r.value
+                    ? 'bg-slate-700 text-slate-100 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
               >
                 {r.label}
               </button>
@@ -137,7 +133,6 @@ export default function InsightsView() {
         </div>
       </motion.div>
 
-
       {/* ── filter bar ── */}
       <motion.div
         initial={{ opacity: 0, y: -4 }}
@@ -145,16 +140,16 @@ export default function InsightsView() {
         transition={{ duration: 0.25, delay: 0.05 }}
         className="mb-4 flex flex-wrap items-center gap-2"
       >
-
         {/* cwd filter */}
         {filterOptions.cwds.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors ${selectedCwd
-                  ? 'border-violet-500/50 bg-violet-500/10 text-violet-300'
-                  : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200'
-                  }`}
+                className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                  selectedCwd
+                    ? 'border-violet-500/50 bg-violet-500/10 text-violet-300'
+                    : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200'
+                }`}
               >
                 <span className="max-w-[160px] truncate">
                   {selectedCwd ? selectedCwd.split('/').slice(-2).join('/') : 'CWD'}
@@ -172,11 +167,12 @@ export default function InsightsView() {
               >
                 All directories
               </DropdownMenuItem>
-              {filterOptions.cwds.map(c => (
+              {filterOptions.cwds.map((c) => (
                 <DropdownMenuItem
                   key={c}
-                  className={`font-mono focus:text-slate-100 ${selectedCwd === c ? 'text-violet-300' : 'text-slate-300'
-                    }`}
+                  className={`font-mono focus:text-slate-100 ${
+                    selectedCwd === c ? 'text-violet-300' : 'text-slate-300'
+                  }`}
                   onSelect={() => setSelectedCwd(selectedCwd === c ? null : c)}
                 >
                   {c}
@@ -214,10 +210,13 @@ export default function InsightsView() {
           >
             <Tabs defaultValue="overview" className="space-y-4">
               <TabsList className="bg-slate-900/60 border border-slate-800">
-                <TabsTrigger value="overview" className="text-xs text-slate-400 data-[state=active]:bg-slate-800 data-[state=active]:text-slate-100">
+                <TabsTrigger
+                  value="overview"
+                  className="text-xs text-slate-400 data-[state=active]:bg-slate-800 data-[state=active]:text-slate-100"
+                >
                   Overview
                 </TabsTrigger>
-                {agentTabs.map(k => (
+                {agentTabs.map((k) => (
                   <TabsTrigger
                     key={k}
                     value={k}
@@ -226,7 +225,10 @@ export default function InsightsView() {
                     {AGENT_CONFIG[k].icon}
                   </TabsTrigger>
                 ))}
-                <TabsTrigger value="rankings" className="text-xs text-slate-400 data-[state=active]:bg-slate-800 data-[state=active]:text-slate-100">
+                <TabsTrigger
+                  value="rankings"
+                  className="text-xs text-slate-400 data-[state=active]:bg-slate-800 data-[state=active]:text-slate-100"
+                >
                   Top Usage
                 </TabsTrigger>
               </TabsList>
@@ -235,17 +237,14 @@ export default function InsightsView() {
                 <OverviewTab heatmaps={data} range={range} pricing={pricing} />
               </TabsContent>
 
-              {agentTabs.map(k => (
+              {agentTabs.map((k) => (
                 <TabsContent key={k} value={k} className="mt-0 focus-visible:outline-none">
                   <AgentPanel agentKey={k} data={data[k]!} range={range} pricing={pricing} />
                 </TabsContent>
               ))}
 
               <TabsContent value="rankings" className="mt-0 focus-visible:outline-none">
-                {rankings
-                  ? <RankingsTab rankings={rankings} />
-                  : <LoadingState />
-                }
+                {rankings ? <RankingsTab rankings={rankings} /> : <LoadingState />}
               </TabsContent>
             </Tabs>
           </motion.div>

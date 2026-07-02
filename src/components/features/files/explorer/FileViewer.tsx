@@ -1,23 +1,23 @@
-import { useState, useEffect, useRef } from 'react';
 import type { UnlistenFn } from '@tauri-apps/api/event';
 import { listen } from '@tauri-apps/api/event';
-import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import { CodeEditor } from '../editor/CodeEditor';
+import { useEffect, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { useInputStore, useNoteStore } from '@/stores';
-import { getErrorMessage } from '@/utils/errorUtils';
-import { getFilename } from '@/utils/getFilename';
+import { isTauri } from '@/hooks/runtime';
 import {
   canonicalizePath,
   readFile,
   readPdfContent,
   readXlsxContent,
-  watchDirectory,
   unwatchDirectory,
+  watchDirectory,
   writeFile,
 } from '@/services';
-import { isTauri } from '@/hooks/runtime';
+import { useInputStore, useNoteStore } from '@/stores';
+import { getErrorMessage } from '@/utils/errorUtils';
+import { getFilename } from '@/utils/getFilename';
+import { CodeEditor } from '../editor/CodeEditor';
 
 interface FileViewerProps {
   filePath: string;
@@ -37,7 +37,7 @@ export function FileViewer({ filePath }: FileViewerProps) {
   const [fileTrigger, setFileTrigger] = useState(0);
   const { resolvedTheme } = useThemeContext();
   const { setInputValue } = useInputStore();
-  const { addNote } = useNoteStore()
+  const { addNote } = useNoteStore();
 
   const getFileExtension = (path: string) => {
     const base = getFilename(path);
@@ -138,10 +138,10 @@ export function FileViewer({ filePath }: FileViewerProps) {
   const displayContent = showFullContent
     ? content
     : (() => {
-      const lines = content.split('\n');
-      if (lines.length <= MAX_LINES) return content;
-      return lines.slice(0, MAX_LINES).join('\n');
-    })();
+        const lines = content.split('\n');
+        if (lines.length <= MAX_LINES) return content;
+        return lines.slice(0, MAX_LINES).join('\n');
+      })();
 
   // Watch parent directory of the open file so we reliably get fs_change events
   useEffect(() => {
@@ -155,14 +155,14 @@ export function FileViewer({ filePath }: FileViewerProps) {
     const start = async () => {
       try {
         await watchDirectory(parentDir);
-      } catch { }
+      } catch {}
     };
     const stopPrev = async () => {
       const prev = prevWatchedDirRef.current;
       if (prev && prev !== parentDir) {
         try {
           await unwatchDirectory(prev);
-        } catch { }
+        } catch {}
       }
     };
     start();
@@ -172,7 +172,7 @@ export function FileViewer({ filePath }: FileViewerProps) {
       (async () => {
         try {
           await unwatchDirectory(parentDir);
-        } catch { }
+        } catch {}
       })();
     };
   }, [filePath, isTauriRuntime]);

@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { ccGetInstalledSkills } from '@/services';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  useComposerPopover,
+  applyEditorReplacement,
   detectWordBoundaryTrigger,
   replaceAtTrigger,
-  applyEditorReplacement,
+  useComposerPopover,
 } from '@/components/common/useComposerPopover';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ccGetInstalledSkills } from '@/services';
 
 interface CCSkillsPopoverProps {
   input: string;
@@ -42,7 +42,7 @@ export function CCSkillsPopover({
       if (newValue !== null) applyEditorReplacement(newValue, setInput, editorRef);
       else editorRef.current?.focus();
     },
-    [input, setInput, editorRef],
+    [input, setInput, editorRef]
   );
 
   const { open, setOpen, filteredItems, selectedIndex, setSelectedIndex, itemRefs } =
@@ -91,7 +91,9 @@ export function CCSkillsPopover({
             filteredItems.map((skill, index) => (
               <Button
                 key={skill}
-                ref={(el) => { itemRefs.current[index] = el; }}
+                ref={(el) => {
+                  itemRefs.current[index] = el;
+                }}
                 variant={index === selectedIndex ? 'secondary' : 'ghost'}
                 className="w-full justify-start text-xs h-7 font-mono rounded-none"
                 onClick={() => handleSelect(skill)}

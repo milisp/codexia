@@ -1,4 +1,7 @@
+import type { RequestId, ThreadId } from '@/bindings';
 import type {
+  CommandExecutionApprovalDecision,
+  FileChangeApprovalDecision,
   GetAccountParams,
   GetAccountRateLimitsResponse,
   GetAccountResponse,
@@ -24,24 +27,9 @@ import type {
   TurnSteerParams,
   TurnSteerResponse,
 } from '@/bindings/v2';
-import type {
-  CommandExecutionApprovalDecision,
-  FileChangeApprovalDecision,
-} from '@/bindings/v2';
-import type {
-  RequestId,
-  ThreadId,
-} from '@/bindings';
+import type { EnvStatusItem, FrontendProviderModels } from '@/components/codex/composer/ModelList';
+import { getJson, invokeTauri, isDesktopTauri, postJson, postNoContent, toast } from './shared';
 
-import {
-  getJson,
-  invokeTauri,
-  isDesktopTauri,
-  postJson,
-  postNoContent,
-  toast,
-} from './shared';
-import type { FrontendProviderModels, EnvStatusItem } from '@/components/codex/composer/ModelList';
 export * from './mcp';
 export * from './skills';
 
@@ -133,7 +121,7 @@ export async function deleteThread(threadId: ThreadId) {
 }
 
 export async function renameThread(threadId: ThreadId, name: string) {
-  const params = { threadId, name }
+  const params = { threadId, name };
   if (isDesktopTauri()) {
     return await invokeTauri('rename_thread', { params });
   }
@@ -190,10 +178,7 @@ export async function getAccountRateLimits() {
   return await getJson<GetAccountRateLimitsResponse>('/api/codex/account/rate-limits');
 }
 
-export async function respondToRequestUserInput(
-  requestId: RequestId,
-  response: unknown
-) {
+export async function respondToRequestUserInput(requestId: RequestId, response: unknown) {
   if (isDesktopTauri()) {
     return await invokeTauri('respond_to_request_user_input', { requestId, response });
   }
@@ -261,5 +246,5 @@ export async function setEnv(key: string, value: string) {
   if (isDesktopTauri()) {
     return await invokeTauri('set_env', { key, value });
   }
-  return null
+  return null;
 }

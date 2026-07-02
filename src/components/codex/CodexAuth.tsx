@@ -1,5 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
 import { listen } from '@tauri-apps/api/event';
+import { open } from '@tauri-apps/plugin-shell';
+import { useCallback, useEffect, useState } from 'react';
+import type { ServerNotification } from '@/bindings/ServerNotification';
+import type { AccountLoginCompletedNotification, GetAccountResponse } from '@/bindings/v2';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,12 +13,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import type { AccountLoginCompletedNotification } from '@/bindings/v2';
-import { GetAccountResponse } from '@/bindings/v2';
-import type { ServerNotification } from '@/bindings/ServerNotification';
-import { open } from '@tauri-apps/plugin-shell';
-import { getAccountWithParams, loginAccount } from '@/services';
 import { isTauri } from '@/hooks/runtime';
+import { getAccountWithParams, loginAccount } from '@/services';
 
 const LOGIN_LABEL = 'Start ChatGPT login';
 
@@ -95,17 +94,13 @@ export function CodexAuth() {
     <Card className="border border-border/50">
       <CardHeader>
         <CardTitle>Codex auth</CardTitle>
-        <CardDescription>
-          .
-        </CardDescription>
+        <CardDescription>.</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-3 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <span>requires_openai_auth:</span>
-          <Badge>
-            {account?.requiresOpenaiAuth ? 'true' : 'false'}
-          </Badge>
+          <Badge>{account?.requiresOpenaiAuth ? 'true' : 'false'}</Badge>
         </div>
         <div>
           <span className="font-semibold text-foreground">Account type:</span> {accountType}

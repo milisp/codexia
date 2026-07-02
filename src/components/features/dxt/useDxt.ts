@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { z } from 'zod';
-import { DxtManifestSchema } from './schemas';
+import type { z } from 'zod';
 import {
   checkManifestsExist,
   downloadAndExtractManifests,
   loadManifests as loadDxtManifests,
 } from '@/services';
+import { DxtManifestSchema } from './schemas';
 
 // Utility to normalize manifest data
 function normalizeManifest(obj: any, index: number) {

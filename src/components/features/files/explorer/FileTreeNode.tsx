@@ -1,11 +1,10 @@
-import { FileIcon, defaultStyles } from 'react-file-icon';
 import { ChevronDown, ChevronRight, FileText, FolderPlus, Plus } from 'lucide-react';
-import { useLayoutStore, useWorkspaceStore } from '@/stores';
-import { useInputStore } from '@/stores';
-import { isTauri } from '@/hooks/runtime';
+import { defaultStyles, FileIcon } from 'react-file-icon';
 import { Button } from '@/components/ui/button';
-import { getExtension, isLatexFile, isPdfFile, isOfficeFile } from './utils';
+import { isTauri } from '@/hooks/runtime';
+import { useInputStore, useLayoutStore, useWorkspaceStore } from '@/stores';
 import type { FileNode } from './types';
+import { getExtension, isLatexFile, isOfficeFile, isPdfFile } from './utils';
 
 type FileTreeNodeProps = {
   node: FileNode;
@@ -145,7 +144,10 @@ export function FileTreeNode({
             variant="ghost"
             size="icon"
             className="ml-auto h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover/file-row:opacity-100"
-            onClick={(e) => { e.stopPropagation(); addProject(node.path); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              addProject(node.path);
+            }}
             title="Add as project"
             aria-label="Add as project"
           >
@@ -159,7 +161,8 @@ export function FileTreeNode({
       </div>
 
       {/* Recursive children */}
-      {isDir && isExpanded &&
+      {isDir &&
+        isExpanded &&
         node.children?.map((child) => (
           <FileTreeNode
             key={child.path}

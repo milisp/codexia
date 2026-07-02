@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { SandboxMode, AskForApproval } from '@/bindings/v2';
 import type { ReasoningEffort } from '@/bindings';
-import { Provider } from '@/stores/settings';
+import type { AskForApproval, SandboxMode } from '@/bindings/v2';
+import type { Provider } from '@/stores/settings';
 
 export type Personality = 'friendly' | 'pragmatic';
 export type ModeKind = 'default' | 'plan';

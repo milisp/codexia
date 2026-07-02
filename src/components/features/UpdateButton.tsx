@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
-import { isDesktopTauri } from "@/hooks/runtime";
-import { Download } from "lucide-react";
-import { useUpdater } from "@/hooks/useUpdater";
+import { Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { isDesktopTauri } from '@/hooks/runtime';
+import { useUpdater } from '@/hooks/useUpdater';
 
 export function UpdateButton() {
   const { hasUpdate, startUpdate } = useUpdater({ enabled: !import.meta.env.DEV });
@@ -11,7 +11,7 @@ export function UpdateButton() {
   }
 
   if (import.meta.env.DEV) {
-    return null
+    return null;
   }
 
   if (!hasUpdate) {
@@ -19,10 +19,7 @@ export function UpdateButton() {
   }
 
   return (
-    <Button
-      size="icon-sm"
-      onClick={() => void startUpdate()}
-    >
+    <Button size="icon-sm" onClick={() => void startUpdate()}>
       <Download className="h-4 w-4" />
     </Button>
   );

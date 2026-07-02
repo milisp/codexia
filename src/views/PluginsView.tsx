@@ -1,6 +1,25 @@
+import {
+  ArrowLeft,
+  Blocks,
+  MoreHorizontal,
+  Package2,
+  Plus,
+  RotateCcw,
+  Settings,
+} from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { AgentSwitcher } from '@/components/agent';
+import CCMcpView from '@/components/cc/mcp/CCMcpView';
+import { McpConfigScopeSelector } from '@/components/cc/mcp/McpConfigScopeSelector';
+import DxtView from '@/components/features/dxt/DxtView';
+import { CodexMcpView } from '@/components/features/mcp/CodexMcpView';
+import { McpAddPanel } from '@/components/features/mcp/McpAddPanel';
+import { Clone } from '@/components/features/skills/Clone';
+import { InstalledTab } from '@/components/features/skills/InstalledTab';
+import SkillsViewContent from '@/components/features/skills/SkillsView';
+import { RecommendToolsView } from '@/components/features/tools/RecommendToolsView';
 import { MCP } from '@/components/icons';
-import { ArrowLeft, Blocks, MoreHorizontal, Package2, Plus, RotateCcw, Settings } from 'lucide-react';
+import { ProjectSelector } from '@/components/project-selector';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -8,26 +27,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import DxtView from '@/components/features/dxt/DxtView';
-import { RecommendToolsView } from '@/components/features/tools/RecommendToolsView';
-import SkillsViewContent from '@/components/features/skills/SkillsView';
-import { Clone } from '@/components/features/skills/Clone';
-import { CodexMcpView } from '@/components/features/mcp/CodexMcpView';
-import CCMcpView from '@/components/cc/mcp/CCMcpView';
-import { InstalledTab } from '@/components/features/skills/InstalledTab';
-import { McpAddPanel } from '@/components/features/mcp/McpAddPanel';
-import { McpConfigScopeSelector } from '@/components/cc/mcp/McpConfigScopeSelector';
-import { useWorkspaceStore, useLayoutStore, usePluginStore } from '@/stores';
 import { useTrafficLightConfig } from '@/hooks';
-import {
-  type SkillGroupsConfig,
-  readSkillGroups,
-  writeSkillGroups,
-} from '@/services';
-import { ProjectSelector } from '@/components/project-selector';
-import { cn } from '@/lib/utils';
-import { AgentSwitcher } from '@/components/agent';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
+import { readSkillGroups, type SkillGroupsConfig, writeSkillGroups } from '@/services';
+import { useLayoutStore, usePluginStore, useWorkspaceStore } from '@/stores';
 
 type ActiveTab = 'MCP' | 'Skills' | 'Tools' | 'manage' | 'add';
 type ManageTab = 'Skills' | 'MCPs';
@@ -55,7 +59,13 @@ function TabSwitcher<T extends string>({
           onClick={() => onChange(t)}
           className={`h-7 ${active === t ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'}`}
         >
-          {t.startsWith('MCP') ? <MCP className="h-3.5 w-3.5" /> : t === 'Tools' ? <Blocks className="h-4 w-4" /> : <Package2 className="h-4 w-4" />}
+          {t.startsWith('MCP') ? (
+            <MCP className="h-3.5 w-3.5" />
+          ) : t === 'Tools' ? (
+            <Blocks className="h-4 w-4" />
+          ) : (
+            <Package2 className="h-4 w-4" />
+          )}
           {showLabel && ` ${t}`}
         </Button>
       ))}
@@ -75,12 +85,17 @@ export default function PluginsView() {
   const { selectedAgent } = useWorkspaceStore();
   const { isSidebarOpen } = useLayoutStore();
   const { needsTrafficLightOffset } = useTrafficLightConfig(isSidebarOpen);
-  const { skillScope: scope, setSkillScope: setScope, selectedDxt, setSelectedDxt } = usePluginStore();
+  const {
+    skillScope: scope,
+    setSkillScope: setScope,
+    selectedDxt,
+    setSelectedDxt,
+  } = usePluginStore();
 
   useEffect(() => {
     readSkillGroups()
       .then(setGroupsConfig)
-      .catch(() => { });
+      .catch(() => {});
   }, []);
 
   const saveGroups = useCallback(async (config: SkillGroupsConfig) => {
@@ -96,12 +111,18 @@ export default function PluginsView() {
 
   return (
     <div className="flex flex-col h-screen">
-      <div className={`flex items-center gap-1.5 p-2 ${needsTrafficLightOffset && 'pl-32'}`} data-tauri-drag-region>
-
+      <div
+        className={`flex items-center gap-1.5 p-2 ${needsTrafficLightOffset && 'pl-32'}`}
+        data-tauri-drag-region
+      >
         {/* Back button: shown in add tab or dxt detail */}
         {(tab === 'add' || (tab === 'MCP' && selectedDxt)) && (
-          <Button variant="ghost" size="icon" className="h-8 w-8"
-            onClick={() => tab === 'add' ? setTab('manage') : setSelectedDxt(null)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => (tab === 'add' ? setTab('manage') : setSelectedDxt(null))}
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
         )}
@@ -115,11 +136,24 @@ export default function PluginsView() {
         ) : (
           <>
             {tab !== 'add' && !selectedDxt && (
-              <TabSwitcher tabs={['Tools', 'Skills', 'MCP'] as const} active={tab as 'MCP' | 'Skills' | 'Tools'} onChange={(t) => { setTab(t); }} showLabel={!isMobile} />
+              <TabSwitcher
+                tabs={['Tools', 'Skills', 'MCP'] as const}
+                active={tab as 'MCP' | 'Skills' | 'Tools'}
+                onChange={(t) => {
+                  setTab(t);
+                }}
+                showLabel={!isMobile}
+              />
             )}
             {tab === 'add' && (
-              <TabSwitcher tabs={['MCP', 'Skill'] as const} active={addTab} onChange={setAddTab} showLabel={!isMobile} />
-            )}</>
+              <TabSwitcher
+                tabs={['MCP', 'Skill'] as const}
+                active={addTab}
+                onChange={setAddTab}
+                showLabel={!isMobile}
+              />
+            )}
+          </>
         )}
 
         <div className="flex-1" />
@@ -161,7 +195,13 @@ export default function PluginsView() {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setRefreshTrigger((k) => k + 1)}>
                   <RotateCcw className="h-3.5 w-3.5 mr-2" />
-                  {tab === 'MCP' ? 'Reload extensions' : tab === 'Skills' ? 'Refresh skills' : tab === 'Tools' ? 'Refresh tools' : 'Refresh'}
+                  {tab === 'MCP'
+                    ? 'Reload extensions'
+                    : tab === 'Skills'
+                      ? 'Refresh skills'
+                      : tab === 'Tools'
+                        ? 'Refresh tools'
+                        : 'Refresh'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -178,7 +218,11 @@ export default function PluginsView() {
         {tab === 'manage' && (
           <div className="flex flex-col h-full">
             <div className="flex items-center gap-0.5 rounded-lg bg-muted/50 p-0.5 mx-3 mt-2">
-              <TabSwitcher tabs={['MCPs', 'Skills'] as const} active={manageTab} onChange={setManageTab} />
+              <TabSwitcher
+                tabs={['MCPs', 'Skills'] as const}
+                active={manageTab}
+                onChange={setManageTab}
+              />
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto py-3">
               {manageTab === 'MCPs' ? (
@@ -205,10 +249,7 @@ export default function PluginsView() {
 
         {tab === 'add' && (
           <div className="flex-1 overflow-y-auto p-4">
-            {addTab === 'MCP'
-              ? <McpAddPanel onAdded={handleMcpAdded} />
-              : <Clone />
-            }
+            {addTab === 'MCP' ? <McpAddPanel onAdded={handleMcpAdded} /> : <Clone />}
           </div>
         )}
       </div>
@@ -226,7 +267,7 @@ export default function PluginsView() {
                 onClick={() => setScope(s as SkillScope)}
                 className={cn(
                   'h-6 px-2.5 text-[10px] uppercase tracking-wider',
-                  scope === s ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground',
+                  scope === s ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
                 )}
               >
                 {s}

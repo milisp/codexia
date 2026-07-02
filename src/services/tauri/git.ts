@@ -1,4 +1,10 @@
-import { invokeTauri, isDesktopTauri, postJson, postJsonWithOptions, postNoContent } from './shared';
+import {
+  invokeTauri,
+  isDesktopTauri,
+  postJson,
+  postJsonWithOptions,
+  postNoContent,
+} from './shared';
 
 export type GitStatusEntry = {
   path: string;
@@ -81,7 +87,7 @@ export async function isGitRepo(cwd: string): Promise<boolean> {
       await postJsonWithOptions<GitBranchInfoResponse>(
         '/api/git/branch-info',
         { cwd },
-        { suppressToast: true },
+        { suppressToast: true }
       );
     }
     return true;

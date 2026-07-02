@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { ServerNotification } from '@/bindings';
-import type { ThreadStatus, CommandExecutionStatus, Thread, ThreadTokenUsage } from '@/bindings/v2';
+import type { CommandExecutionStatus, Thread, ThreadStatus, ThreadTokenUsage } from '@/bindings/v2';
 import { codexService } from '@/services/codexService';
 
 /**
@@ -233,7 +233,11 @@ export const useCodexStore = create<CodexStore>((set, get) => ({
         // and no turn/completed has landed yet, mark it failed so the UI stops
         // showing "Working..." even if turn/completed never arrives.
         const existing = turnTimingMap[threadId];
-        if (existing && existing.turnId === event.params.turnId && existing.status === 'inProgress') {
+        if (
+          existing &&
+          existing.turnId === event.params.turnId &&
+          existing.status === 'inProgress'
+        ) {
           turnTimingMap = {
             ...turnTimingMap,
             [threadId]: {
@@ -253,7 +257,10 @@ export const useCodexStore = create<CodexStore>((set, get) => ({
           ...commandStatusMap,
           [event.params.item.id]: event.params.item.status,
         };
-      } else if (event.method === 'item/completed' && event.params.item?.type === 'commandExecution') {
+      } else if (
+        event.method === 'item/completed' &&
+        event.params.item?.type === 'commandExecution'
+      ) {
         commandStatusMap = {
           ...commandStatusMap,
           [event.params.item.id]: event.params.item.status,
@@ -347,7 +354,7 @@ export const useCodexStore = create<CodexStore>((set, get) => ({
         }
 
         // Small delay to prevent overwhelming the system
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
     } catch (error) {
       console.error('Error processing queued messages:', error);
@@ -364,8 +371,8 @@ export const useCodexStore = create<CodexStore>((set, get) => ({
   getCurrentThread: () => {
     const { currentThreadId, threads } = get();
     if (!currentThreadId) return null;
-    return threads.find(t => t.id === currentThreadId) || null;
+    return threads.find((t) => t.id === currentThreadId) || null;
   },
 }));
 
-export const useCurrentThread = () => useCodexStore(state => state.getCurrentThread());
+export const useCurrentThread = () => useCodexStore((state) => state.getCurrentThread());

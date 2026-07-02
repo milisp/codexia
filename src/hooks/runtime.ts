@@ -7,8 +7,7 @@ const _isTauri = () =>
   typeof window !== 'undefined' && ('__TAURI__' in window || '__TAURI_INTERNALS__' in window);
 
 const _uaIsPhone = () =>
-  typeof window !== 'undefined' &&
-  /iPhone|iPad|iPod|Android/.test(window.navigator.userAgent);
+  typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/.test(window.navigator.userAgent);
 
 const resolveApiBase = () => {
   if (typeof window === 'undefined') {
@@ -70,7 +69,8 @@ export const buildWsUrl = (path: string) => `${resolveWsBase()}${path}`;
 
 export const isTauri = () => _isTauri();
 
-export const isMacos = isTauri() && /Macintosh|MacIntel|MacPPC|Mac68K/.test(window.navigator.userAgent);
+export const isMacos =
+  isTauri() && /Macintosh|MacIntel|MacPPC|Mac68K/.test(window.navigator.userAgent);
 
 // Unreliable on real iOS devices (Tauri injection timing); use getIsPhone() instead.
 export const isPhone = isTauri() && _uaIsPhone();
@@ -92,7 +92,10 @@ let _isPhone: boolean | null = null;
 /** Reliable platform detection via plugin-os. Cached after first call. */
 export async function getIsPhone(): Promise<boolean> {
   if (_isPhone !== null) return _isPhone;
-  if (!isTauri()) { _isPhone = false; return false; }
+  if (!isTauri()) {
+    _isPhone = false;
+    return false;
+  }
   try {
     const t = await osType();
     _isPhone = t === 'ios' || t === 'android';

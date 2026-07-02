@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 
 const NARROW_THRESHOLD = 420;
 
@@ -10,7 +10,13 @@ const ComposerToolbarNarrowContext = createContext(false);
  * `useComposerToolbarNarrow()` to hide secondary labels (mode name, provider)
  * when the toolbar is too small to fit them comfortably.
  */
-export function ComposerToolbarProvider({ children, className }: { children: ReactNode; className?: string }) {
+export function ComposerToolbarProvider({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [isNarrow, setIsNarrow] = useState(false);
 

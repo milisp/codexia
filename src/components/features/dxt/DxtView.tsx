@@ -1,9 +1,9 @@
+import { Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { usePluginStore } from '@/stores';
 import { DxtCard } from './DxdCard';
 import DxtDetail from './DxtDetail';
-import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
 import { useDxt } from './useDxt';
-import { usePluginStore } from '@/stores';
 
 export default function DxtView({ refreshTrigger }: { refreshTrigger?: number } = {}) {
   const { dxtList, search, setSearch, loading, handleSearch } = useDxt(refreshTrigger);

@@ -1,26 +1,29 @@
-import { useRef, useEffect, useState, useMemo } from 'react';
+import { Check, RotateCcw, Square } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { renderEvent } from '@/components/codex/items';
+import {
+  useApprovalStore,
+  useCodexStore,
+  useRequestUserInputStore,
+} from '@/components/codex/stores';
+import { Button } from '@/components/ui/button';
+import { codexService } from '@/services/codexService';
 import {
   gitApplyWorktreeChanges,
-  gitRemoveWorktree,
   gitHasWorktreeChanges,
+  gitRemoveWorktree,
 } from '@/services/tauri/git';
-import { useCodexStore } from '@/components/codex/stores';
-import { useApprovalStore, useRequestUserInputStore } from '@/components/codex/stores';
-import { codexService } from '@/services/codexService';
-import { renderEvent } from '@/components/codex/items';
-import { Button } from '@/components/ui/button';
-import { Check, RotateCcw, Square } from 'lucide-react';
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { toast } from 'sonner';
 import { getFilename } from '@/utils/getFilename';
 import {
-  getCodexActiveTurnId,
-  getCodexTokens,
-  getCodexContextWindow,
-  fmtTokens,
   fmtElapsed,
+  fmtTokens,
+  getCodexActiveTurnId,
+  getCodexContextWindow,
+  getCodexTokens,
 } from './utils';
 
 // ─── ContextWindowBar ────────────────────────────────────────────────────────

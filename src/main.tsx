@@ -2,12 +2,12 @@ import React, { lazy, Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './App.css';
-import { ThemeProvider } from '@/contexts/ThemeContext';
 import { I18nextProvider } from 'react-i18next';
-import { i18n } from '@/lib/i18n';
-import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from 'sonner';
+import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { ThemeProvider } from '@/contexts/ThemeContext';
+import { i18n } from '@/lib/i18n';
 
 const AboutView = lazy(() => import('@/views/AboutView'));
 

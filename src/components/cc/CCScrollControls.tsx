@@ -1,6 +1,6 @@
-import React from 'react';
+import { ArrowDown, ArrowUp } from 'lucide-react';
+import type React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowUp, ArrowDown } from 'lucide-react';
 
 interface CCScrollControlsProps {
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;

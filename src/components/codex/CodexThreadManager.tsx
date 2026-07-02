@@ -1,18 +1,18 @@
+import { Loader2, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Trash2, Loader2 } from 'lucide-react';
-import { deleteFile, listThreads } from '@/services/tauri';
-import { codexService } from '@/services/codexService';
-import { useCodexStore, useThreadListStore } from '@/components/codex/stores';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { useLayoutStore, useAgentCenterStore } from '@/stores';
-import { formatThreadAge } from '@/utils/formatThreadAge';
-import { getFilename } from '@/utils/getFilename';
 import type { Thread, ThreadListParams } from '@/bindings/v2';
+import { useCodexStore, useThreadListStore } from '@/components/codex/stores';
+import { DeleteConfirmDialog, Toolbar } from '@/components/common/SessionManagerShared';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/components/ui/use-toast';
-import { Toolbar, DeleteConfirmDialog } from '@/components/common/SessionManagerShared';
+import { codexService } from '@/services/codexService';
+import { deleteFile, listThreads } from '@/services/tauri';
+import { useAgentCenterStore, useLayoutStore } from '@/stores';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { formatThreadAge } from '@/utils/formatThreadAge';
+import { getFilename } from '@/utils/getFilename';
 import { modelProviders } from './ThreadList';
 
 interface CodexThreadManagerProps {
@@ -74,7 +74,7 @@ export function CodexThreadManager({ onClose }: CodexThreadManagerProps) {
           archived: false,
           sortKey,
           cwd: scopeToCwd ? cwd : null,
-          useStateDbOnly: true
+          useStateDbOnly: true,
         };
         const response = await listThreads(params);
         setThreads((prev) => (append ? [...prev, ...response.data] : response.data));
@@ -87,7 +87,7 @@ export function CodexThreadManager({ onClose }: CodexThreadManagerProps) {
         append ? setLoadingMore(false) : setLoading(false);
       }
     },
-    [cwd, sortKey, scopeToCwd],
+    [cwd, sortKey, scopeToCwd]
   );
 
   // Reload from the first page whenever cwd scope or sort changes.
@@ -109,7 +109,7 @@ export function CodexThreadManager({ onClose }: CodexThreadManagerProps) {
           void fetchThreads(nextCursor, true);
         }
       },
-      { root: sentinel.closest('[data-radix-scroll-area-viewport]'), rootMargin: '80px' },
+      { root: sentinel.closest('[data-radix-scroll-area-viewport]'), rootMargin: '80px' }
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
@@ -119,9 +119,7 @@ export function CodexThreadManager({ onClose }: CodexThreadManagerProps) {
     const q = search.trim().toLowerCase();
     if (!q) return threads;
     return threads.filter(
-      (t) =>
-        (t.preview ?? '').toLowerCase().includes(q) ||
-        (t.cwd ?? '').toLowerCase().includes(q),
+      (t) => (t.preview ?? '').toLowerCase().includes(q) || (t.cwd ?? '').toLowerCase().includes(q)
     );
   }, [threads, search]);
 
@@ -146,7 +144,10 @@ export function CodexThreadManager({ onClose }: CodexThreadManagerProps) {
   const doDelete = async (items: Thread[]) => {
     let failed = 0;
     for (const item of items) {
-      if (!item.path) { failed++; continue; }
+      if (!item.path) {
+        failed++;
+        continue;
+      }
       try {
         await deleteFile(item.path);
         if (currentThreadId === item.id) {
@@ -210,7 +211,9 @@ export function CodexThreadManager({ onClose }: CodexThreadManagerProps) {
             Loading threads…
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-sm text-muted-foreground py-8 text-center animate-in fade-in duration-200">No threads found</div>
+          <div className="text-sm text-muted-foreground py-8 text-center animate-in fade-in duration-200">
+            No threads found
+          </div>
         ) : (
           filtered.map((thread) => (
             <div
@@ -257,7 +260,10 @@ export function CodexThreadManager({ onClose }: CodexThreadManagerProps) {
             it scrolls into view. Shows an inline spinner while fetching so
             new rows appear right where the user is looking. */}
         {!loading && nextCursor && (
-          <div ref={sentinelRef} className="flex items-center justify-center gap-2 py-3 text-xs text-muted-foreground">
+          <div
+            ref={sentinelRef}
+            className="flex items-center justify-center gap-2 py-3 text-xs text-muted-foreground"
+          >
             {loadingMore && (
               <>
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />

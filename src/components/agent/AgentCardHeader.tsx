@@ -36,6 +36,7 @@ export function AgentCardHeader({
       {onClose && (
         // Shows a status dot by default; reveals the X button on hover.
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onClose();

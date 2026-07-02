@@ -1,11 +1,11 @@
-import { Activity, Zap, DollarSign, Database, Cpu } from 'lucide-react';
-import { type Range, type AgentKey, AGENT_CONFIG, RANGES, type ModelPricing } from './constants';
-import { fmtTokens, fmtCost, estimateCost, pricingForModel } from './utils';
-import { StatCard } from './StatCard';
-import { ModelBadges } from './ModelBadges';
-import { ContributionHeatmap } from './ContributionHeatmap';
-import { ToolList } from './ToolList';
+import { Activity, Cpu, Database, DollarSign, Zap } from 'lucide-react';
 import type { HeatmapData } from '@/services/tauri/insights';
+import { ContributionHeatmap } from './ContributionHeatmap';
+import { AGENT_CONFIG, type AgentKey, type ModelPricing, RANGES, type Range } from './constants';
+import { ModelBadges } from './ModelBadges';
+import { StatCard } from './StatCard';
+import { ToolList } from './ToolList';
+import { estimateCost, fmtCost, fmtTokens, pricingForModel } from './utils';
 
 interface AgentPanelProps {
   agentKey: AgentKey;
@@ -16,21 +16,23 @@ interface AgentPanelProps {
 
 export function AgentPanel({ agentKey, data, range, pricing }: AgentPanelProps) {
   const { color } = AGENT_CONFIG[agentKey];
-  const sessions  = data.total_files;
-  const actDays   = data.data.filter(d => d.count > 0).length;
-  const cost      = estimateCost(data.token_stats, data.models, agentKey, pricing);
-  const rangeLabel = range === 'all' ? 'All time' : `Last ${RANGES.find(r => r.value === range)?.label}`;
+  const sessions = data.total_files;
+  const actDays = data.data.filter((d) => d.count > 0).length;
+  const cost = estimateCost(data.token_stats, data.models, agentKey, pricing);
+  const rangeLabel =
+    range === 'all' ? 'All time' : `Last ${RANGES.find((r) => r.value === range)?.label}`;
 
   const p = pricingForModel(data.models[0], agentKey, pricing);
   const cacheSavings = ((p.input - p.cache_read) / 1_000_000) * data.token_stats.cache_read_tokens;
-  const cacheHitRate = data.token_stats.input_tokens > 0
-    ? Math.round((data.token_stats.cache_read_tokens / data.token_stats.input_tokens) * 100)
-    : 0;
-  const avgTokensPerSession = sessions > 0 ? Math.round(data.token_stats.total_tokens / sessions) : 0;
+  const cacheHitRate =
+    data.token_stats.input_tokens > 0
+      ? Math.round((data.token_stats.cache_read_tokens / data.token_stats.input_tokens) * 100)
+      : 0;
+  const avgTokensPerSession =
+    sessions > 0 ? Math.round(data.token_stats.total_tokens / sessions) : 0;
 
   return (
     <div className="space-y-4">
-
       {/* hero stats */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
@@ -75,10 +77,14 @@ export function AgentPanel({ agentKey, data, range, pricing }: AgentPanelProps) 
         <p className="mb-3 text-xs font-medium text-slate-400">Token breakdown</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: 'Input',          val: data.token_stats.input_tokens,          color: color },
-            { label: 'Output',         val: data.token_stats.output_tokens,         color: `${color}cc` },
-            { label: 'Cache Read',     val: data.token_stats.cache_read_tokens,     color: '#22d3ee' },
-            { label: 'Cache Created',  val: data.token_stats.cache_creation_tokens, color: '#22d3ee99' },
+            { label: 'Input', val: data.token_stats.input_tokens, color: color },
+            { label: 'Output', val: data.token_stats.output_tokens, color: `${color}cc` },
+            { label: 'Cache Read', val: data.token_stats.cache_read_tokens, color: '#22d3ee' },
+            {
+              label: 'Cache Created',
+              val: data.token_stats.cache_creation_tokens,
+              color: '#22d3ee99',
+            },
           ].map(({ label, val, color: c }) => (
             <div key={label} className="rounded-lg bg-slate-800/50 p-3">
               <p className="text-[10px] text-slate-500">{label}</p>
@@ -97,7 +103,9 @@ export function AgentPanel({ agentKey, data, range, pricing }: AgentPanelProps) 
             <Activity className="h-3.5 w-3.5" />
             Activity — {rangeLabel}
           </span>
-          <span>{actDays} active day{actDays !== 1 ? 's' : ''}</span>
+          <span>
+            {actDays} active day{actDays !== 1 ? 's' : ''}
+          </span>
         </div>
         <ContributionHeatmap data={data} color={color} range={range} />
       </div>

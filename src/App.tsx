@@ -3,17 +3,17 @@ import { useEffect, useState } from 'react';
 import './App.css';
 
 import { useCodexEvents } from '@/components/codex/hooks';
+import { QuitDialog } from '@/components/dialogs';
+import { AppLayout } from '@/components/layout';
+import { HistoryProjectsDialog } from '@/components/project-selector';
+import { StoreErrorBoundary } from '@/components/StoreErrorBoundary';
+import { AnalyticsConsentDialog } from '@/components/settings/AnalyticsConsentDialog';
+import { isTauri } from '@/hooks/runtime';
 import { useAppDeepLink } from '@/hooks/useAppDeepLink';
 import { useUrlParamThread } from '@/hooks/useUrlParamThread';
-import { AppLayout } from '@/components/layout';
-import { isTauri } from '@/hooks/runtime';
-import { HistoryProjectsDialog } from '@/components/project-selector';
-import { AnalyticsConsentDialog } from '@/components/settings/AnalyticsConsentDialog';
-import { QuitDialog } from '@/components/dialogs';
+import { initSettingsSync, loadSettings } from '@/lib/settings';
 import { initializeCodexAsync } from '@/services/tauri';
 import type { InitializeResponse } from './bindings';
-import { loadSettings, initSettingsSync } from '@/lib/settings';
-import { StoreErrorBoundary } from '@/components/StoreErrorBoundary';
 
 function AppShell() {
   const [quitDialogOpen, setQuitDialogOpen] = useState(false);

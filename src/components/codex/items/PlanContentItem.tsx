@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
 import { save } from '@tauri-apps/plugin-dialog';
-import { Button } from '@/components/ui/button';
-import { Markdown } from '@/components/Markdown';
 import { Check, ChevronDown, ChevronUp, Copy, Download } from 'lucide-react';
-import { writeFile } from '@/services';
+import { useEffect, useRef, useState } from 'react';
+import { Markdown } from '@/components/Markdown';
+import { Button } from '@/components/ui/button';
 import { isTauri } from '@/hooks/runtime';
+import { writeFile } from '@/services';
 
 type PlanContentItemProps = {
   text: string;
@@ -78,7 +78,11 @@ export const PlanContentItem = ({ text }: PlanContentItemProps) => {
               aria-label={copied ? 'Copied' : 'Copy plan'}
               title={copied ? 'Copied' : 'Copy plan'}
             >
-              {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+              {copied ? (
+                <Check className="h-3.5 w-3.5 text-green-500" />
+              ) : (
+                <Copy className="h-3.5 w-3.5" />
+              )}
             </Button>
             <Button
               variant="ghost"
@@ -87,7 +91,11 @@ export const PlanContentItem = ({ text }: PlanContentItemProps) => {
               aria-label={collapsed ? 'Expand plan content' : 'Collapse plan content'}
               title={collapsed ? 'Expand plan content' : 'Collapse plan content'}
             >
-              {collapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
+              {collapsed ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronUp className="h-3.5 w-3.5" />
+              )}
             </Button>
           </div>
         </div>

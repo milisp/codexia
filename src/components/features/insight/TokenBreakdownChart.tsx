@@ -1,8 +1,8 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Layers } from 'lucide-react';
-import { type Range, type AgentKey, AGENT_CONFIG, RANGES } from './constants';
-import { fmtTokens } from './utils';
+import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { AgentHeatmaps } from '@/services/tauri/insights';
+import { AGENT_CONFIG, type AgentKey, RANGES, type Range } from './constants';
+import { fmtTokens } from './utils';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -20,9 +20,15 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-export function TokenBreakdownChart({ heatmaps, range }: { heatmaps: AgentHeatmaps; range: Range }) {
-  const keys = (Object.keys(AGENT_CONFIG) as AgentKey[]).filter(k => !!heatmaps[k]);
-  const data = keys.map(k => {
+export function TokenBreakdownChart({
+  heatmaps,
+  range,
+}: {
+  heatmaps: AgentHeatmaps;
+  range: Range;
+}) {
+  const keys = (Object.keys(AGENT_CONFIG) as AgentKey[]).filter((k) => !!heatmaps[k]);
+  const data = keys.map((k) => {
     const h = heatmaps[k]!;
     const { label, color } = AGENT_CONFIG[k];
     const ts = h.token_stats;
@@ -38,13 +44,14 @@ export function TokenBreakdownChart({ heatmaps, range }: { heatmaps: AgentHeatma
 
   if (!data.length) return null;
 
-  const rangeLabel = range === 'all' ? 'All time' : `Last ${RANGES.find(r => r.value === range)?.label}`;
+  const rangeLabel =
+    range === 'all' ? 'All time' : `Last ${RANGES.find((r) => r.value === range)?.label}`;
 
   const LEGEND = [
-    { key: 'input',    label: 'Input',         opacity: 0.95 },
-    { key: 'output',   label: 'Output',        opacity: 0.6  },
-    { key: 'cached',   label: 'Cache Read',    opacity: 0.35 },
-    { key: 'creation', label: 'Cache Created', opacity: 0.2  },
+    { key: 'input', label: 'Input', opacity: 0.95 },
+    { key: 'output', label: 'Output', opacity: 0.6 },
+    { key: 'cached', label: 'Cache Read', opacity: 0.35 },
+    { key: 'creation', label: 'Cache Created', opacity: 0.2 },
   ];
 
   return (
@@ -73,23 +80,34 @@ export function TokenBreakdownChart({ heatmaps, range }: { heatmaps: AgentHeatma
           />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
           <Bar dataKey="input" stackId="a">
-            {data.map(d => <Cell key={d.name} fill={d.color} fillOpacity={0.95} />)}
+            {data.map((d) => (
+              <Cell key={d.name} fill={d.color} fillOpacity={0.95} />
+            ))}
           </Bar>
           <Bar dataKey="output" stackId="a">
-            {data.map(d => <Cell key={d.name} fill={d.color} fillOpacity={0.55} />)}
+            {data.map((d) => (
+              <Cell key={d.name} fill={d.color} fillOpacity={0.55} />
+            ))}
           </Bar>
           <Bar dataKey="cached" stackId="a">
-            {data.map(d => <Cell key={d.name} fill={d.color} fillOpacity={0.32} />)}
+            {data.map((d) => (
+              <Cell key={d.name} fill={d.color} fillOpacity={0.32} />
+            ))}
           </Bar>
           <Bar dataKey="creation" stackId="a" radius={[4, 4, 0, 0]}>
-            {data.map(d => <Cell key={d.name} fill={d.color} fillOpacity={0.18} />)}
+            {data.map((d) => (
+              <Cell key={d.name} fill={d.color} fillOpacity={0.18} />
+            ))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
       <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-slate-600">
-        {LEGEND.map(l => (
+        {LEGEND.map((l) => (
           <span key={l.key} className="flex items-center gap-1">
-            <span className="inline-block h-2 w-2 rounded-full bg-slate-400" style={{ opacity: l.opacity }} />
+            <span
+              className="inline-block h-2 w-2 rounded-full bg-slate-400"
+              style={{ opacity: l.opacity }}
+            />
             {l.label}
           </span>
         ))}

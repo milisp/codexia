@@ -1,11 +1,11 @@
 import { create } from 'zustand';
+import type { RequestId } from '@/bindings';
 import type {
   CommandExecutionApprovalDecision,
   CommandExecutionRequestApprovalParams,
   FileChangeApprovalDecision,
   FileChangeRequestApprovalParams,
 } from '@/bindings/v2';
-import { RequestId } from '@/bindings';
 import { respondToCommandExecutionApproval, respondToFileChangeApproval } from '@/services';
 
 export type ApprovalRequest =

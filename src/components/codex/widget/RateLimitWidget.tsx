@@ -1,16 +1,16 @@
+import { ChevronDown, ChevronRight, CircleGauge } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { ChevronDown, ChevronRight, CircleGauge } from "lucide-react"
+import type { RateLimitWindow } from '@/bindings/v2';
 import type { GetAccountRateLimitsResponse } from '@/bindings/v2/GetAccountRateLimitsResponse';
 import { getAccountRateLimits } from '@/services';
-import { RateLimitWindow } from '@/bindings/v2';
 
 function formatTimestamp(timestamp: number | null | undefined, locale: string = 'en'): string {
-  if (!timestamp) return '0'
+  if (!timestamp) return '0';
   const ms = timestamp.toString().length === 10 ? timestamp * 1000 : timestamp;
   const date = new Date(ms);
   const options: Intl.DateTimeFormatOptions = {
     month: locale.startsWith('zh') ? 'long' : 'short',
-    day: 'numeric'
+    day: 'numeric',
   };
   return date.toLocaleDateString(locale, options);
 }
@@ -27,10 +27,12 @@ export function useRateLimits() {
     try {
       const response = await getAccountRateLimits();
       setRateLimits(response);
-    } catch { }
+    } catch {}
   }, []);
 
-  useEffect(() => { fetchRateLimits(); }, [fetchRateLimits]);
+  useEffect(() => {
+    fetchRateLimits();
+  }, [fetchRateLimits]);
 
   return rateLimits;
 }
@@ -43,9 +45,11 @@ export function RateLimitTrigger({ isOpen }: { isOpen: boolean }) {
         <CircleGauge className="w-4 h-4" />
         <span>Usage remaining</span>
       </span>
-      {isOpen
-        ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
-        : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+      {isOpen ? (
+        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+      ) : (
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      )}
     </span>
   );
 }
@@ -75,11 +79,11 @@ export function RateLimitWidget() {
         role="button"
         tabIndex={0}
         className="flex w-full items-center justify-between font-medium text-foreground hover:opacity-80 transition-opacity cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-ring rounded"
-        onClick={() => setIsOpen(o => !o)}
+        onClick={() => setIsOpen((o) => !o)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            setIsOpen(o => !o);
+            setIsOpen((o) => !o);
           }
         }}
       >
@@ -97,4 +101,3 @@ export function RateLimitWidget() {
     </div>
   );
 }
-

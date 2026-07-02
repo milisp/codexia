@@ -1,14 +1,14 @@
+import { Activity, DollarSign, Sparkles, Zap } from 'lucide-react';
 import { useMemo } from 'react';
-import { Activity, Zap, DollarSign, Sparkles } from 'lucide-react';
-import { type Range, type AgentKey, AGENT_CONFIG, type ModelPricing } from './constants';
-import { fmtTokens, fmtCost, estimateCost, pricingForModel } from './utils';
-import { StatCard } from './StatCard';
-import { ContributionHeatmap } from './ContributionHeatmap';
-import { TokenBreakdownChart } from './TokenBreakdownChart';
-import { ToolList } from './ToolList';
+import type { AgentHeatmaps } from '@/services/tauri/insights';
 import { ActivityAreaChart } from './ActivityAreaChart';
 import { AgentShareChart } from './AgentShareChart';
-import type { AgentHeatmaps } from '@/services/tauri/insights';
+import { ContributionHeatmap } from './ContributionHeatmap';
+import { AGENT_CONFIG, type AgentKey, type ModelPricing, type Range } from './constants';
+import { StatCard } from './StatCard';
+import { TokenBreakdownChart } from './TokenBreakdownChart';
+import { ToolList } from './ToolList';
+import { estimateCost, fmtCost, fmtTokens, pricingForModel } from './utils';
 
 interface OverviewProps {
   heatmaps: AgentHeatmaps;
@@ -27,27 +27,32 @@ export function OverviewTab({ heatmaps, range, pricing }: OverviewProps) {
   }, 0);
 
   // money saved: (input_price – cache_read_price) * cache_read_tokens
-  const cacheSavings = useMemo(() =>
-    keys.reduce((s, k) => {
-      const h = heatmaps[k];
-      if (!h) return s;
-      const p = pricingForModel(h.models[0], k, pricing);
-      return s + ((p.input - p.cache_read) / 1_000_000) * h.token_stats.cache_read_tokens;
-    }, 0),
-    [heatmaps, pricing],
+  const cacheSavings = useMemo(
+    () =>
+      keys.reduce((s, k) => {
+        const h = heatmaps[k];
+        if (!h) return s;
+        const p = pricingForModel(h.models[0], k, pricing);
+        return s + ((p.input - p.cache_read) / 1_000_000) * h.token_stats.cache_read_tokens;
+      }, 0),
+    [heatmaps, pricing]
   );
 
   const totalActDays = useMemo(() => {
     const dates = new Set<string>();
-    for (const k of keys) for (const d of heatmaps[k]?.data ?? []) if (d.count > 0) dates.add(d.date);
+    for (const k of keys)
+      for (const d of heatmaps[k]?.data ?? []) if (d.count > 0) dates.add(d.date);
     return dates.size;
   }, [heatmaps]);
 
   const avgTokensPerSession = totalSessions > 0 ? Math.round(totalTokens / totalSessions) : 0;
 
-  const totalCacheRead = keys.reduce((s, k) => s + (heatmaps[k]?.token_stats.cache_read_tokens ?? 0), 0);
+  const totalCacheRead = keys.reduce(
+    (s, k) => s + (heatmaps[k]?.token_stats.cache_read_tokens ?? 0),
+    0
+  );
   const totalInput = keys.reduce((s, k) => s + (heatmaps[k]?.token_stats.input_tokens ?? 0), 0);
-  const cacheHitRate = totalInput > 0 ? Math.round(totalCacheRead / totalInput * 100) : 0;
+  const cacheHitRate = totalInput > 0 ? Math.round((totalCacheRead / totalInput) * 100) : 0;
 
   const mergedTools = useMemo(() => {
     const m = new Map<string, number>();
@@ -63,7 +68,6 @@ export function OverviewTab({ heatmaps, range, pricing }: OverviewProps) {
 
   return (
     <div className="space-y-4">
-
       {/* ── hero stats ── */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
@@ -102,7 +106,7 @@ export function OverviewTab({ heatmaps, range, pricing }: OverviewProps) {
           <Activity className="h-3.5 w-3.5" />
           Activity heatmaps
         </p>
-        {keys.map(k => {
+        {keys.map((k) => {
           const h = heatmaps[k];
           if (!h) return null;
           const { label, color, icon } = AGENT_CONFIG[k];
@@ -140,7 +144,6 @@ export function OverviewTab({ heatmaps, range, pricing }: OverviewProps) {
         <TokenBreakdownChart heatmaps={heatmaps} range={range} />
         <ToolList tools={mergedTools} color="#a78bfa" title="All Tools (merged)" />
       </div>
-
     </div>
   );
 }

@@ -1,8 +1,8 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react';
-import { getFilename } from '@/utils/getFilename';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { getFilename } from '@/utils/getFilename';
 
 export function ProjectsSettings() {
   const { projects, setProjects, cwd, setCwd } = useWorkspaceStore();

@@ -1,11 +1,15 @@
+import { Edit, Trash2 } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Trash2, Edit } from 'lucide-react';
-import { McpServerConfig } from '@/types';
-import { toast } from 'sonner';
-import { unifiedDisableMcpServer, unifiedEnableMcpServer, unifiedRemoveMcpServer } from '@/services';
+import {
+  unifiedDisableMcpServer,
+  unifiedEnableMcpServer,
+  unifiedRemoveMcpServer,
+} from '@/services';
+import type { McpServerConfig } from '@/types';
 
 export const getServerProtocol = (config: McpServerConfig): 'stdio' | 'http' | 'sse' =>
   config.type ?? 'stdio';

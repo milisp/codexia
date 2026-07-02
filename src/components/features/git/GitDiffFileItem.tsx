@@ -1,23 +1,28 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
-import { createTwoFilesPatch } from 'diff';
 import { DiffModeEnum, DiffView } from '@git-diff-view/react';
+import { createTwoFilesPatch } from 'diff';
 import { ChevronDown, ChevronRight, Minus, Plus, Undo2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useThemeContext } from '@/contexts/ThemeContext';
 import {
+  type GitFileDiffMetaResponse,
+  type GitFileDiffResponse,
+  type GitStatusEntry,
   gitFileDiff,
   gitFileDiffMeta,
   gitReverseFiles,
   gitStageFiles,
   gitUnstageFiles,
-  type GitFileDiffResponse,
-  type GitFileDiffMetaResponse,
-  type GitStatusEntry,
 } from '@/services/tauri';
-import { useThemeContext } from '@/contexts/ThemeContext';
-import { useWorkspaceStore, useLayoutStore } from '@/stores';
+import { useLayoutStore, useWorkspaceStore } from '@/stores';
 import type { DiffSection, DiffSource } from './types';
-import { LARGE_DIFF_THRESHOLD_BYTES, formatBytes, statusColorByText, statusTextForSection } from './utils';
+import {
+  formatBytes,
+  LARGE_DIFF_THRESHOLD_BYTES,
+  statusColorByText,
+  statusTextForSection,
+} from './utils';
 
 interface GitDiffFileItemProps {
   cwd: string;
@@ -62,7 +67,12 @@ export function GitDiffFileItem({
   const prevSectionRef = useRef(section);
   const prevRefreshKeyRef = useRef(refreshKey);
 
-  if (expanded !== prevExpandedRef.current || entry.path !== prevPathRef.current || section !== prevSectionRef.current || refreshKey !== prevRefreshKeyRef.current) {
+  if (
+    expanded !== prevExpandedRef.current ||
+    entry.path !== prevPathRef.current ||
+    section !== prevSectionRef.current ||
+    refreshKey !== prevRefreshKeyRef.current
+  ) {
     prevExpandedRef.current = expanded;
     prevPathRef.current = entry.path;
     prevSectionRef.current = section;
@@ -188,7 +198,9 @@ export function GitDiffFileItem({
   const isLarge = diffMeta ? diffMeta.total_bytes > LARGE_DIFF_THRESHOLD_BYTES : false;
 
   return (
-    <div className={`border-b border-white/10 ${isSelected ? 'ring-1 ring-inset ring-primary/40' : ''}`}>
+    <div
+      className={`border-b border-white/10 ${isSelected ? 'ring-1 ring-inset ring-primary/40' : ''}`}
+    >
       {/* File header */}
       <div
         className={`flex items-center gap-1.5 px-2 py-1.5 text-xs ${
@@ -234,7 +246,6 @@ export function GitDiffFileItem({
         {diffSource === 'latest-turn' && (
           <span className="text-[10px] text-muted-foreground/50 shrink-0">latest-turn</span>
         )}
-
 
         <Button
           variant="ghost"

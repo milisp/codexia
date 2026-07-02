@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { useSettingsStore } from '@/stores/settings';
 import { initPosthog, posthog } from '@/lib/posthog';
+import { useSettingsStore } from '@/stores/settings';
 
 export function PrivacySettings() {
   const { analyticsEnabled, setAnalyticsEnabled } = useSettingsStore();
@@ -29,10 +29,7 @@ export function PrivacySettings() {
                 Help improve Codexia by sending anonymous usage data.
               </div>
             </div>
-            <Switch
-              checked={analyticsEnabled}
-              onCheckedChange={handleAnalyticsChange}
-            />
+            <Switch checked={analyticsEnabled} onCheckedChange={handleAnalyticsChange} />
           </div>
         </CardContent>
       </Card>

@@ -2,7 +2,8 @@ import posthog from 'posthog-js';
 import { v4 as uuidv4 } from 'uuid';
 
 const key = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
-const host = (import.meta.env.VITE_POSTHOG_HOST as string | undefined) ?? 'https://us.i.posthog.com';
+const host =
+  (import.meta.env.VITE_POSTHOG_HOST as string | undefined) ?? 'https://us.i.posthog.com';
 
 let initialized = false;
 

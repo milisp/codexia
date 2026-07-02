@@ -1,10 +1,10 @@
+import { Github, Monitor, Moon, Sun, Twitter } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sun, Moon, Monitor, Github, Twitter } from 'lucide-react';
-import { useThemeStore, type Theme, type Accent } from '@/stores/settings';
-import { LanguageSelector } from './LanguageSelector';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
+import { type Accent, type Theme, useThemeStore } from '@/stores/settings';
+import { LanguageSelector } from './LanguageSelector';
 
 const ACCENT_OPTIONS: Array<{ value: Accent; label: string; colorClass: string }> = [
   { value: 'black', label: 'Noir', colorClass: 'bg-slate-800' },
@@ -27,7 +27,8 @@ export function GeneralSettings() {
   const { t } = useTranslation('settings');
 
   // Shared Tailwind classes from shadcn/ui Button (variant: default, size: sm)
-  const buttonClassName = 'inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-3';
+  const buttonClassName =
+    'inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-3';
 
   return (
     <div className="space-y-6">
@@ -38,9 +39,7 @@ export function GeneralSettings() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <div className="text-sm font-medium">{t('appearance')}</div>
-                <div className="text-xs text-muted-foreground">
-                  {t('appearanceDescription')}
-                </div>
+                <div className="text-xs text-muted-foreground">{t('appearanceDescription')}</div>
               </div>
               <Tabs value={theme} onValueChange={handleThemeChange}>
                 <TabsList className="h-8">
@@ -63,9 +62,7 @@ export function GeneralSettings() {
             <div className="space-y-2">
               <div className="space-y-0.5">
                 <div className="text-sm font-medium">{t('accentColor')}</div>
-                <div className="text-xs text-muted-foreground">
-                  {t('accentColorDescription')}
-                </div>
+                <div className="text-xs text-muted-foreground">{t('accentColorDescription')}</div>
               </div>
               <div className="flex flex-wrap gap-2">
                 {ACCENT_OPTIONS.map(({ value, label, colorClass }) => {

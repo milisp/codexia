@@ -1,20 +1,20 @@
-import { ChevronsUpDown, Settings, Search } from 'lucide-react';
+import { ChevronsUpDown, Search, Settings } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { ReasoningEffort } from '@/bindings';
+import { useCodexStore, useConfigStore } from '@/components/codex/stores';
+import { ProviderIcons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import type { ReasoningEffort } from '@/bindings';
-import { useCallback, useEffect, useState, useMemo } from 'react';
-import { useConfigStore, useCodexStore } from '@/components/codex/stores';
+import { cn } from '@/lib/utils';
 import { codexService } from '@/services/codexService';
 import type { Provider } from '@/stores/settings';
-import { ModelList } from './ModelList';
 import { useModels } from '../hooks/useModels';
-import { Input } from '@/components/ui/input';
-import { EnvKeysDialog } from './EnvKeysDialog';
-import { ProviderIcons } from '@/components/icons';
-import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
 import { useComposerToolbarNarrow } from './ComposerToolbarContext';
+import { EnvKeysDialog } from './EnvKeysDialog';
+import { ModelList } from './ModelList';
 
 const GENERIC_REASONING_OPTIONS: ReasoningEffort[] = ['none', 'low', 'medium', 'high', 'xhigh'];
 
@@ -57,25 +57,36 @@ function BaseModelSelector({
         if (selected && onReasoningEffortChange) {
           onReasoningEffortChange(selected.defaultReasoningEffort);
         }
-      } else if (onReasoningEffortChange && (!reasoningEffort || !GENERIC_REASONING_OPTIONS.includes(reasoningEffort))) {
+      } else if (
+        onReasoningEffortChange &&
+        (!reasoningEffort || !GENERIC_REASONING_OPTIONS.includes(reasoningEffort))
+      ) {
         onReasoningEffortChange('medium');
       }
 
       setOpen(false);
       onClose?.();
     },
-    [onValueChange, onProviderChange, provider, openAiModels, onReasoningEffortChange, reasoningEffort],
+    [
+      onValueChange,
+      onProviderChange,
+      provider,
+      openAiModels,
+      onReasoningEffortChange,
+      reasoningEffort,
+    ]
   );
 
   const currentItems = providerItems(provider);
   const activeItem = currentItems.find((m) => m.id === value);
   const activeLabel = activeItem?.label || value || 'Select model';
 
-  const selectedOpenAiModel = provider === 'openai' ? openAiModels.find((m) => m.id === value) : undefined;
+  const selectedOpenAiModel =
+    provider === 'openai' ? openAiModels.find((m) => m.id === value) : undefined;
 
   const availableOptions = useMemo(() => {
     if (provider === 'openai') {
-      return selectedOpenAiModel?.supportedReasoningEfforts.map(o => o.reasoningEffort) ?? [];
+      return selectedOpenAiModel?.supportedReasoningEfforts.map((o) => o.reasoningEffort) ?? [];
     }
     return GENERIC_REASONING_OPTIONS;
   }, [provider, selectedOpenAiModel]);
@@ -89,8 +100,7 @@ function BaseModelSelector({
         const items = providerItems(p);
         const filteredItems = items.filter(
           (item) =>
-            item.label.toLowerCase().includes(query) ||
-            item.id.toLowerCase().includes(query)
+            item.label.toLowerCase().includes(query) || item.id.toLowerCase().includes(query)
         );
         return { provider: p, items: filteredItems };
       })
@@ -99,7 +109,13 @@ function BaseModelSelector({
 
   return (
     <div className="flex items-center">
-      <Popover open={open} onOpenChange={(io) => { setOpen(io); if (!io) setSearchQuery(''); }}>
+      <Popover
+        open={open}
+        onOpenChange={(io) => {
+          setOpen(io);
+          if (!io) setSearchQuery('');
+        }}
+      >
         <PopoverTrigger asChild>
           <Button
             variant="ghost"
@@ -108,7 +124,11 @@ function BaseModelSelector({
             disabled={disabled}
           >
             <div className="flex items-center gap-1.5 text-xs text-foreground">
-              {provider !== 'openai' && !isNarrow && <span className="font-semibold tracking-wider text-muted-foreground">{provider}</span>}
+              {provider !== 'openai' && !isNarrow && (
+                <span className="font-semibold tracking-wider text-muted-foreground">
+                  {provider}
+                </span>
+              )}
               <span className="font-medium max-w-[120px] truncate">{activeLabel}</span>
               {reasoningEffort !== undefined && reasoningEffort !== 'none' && (
                 <span className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono capitalize text-muted-foreground border">
@@ -131,7 +151,12 @@ function BaseModelSelector({
                 className="h-7 pl-7 text-xs focus-visible:ring-1"
               />
             </div>
-            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setEnvKeysOpen(true)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 shrink-0"
+              onClick={() => setEnvKeysOpen(true)}
+            >
               <Settings className="h-4 w-4" />
             </Button>
           </PopoverTitle>
@@ -157,7 +182,12 @@ function BaseModelSelector({
           </div>
 
           {reasoningEffort !== undefined && onReasoningEffortChange && (
-            <div className={cn("pt-2 border-t space-y-1.5", !canSelectReasoning && "opacity-40 pointer-events-none")}>
+            <div
+              className={cn(
+                'pt-2 border-t space-y-1.5',
+                !canSelectReasoning && 'opacity-40 pointer-events-none'
+              )}
+            >
               <div className="flex justify-between items-center px-1">
                 <span className="text-[10px] font-bold text-muted-foreground/70 tracking-wider">
                   Reasoning Effort
@@ -171,7 +201,9 @@ function BaseModelSelector({
                 <div className="flex w-full gap-0.5 bg-muted p-0.5 rounded-md border border-input/50">
                   {availableOptions.map((option) => {
                     const isSelected = reasoningEffort === option;
-                    const openAiOpt = selectedOpenAiModel?.supportedReasoningEfforts.find(o => o.reasoningEffort === option);
+                    const openAiOpt = selectedOpenAiModel?.supportedReasoningEfforts.find(
+                      (o) => o.reasoningEffort === option
+                    );
                     const description = provider === 'openai' ? openAiOpt?.description : undefined;
 
                     const buttonContent = (
@@ -179,12 +211,16 @@ function BaseModelSelector({
                         key={option}
                         type="button"
                         disabled={!canSelectReasoning}
-                        onClick={() => { onReasoningEffortChange(option); setOpen(false); onClose?.(); }}
+                        onClick={() => {
+                          onReasoningEffortChange(option);
+                          setOpen(false);
+                          onClose?.();
+                        }}
                         className={cn(
-                          "flex-1 h-6 rounded text-[11px] font-medium capitalize transition-all",
+                          'flex-1 h-6 rounded text-[11px] font-medium capitalize transition-all',
                           isSelected
-                            ? "bg-background text-foreground shadow-sm border border-input/30"
-                            : "text-muted-foreground hover:bg-background/40 hover:text-foreground"
+                            ? 'bg-background text-foreground shadow-sm border border-input/30'
+                            : 'text-muted-foreground hover:bg-background/40 hover:text-foreground'
                         )}
                       >
                         {option}
@@ -290,7 +326,6 @@ export function CodexModelSelector({
   onReasoningEffortChange,
   disabled = false,
 }: CodexModelSelectorProps) {
-
   return (
     <BaseModelSelector
       provider={provider}

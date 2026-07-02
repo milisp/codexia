@@ -1,12 +1,11 @@
+import { open } from '@tauri-apps/plugin-dialog';
+import { Image as ImageIcon, Plus } from 'lucide-react';
 import { useState } from 'react';
+import { SelectFilesMenuItem } from '@/components/codex/composer/AttachmentSelector';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus } from 'lucide-react';
-import { useInputStore } from '@/stores/useInputStore';
-import { SelectFilesMenuItem } from '@/components/codex/composer/AttachmentSelector';
-import { open } from '@tauri-apps/plugin-dialog';
-import { Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useInputStore } from '@/stores/useInputStore';
 
 interface CCAttachmentButtonProps {
   onImagesSelected?: (paths: string[]) => void;
@@ -62,7 +61,9 @@ export function CCAttachmentButton({ onImagesSelected }: CCAttachmentButtonProps
         <div className="flex flex-col gap-1">
           <Button
             variant="ghost"
-            className={cn('justify-start gap-2 px-2 h-8 w-full text-xs hover:bg-blue-500 hover:text-white transition-colors')}
+            className={cn(
+              'justify-start gap-2 px-2 h-8 w-full text-xs hover:bg-blue-500 hover:text-white transition-colors'
+            )}
             onClick={handleSelectImages}
           >
             <ImageIcon className="w-4 h-4" />

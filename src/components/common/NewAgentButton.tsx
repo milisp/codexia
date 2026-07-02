@@ -1,12 +1,11 @@
-import { useCallback, useEffect } from 'react';
 import { SquarePen } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { useAgentCenterStore } from '@/stores';
-import { useLayoutStore } from '@/stores';
-import { useCCSessionManager } from '@/hooks/useCCSessionManager';
-import { useThreadList } from '@/components/codex/hooks';
+import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useThreadList } from '@/components/codex/hooks';
+import { Button } from '@/components/ui/button';
+import { useCCSessionManager } from '@/hooks/useCCSessionManager';
+import { useAgentCenterStore, useLayoutStore } from '@/stores';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
 const focusCCInput = () => window.dispatchEvent(new Event('cc-input-focus-request'));
 
@@ -15,7 +14,7 @@ type Props = {
 };
 
 export function NewAgentButton({ showLabel = false }: Props) {
-  const { t } = useTranslation('sidebar')
+  const { t } = useTranslation('sidebar');
   const { selectedAgent, cwd, setCwd } = useWorkspaceStore();
   const { setCurrentAgentCardId } = useAgentCenterStore();
   const { view, setView, setActiveSidebarTab } = useLayoutStore();
@@ -36,7 +35,16 @@ export function NewAgentButton({ showLabel = false }: Props) {
       }
       await handleNewThread();
     },
-    [cwd, handleNewSession, handleNewThread, selectedAgent, setActiveSidebarTab, setCwd, setCurrentAgentCardId, setView],
+    [
+      cwd,
+      handleNewSession,
+      handleNewThread,
+      selectedAgent,
+      setActiveSidebarTab,
+      setCwd,
+      setCurrentAgentCardId,
+      setView,
+    ]
   );
 
   // Keyboard shortcut: Cmd/Ctrl+N → new thread / session
@@ -70,7 +78,7 @@ export function NewAgentButton({ showLabel = false }: Props) {
   return (
     <Button
       onClick={() => void handleCreateNew()}
-      size={showLabel ? "default" : "icon"}
+      size={showLabel ? 'default' : 'icon'}
       variant="ghost"
       className={`group ${showLabel ? 'justify-start' : ''} relative flex items-center gap-2`}
       title={`${t('newChat')} (⌘N)`}
@@ -79,12 +87,9 @@ export function NewAgentButton({ showLabel = false }: Props) {
       {showLabel && (
         <div className="flex items-center justify-between w-full">
           <span>{t('newChat')}</span>
-          <span className="hidden group-hover:inline text-xs text-muted-foreground ml-2">
-            ⌘N
-          </span>
+          <span className="hidden group-hover:inline text-xs text-muted-foreground ml-2">⌘N</span>
         </div>
       )}
     </Button>
   );
 }
-

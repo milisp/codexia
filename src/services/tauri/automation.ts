@@ -1,4 +1,4 @@
-import { Provider } from '@/stores/settings';
+import type { Provider } from '@/stores/settings';
 import { invokeTauri, isDesktopTauri, postJson, postNoContent } from './shared';
 
 export type AutomationScheduleMode = 'daily' | 'interval';

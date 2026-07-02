@@ -1,19 +1,14 @@
+import { X } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
 import { useSettingsStore } from '@/stores/settings';
 
 export function ExplorerSettings() {
-  const {
-    hiddenNames,
-    addHiddenName,
-    removeHiddenName,
-    resetHiddenNames,
-  } = useSettingsStore();
+  const { hiddenNames, addHiddenName, removeHiddenName, resetHiddenNames } = useSettingsStore();
   const [draftHiddenNames, setDraftHiddenNames] = useState('');
   const hasHiddenNames = hiddenNames.length > 0;
   const placeholder = useMemo(() => hiddenNames.join(', '), [hiddenNames]);

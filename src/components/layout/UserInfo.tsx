@@ -1,12 +1,12 @@
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
 import { User } from 'lucide-react';
-import { useLayoutStore } from '@/stores';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useLayoutStore } from '@/stores';
 
 export function UserInfo() {
   const { setView } = useLayoutStore();
-  const { t } = useTranslation("sidebar");
+  const { t } = useTranslation('sidebar');
 
   const handleOpenSettings = () => {
     setView('settings');

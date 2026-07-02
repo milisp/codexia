@@ -1,9 +1,9 @@
-import type { KeyboardEvent, MouseEvent } from 'react';
 import { MessageSquarePlus, Star } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import type { KeyboardEvent, MouseEvent } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { NoteSummary } from '@/hooks/useNotes';
+import type { NoteSummary } from '@/hooks/useNotes';
 
 type NoteListItemProps = {
   note: NoteSummary;

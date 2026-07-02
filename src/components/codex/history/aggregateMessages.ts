@@ -1,4 +1,4 @@
-import { RawMessage } from './type';
+import type { RawMessage } from './type';
 
 type ExecCommandRecord = {
   type: 'exec_command';

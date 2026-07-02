@@ -1,10 +1,16 @@
-import { useState } from 'react';
 import { Plus } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { type SkillGroupsConfig } from '@/services';
 import { cn } from '@/lib/utils';
+import type { SkillGroupsConfig } from '@/services';
 
 interface SkillGroupsBarProps {
   groupsConfig: SkillGroupsConfig;
@@ -24,7 +30,10 @@ export function SkillGroupsBar({
 
   const handleSave = async () => {
     const name = newGroupName.trim();
-    if (!name) { setDialogOpen(false); return; }
+    if (!name) {
+      setDialogOpen(false);
+      return;
+    }
     await onAddGroup(name);
     setNewGroupName('');
     setDialogOpen(false);
@@ -92,10 +101,14 @@ export function SkillGroupsBar({
             onChange={(e) => setNewGroupName(e.target.value)}
             placeholder="Group name..."
             autoFocus
-            onKeyDown={(e) => { if (e.key === 'Enter') void handleSave(); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void handleSave();
+            }}
           />
           <DialogFooter>
-            <Button variant="ghost" onClick={handleCancel}>Cancel</Button>
+            <Button variant="ghost" onClick={handleCancel}>
+              Cancel
+            </Button>
             <Button onClick={() => void handleSave()}>Save changes</Button>
           </DialogFooter>
         </DialogContent>

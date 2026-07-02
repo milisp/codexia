@@ -1,19 +1,19 @@
-import { useEffect, useMemo, useState } from 'react';
+import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { ChevronDown, Folder, FolderPlus } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { BrowserProjects, WorkspaceProjects } from '@/components/project-selector';
 import { Button } from '@/components/ui/button';
 import { Command } from '@/components/ui/command';
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { isDesktopTauri } from '@/hooks/runtime';
 import { cn } from '@/lib/utils';
 import { codexService } from '@/services/codexService';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { getFilename } from '@/utils/getFilename';
-import { open as openDialog } from '@tauri-apps/plugin-dialog';
-import { isDesktopTauri } from '@/hooks/runtime';
 
 type SelectorMode = 'workspace' | 'browse';
 

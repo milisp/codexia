@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { ReadTool, GrepTool, GlobTool } from './tool-use';
 import type { ToolResultBlock, ToolUseBlock } from '../types/messages';
+import { GlobTool, GrepTool, ReadTool } from './tool-use';
 
 const MAX_VISIBLE_LOADING = 5;
 
@@ -22,13 +22,34 @@ function ItemRow({ block, inlineError }: ExploredItem) {
   const err = inlineError ?? null;
 
   if (block.name === 'Read') {
-    return <ReadTool block={block} inlineError={err} showError={showError} onToggleError={() => setShowError((p) => !p)} />;
+    return (
+      <ReadTool
+        block={block}
+        inlineError={err}
+        showError={showError}
+        onToggleError={() => setShowError((p) => !p)}
+      />
+    );
   }
   if (block.name === 'Grep') {
-    return <GrepTool block={block} inlineError={err} showError={showError} onToggleError={() => setShowError((p) => !p)} />;
+    return (
+      <GrepTool
+        block={block}
+        inlineError={err}
+        showError={showError}
+        onToggleError={() => setShowError((p) => !p)}
+      />
+    );
   }
   if (block.name === 'Glob') {
-    return <GlobTool block={block} inlineError={err} showError={showError} onToggleError={() => setShowError((p) => !p)} />;
+    return (
+      <GlobTool
+        block={block}
+        inlineError={err}
+        showError={showError}
+        onToggleError={() => setShowError((p) => !p)}
+      />
+    );
   }
   return null;
 }
@@ -37,7 +58,9 @@ export function ExploredGroup({ items, isCompleted }: Props) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const readCount = items.filter((i) => i.block.name === 'Read').length;
-  const searchCount = items.filter((i) => i.block.name === 'Grep' || i.block.name === 'Glob').length;
+  const searchCount = items.filter(
+    (i) => i.block.name === 'Grep' || i.block.name === 'Glob'
+  ).length;
 
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -77,7 +100,11 @@ export function ExploredGroup({ items, isCompleted }: Props) {
             className="flex items-center gap-1 group text-left"
           >
             <span className="text-muted-foreground group-hover:text-foreground transition-colors inline-flex">
-              {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+              {isExpanded ? (
+                <ChevronDown className="h-3 w-3" />
+              ) : (
+                <ChevronRight className="h-3 w-3" />
+              )}
             </span>
             <Badge
               variant="secondary"

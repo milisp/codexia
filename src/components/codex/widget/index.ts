@@ -1,2 +1,2 @@
 export { ContextWindowWidget } from './ContextWindowWidget';
-export { WorkingIndicator } from './WorkingIndicator'
+export { WorkingIndicator } from './WorkingIndicator';

@@ -10,7 +10,7 @@ export const useDeepLink = (onUrlReceived: (url: string) => void) => {
   callbackRef.current = onUrlReceived;
 
   useEffect(() => {
-    let unlisteners: (UnlistenFn | (() => void))[] = [];
+    const unlisteners: (UnlistenFn | (() => void))[] = [];
 
     const initDeepLink = async () => {
       const handleUrl = (urls: string[] | string | null) => {

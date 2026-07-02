@@ -1,17 +1,17 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
+import { convertFileSrc } from '@tauri-apps/api/core';
 import { CircleStop, Send, X } from 'lucide-react';
-import { useCCStore } from '@/stores/cc';
-import { useCCInputStore, useAgentCenterStore } from '@/stores';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CCPermissionModeSelect } from '@/components/cc/composer';
-import { ModelSelector } from './ModelSelector';
-import { CCAttachmentButton } from './CCAttachmentButton';
-import { CCSlashCommandPopover } from './CCSlashCommandPopover';
-import { CCSkillsPopover } from './CCSkillsPopover';
+import { FileMentionPopover } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
 import { ccInterrupt, ccSendMessage } from '@/services';
-import { FileMentionPopover } from '@/components/common';
-import { convertFileSrc } from '@tauri-apps/api/core';
+import { useAgentCenterStore, useCCInputStore } from '@/stores';
+import { useCCStore } from '@/stores/cc';
+import { CCAttachmentButton } from './CCAttachmentButton';
+import { CCSkillsPopover } from './CCSkillsPopover';
+import { CCSlashCommandPopover } from './CCSlashCommandPopover';
+import { ModelSelector } from './ModelSelector';
 
 const CC_INPUT_FOCUS_EVENT = 'cc-input-focus-request';
 
@@ -22,14 +22,8 @@ interface ComposerProps {
 }
 
 export function Composer({ overrideSend, onAfterSend }: ComposerProps = {}) {
-  const {
-    activeSessionId,
-    isConnected,
-    isLoading,
-    addMessage,
-    setLoading,
-    setConnected,
-  } = useCCStore();
+  const { activeSessionId, isConnected, isLoading, addMessage, setLoading, setConnected } =
+    useCCStore();
   const { inputValue: input, setInputValue: setInput } = useCCInputStore();
   const { setCurrentAgentCardId } = useAgentCenterStore();
   const { handleNewSession } = useCCSessionManager();
@@ -63,44 +57,59 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps = {}) {
     ta.style.height = `${ta.scrollHeight}px`;
   }, [input]);
 
-  const handleSendMessage = useCallback(async (messageText?: string) => {
-    const text = (messageText ?? input).trim();
-    if (!text || isLoading) return;
+  const handleSendMessage = useCallback(
+    async (messageText?: string) => {
+      const text = (messageText ?? input).trim();
+      if (!text || isLoading) return;
 
-    if (overrideSend) {
+      if (overrideSend) {
+        setInput('');
+        overrideSend(text);
+        return;
+      }
+
       setInput('');
-      overrideSend(text);
-      return;
-    }
+      const pendingImages = images;
+      setImages([]);
 
-    setInput('');
-    const pendingImages = images;
-    setImages([]);
+      if (!activeSessionId) {
+        await handleNewSession(text);
+        const newSessionId = useCCStore.getState().activeSessionId;
+        if (newSessionId) onAfterSend?.(newSessionId, text);
+        return;
+      }
 
-    if (!activeSessionId) {
-      await handleNewSession(text);
-      const newSessionId = useCCStore.getState().activeSessionId;
-      if (newSessionId) onAfterSend?.(newSessionId, text);
-      return;
-    }
+      setCurrentAgentCardId(activeSessionId);
+      addMessage({ type: 'user', text });
+      setLoading(true);
+      onAfterSend?.(activeSessionId, text);
 
-    setCurrentAgentCardId(activeSessionId);
-    addMessage({ type: 'user', text });
-    setLoading(true);
-    onAfterSend?.(activeSessionId, text);
-
-    try {
-      await ccSendMessage(activeSessionId, text, pendingImages);
-      if (!isConnected) setConnected(true);
-    } catch (error) {
-      console.error('[CCInput] Failed to send message:', error);
-      setLoading(false);
-      addMessage({
-        type: 'assistant',
-        message: { content: [{ type: 'text', text: `Error: ${error}` }] },
-      });
-    }
-  }, [input, images, isLoading, activeSessionId, isConnected, addMessage, setInput, setLoading, setConnected, handleNewSession, setCurrentAgentCardId]);
+      try {
+        await ccSendMessage(activeSessionId, text, pendingImages);
+        if (!isConnected) setConnected(true);
+      } catch (error) {
+        console.error('[CCInput] Failed to send message:', error);
+        setLoading(false);
+        addMessage({
+          type: 'assistant',
+          message: { content: [{ type: 'text', text: `Error: ${error}` }] },
+        });
+      }
+    },
+    [
+      input,
+      images,
+      isLoading,
+      activeSessionId,
+      isConnected,
+      addMessage,
+      setInput,
+      setLoading,
+      setConnected,
+      handleNewSession,
+      setCurrentAgentCardId,
+    ]
+  );
 
   const handleInterrupt = useCallback(async () => {
     if (!activeSessionId) return;
@@ -122,7 +131,10 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps = {}) {
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && !e.shiftKey) {
-        if (isComposing.current || (e.nativeEvent as KeyboardEvent & { isComposing?: boolean }).isComposing) {
+        if (
+          isComposing.current ||
+          (e.nativeEvent as KeyboardEvent & { isComposing?: boolean }).isComposing
+        ) {
           return;
         }
         e.preventDefault();
@@ -145,8 +157,14 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps = {}) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              onCompositionStart={() => { isComposing.current = true; }}
-              onCompositionEnd={() => { setTimeout(() => { isComposing.current = false; }, 50); }}
+              onCompositionStart={() => {
+                isComposing.current = true;
+              }}
+              onCompositionEnd={() => {
+                setTimeout(() => {
+                  isComposing.current = false;
+                }, 50);
+              }}
               placeholder="Ask Claude to do anything..."
               rows={1}
               className="w-full resize-none overflow-y-auto bg-transparent px-3 pt-3 pb-11 text-base md:text-sm outline-none placeholder:text-muted-foreground min-h-16 max-h-48"
@@ -174,7 +192,9 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps = {}) {
           )}
 
           <div className="absolute left-1 bottom-1 flex items-center gap-0.5">
-            <CCAttachmentButton onImagesSelected={(paths) => setImages((prev) => [...prev, ...paths])} />
+            <CCAttachmentButton
+              onImagesSelected={(paths) => setImages((prev) => [...prev, ...paths])}
+            />
             <CCPermissionModeSelect />
           </div>
 

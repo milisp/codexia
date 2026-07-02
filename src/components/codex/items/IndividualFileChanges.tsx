@@ -1,16 +1,19 @@
-import { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Markdown } from '@/components/Markdown';
+import { useState } from 'react';
+import type { FileUpdateChange } from '@/bindings/v2';
 import { DiffViewer } from '@/components/features/DiffViewer';
+import { Markdown } from '@/components/Markdown';
+import { Button } from '@/components/ui/button';
 import { getFilename } from '@/utils/getFilename';
-import { FileUpdateChange } from '@/bindings/v2';
-import { type DiffViewerInput } from './fileChangeLogic';
+import type { DiffViewerInput } from './fileChangeLogic';
 
 type IndividualFileChangesProps = {
   changes: FileUpdateChange[];
   fileChangeMap: Record<FileUpdateChange['kind']['type'], string>;
-  getChangeCounts: (kind: FileUpdateChange['kind'], diff: string) => {
+  getChangeCounts: (
+    kind: FileUpdateChange['kind'],
+    diff: string
+  ) => {
     addedCount: number;
     removedCount: number;
   };

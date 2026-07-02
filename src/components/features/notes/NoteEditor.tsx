@@ -1,12 +1,12 @@
+import MarkdownIt from 'markdown-it';
 import { useEffect, useRef, useState } from 'react';
 import MdEditor from 'react-markdown-editor-lite';
-import MarkdownIt from 'markdown-it';
 import 'react-markdown-editor-lite/lib/index.css';
-import { useThemeContext } from '@/contexts/ThemeContext';
+import { X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
+import { useThemeContext } from '@/contexts/ThemeContext';
 import { getNoteById, updateNote } from '@/services/tauri';
 
 type NoteViewProps = {
@@ -268,7 +268,9 @@ export function NoteEditor({
           </div>
         </div>
       </div>
-      <div className={`min-h-0 flex-1 overflow-hidden ${resolvedTheme === 'dark' ? 'rc-md-editor-dark' : ''}`}>
+      <div
+        className={`min-h-0 flex-1 overflow-hidden ${resolvedTheme === 'dark' ? 'rc-md-editor-dark' : ''}`}
+      >
         <MdEditor
           value={content}
           className="h-full w-full"

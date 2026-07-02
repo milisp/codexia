@@ -1,5 +1,7 @@
-import { AlertTriangle, Bot, Hand, ListChecks, Check } from 'lucide-react';
+import { AlertTriangle, Bot, Check, Hand, ListChecks } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { SandboxMode } from '@/bindings/v2';
+import { useCodexStore, useConfigStore } from '@/components/codex/stores';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -7,9 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useConfigStore, useCodexStore } from '@/components/codex/stores';
 import { useComposerToolbarNarrow } from './ComposerToolbarContext';
-import { useTranslation } from 'react-i18next';
 
 const ACCESS_MODE_OPTIONS: Array<{
   label: string;
@@ -17,18 +17,25 @@ const ACCESS_MODE_OPTIONS: Array<{
   icon: typeof Hand;
   textColor: string;
 }> = [
-    { label: 'askApproval', sandbox: 'read-only', icon: Hand, textColor: 'text-muted-500' },
-    { label: 'approvalForMe', sandbox: 'workspace-write', icon: Bot, textColor: 'text-orange-400' },
-    { label: 'fullAccess', sandbox: 'danger-full-access', icon: AlertTriangle, textColor: 'text-orange-600' },
-  ];
+  { label: 'askApproval', sandbox: 'read-only', icon: Hand, textColor: 'text-muted-500' },
+  { label: 'approvalForMe', sandbox: 'workspace-write', icon: Bot, textColor: 'text-orange-400' },
+  {
+    label: 'fullAccess',
+    sandbox: 'danger-full-access',
+    icon: AlertTriangle,
+    textColor: 'text-orange-600',
+  },
+];
 
 export function AccessModePopover() {
-  const { t } = useTranslation('composer')
+  const { t } = useTranslation('composer');
   const { sandbox, setAccessMode, collaborationMode, setCollaborationMode } = useConfigStore();
   const { triggerInputFocus } = useCodexStore();
   const isNarrow = useComposerToolbarNarrow();
 
-  const closeAndFocus = () => { triggerInputFocus(); };
+  const closeAndFocus = () => {
+    triggerInputFocus();
+  };
   const selected =
     ACCESS_MODE_OPTIONS.find((item) => item.sandbox === sandbox) ?? ACCESS_MODE_OPTIONS[0];
   const displayLabel = collaborationMode === 'plan' ? 'plan' : selected.label;
@@ -37,7 +44,11 @@ export function AccessModePopover() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className={`h-8 gap-2 px-2 ${selected.textColor} hover:bg-accent`}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={`h-8 gap-2 px-2 ${selected.textColor} hover:bg-accent`}
+        >
           <DisplayIcon className="h-4 w-4" />
           {!isNarrow && <span className="text-xs">{t(displayLabel)}</span>}
         </Button>

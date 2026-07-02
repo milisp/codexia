@@ -1,8 +1,8 @@
-import { useState } from 'react';
 import { NotebookPen } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useNoteStore } from '@/stores/useNoteStore';
 import { toast } from '@/components/ui/use-toast';
+import { useNoteStore } from '@/stores/useNoteStore';
 import { getErrorMessage } from '@/utils/errorUtils';
 
 type AddToNoteProps = {

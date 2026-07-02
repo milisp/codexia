@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { listen } from '@tauri-apps/api/event';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
+import { buildWsUrl, isTauri } from '@/hooks/runtime';
 import { terminalResize, terminalStart, terminalStop, terminalWrite } from '@/services/tauri';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { buildWsUrl, isTauri } from '@/hooks/runtime';
 
 const IS_TAURI = isTauri();
 
@@ -108,7 +108,7 @@ export function TerminalPane({ id, active, panelOpen }: TerminalPaneProps) {
       const { session_id } = await terminalStart(
         cwd,
         Math.max(term.cols, 2),
-        Math.max(term.rows, 2),
+        Math.max(term.rows, 2)
       );
       setSession(session_id);
     } catch (err) {
@@ -140,7 +140,11 @@ export function TerminalPane({ id, active, panelOpen }: TerminalPaneProps) {
         terminalRef.current?.writeln(`\r\n[${event.payload.message}]`);
         setSession(null);
       });
-      if (cancelled) { dataFn(); exitFn(); return; }
+      if (cancelled) {
+        dataFn();
+        exitFn();
+        return;
+      }
       unlistenData = dataFn;
       unlistenExit = exitFn;
     };
@@ -235,10 +239,7 @@ export function TerminalPane({ id, active, panelOpen }: TerminalPaneProps) {
   }, []);
 
   return (
-    <div
-      className="absolute inset-0"
-      style={{ visibility: active ? 'visible' : 'hidden' }}
-    >
+    <div className="absolute inset-0" style={{ visibility: active ? 'visible' : 'hidden' }}>
       <div
         ref={containerRef}
         className="h-full w-full px-2 py-2"

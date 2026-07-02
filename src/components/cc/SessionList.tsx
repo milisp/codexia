@@ -1,16 +1,6 @@
+import { Copy, FolderX, Loader2, MoreVertical, Trash2 } from 'lucide-react';
 import { useCallback, useState } from 'react';
-import { useCCStore } from '@/stores/cc';
-import { listSessions, type SdkSessionInfo } from '@/lib/sessions';
-import { ccGetSessionMessages, ccDeleteSession } from '@/services/tauri/cc';
 import { fromSdkMessages } from '@/components/cc/utils/fromSdkMessages';
-import { MoreVertical, Copy, Loader2, Trash2, FolderX } from 'lucide-react';
-import { gitRemoveWorktree } from '@/services/tauri/git';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,8 +12,18 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useToast } from '@/components/ui/use-toast';
-import { useLayoutStore, useAgentCenterStore } from '@/stores';
+import { listSessions, type SdkSessionInfo } from '@/lib/sessions';
+import { ccDeleteSession, ccGetSessionMessages } from '@/services/tauri/cc';
+import { gitRemoveWorktree } from '@/services/tauri/git';
+import { useAgentCenterStore, useLayoutStore } from '@/stores';
+import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { formatThreadAge } from '@/utils/formatThreadAge';
 
@@ -44,7 +44,15 @@ export function ClaudeCodeSessionList({ directory, sessions, onSelectSession }: 
   const { setCwd, setSelectedAgent } = useWorkspaceStore();
   const { setView } = useLayoutStore();
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
-  const { activeSessionIds, activeSessionId, isLoading, addMessageToSession, setSessionLoading, sessionMessagesMap, pendingNewSession } = useCCStore();
+  const {
+    activeSessionIds,
+    activeSessionId,
+    isLoading,
+    addMessageToSession,
+    setSessionLoading,
+    sessionMessagesMap,
+    pendingNewSession,
+  } = useCCStore();
   const { toast } = useToast();
 
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -101,7 +109,12 @@ export function ClaudeCodeSessionList({ directory, sessions, onSelectSession }: 
       setCwd(sessionProject);
     }
     setSelectedAgent('cc');
-    addAgentCard({ kind: 'cc', id: session.session_id, preview: session.summary, cwd: sessionProject || directory });
+    addAgentCard({
+      kind: 'cc',
+      id: session.session_id,
+      preview: session.summary,
+      cwd: sessionProject || directory,
+    });
     setCurrentAgentCardId(session.session_id);
     setView('agent');
     if (onSelectSession) {
@@ -166,8 +179,9 @@ export function ClaudeCodeSessionList({ directory, sessions, onSelectSession }: 
               key={session.session_id}
               role="button"
               tabIndex={0}
-              className={`group relative grid grid-cols-[0.5rem_1fr_auto] items-center gap-3 w-full text-left p-2 rounded-lg transition-colors cursor-pointer ${isSelected ? 'bg-zinc-700/50' : 'hover:bg-zinc-800/30'
-                }`}
+              className={`group relative grid grid-cols-[0.5rem_1fr_auto] items-center gap-3 w-full text-left p-2 rounded-lg transition-colors cursor-pointer ${
+                isSelected ? 'bg-zinc-700/50' : 'hover:bg-zinc-800/30'
+              }`}
               onClick={() => handleSessionClick(session)}
             >
               <div className="relative h-6 flex items-center justify-center">
@@ -185,7 +199,9 @@ export function ClaudeCodeSessionList({ directory, sessions, onSelectSession }: 
               </div>
 
               <div className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap">
-                <span className="group-hover:hidden">{formatThreadAge(Math.floor(session.last_modified / 1000))}</span>
+                <span className="group-hover:hidden">
+                  {formatThreadAge(Math.floor(session.last_modified / 1000))}
+                </span>
               </div>
 
               <div className="absolute right-0">
@@ -235,6 +251,7 @@ export function ClaudeCodeSessionList({ directory, sessions, onSelectSession }: 
       </div>
       {hasMore && (
         <button
+          type="button"
           className="w-full text-xs text-muted-foreground hover:text-foreground py-1 transition-colors"
           onClick={() => {
             if (expanded && allLoaded) {
@@ -252,7 +269,10 @@ export function ClaudeCodeSessionList({ directory, sessions, onSelectSession }: 
         </button>
       )}
 
-      <AlertDialog open={!!pendingDeleteId} onOpenChange={(open) => !open && setPendingDeleteId(null)}>
+      <AlertDialog
+        open={!!pendingDeleteId}
+        onOpenChange={(open) => !open && setPendingDeleteId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete session?</AlertDialogTitle>

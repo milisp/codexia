@@ -24,13 +24,15 @@ export class StoreErrorBoundary extends Component<Props, State> {
       <div className="flex flex-col items-center justify-center h-screen gap-4 p-8 text-center">
         <p className="text-destructive font-semibold text-lg">App failed to render</p>
         <p className="text-muted-foreground text-sm max-w-md">
-          A store may have corrupted or incompatible data in localStorage. Use the inspector below to delete the offending key, then reload.
+          A store may have corrupted or incompatible data in localStorage. Use the inspector below
+          to delete the offending key, then reload.
         </p>
         <p className="font-mono text-xs text-muted-foreground bg-muted px-3 py-1 rounded">
           {error.message}
         </p>
         <LocalStorageDialog defaultOpen />
         <button
+          type="button"
           className="text-sm underline text-muted-foreground mt-2"
           onClick={() => window.location.reload()}
         >

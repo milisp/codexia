@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { navigateToAgentSession } from '@/lib/agentNav';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
 let processed = false;
 

@@ -1,5 +1,5 @@
-import { TurnPlanStep } from '@/bindings/v2';
 import { CircleCheck, LoaderCircle } from 'lucide-react';
+import type { TurnPlanStep } from '@/bindings/v2';
 import { cn } from '@/lib/utils';
 
 interface TurnPlanProps {

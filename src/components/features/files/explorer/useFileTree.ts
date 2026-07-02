@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSettingsStore } from '@/stores/settings';
-import { useWorkspaceStore } from '@/stores';
 import {
   canonicalizePath,
   readDirectory,
   searchFilesByName,
   type TauriFileEntry,
 } from '@/services/tauri';
+import { useWorkspaceStore } from '@/stores';
+import { useSettingsStore } from '@/stores/settings';
 import { getFilename } from '@/utils/getFilename';
-import { sortNodes, normalizeName, shouldSkipEntry, buildSearchTree } from './utils';
 import type { FileNode } from './types';
+import { buildSearchTree, normalizeName, shouldSkipEntry, sortNodes } from './utils';
 
 export type UseFileTreeReturn = {
   treeContainerRef: React.RefObject<HTMLDivElement | null>;
@@ -59,10 +59,7 @@ export function useFileTree(folder: string): UseFileTreeReturn {
     setFolderTrigger((prev) => prev + 1);
   }
 
-  const hiddenSet = useMemo(
-    () => new Set(hiddenNames.map(normalizeName)),
-    [hiddenNames],
-  );
+  const hiddenSet = useMemo(() => new Set(hiddenNames.map(normalizeName)), [hiddenNames]);
 
   const listDir = useCallback(
     async (dir: string): Promise<FileNode[]> => {
@@ -70,15 +67,15 @@ export function useFileTree(folder: string): UseFileTreeReturn {
       const entries = await readDirectory(resolvedDir);
       return sortNodes(
         entries
-            .filter((e) => !shouldSkipEntry(e.name, hiddenSet))
-            .map((e) => ({
-              name: e.name,
-              path: e.path,
-              kind: e.is_dir ? ('dir' as const) : ('file' as const),
-            })),
+          .filter((e) => !shouldSkipEntry(e.name, hiddenSet))
+          .map((e) => ({
+            name: e.name,
+            path: e.path,
+            kind: e.is_dir ? ('dir' as const) : ('file' as const),
+          }))
       );
     },
-    [hiddenSet],
+    [hiddenSet]
   );
 
   // Load root directory
@@ -86,7 +83,10 @@ export function useFileTree(folder: string): UseFileTreeReturn {
     let isActive = true;
     const load = async () => {
       if (!folder) {
-        if (isActive) { setRoot(null); setExpanded(new Set()); }
+        if (isActive) {
+          setRoot(null);
+          setExpanded(new Set());
+        }
         return;
       }
       setLoading(true);
@@ -109,7 +109,9 @@ export function useFileTree(folder: string): UseFileTreeReturn {
       }
     };
     void load();
-    return () => { isActive = false; };
+    return () => {
+      isActive = false;
+    };
   }, [folder, listDir, refreshKey]);
 
   // Reset search state on folder change
@@ -154,7 +156,9 @@ export function useFileTree(folder: string): UseFileTreeReturn {
       setSearching(false);
       setSearchError(null);
       setSearchMatches([]);
-      return () => { isActive = false; };
+      return () => {
+        isActive = false;
+      };
     }
     const timer = setTimeout(async () => {
       setSearching(true);
@@ -177,7 +181,10 @@ export function useFileTree(folder: string): UseFileTreeReturn {
         if (isActive) setSearching(false);
       }
     }, 200);
-    return () => { isActive = false; clearTimeout(timer); };
+    return () => {
+      isActive = false;
+      clearTimeout(timer);
+    };
   }, [searchTrigger]);
 
   const displayRoot = useMemo(() => {
@@ -253,8 +260,11 @@ export function useFileTree(folder: string): UseFileTreeReturn {
     let cancelled = false;
     const run = async () => {
       let canonicalSelected = selectedFilePath;
-      try { canonicalSelected = await canonicalizePath(selectedFilePath); }
-      catch { canonicalSelected = selectedFilePath; }
+      try {
+        canonicalSelected = await canonicalizePath(selectedFilePath);
+      } catch {
+        canonicalSelected = selectedFilePath;
+      }
       if (cancelled) return;
 
       const toPosix = (v: string) => v.replace(/\\/g, '/');
@@ -266,7 +276,10 @@ export function useFileTree(folder: string): UseFileTreeReturn {
       if (autoExpandedTargetRef.current === targetKey) return;
       autoExpandedTargetRef.current = targetKey;
 
-      const parts = selectedPosix.slice(rootPosix.length + 1).split('/').filter(Boolean);
+      const parts = selectedPosix
+        .slice(rootPosix.length + 1)
+        .split('/')
+        .filter(Boolean);
       if (parts.length <= 1) return;
 
       const sep = root.path.includes('\\') ? '\\' : '/';
@@ -292,18 +305,22 @@ export function useFileTree(folder: string): UseFileTreeReturn {
           if (cancelled) return;
           snapshot = updateChildren(snapshot, dirPath, children);
           setRoot(snapshot);
-        } catch { return; }
+        } catch {
+          return;
+        }
       }
     };
     void run();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [root, selectedFilePath, listDir]);
 
   // Scroll selected file into view
   useEffect(() => {
     if (!selectedFilePath || !treeContainerRef.current) return;
     const row = treeContainerRef.current.querySelector<HTMLElement>(
-      `[data-file-path="${CSS.escape(selectedFilePath)}"]`,
+      `[data-file-path="${CSS.escape(selectedFilePath)}"]`
     );
     row?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, [selectedFilePath]);

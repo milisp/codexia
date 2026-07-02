@@ -1,13 +1,19 @@
-import { useCallback, useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { useCallback, useEffect, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { BrowseTab } from '@/components/features/skills/BrowseTab';
 import { SkillGroupsBar } from '@/components/features/skills/SkillGroupsBar';
-import { useWorkspaceStore, useLayoutStore, usePluginStore } from '@/stores';
-import { useTrafficLightConfig } from '@/hooks';
-import { type SkillGroup, type SkillGroupsConfig, listCentralSkills, readSkillGroups, writeSkillGroups } from '@/services';
+import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
-import { v4 as uuidv4 } from 'uuid';
+import { useTrafficLightConfig } from '@/hooks';
+import {
+  listCentralSkills,
+  readSkillGroups,
+  type SkillGroup,
+  type SkillGroupsConfig,
+  writeSkillGroups,
+} from '@/services';
+import { useLayoutStore, usePluginStore, useWorkspaceStore } from '@/stores';
 
 export default function SkillsView() {
   const { cwd } = useWorkspaceStore();
@@ -20,22 +26,19 @@ export default function SkillsView() {
   const [groupsConfig, setGroupsConfig] = useState<SkillGroupsConfig>({ groups: [] });
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
-
   useEffect(() => {
     listCentralSkills(scope, cwd ?? undefined)
       .then((skills) => setInstalledNames(new Set(skills.map((s) => s.name))))
-      .catch(() => { });
+      .catch(() => {});
   }, [scope, cwd, installedRefreshKey]);
 
   useEffect(() => {
     readSkillGroups()
       .then((cfg) => {
         setGroupsConfig(cfg);
-        setSelectedGroupId((prev) =>
-          prev && cfg.groups.some((g) => g.id === prev) ? prev : null
-        );
+        setSelectedGroupId((prev) => (prev && cfg.groups.some((g) => g.id === prev) ? prev : null));
       })
-      .catch(() => { });
+      .catch(() => {});
   }, []);
 
   const saveGroups = useCallback(async (config: SkillGroupsConfig) => {
@@ -63,7 +66,6 @@ export default function SkillsView() {
 
   return (
     <div className="flex flex-col h-full">
-
       <div>
         <div className="relative mx-20 py-4">
           <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground pointer-events-none" />

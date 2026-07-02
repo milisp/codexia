@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -61,7 +61,10 @@ export function GitDiffDialogs({
             >
               Cancel
             </Button>
-            <Button onClick={onBulkStageConfirm} disabled={bulkStagePathsCount === 0 || bulkStageLoading}>
+            <Button
+              onClick={onBulkStageConfirm}
+              disabled={bulkStagePathsCount === 0 || bulkStageLoading}
+            >
               {bulkStageLoading ? 'Staging...' : 'Stage all'}
             </Button>
           </DialogFooter>

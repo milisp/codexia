@@ -1,16 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Trash2 } from 'lucide-react';
-import { listSessions, type SdkSessionInfo } from '@/lib/sessions';
-import { ccDeleteSession } from '@/services/tauri/cc';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { useLayoutStore, useAgentCenterStore } from '@/stores';
-import { formatThreadAge } from '@/utils/formatThreadAge';
-import { getFilename } from '@/utils/getFilename';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DeleteConfirmDialog, Toolbar } from '@/components/common/SessionManagerShared';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/components/ui/use-toast';
-import { Toolbar, DeleteConfirmDialog } from '@/components/common/SessionManagerShared';
+import { listSessions, type SdkSessionInfo } from '@/lib/sessions';
+import { ccDeleteSession } from '@/services/tauri/cc';
+import { useAgentCenterStore, useLayoutStore } from '@/stores';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { formatThreadAge } from '@/utils/formatThreadAge';
+import { getFilename } from '@/utils/getFilename';
 
 interface CCSessionManagerProps {
   open: boolean;
@@ -37,7 +37,12 @@ export function CCSessionManager({ open, onClose }: CCSessionManagerProps) {
       setCwd(session.cwd);
     }
     setSelectedAgent('cc');
-    addAgentCard({ kind: 'cc', id: session.session_id, preview: session.summary, cwd: session.cwd || cwd });
+    addAgentCard({
+      kind: 'cc',
+      id: session.session_id,
+      preview: session.summary,
+      cwd: session.cwd || cwd,
+    });
     setCurrentAgentCardId(session.session_id);
     setView('agent');
     onClose();
@@ -77,7 +82,7 @@ export function CCSessionManager({ open, onClose }: CCSessionManagerProps) {
       (s) =>
         s.summary.toLowerCase().includes(q) ||
         (s.cwd ?? '').toLowerCase().includes(q) ||
-        s.session_id.toLowerCase().includes(q),
+        s.session_id.toLowerCase().includes(q)
     );
   }, [sessions, search]);
 
@@ -120,7 +125,11 @@ export function CCSessionManager({ open, onClose }: CCSessionManagerProps) {
   };
 
   if (loading) {
-    return <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">Loading...</div>;
+    return (
+      <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
+        Loading...
+      </div>
+    );
   }
 
   return (
@@ -159,8 +168,12 @@ export function CCSessionManager({ open, onClose }: CCSessionManagerProps) {
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{session.summary || session.session_id}</div>
-                <div className="text-xs text-muted-foreground truncate">{getFilename(session.cwd ?? '') || session.cwd || 'Unknown project'}</div>
+                <div className="text-sm font-medium truncate">
+                  {session.summary || session.session_id}
+                </div>
+                <div className="text-xs text-muted-foreground truncate">
+                  {getFilename(session.cwd ?? '') || session.cwd || 'Unknown project'}
+                </div>
               </div>
               <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
                 {formatThreadAge(Math.floor(session.last_modified / 1000))}
@@ -193,7 +206,9 @@ export function CCSessionManager({ open, onClose }: CCSessionManagerProps) {
           >
             Prev
           </Button>
-          <span>{offset + 1}-{offset + filtered.length} / {total}</span>
+          <span>
+            {offset + 1}-{offset + filtered.length} / {total}
+          </span>
           <Button
             variant="ghost"
             size="sm"

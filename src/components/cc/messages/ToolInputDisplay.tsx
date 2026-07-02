@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { ChevronDown, ChevronRight, Terminal } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 const INLINE_STRING_LIMIT = 80;
@@ -35,14 +35,22 @@ export function CommandValue({ value }: { value: string }) {
       {hasMore && (
         <div className="px-2 pb-1.5">
           <Button
-            variant="ghost" size="sm"
+            variant="ghost"
+            size="sm"
             className="h-5 px-1.5 text-[10px] text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
             onClick={() => setExpanded((p) => !p)}
           >
-            {expanded
-              ? <><ChevronDown className="w-3 h-3 mr-0.5" />Collapse</>
-              : <><ChevronRight className="w-3 h-3 mr-0.5" />{lines.length - PREVIEW_LINES} more lines</>
-            }
+            {expanded ? (
+              <>
+                <ChevronDown className="w-3 h-3 mr-0.5" />
+                Collapse
+              </>
+            ) : (
+              <>
+                <ChevronRight className="w-3 h-3 mr-0.5" />
+                {lines.length - PREVIEW_LINES} more lines
+              </>
+            )}
           </Button>
         </div>
       )}
@@ -66,14 +74,27 @@ function ScalarValue({ value }: { value: string | number | boolean | null }) {
   return (
     <div className="w-full">
       <pre className="font-mono text-[10px] text-foreground/75 bg-muted/40 rounded p-2 border border-border/40 overflow-auto max-h-56 whitespace-pre-wrap break-all">
-        {expanded ? str : preview}{!expanded && hasMore && '…'}
+        {expanded ? str : preview}
+        {!expanded && hasMore && '…'}
       </pre>
       {hasMore && (
-        <Button variant="ghost" size="sm" className="h-5 px-1 text-[10px] text-muted-foreground mt-0.5"
-          onClick={() => setExpanded((p) => !p)}>
-          {expanded
-            ? <><ChevronDown className="w-3 h-3 mr-0.5" />Collapse</>
-            : <><ChevronRight className="w-3 h-3 mr-0.5" />{lines.length - PREVIEW_LINES} more lines</>}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-5 px-1 text-[10px] text-muted-foreground mt-0.5"
+          onClick={() => setExpanded((p) => !p)}
+        >
+          {expanded ? (
+            <>
+              <ChevronDown className="w-3 h-3 mr-0.5" />
+              Collapse
+            </>
+          ) : (
+            <>
+              <ChevronRight className="w-3 h-3 mr-0.5" />
+              {lines.length - PREVIEW_LINES} more lines
+            </>
+          )}
         </Button>
       )}
     </div>
@@ -90,11 +111,23 @@ function ComplexValue({ value }: { value: object }) {
 
   return (
     <div className="w-full">
-      <Button variant="ghost" size="sm" className="h-5 px-1 text-[10px] text-muted-foreground mb-0.5"
-        onClick={() => setExpanded((p) => !p)}>
-        {expanded
-          ? <><ChevronDown className="w-3 h-3 mr-0.5" />Collapse</>
-          : <><ChevronRight className="w-3 h-3 mr-0.5" />{label}</>}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-5 px-1 text-[10px] text-muted-foreground mb-0.5"
+        onClick={() => setExpanded((p) => !p)}
+      >
+        {expanded ? (
+          <>
+            <ChevronDown className="w-3 h-3 mr-0.5" />
+            Collapse
+          </>
+        ) : (
+          <>
+            <ChevronRight className="w-3 h-3 mr-0.5" />
+            {label}
+          </>
+        )}
       </Button>
       {expanded && (
         <pre className="font-mono text-[10px] text-foreground/75 bg-muted/40 rounded p-2 border border-border/40 overflow-auto max-h-56 whitespace-pre-wrap break-all">
@@ -130,21 +163,27 @@ export function ToolInputDisplay({ input, highlightKeys = [], className }: Props
       {entries.map(([key, value]) => {
         const isCommand = COMMAND_KEYS.has(key) && typeof value === 'string';
         return (
-          <div key={key} className={`flex gap-2 items-start text-xs min-w-0 ${isCommand ? 'flex-col' : ''}`}>
-            <span className={`shrink-0 font-medium text-[10px] uppercase tracking-wide pt-0.5 ${
-              highlightKeys.includes(key)
-                ? 'text-amber-600 dark:text-amber-400'
-                : 'text-muted-foreground'
-            }`}>
+          <div
+            key={key}
+            className={`flex gap-2 items-start text-xs min-w-0 ${isCommand ? 'flex-col' : ''}`}
+          >
+            <span
+              className={`shrink-0 font-medium text-[10px] uppercase tracking-wide pt-0.5 ${
+                highlightKeys.includes(key)
+                  ? 'text-amber-600 dark:text-amber-400'
+                  : 'text-muted-foreground'
+              }`}
+            >
               {key}
             </span>
             <div className="min-w-0 flex-1 w-full">
-              {isCommand
-                ? <CommandValue value={value as string} />
-                : isPlainScalar(value)
-                  ? <ScalarValue value={value} />
-                  : <ComplexValue value={value as object} />
-              }
+              {isCommand ? (
+                <CommandValue value={value as string} />
+              ) : isPlainScalar(value) ? (
+                <ScalarValue value={value} />
+              ) : (
+                <ComplexValue value={value as object} />
+              )}
             </div>
           </div>
         );

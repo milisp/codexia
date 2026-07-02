@@ -1,5 +1,7 @@
 import { version } from '../../package.json';
+
 const GITHUB_URL = 'https://github.com/milisp/codexia';
+
 import { open } from '@tauri-apps/plugin-shell';
 
 export default function AboutView() {

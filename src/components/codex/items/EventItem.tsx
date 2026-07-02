@@ -1,12 +1,11 @@
-import { Badge } from '@/components/ui/badge';
-import { FileUpdateChange } from '@/bindings/v2';
 import type { ServerNotification } from '@/bindings';
-import { TurnPlan } from './TurnPlan';
-import { EditableUserMessageItem } from './UserMessageItem';
+import type { FileUpdateChange } from '@/bindings/v2';
+import { Badge } from '@/components/ui/badge';
 import { AgentMessageItem } from './AgentMessageItem';
-import { IndividualFileChanges } from './IndividualFileChanges';
-import { SummaryFileChanges } from './SummaryFileChanges';
-import { CollabAgentToolCallItem, type CollabAgentToolCallItemData } from './CollabAgentToolCallItem';
+import {
+  CollabAgentToolCallItem,
+  type CollabAgentToolCallItemData,
+} from './CollabAgentToolCallItem';
 import {
   aggregateFileChanges,
   aggregateTurnChangesFromContext,
@@ -14,7 +13,11 @@ import {
   getDiffViewerProps,
   type RenderEventContext,
 } from './fileChangeLogic';
+import { IndividualFileChanges } from './IndividualFileChanges';
 import { McpToolCallItem } from './McpToolCallItem';
+import { SummaryFileChanges } from './SummaryFileChanges';
+import { TurnPlan } from './TurnPlan';
+import { EditableUserMessageItem } from './UserMessageItem';
 
 type CollapsedJsonItemProps = {
   label: string;
@@ -81,11 +84,15 @@ export const renderEvent = (event: ServerNotification, context?: RenderEventCont
   );
   switch (event.method) {
     case 'error':
-      return <p className="text-red-600 dark:text-red-400 font-medium">{event.params.error.message}</p>;
+      return (
+        <p className="text-red-600 dark:text-red-400 font-medium">{event.params.error.message}</p>
+      );
     case 'warning':
-      return <p className="text-yellow-600 dark:text-yellow-400 font-medium">{event.params.message}</p>;
-    case 'item/started':
-      let { item: startedItem } = event.params;
+      return (
+        <p className="text-yellow-600 dark:text-yellow-400 font-medium">{event.params.message}</p>
+      );
+    case 'item/started': {
+      const { item: startedItem } = event.params;
       switch (startedItem.type) {
         case 'userMessage': {
           const threadId = event.params.threadId;
@@ -110,8 +117,9 @@ export const renderEvent = (event: ServerNotification, context?: RenderEventCont
         default:
           return null;
       }
-    case 'item/completed':
-      let { item } = event.params;
+    }
+    case 'item/completed': {
+      const { item } = event.params;
       switch (item.type) {
         case 'agentMessage':
           return <AgentMessageItem text={item.text} />;
@@ -128,11 +136,12 @@ export const renderEvent = (event: ServerNotification, context?: RenderEventCont
           // Render the multi-agent sub-agent operation card.
           return <CollabAgentToolCallItem item={item as unknown as CollabAgentToolCallItemData} />;
         case 'mcpToolCall':
-          return <McpToolCallItem item={item} />
+          return <McpToolCallItem item={item} />;
         default:
-          return <CollapsedJsonItem label={item.type} value={item} />
+          return <CollapsedJsonItem label={item.type} value={item} />;
       }
-    case 'turn/completed':
+    }
+    case 'turn/completed': {
       if (event.params.turn.status === 'interrupted') {
         return (
           <div>
@@ -158,6 +167,7 @@ export const renderEvent = (event: ServerNotification, context?: RenderEventCont
           <SummaryFileChanges changes={aggregatedChanges} getDiffViewerProps={getDiffViewerProps} />
         </div>
       );
+    }
     case 'turn/plan/updated':
       return <TurnPlan plan={event.params.plan} explanation={event.params.explanation} />;
     case 'item/agentMessage/delta':
@@ -182,8 +192,6 @@ export const renderEvent = (event: ServerNotification, context?: RenderEventCont
       return null;
 
     default:
-      return (
-        <CollapsedJsonItem label={event.method} value={event.params} />
-      );
+      return <CollapsedJsonItem label={event.method} value={event.params} />;
   }
 };

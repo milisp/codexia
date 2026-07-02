@@ -7,7 +7,7 @@ import { isToolResultBlock } from '../types/messages';
  */
 export function collectInlineErrors(
   messages: CCMessage[],
-  idx: number,
+  idx: number
 ): Record<string, ToolResultBlock> | undefined {
   const msg = messages[idx];
   if (msg.type !== 'assistant') return undefined;
@@ -44,7 +44,7 @@ export function collectInlineErrors(
  * Pre-compute inline errors map for the entire message list.
  */
 export function buildInlineErrorsMap(
-  messages: CCMessage[],
+  messages: CCMessage[]
 ): Record<number, Record<string, ToolResultBlock>> {
   return messages.reduce<Record<number, Record<string, ToolResultBlock>>>((acc, _, idx) => {
     const errors = collectInlineErrors(messages, idx);

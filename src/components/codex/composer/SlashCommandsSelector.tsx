@@ -1,6 +1,13 @@
+import type { CSSProperties } from 'react';
 import { useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import type { CSSProperties } from 'react';
+import { useCodexStore } from '@/components/codex/stores';
+import {
+  applyEditorReplacement,
+  detectWordBoundaryTrigger,
+  replaceAtTrigger,
+  useComposerPopover,
+} from '@/components/common/useComposerPopover';
 import {
   Command,
   CommandEmpty,
@@ -8,20 +15,12 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { codexService } from '@/services/codexService';
-import {
-  useComposerPopover,
-  detectWordBoundaryTrigger,
-  replaceAtTrigger,
-  applyEditorReplacement,
-} from '@/components/common/useComposerPopover';
-import { useCodexStore } from '@/components/codex/stores';
 import { startReview } from '@/services';
+import { codexService } from '@/services/codexService';
 
 const SLASH_COMMANDS = [{ id: 'review', description: 'Review uncommitted changes' }];
 const detectSlash = detectWordBoundaryTrigger('/');
-const filterCmd = (cmd: { id: string }, query: string) =>
-  cmd.id.startsWith(query.toLowerCase());
+const filterCmd = (cmd: { id: string }, query: string) => cmd.id.startsWith(query.toLowerCase());
 
 interface SlashCommandPopoverProps {
   input: string;
@@ -68,17 +67,16 @@ export function SlashCommandPopover({
         }
       }
     },
-    [input, setInputValue, editorRef, currentThreadId],
+    [input, setInputValue, editorRef, currentThreadId]
   );
 
-  const { open, filteredItems, selectedIndex, setSelectedIndex, itemRefs } =
-    useComposerPopover({
-      input,
-      items: SLASH_COMMANDS,
-      filter: filterCmd,
-      detect: detectSlash,
-      onKeySelect: handleSelect,
-    });
+  const { open, filteredItems, selectedIndex, setSelectedIndex, itemRefs } = useComposerPopover({
+    input,
+    items: SLASH_COMMANDS,
+    filter: filterCmd,
+    detect: detectSlash,
+    onKeySelect: handleSelect,
+  });
 
   if (!open || typeof document === 'undefined' || filteredItems.length === 0) return null;
 
@@ -86,12 +84,14 @@ export function SlashCommandPopover({
 
   return createPortal(
     <div
-      style={{
-        position: 'fixed',
-        top: rect?.top ?? 0,
-        left: rect?.left ?? 0,
-        transform: 'translateY(calc(-100% - 8px))',
-      } as CSSProperties}
+      style={
+        {
+          position: 'fixed',
+          top: rect?.top ?? 0,
+          left: rect?.left ?? 0,
+          transform: 'translateY(calc(-100% - 8px))',
+        } as CSSProperties
+      }
       className="z-[9999] w-64 overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md"
     >
       <Command shouldFilter={false}>
@@ -104,7 +104,9 @@ export function SlashCommandPopover({
                 <CommandItem
                   key={cmd.id}
                   value={cmd.id}
-                  ref={(el) => { itemRefs.current[index] = el; }}
+                  ref={(el) => {
+                    itemRefs.current[index] = el;
+                  }}
                   data-selected={index === selectedIndex}
                   className="flex flex-col items-start gap-0.5 data-[selected=true]:bg-accent"
                   onClick={() => handleSelect(cmd)}
@@ -124,7 +126,7 @@ export function SlashCommandPopover({
         <span className="ml-3">Esc close</span>
       </div>
     </div>,
-    document.body,
+    document.body
   );
 }
 

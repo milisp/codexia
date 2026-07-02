@@ -1,20 +1,20 @@
-import { useState, useCallback } from 'react';
-import { Check, FolderOpen, FolderPlus, ChevronDown } from 'lucide-react';
+import { open } from '@tauri-apps/plugin-dialog';
+import { Check, ChevronDown, FolderOpen, FolderPlus } from 'lucide-react';
+import { useCallback, useState } from 'react';
+import { type ThreadCwdMode, useConfigStore } from '@/components/codex/stores';
+import { BrowserProjects } from '@/components/project-selector';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { open } from '@tauri-apps/plugin-dialog';
-import { Button } from '@/components/ui/button';
-import { BrowserProjects } from '@/components/project-selector';
 import { isDesktopTauri } from '@/hooks/runtime';
+import { useCCStore } from '@/stores';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { BranchSwitcher } from '../features/branch';
 import { AgentWorkspaceSelect } from './AgentWorkspaceSelect';
-import { ThreadCwdMode, useConfigStore } from '@/components/codex/stores';
-import { useCCStore } from '@/stores';
 
 export function WorkspaceSwitcher() {
   const [projectOpen, setProjectOpen] = useState(false);

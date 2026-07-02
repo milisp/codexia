@@ -1,20 +1,20 @@
-import { useEffect, useState, useMemo } from 'react';
 import { Dot, Funnel } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Streamdown } from 'streamdown';
+import { AccordionMsg } from '@/components/codex/history/AccordionMsg';
+import { useCurrentThread } from '@/components/codex/stores/useCodexStore';
+import { DiffViewer } from '@/components/features/DiffViewer';
+import { Markdown } from '@/components/Markdown';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { DiffViewer } from '@/components/features/DiffViewer';
-import { AccordionMsg } from '@/components/codex/history/AccordionMsg';
-import HistoryExecCommandItem from './HistoryExecCommandItem';
-import { HistoryPatchOutputIcon } from './HistoryPatchOutputIcon';
-import { useCurrentThread } from '@/components/codex/stores/useCodexStore';
-import { RawMessage } from './type';
-import { aggregateMessages } from './aggregateMessages';
-import { PlanDisplay, SimplePlanStep } from './PlanDisplay';
-import { HistoryFilters, createInitialFilterState } from './HistoryFilters';
-import { Markdown } from '@/components/Markdown';
 import { readTextFileLines } from '@/services';
-import { Streamdown } from 'streamdown';
+import { aggregateMessages } from './aggregateMessages';
+import HistoryExecCommandItem from './HistoryExecCommandItem';
+import { createInitialFilterState, HistoryFilters } from './HistoryFilters';
+import { HistoryPatchOutputIcon } from './HistoryPatchOutputIcon';
+import { PlanDisplay, type SimplePlanStep } from './PlanDisplay';
+import type { RawMessage } from './type';
 
 export function History() {
   const currentThread = useCurrentThread();
@@ -37,7 +37,7 @@ export function History() {
     const readConversation = async () => {
       try {
         const lines = await readTextFileLines(currentPath);
-        let messages: RawMessage[] = [];
+        const messages: RawMessage[] = [];
         let payload: Record<string, any> = {};
         for await (const line of lines) {
           if (!line) continue;
@@ -160,7 +160,10 @@ export function History() {
               );
             case 'user_message':
               return (
-                <div key={`user-${index}`} className="p-3 rounded-lg max-w-[90%] self-end shadow-md">
+                <div
+                  key={`user-${index}`}
+                  className="p-3 rounded-lg max-w-[90%] self-end shadow-md"
+                >
                   {msg.images && msg.images.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-2">
                       {msg.images.map((image: string, index: number) => (
@@ -218,18 +221,20 @@ export function History() {
                 />
               );
             }
-            case 'update_plan':
-              let planArgs: { plan: SimplePlanStep[]; explanation: string } = JSON.parse(
+            case 'update_plan': {
+              const planArgs: { plan: SimplePlanStep[]; explanation: string } = JSON.parse(
                 msg.arguments
               );
               return <PlanDisplay key={index} steps={planArgs.plan} />;
-            case 'apply_patch':
-              let applyPatchArgs = JSON.parse(msg.arguments);
+            }
+            case 'apply_patch': {
+              const applyPatchArgs = JSON.parse(msg.arguments);
               return (
                 <div key={index}>
                   <DiffViewer unifiedDiff={applyPatchArgs.input} />
                 </div>
               );
+            }
             case 'custom_tool_call':
               return (
                 <div key={index}>

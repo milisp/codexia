@@ -1,6 +1,6 @@
-import { useWindowFocus } from '@/hooks/useWindowFocus';
 import { CopyButton } from '@/components/common';
 import { Markdown } from '@/components/Markdown';
+import { useWindowFocus } from '@/hooks/useWindowFocus';
 
 type AgentMessageItemProps = {
   text: string;
@@ -21,10 +21,7 @@ export const AgentMessageItem = ({ text }: AgentMessageItemProps) => {
           isWindowFocused ? 'invisible group-hover:visible group-focus-within:visible' : 'invisible'
         }`}
       >
-        <CopyButton
-          text={text}
-          className="h-7 w-7 text-muted-foreground"
-        />
+        <CopyButton text={text} className="h-7 w-7 text-muted-foreground" />
       </div>
     </div>
   );

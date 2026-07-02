@@ -1,9 +1,9 @@
-import { DxtUserConfigurationOptionSchema } from '../schemas';
 import { Folder } from 'lucide-react';
-import { z } from 'zod';
-import { FolderSelector } from '../FolderSelector';
-import { Input } from '@/components/ui/input';
+import type { z } from 'zod';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { FolderSelector } from '../FolderSelector';
+import type { DxtUserConfigurationOptionSchema } from '../schemas';
 
 // Generic input renderer for different types
 function ConfigInput({
@@ -58,7 +58,7 @@ function ConfigInput({
             onChange={(e) => onChange(e.target.value)}
           />
           {/* TODO: Implement file picker logic */}
-          <Button size="icon" variant="ghost" onClick={() => { }}>
+          <Button size="icon" variant="ghost" onClick={() => {}}>
             <Folder />
           </Button>
         </div>

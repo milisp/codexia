@@ -51,7 +51,9 @@ export const useGitStatsStore = create<GitStatsStore>((set) => ({
     }
 
     set((state) => ({
-      stats: state.stats ? { ...state.stats, isLoading: true } : { ...initialStats, isLoading: true },
+      stats: state.stats
+        ? { ...state.stats, isLoading: true }
+        : { ...initialStats, isLoading: true },
     }));
 
     try {
@@ -86,7 +88,9 @@ export const useGitStatsStore = create<GitStatsStore>((set) => ({
       set((state) => {
         const prev = state.stats;
         // Skip update if nothing changed during silent background refresh
-        if (silent && prev &&
+        if (
+          silent &&
+          prev &&
           prev.stagedFiles === nextStats.stagedFiles &&
           prev.unstagedFiles === nextStats.unstagedFiles &&
           prev.totalAdditions === nextStats.totalAdditions &&
@@ -102,7 +106,9 @@ export const useGitStatsStore = create<GitStatsStore>((set) => ({
       console.error('Failed to refresh git stats:', error);
       if (!silent) {
         set((state) => ({
-          stats: state.stats ? { ...state.stats, isLoading: false } : { ...initialStats, isLoading: false },
+          stats: state.stats
+            ? { ...state.stats, isLoading: false }
+            : { ...initialStats, isLoading: false },
         }));
       }
     }

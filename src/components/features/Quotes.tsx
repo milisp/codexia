@@ -1,6 +1,6 @@
+import { Card, CardContent } from '@/components/ui/card';
 import { useRandomQuote } from '@/hooks/useRandomQuote';
 import { useWorkspaceStore } from '@/stores';
-import { Card, CardContent } from '@/components/ui/card';
 
 export function Quotes() {
   const { selectedAgent } = useWorkspaceStore();

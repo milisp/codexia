@@ -16,7 +16,9 @@ export function ErrorState({ error, onRetry }: { error: string; onRetry: () => v
     <div className="flex h-full items-center justify-center p-8">
       <div className="text-center">
         <p className="mb-3 text-sm text-red-400">{error}</p>
-        <Button variant="outline" size="sm" onClick={onRetry}>Retry</Button>
+        <Button variant="outline" size="sm" onClick={onRetry}>
+          Retry
+        </Button>
       </div>
     </div>
   );

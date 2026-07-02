@@ -1,7 +1,7 @@
 import { CCMessageBlock } from '@/components/cc/messages/CCMessageBlock';
 import { ExploredGroup } from '@/components/cc/messages/ExploredGroup';
-import type { AssistantMessage, ToolResultBlock, ToolUseBlock } from '../types/messages';
 import { useCCStore } from '@/stores/cc';
+import type { AssistantMessage, ToolResultBlock, ToolUseBlock } from '../types/messages';
 import { buildRenderItems } from './group';
 
 interface Props {
@@ -11,19 +11,18 @@ interface Props {
   inlineErrors?: Record<string, ToolResultBlock>;
 }
 
-
 export function CCMessageContent({ msg, isToolBlock, inlineErrors }: Props) {
   const { messages } = useCCStore();
 
   const resolveToolName = (toolUseId: string): string | undefined => {
     const inMsg = msg.message.content.find(
-      (b): b is ToolUseBlock => b.type === 'tool_use' && b.id === toolUseId,
+      (b): b is ToolUseBlock => b.type === 'tool_use' && b.id === toolUseId
     );
     if (inMsg) return inMsg.name;
     for (const m of messages) {
       if (m.type !== 'assistant') continue;
       const found = m.message.content.find(
-        (b): b is ToolUseBlock => b.type === 'tool_use' && b.id === toolUseId,
+        (b): b is ToolUseBlock => b.type === 'tool_use' && b.id === toolUseId
       );
       if (found) return found.name;
     }
@@ -37,14 +36,15 @@ export function CCMessageContent({ msg, isToolBlock, inlineErrors }: Props) {
   return (
     <div className="flex flex-col">
       {msg.message.error && (
-        <div className="text-xs text-red-500 px-1 mb-2">
-          Error: {msg.message.error}
-        </div>
+        <div className="text-xs text-red-500 px-1 mb-2">Error: {msg.message.error}</div>
       )}
       {renderItems.map((item, gi) => (
         <div key={gi} className={item.mt}>
           {item.kind === 'explored' ? (
-            <ExploredGroup items={item.items} isCompleted={isCompleted || item.isLocallyCompleted} />
+            <ExploredGroup
+              items={item.items}
+              isCompleted={isCompleted || item.isLocallyCompleted}
+            />
           ) : (
             <CCMessageBlock
               block={item.block}

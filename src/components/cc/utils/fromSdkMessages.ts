@@ -1,5 +1,5 @@
-import type { CCMessage } from '../types/messages';
 import type { SdkSessionMessage } from '@/services/tauri/cc';
+import type { CCMessage } from '../types/messages';
 
 /**
  * Convert SDK SessionMessage[] (from the Rust get_session_messages call) into

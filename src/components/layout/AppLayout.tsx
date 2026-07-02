@@ -1,20 +1,20 @@
-import { Suspense, lazy, useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import type { ImperativePanelHandle } from 'react-resizable-panels';
-import { useLayoutStore } from '@/stores';
-import { AppSideBar, RightPanel } from '@/components/layout';
 import { History } from '@/components/codex/history';
+import { BottomTerminal } from '@/components/features/terminal/BottomTerminal';
+import { AppSideBar, RightPanel } from '@/components/layout';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { SidebarInset, SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { BottomTerminal } from '@/components/features/terminal/BottomTerminal';
 import { useEdgeSwipe } from '@/hooks/useEdgeSwipe';
+import { useLayoutStore } from '@/stores';
 
 const SettingsView = lazy(() => import('@/components/settings/SettingsView'));
 const PluginsView = lazy(() => import('@/views/PluginsView'));
 const AgentsMdView = lazy(() => import('@/views/agents-md-view'));
 const AgentView = lazy(() => import('@/components/agent/AgentView'));
 const AutoMationsView = lazy(() =>
-  import('../features/automations').then((module) => ({ default: module.AutoMationsView })),
+  import('../features/automations').then((module) => ({ default: module.AutoMationsView }))
 );
 const InsightsView = lazy(() => import('@/components/features/insight/InsightsView'));
 
@@ -82,7 +82,8 @@ function LayoutContent({ mainContent }: { mainContent: React.ReactNode }) {
   // Focus mode hides the main agent thread so the right panel (diff/tasks/etc.)
   // can take the full width — useful when reviewing a diff or reading notes
   // without the agent chat competing for attention.
-  const isFocusModeActive = canShowRightPanel && isRightPanelVisible && isRightPanelFocused && !isMobile;
+  const isFocusModeActive =
+    canShowRightPanel && isRightPanelVisible && isRightPanelFocused && !isMobile;
 
   return (
     <SidebarInset className="min-w-0 overflow-hidden h-full">
@@ -171,9 +172,7 @@ export function AppLayout() {
           {view === 'insights' && <InsightsView />}
         </Suspense>
       </div>
-      {view === 'agent' && (
-        <BottomTerminal />
-      )}
+      {view === 'agent' && <BottomTerminal />}
     </div>
   );
 

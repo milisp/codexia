@@ -44,6 +44,6 @@ export const useModelSettingsStore = create<ModelSettingsStore>()(
     }),
     {
       name: 'model-settings',
-    },
-  ),
+    }
+  )
 );

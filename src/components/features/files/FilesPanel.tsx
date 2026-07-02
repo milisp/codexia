@@ -1,10 +1,10 @@
-import { useState, useEffect, Suspense } from 'react';
-import { useWorkspaceStore } from '@/stores';
-import { FileTree, FileViewer } from './explorer';
-import { Button } from '@/components/ui/button';
 import { Folders, X } from 'lucide-react';
+import { Suspense, useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useWorkspaceStore } from '@/stores';
 import { getFilename } from '@/utils/getFilename';
+import { FileTree, FileViewer } from './explorer';
 
 export default function FilesPanel() {
   const { openFiles, activeFile, openFile, closeFile, setActiveFile, cwd } = useWorkspaceStore();
@@ -35,10 +35,11 @@ export default function FilesPanel() {
                 key={path}
                 type="button"
                 onClick={() => setActiveFile(path)}
-                className={`group flex h-9 min-w-0 shrink-0 items-center gap-1.5 border-r border-border px-3 text-xs transition-colors ${isActive
+                className={`group flex h-9 min-w-0 shrink-0 items-center gap-1.5 border-r border-border px-3 text-xs transition-colors ${
+                  isActive
                     ? 'bg-background text-foreground'
                     : 'text-muted-foreground hover:bg-accent/40 hover:text-foreground'
-                  }`}
+                }`}
                 title={path}
               >
                 <span className="max-w-[120px] truncate font-mono">{getFilename(path)}</span>
@@ -88,8 +89,9 @@ export default function FilesPanel() {
         {/* FileTree — desktop inline, right side */}
         {isFileTreeVisible && !isMobile && cwd && (
           <div
-            className={`h-full shrink-0 border-l border-border bg-sidebar/20 overflow-hidden ${activeFile ? 'w-60 min-w-60' : 'flex-1'
-              }`}
+            className={`h-full shrink-0 border-l border-border bg-sidebar/20 overflow-hidden ${
+              activeFile ? 'w-60 min-w-60' : 'flex-1'
+            }`}
           >
             <FileTree folder={cwd} onFileSelect={handleFileSelect} />
           </div>

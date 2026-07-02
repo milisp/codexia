@@ -1,6 +1,6 @@
-import { ClaudeCodeSessionList } from '../cc/SessionList';
 import { ThreadList } from '@/components/codex/ThreadList';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
+import { ClaudeCodeSessionList } from '../cc/SessionList';
 import { SideBarProjectList } from './SideBarProjectList';
 
 type SideBarClaudeTabProps = {

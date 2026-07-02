@@ -6,17 +6,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useLocaleStore } from '@/stores/settings/useLocaleStore';
-import type { AppLocale } from '@/locales';
 import { supportedLocales } from '@/lib/i18n';
+import type { AppLocale } from '@/locales';
+import { useLocaleStore } from '@/stores/settings/useLocaleStore';
 
 export function LanguageSelector() {
-  const { t } = useTranslation("header");
+  const { t } = useTranslation('header');
   const { locale, setLocale } = useLocaleStore();
 
   const options = [
     { code: 'auto', label: t('autoDetect') },
-    ...supportedLocales.map(({ code, label }) => ({ code, label }))
+    ...supportedLocales.map(({ code, label }) => ({ code, label })),
   ];
 
   return (

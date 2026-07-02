@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import type { ThreadId } from '@/bindings';
 import type { ThreadListParams, ThreadListResponse } from '@/bindings/v2';
-import { listThreads, threadUnarchive } from '@/services/tauri';
-import { ThreadId } from '@/bindings';
-import { getFilename } from '@/utils/getFilename';
-import { formatThreadAge } from '@/utils/formatThreadAge';
 import { modelProviders } from '@/components/codex/ThreadList';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { listThreads, threadUnarchive } from '@/services/tauri';
+import { formatThreadAge } from '@/utils/formatThreadAge';
+import { getFilename } from '@/utils/getFilename';
 
 const EMPTY_LIST: ThreadListResponse = { data: [], nextCursor: null, backwardsCursor: null };
 

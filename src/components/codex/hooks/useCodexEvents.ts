@@ -1,22 +1,21 @@
-import { useEffect, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
+import { useEffect, useRef } from 'react';
+import type { ServerNotification } from '@/bindings/ServerNotification';
+import type { AccountLoginCompletedNotification, ThreadTokenUsage } from '@/bindings/v2';
+import type { CodexParseErrorEvent, CodexStderrEvent } from '@/components/codex/CodexInternalEvent';
 import {
-  useCodexStore,
-  useApprovalStore,
-  useRequestUserInputStore,
   type ApprovalRequest,
   type RequestUserInputRequest,
+  useApprovalStore,
+  useCodexStore,
+  useRequestUserInputStore,
 } from '@/components/codex/stores';
-import type { ThreadTokenUsage } from '@/bindings/v2';
+import { buildUrl, isDesktopTauri } from '@/hooks/runtime';
+import { getAccountWithParams } from '@/services';
+import { allowSleep, preventSleep } from '@/services/tauri';
 import { useLayoutStore } from '@/stores';
 import { useSettingsStore } from '@/stores/settings';
-import type { ServerNotification } from '@/bindings/ServerNotification';
-import type { AccountLoginCompletedNotification } from '@/bindings/v2';
 import { playBeep } from '@/utils/beep';
-import { allowSleep, preventSleep } from '@/services/tauri';
-import { getAccountWithParams } from '@/services';
-import { buildUrl, isDesktopTauri } from '@/hooks/runtime';
-import { CodexParseErrorEvent, CodexStderrEvent } from '@/components/codex/CodexInternalEvent';
 
 function shouldPlayCompletionBeep(
   mode: 'never' | 'unfocused' | 'always',
@@ -113,7 +112,13 @@ export function useCodexEvents(enabled = true) {
       const threadId = extractThreadId(payload);
 
       if (threadId) {
-        if (['thread/settings/updated', 'serverRequest/resolved', 'mcpServer/startupStatus/updated'].includes(method)) {
+        if (
+          [
+            'thread/settings/updated',
+            'serverRequest/resolved',
+            'mcpServer/startupStatus/updated',
+          ].includes(method)
+        ) {
           return;
         }
 
@@ -163,7 +168,10 @@ export function useCodexEvents(enabled = true) {
           const turnStatus = payload.params.turn.status;
           if (
             turnStatus === 'completed' &&
-            shouldPlayCompletionBeep(taskCompleteBeepModeRef.current, isCodexThreadActiveRef.current)
+            shouldPlayCompletionBeep(
+              taskCompleteBeepModeRef.current,
+              isCodexThreadActiveRef.current
+            )
           ) {
             playBeep();
           }
@@ -178,7 +186,12 @@ export function useCodexEvents(enabled = true) {
         getAddEvent()(threadId, payload);
       } else {
         if (
-          !['account/rateLimits/updated', 'account/updated', 'error', 'account/login/completed'].includes(method)
+          ![
+            'account/rateLimits/updated',
+            'account/updated',
+            'error',
+            'account/login/completed',
+          ].includes(method)
         ) {
           console.warn('[useCodexEvents] No threadId found in payload:', payload);
         }

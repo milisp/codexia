@@ -1,6 +1,8 @@
 import { BarChart2, Bug, ListFilter, Package2, Search, Timer } from 'lucide-react';
 import { useCallback, useState } from 'react';
-import { useLayoutStore } from '@/stores';
+import { useTranslation } from 'react-i18next';
+import { AgentSwitcher } from '@/components/agent';
+import { useThreadList } from '@/components/codex/hooks';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -17,18 +19,16 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { UserInfo } from './UserInfo';
-import { useThreadList } from '@/components/codex/hooks';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { useCCSessionManager } from '@/hooks/useCCSessionManager';
-import { UpdateButton } from '../features/UpdateButton';
 import { useTrafficLightConfig } from '@/hooks';
-import { SideBarCodexTab, SideBarClaudeTab } from './SideBarTab';
-import { AgentSwitcher } from '@/components/agent';
-import { SessionManagerDialog } from '../common/SessionManagerDialog';
-import { SideBarAddProjectButton } from './SideBarAddProjectButton';
+import { useCCSessionManager } from '@/hooks/useCCSessionManager';
+import { useLayoutStore } from '@/stores';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { NewAgentButton } from '../common/NewAgentButton';
-import { useTranslation } from 'react-i18next';
+import { SessionManagerDialog } from '../common/SessionManagerDialog';
+import { UpdateButton } from '../features/UpdateButton';
+import { SideBarAddProjectButton } from './SideBarAddProjectButton';
+import { SideBarClaudeTab, SideBarCodexTab } from './SideBarTab';
+import { UserInfo } from './UserInfo';
 
 const focusCCInput = () => window.dispatchEvent(new Event('cc-input-focus-request'));
 
@@ -39,7 +39,7 @@ const navBtnInactive = 'border-transparent hover:border-border/60';
 const navBtnCls = (active: boolean) => `${navBtnBase} ${active ? navBtnActive : navBtnInactive}`;
 
 export function AppSideBar() {
-  const { t } = useTranslation('sidebar')
+  const { t } = useTranslation('sidebar');
   const { cwd, setCwd, setSelectedAgent, selectedAgent } = useWorkspaceStore();
   const { setView, view, activeSidebarTab, setActiveSidebarTab } = useLayoutStore();
   const { open: isSidebarOpen } = useSidebar();
@@ -57,7 +57,7 @@ export function AppSideBar() {
       if (project !== cwd) setCwd(project);
       void handleNewThread();
     },
-    [cwd, handleNewThread, setCwd],
+    [cwd, handleNewThread, setCwd]
   );
 
   const handleStartNewCcSessionForProject = useCallback(
@@ -69,14 +69,13 @@ export function AppSideBar() {
       await handleNewSession();
       focusCCInput();
     },
-    [handleNewSession, setActiveSidebarTab, setCwd, setSelectedAgent, setView],
+    [handleNewSession, setActiveSidebarTab, setCwd, setSelectedAgent, setView]
   );
 
   return (
     <>
       <Sidebar className="border-r border-sidebar-border bg-zinc-100/95 dark:bg-zinc-900/95">
         <SidebarHeader className="gap-1 p-2">
-
           {/* Header row: toggle */}
           <div
             className={`flex items-center gap-2 ${isMacos ? 'pl-20' : 'pl-2'}`}
@@ -150,8 +149,12 @@ export function AppSideBar() {
                     value={sortKey}
                     onValueChange={(v) => setSortKey(v as 'created_at' | 'updated_at')}
                   >
-                    <DropdownMenuRadioItem value="created_at">Sort by Created</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="updated_at">Sort by Updated</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="created_at">
+                      Sort by Created
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="updated_at">
+                      Sort by Updated
+                    </DropdownMenuRadioItem>
                   </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -174,7 +177,11 @@ export function AppSideBar() {
             <UserInfo />
           </div>
           <div className="flex-shrink-0 pr-2 flex items-center gap-2">
-            <a href='https://github.com/milisp/codexia/issues' target='_blank' rel='noopener noreferrer'>
+            <a
+              href="https://github.com/milisp/codexia/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <Bug className="h-4 w-4" />
             </a>
           </div>

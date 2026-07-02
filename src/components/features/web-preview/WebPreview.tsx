@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { RefreshCw, ExternalLink, Globe, ArrowLeft, ArrowRight } from 'lucide-react';
+import { openUrl } from '@tauri-apps/plugin-opener';
+import { ArrowLeft, ArrowRight, ExternalLink, Globe, RefreshCw } from 'lucide-react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { openUrl } from '@tauri-apps/plugin-opener';
 import { isTauri } from '@/hooks/runtime';
 import { useWebviewStore } from '@/stores/useWebViewStore';
 
@@ -71,7 +72,7 @@ export const WebPreview: React.FC<WebPreviewProps> = ({ url = '', onUrlChange })
           disabled={index <= 0}
           size="icon"
           variant="ghost"
-          className='h-7 w-7 p-0'
+          className="h-7 w-7 p-0"
         >
           <ArrowLeft className="w-3 h-3" />
         </Button>
@@ -80,7 +81,7 @@ export const WebPreview: React.FC<WebPreviewProps> = ({ url = '', onUrlChange })
           disabled={index >= history.length - 1}
           size="icon"
           variant="ghost"
-          className='h-7 w-7 p-0'
+          className="h-7 w-7 p-0"
         >
           <ArrowRight className="w-3 h-3" />
         </Button>
@@ -89,7 +90,7 @@ export const WebPreview: React.FC<WebPreviewProps> = ({ url = '', onUrlChange })
           size="icon"
           variant="ghost"
           disabled={isLoading}
-          className='h-7 w-7 p-0'
+          className="h-7 w-7 p-0"
         >
           <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
         </Button>
@@ -120,7 +121,7 @@ export const WebPreview: React.FC<WebPreviewProps> = ({ url = '', onUrlChange })
         ) : (
           <div className="flex items-center justify-center h-full text-muted-foreground">
             {history.length > 0 ? (
-              <ul className='flex flex-col gap-2'>
+              <ul className="flex flex-col gap-2">
                 {history.map((historyUrl: string, idx: number) => (
                   <li key={idx}>
                     <Button

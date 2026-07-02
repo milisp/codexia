@@ -1,15 +1,10 @@
-import { useEffect, useState, useRef } from 'react';
 import { ExternalLink, Key, Save } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { setEnv, loadEnvKeys } from '@/services/tauri';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { loadEnvKeys, setEnv } from '@/services/tauri';
 import type { EnvStatusItem } from './ModelList';
 
 type EnvKeysDialogProps = {
@@ -61,9 +56,7 @@ export function EnvKeysDialog({ open, onOpenChange }: EnvKeysDialogProps) {
     await setEnv(item.env_key, valueToSave);
 
     setEnvKeys((prev) =>
-      prev.map((k) =>
-        k.provider === item.provider ? { ...k, is_env_set: true } : k
-      )
+      prev.map((k) => (k.provider === item.provider ? { ...k, is_env_set: true } : k))
     );
   };
 
@@ -91,23 +84,20 @@ export function EnvKeysDialog({ open, onOpenChange }: EnvKeysDialogProps) {
 
                   <span className="flex">
                     {item.signup_url && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        asChild
-                      >
+                      <Button variant="ghost" size="sm" asChild>
                         <a href={item.signup_url} target="_blank" rel="noreferrer" title="Sign up">
                           <ExternalLink className="h-3 w-3" /> Sign Up
                         </a>
                       </Button>
                     )}
                     {item.api_key_url && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        asChild
-                      >
-                        <a href={item.api_key_url} target="_blank" rel="noreferrer" title="Get API key">
+                      <Button variant="ghost" size="sm" asChild>
+                        <a
+                          href={item.api_key_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="Get API key"
+                        >
                           <ExternalLink className="h-3 w-3" /> Get API key
                         </a>
                       </Button>
@@ -127,7 +117,9 @@ export function EnvKeysDialog({ open, onOpenChange }: EnvKeysDialogProps) {
                     variant="ghost"
                     size="icon"
                     onClick={() => handleSave(item)}
-                    disabled={!inputValues[item.provider] || inputValues[item.provider] === '••••••••••••'}
+                    disabled={
+                      !inputValues[item.provider] || inputValues[item.provider] === '••••••••••••'
+                    }
                   >
                     <Save className="h-3 w-3" />
                   </Button>

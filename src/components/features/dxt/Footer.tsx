@@ -1,5 +1,5 @@
-import { DxtManifestSchema } from './schemas';
-import { z } from 'zod';
+import type { z } from 'zod';
+import type { DxtManifestSchema } from './schemas';
 
 // Footer component for displaying manifest details
 export function Footer({ manifest }: { manifest: z.infer<typeof DxtManifestSchema> }) {

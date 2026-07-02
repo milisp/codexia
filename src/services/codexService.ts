@@ -1,30 +1,30 @@
-import {
-  threadFork,
-  threadRollback,
-  threadStart as apiThreadStart,
-  threadResume,
-  turnStart,
-  turnInterrupt,
-  turnSteer,
-  listThreads,
-  threadArchive,
-  skillList,
-  gitCreateWorktree,
-} from './tauri';
 import type {
-  Thread,
-  ThreadForkParams,
-  ThreadStartParams,
-  ThreadListParams,
-  ThreadRollbackParams,
-  UserInput,
   SandboxMode,
   SandboxPolicy,
+  Thread,
+  ThreadForkParams,
+  ThreadListParams,
+  ThreadRollbackParams,
+  ThreadStartParams,
+  UserInput,
 } from '@/bindings/v2';
 import { useCodexStore, useConfigStore } from '@/components/codex/stores';
 import { useWorkspaceStore } from '@/stores';
 import { useSettingsStore } from '@/stores/settings';
 import { convertThreadHistoryToEvents } from '@/utils/threadHistoryConverter';
+import {
+  threadStart as apiThreadStart,
+  gitCreateWorktree,
+  listThreads,
+  skillList,
+  threadArchive,
+  threadFork,
+  threadResume,
+  threadRollback,
+  turnInterrupt,
+  turnStart,
+  turnSteer,
+} from './tauri';
 
 const sandboxModeToPolicy = (mode: SandboxMode, networkAccess: boolean): SandboxPolicy => {
   switch (mode) {
@@ -281,15 +281,15 @@ export const codexService = {
           // Inject plan mode when selected.
           ...(collaborationMode === 'plan'
             ? {
-              collaboration_mode: {
-                mode: 'plan',
-                settings: {
-                  model,
-                  reasoning_effort: reasoningEffort,
-                  developer_instructions: null,
+                collaboration_mode: {
+                  mode: 'plan',
+                  settings: {
+                    model,
+                    reasoning_effort: reasoningEffort,
+                    developer_instructions: null,
+                  },
                 },
-              },
-            }
+              }
             : {}),
         },
       };

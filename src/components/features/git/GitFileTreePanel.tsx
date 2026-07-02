@@ -1,8 +1,8 @@
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { DiffSection, TreeNode } from './types';
 import { GitFileTree } from './GitFileTree';
+import type { DiffSection, TreeNode } from './types';
 
 interface GitFileTreePanelProps {
   cwd: string | null;

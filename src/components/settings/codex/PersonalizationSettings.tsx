@@ -1,5 +1,7 @@
+import MarkdownIt from 'markdown-it';
 import { useEffect, useRef, useState } from 'react';
-import { useConfigStore, type Personality } from '@/components/codex/stores';
+import MdEditor from 'react-markdown-editor-lite';
+import { type Personality, useConfigStore } from '@/components/codex/stores';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
@@ -8,12 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import MdEditor from 'react-markdown-editor-lite';
-import MarkdownIt from 'markdown-it';
 import 'react-markdown-editor-lite/lib/index.css';
-import { useThemeContext } from '@/contexts/ThemeContext';
-import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useThemeContext } from '@/contexts/ThemeContext';
 import { loadInstructionFile, saveInstructionFile } from '@/utils/instructionFile';
 
 const CUSTOM_INSTRUCTIONS_PATH = '~/.codex/AGENTS.md';

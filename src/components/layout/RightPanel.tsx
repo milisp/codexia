@@ -1,16 +1,16 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { useLayoutStore, useWorkspaceStore } from '@/stores';
-import { detectWebFramework } from '../features/web-preview/webFrameworkDetection';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useGitWatch } from '@/hooks/useGitWatch';
+import { useLayoutStore, useWorkspaceStore } from '@/stores';
 import { useGitStatsStore } from '@/stores/useGitStatsStore';
+import { detectWebFramework } from '../features/web-preview/webFrameworkDetection';
 import { RightPanelHeader } from './RightPanelHeader';
 
 const NoteView = lazy(() => import('@/components/features/notes/NoteView'));
-const FilesPanel = lazy(() => import('@/components/features/files/FilesPanel'))
-const GitDiffPanel = lazy(() => import('@/components/features/git/GitDiffPanel'))
+const FilesPanel = lazy(() => import('@/components/features/files/FilesPanel'));
+const GitDiffPanel = lazy(() => import('@/components/features/git/GitDiffPanel'));
 const WebPreview = lazy(() =>
-  import('../features/web-preview/WebPreview').then((m) => ({ default: m.WebPreview })),
+  import('../features/web-preview/WebPreview').then((m) => ({ default: m.WebPreview }))
 );
 const TasksPanel = lazy(() => import('@/components/agent/TasksPanel'));
 
@@ -65,39 +65,48 @@ export function RightPanel() {
   }, [cwd]);
 
   return (
-    <div className={`h-full w-full min-h-0 border-l border-white/10 flex flex-col overflow-hidden ${isMobile ? 'bg-sidebar' : 'bg-sidebar/30'}`}>
+    <div
+      className={`h-full w-full min-h-0 border-l border-white/10 flex flex-col overflow-hidden ${isMobile ? 'bg-sidebar' : 'bg-sidebar/30'}`}
+    >
       <RightPanelHeader />
       <div className="flex-1 min-h-0 flex overflow-hidden">
         <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
           <Suspense fallback={null}>
-            <div className={activeRightPanelTab === 'diff' ? 'h-full min-h-0 overflow-hidden' : 'hidden'}>
+            <div
+              className={
+                activeRightPanelTab === 'diff' ? 'h-full min-h-0 overflow-hidden' : 'hidden'
+              }
+            >
               <GitDiffPanel cwd={cwd} isActive={activeRightPanelTab === 'diff'} />
             </div>
           </Suspense>
 
           {activeRightPanelTab === 'tasks' && (
             <div className="h-full min-h-0 overflow-hidden">
-              <Suspense fallback={null}><TasksPanel /></Suspense>
+              <Suspense fallback={null}>
+                <TasksPanel />
+              </Suspense>
             </div>
           )}
 
           {activeRightPanelTab === 'note' && (
             <div className="h-full min-h-0 overflow-hidden">
-              <Suspense fallback={null}><NoteView /></Suspense>
+              <Suspense fallback={null}>
+                <NoteView />
+              </Suspense>
             </div>
           )}
 
           {activeRightPanelTab === 'files' && (
-            <Suspense fallback={null}><FilesPanel /></Suspense>
+            <Suspense fallback={null}>
+              <FilesPanel />
+            </Suspense>
           )}
 
           {activeRightPanelTab === 'webpreview' && (
             <div className="h-full min-h-0 overflow-hidden">
               <Suspense fallback={null}>
-                <WebPreview
-                  url={webPreviewUrl}
-                  onUrlChange={setWebPreviewUrl}
-                />
+                <WebPreview url={webPreviewUrl} onUrlChange={setWebPreviewUrl} />
               </Suspense>
             </div>
           )}

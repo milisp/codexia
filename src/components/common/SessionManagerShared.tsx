@@ -1,6 +1,4 @@
-import { Trash2, Search, CheckSquare, Square } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { CheckSquare, Search, Square, Trash2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,6 +9,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export interface ToolbarProps {
   search: string;
@@ -80,9 +80,7 @@ export function DeleteConfirmDialog({
     <AlertDialog open={open} onOpenChange={(v) => !v && onCancel()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>
-            Delete {count === 1 ? '1 item' : `${count} items`}?
-          </AlertDialogTitle>
+          <AlertDialogTitle>Delete {count === 1 ? '1 item' : `${count} items`}?</AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone. The selected {count === 1 ? 'item' : 'items'} and{' '}
             {count === 1 ? 'its' : 'their'} history will be permanently deleted.

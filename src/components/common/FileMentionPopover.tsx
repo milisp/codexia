@@ -1,17 +1,17 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { FileIcon, defaultStyles } from 'react-file-icon';
 import { FileText } from 'lucide-react';
-import { searchFiles } from '@/services/tauri/filesystem';
-import { useWorkspaceStore } from '@/stores';
-import { isTauri } from '@/hooks/runtime';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { defaultStyles, FileIcon } from 'react-file-icon';
 import {
-  useComposerPopover,
+  applyEditorReplacement,
   detectAtMention,
   replaceAtTrigger,
-  applyEditorReplacement,
+  useComposerPopover,
 } from '@/components/common/useComposerPopover';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { isTauri } from '@/hooks/runtime';
+import { searchFiles } from '@/services/tauri/filesystem';
+import { useWorkspaceStore } from '@/stores';
 
 interface FileItem {
   name: string;

@@ -1,18 +1,18 @@
-import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { ArrowUp, ChevronDown, FolderOpen, Loader2 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import {
-  type TauriFileEntry,
   canonicalizePath,
   getHomeDirectory,
   readDirectory,
+  type TauriFileEntry,
 } from '@/services/tauri';
 
 function getParentPath(path: string): string | null {

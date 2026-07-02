@@ -1,6 +1,11 @@
-import { Bot, GitBranch, Send, Play, Square, Clock } from 'lucide-react';
+import { Bot, Clock, GitBranch, Play, Send, Square } from 'lucide-react';
+import type {
+  CollabAgentState,
+  CollabAgentStatus,
+  CollabAgentTool,
+  CollabAgentToolCallStatus,
+} from '@/bindings/v2';
 import { Badge } from '@/components/ui/badge';
-import type { CollabAgentTool, CollabAgentToolCallStatus, CollabAgentState, CollabAgentStatus } from '@/bindings/v2';
 
 // Shape of the collabAgentToolCall item from item/completed.
 export interface CollabAgentToolCallItemData {
@@ -20,23 +25,35 @@ export interface CollabAgentToolCallItemData {
 function toolLabel(tool: CollabAgentTool, status: CollabAgentToolCallStatus): string {
   const done = status === 'completed';
   switch (tool) {
-    case 'spawnAgent':  return done ? 'Spawned sub-agent' : 'Spawning sub-agent';
-    case 'sendInput':   return done ? 'Sent to sub-agent'  : 'Sending to sub-agent';
-    case 'resumeAgent': return done ? 'Resumed sub-agent'  : 'Resuming sub-agent';
-    case 'wait':        return done ? 'Waited for sub-agent' : 'Waiting for sub-agent';
-    case 'closeAgent':  return done ? 'Closed sub-agent'   : 'Closing sub-agent';
-    default:            return 'Sub-agent operation';
+    case 'spawnAgent':
+      return done ? 'Spawned sub-agent' : 'Spawning sub-agent';
+    case 'sendInput':
+      return done ? 'Sent to sub-agent' : 'Sending to sub-agent';
+    case 'resumeAgent':
+      return done ? 'Resumed sub-agent' : 'Resuming sub-agent';
+    case 'wait':
+      return done ? 'Waited for sub-agent' : 'Waiting for sub-agent';
+    case 'closeAgent':
+      return done ? 'Closed sub-agent' : 'Closing sub-agent';
+    default:
+      return 'Sub-agent operation';
   }
 }
 
 function toolIcon(tool: CollabAgentTool) {
   switch (tool) {
-    case 'spawnAgent':  return <GitBranch className="h-3.5 w-3.5" />;
-    case 'sendInput':   return <Send className="h-3.5 w-3.5" />;
-    case 'resumeAgent': return <Play className="h-3.5 w-3.5" />;
-    case 'wait':        return <Clock className="h-3.5 w-3.5" />;
-    case 'closeAgent':  return <Square className="h-3.5 w-3.5" />;
-    default:            return <Bot className="h-3.5 w-3.5" />;
+    case 'spawnAgent':
+      return <GitBranch className="h-3.5 w-3.5" />;
+    case 'sendInput':
+      return <Send className="h-3.5 w-3.5" />;
+    case 'resumeAgent':
+      return <Play className="h-3.5 w-3.5" />;
+    case 'wait':
+      return <Clock className="h-3.5 w-3.5" />;
+    case 'closeAgent':
+      return <Square className="h-3.5 w-3.5" />;
+    default:
+      return <Bot className="h-3.5 w-3.5" />;
   }
 }
 
@@ -46,14 +63,25 @@ function agentStatusDisplay(status: CollabAgentStatus): {
   className: string;
 } {
   switch (status) {
-    case 'running':      return { label: 'running',   className: 'bg-blue-500/15 text-blue-700 dark:text-blue-400' };
-    case 'completed':    return { label: 'done',      className: 'bg-green-500/15 text-green-700 dark:text-green-400' };
-    case 'errored':      return { label: 'errored',   className: 'bg-red-500/15 text-red-700 dark:text-red-400' };
-    case 'interrupted':  return { label: 'stopped',   className: 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-400' };
-    case 'shutdown':     return { label: 'shutdown',  className: 'bg-muted text-muted-foreground' };
-    case 'pendingInit':  return { label: 'starting',  className: 'bg-muted text-muted-foreground' };
-    case 'notFound':     return { label: 'not found', className: 'bg-red-500/15 text-red-700 dark:text-red-400' };
-    default:             return { label: status,      className: 'bg-muted text-muted-foreground' };
+    case 'running':
+      return { label: 'running', className: 'bg-blue-500/15 text-blue-700 dark:text-blue-400' };
+    case 'completed':
+      return { label: 'done', className: 'bg-green-500/15 text-green-700 dark:text-green-400' };
+    case 'errored':
+      return { label: 'errored', className: 'bg-red-500/15 text-red-700 dark:text-red-400' };
+    case 'interrupted':
+      return {
+        label: 'stopped',
+        className: 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-400',
+      };
+    case 'shutdown':
+      return { label: 'shutdown', className: 'bg-muted text-muted-foreground' };
+    case 'pendingInit':
+      return { label: 'starting', className: 'bg-muted text-muted-foreground' };
+    case 'notFound':
+      return { label: 'not found', className: 'bg-red-500/15 text-red-700 dark:text-red-400' };
+    default:
+      return { label: status, className: 'bg-muted text-muted-foreground' };
   }
 }
 

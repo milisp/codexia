@@ -2,11 +2,11 @@ import type { SkillsListResponse } from '@/bindings/v2';
 
 import {
   type InstalledSkillItem,
-  type MarketplaceSkillItem,
-  type SkillScope,
   invokeTauri,
   isDesktopTauri,
+  type MarketplaceSkillItem,
   postJson,
+  type SkillScope,
 } from './shared';
 
 export type MarketSkillItem = {
@@ -53,11 +53,7 @@ export async function listCentralSkills(scope: SkillScope, cwd?: string) {
   return await postJson<Array<CentralSkillItem>>('/api/skills/list-central', { scope, cwd });
 }
 
-export async function listInstalledSkills(
-  selectedAgent: string,
-  scope: SkillScope,
-  cwd?: string
-) {
+export async function listInstalledSkills(selectedAgent: string, scope: SkillScope, cwd?: string) {
   if (isDesktopTauri()) {
     return await invokeTauri<Array<InstalledSkillItem>>('list_installed_skills', {
       selectedAgent,

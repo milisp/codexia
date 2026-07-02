@@ -1,12 +1,12 @@
+import { Edit, Power, PowerOff, Save, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Save, X, Trash2, Edit, Power, PowerOff } from 'lucide-react';
-import type { ClaudeCodeMcpServer } from '@/types/cc/cc-mcp';
-import { toast } from 'sonner';
-import { McpServerFormFields } from './McpServerFormFields';
 import { ccMcpAdd, ccMcpDisable, ccMcpEnable, ccMcpRemove } from '@/services';
+import type { ClaudeCodeMcpServer } from '@/types/cc/cc-mcp';
+import { McpServerFormFields } from './McpServerFormFields';
 
 type ServerType = 'stdio' | 'http' | 'sse';
 
@@ -50,7 +50,7 @@ export function McpServerCard({ server, workingDir, onServerUpdated }: McpServer
       return;
     }
 
-    let request: any = {
+    const request: any = {
       name: editName,
       type: editType,
       scope: 'local',
@@ -161,12 +161,13 @@ export function McpServerCard({ server, workingDir, onServerUpdated }: McpServer
               </Badge>
               <Badge
                 variant="outline"
-                className={`text-[10px] font-normal px-1.5 h-4 uppercase ${server.scope === 'global'
+                className={`text-[10px] font-normal px-1.5 h-4 uppercase ${
+                  server.scope === 'global'
                     ? 'bg-blue-500/10 text-blue-500'
                     : server.scope === 'project'
                       ? 'bg-green-500/10 text-green-500'
                       : 'bg-orange-500/10 text-orange-500'
-                  }`}
+                }`}
               >
                 {server.scope}
               </Badge>

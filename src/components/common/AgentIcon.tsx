@@ -1,5 +1,5 @@
+import { ClaudeCode, Codex } from '@/components/icons';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { Codex, ClaudeCode } from '@/components/icons';
 
 type agent = 'codex' | 'cc';
 

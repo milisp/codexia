@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Clock3, FolderPlus, X } from 'lucide-react';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
+import { Clock3, FolderPlus, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { BrowserProjects } from '@/components/project-selector/BrowserProjects';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -12,13 +13,12 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { isDesktopTauri } from '@/hooks/runtime';
 import { cn } from '@/lib/utils';
 import { codexService } from '@/services/codexService';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useLayoutStore } from '@/stores/useLayoutStore';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { getFilename } from '@/utils/getFilename';
-import { isDesktopTauri } from '@/hooks/runtime';
-import { BrowserProjects } from '@/components/project-selector/BrowserProjects';
 
 export function HistoryProjectsDialog() {
   const { projects, historyProjects, setCwd, addProject, selectedAgent, setSelectedAgent } =

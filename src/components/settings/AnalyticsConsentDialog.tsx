@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -6,9 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { useSettingsStore } from '@/stores/settings';
 import { initPosthog, posthog } from '@/lib/posthog';
+import { useSettingsStore } from '@/stores/settings';
 
 export function AnalyticsConsentDialog() {
   const { analyticsConsentShown, setAnalyticsConsentShown, setAnalyticsEnabled } =
@@ -34,8 +34,8 @@ export function AnalyticsConsentDialog() {
         <DialogHeader>
           <DialogTitle>Help improve Codexia</DialogTitle>
           <DialogDescription>
-            We'd like to collect anonymous usage data to understand how Codexia is used and
-            improve the experience. No personal information or code is ever collected.
+            We'd like to collect anonymous usage data to understand how Codexia is used and improve
+            the experience. No personal information or code is ever collected.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">

@@ -1,19 +1,19 @@
-import { useState, useCallback } from 'react';
-import { GitCommit, ChevronDown, CloudUpload } from 'lucide-react';
+import { ChevronDown, CloudUpload, GitCommit } from 'lucide-react';
+import { useCallback, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { useGitStatsStore } from '@/stores/useGitStatsStore';
 import { gitCommit, gitPush } from '@/services/tauri/git';
+import { useGitStatsStore } from '@/stores/useGitStatsStore';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
 export function GitActions() {
   const { cwd } = useWorkspaceStore();

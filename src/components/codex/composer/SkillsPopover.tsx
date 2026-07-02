@@ -1,14 +1,18 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import type { CSSProperties } from 'react';
 import { X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { codexService } from '@/services/codexService';
+import type { CSSProperties } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { SkillsListEntry } from '@/bindings/v2/SkillsListEntry';
+import {
+  applyEditorReplacement,
+  detectWordBoundaryTrigger,
+  replaceAtTrigger,
+} from '@/components/common/useComposerPopover';
+import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { detectWordBoundaryTrigger, replaceAtTrigger, applyEditorReplacement } from '@/components/common/useComposerPopover';
 import { skillsConfigWrite } from '@/services';
+import { codexService } from '@/services/codexService';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
 type SkillWithEnabled = SkillsListEntry['skills'][number] & { enabled?: boolean };
 
@@ -66,7 +70,11 @@ export function SkillsInputPopover({
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); handleClose(); }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleClose();
+      }
     };
     document.addEventListener('keydown', handler, true);
     return () => document.removeEventListener('keydown', handler, true);
@@ -79,12 +87,14 @@ export function SkillsInputPopover({
   return createPortal(
     <div
       ref={containerRef}
-      style={{
-        position: 'fixed',
-        top: rect?.top ?? 0,
-        left: rect?.left ?? 0,
-        transform: 'translateY(calc(-100% - 8px))',
-      } as CSSProperties}
+      style={
+        {
+          position: 'fixed',
+          top: rect?.top ?? 0,
+          left: rect?.left ?? 0,
+          transform: 'translateY(calc(-100% - 8px))',
+        } as CSSProperties
+      }
       className="z-[9999] w-96 max-w-[600px] max-h-96 overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md p-3"
     >
       <div className="flex items-center justify-between mb-3">
@@ -147,6 +157,6 @@ export function SkillsInputPopover({
         )}
       </div>
     </div>,
-    document.body,
+    document.body
   );
 }

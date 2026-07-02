@@ -1,17 +1,19 @@
-import { useEffect, useState, useMemo, lazy, Suspense } from 'react';
-import { useCCStore } from '@/stores/cc';
-import { ccGetSessionMessages, ccInterrupt, ccResumeSession } from '@/services/tauri/cc';
+import { Check, RotateCcw, Square } from 'lucide-react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { fromSdkMessages } from '@/components/cc/utils/fromSdkMessages';
 import { Button } from '@/components/ui/button';
-import { Check, RotateCcw, Square } from 'lucide-react';
+import { ccGetSessionMessages, ccInterrupt, ccResumeSession } from '@/services/tauri/cc';
+import { gitApplyWorktreeChanges, gitRemoveWorktree } from '@/services/tauri/git';
+import { useCCStore } from '@/stores/cc';
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { gitApplyWorktreeChanges, gitRemoveWorktree } from '@/services/tauri/git';
 import { getFilename } from '@/utils/getFilename';
+
 const CCSession = lazy(() => import('@/components/cc/CCSession'));
-import type { ResultMessage } from '@/components/cc/types/messages';
+
 import { toast } from 'sonner';
+import type { ResultMessage } from '@/components/cc/types/messages';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 

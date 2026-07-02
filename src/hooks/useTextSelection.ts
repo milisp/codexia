@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export const useTextSelection = () => {
   const [selectedText, setSelectedText] = useState<string>('');

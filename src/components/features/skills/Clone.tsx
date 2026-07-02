@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { cloneSkillsRepo } from '@/services';
 import { toast } from '@/components/ui/use-toast';
+import { cloneSkillsRepo } from '@/services';
 
 const RECOMMENDED_URLS = [
   'https://github.com/anthropics/skills.git',

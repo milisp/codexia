@@ -40,7 +40,7 @@ const buildCommandTitle = (
   begin: ExecCommandMessage | null | undefined,
   shellCommandParts: string[]
 ) => {
-  console.info(shellCommandParts, begin?.arguments)
+  console.info(shellCommandParts, begin?.arguments);
   const hasMultipleParts =
     shellCommandParts.length >= 2 && ['zsh', 'bash'].includes(shellCommandParts[0]);
   const slicedParts = hasMultipleParts ? shellCommandParts.slice(2) : shellCommandParts;

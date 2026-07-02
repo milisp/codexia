@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react';
-import { eachDayOfInterval, subDays as _subDays, format } from 'date-fns';
-import { type Range } from './constants';
-import { weeksForRange } from './utils';
+import { subDays as _subDays, eachDayOfInterval, format } from 'date-fns';
+import { useMemo, useState } from 'react';
 import type { HeatmapData } from '@/services/tauri/insights';
+import type { Range } from './constants';
+import { weeksForRange } from './utils';
 
 const CELL = 10;
 const GAP = 2;
@@ -33,7 +33,7 @@ export function ContributionHeatmap({ data, color, range }: HeatmapProps) {
   const grid: (Date | null)[][] = [];
   for (let i = 0; i < paddedDays.length; i += 7) grid.push(paddedDays.slice(i, i + 7));
 
-  const maxCount = Math.max(1, ...data.data.map(d => d.count));
+  const maxCount = Math.max(1, ...data.data.map((d) => d.count));
 
   function opacity(count: number): number {
     if (!count) return 0;
@@ -44,7 +44,9 @@ export function ContributionHeatmap({ data, color, range }: HeatmapProps) {
     return 0.9;
   }
 
-  const [tip, setTip] = useState<{ date: string; count: number; x: number; y: number } | null>(null);
+  const [tip, setTip] = useState<{ date: string; count: number; x: number; y: number } | null>(
+    null
+  );
 
   return (
     <div className="overflow-x-auto">
@@ -64,21 +66,49 @@ export function ContributionHeatmap({ data, color, range }: HeatmapProps) {
             return (
               <rect
                 key={ds}
-                x={x} y={y}
-                width={CELL} height={CELL} rx={2}
+                x={x}
+                y={y}
+                width={CELL}
+                height={CELL}
+                rx={2}
                 fill={cnt ? color : 'rgb(30,32,40)'}
                 fillOpacity={opacity(cnt)}
                 className="cursor-pointer"
-                onMouseEnter={() => setTip({ date: format(day, 'MMM d, yyyy'), count: cnt, x: x + CELL / 2, y: y - 4 })}
+                onMouseEnter={() =>
+                  setTip({
+                    date: format(day, 'MMM d, yyyy'),
+                    count: cnt,
+                    x: x + CELL / 2,
+                    y: y - 4,
+                  })
+                }
               />
             );
           })
         )}
         {tip && (
           <g>
-            <rect x={tip.x - 54} y={tip.y - 30} width={108} height={26} rx={4} fill="rgb(15,17,23)" stroke="rgb(51,65,85)" strokeWidth={1} />
-            <text x={tip.x} y={tip.y - 20} textAnchor="middle" fill="rgb(226,232,240)" fontSize={9}>{tip.date}</text>
-            <text x={tip.x} y={tip.y - 9} textAnchor="middle" fill={color} fontSize={9} fontWeight="bold">
+            <rect
+              x={tip.x - 54}
+              y={tip.y - 30}
+              width={108}
+              height={26}
+              rx={4}
+              fill="rgb(15,17,23)"
+              stroke="rgb(51,65,85)"
+              strokeWidth={1}
+            />
+            <text x={tip.x} y={tip.y - 20} textAnchor="middle" fill="rgb(226,232,240)" fontSize={9}>
+              {tip.date}
+            </text>
+            <text
+              x={tip.x}
+              y={tip.y - 9}
+              textAnchor="middle"
+              fill={color}
+              fontSize={9}
+              fontWeight="bold"
+            >
               {tip.count} session{tip.count !== 1 ? 's' : ''}
             </text>
           </g>

@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { PlusIcon, Globe, Image as ImageIcon, Check, File } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ScreenshotPopover } from '@/components/codex/composer/ScreenshotPopover';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useConfigStore } from '@/components/codex/stores';
-import { cn } from '@/lib/utils';
 import { open } from '@tauri-apps/plugin-dialog';
+import { Check, File, Globe, Image as ImageIcon, PlusIcon } from 'lucide-react';
+import { useState } from 'react';
+import { ScreenshotPopover } from '@/components/codex/composer/ScreenshotPopover';
+import { useConfigStore } from '@/components/codex/stores';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 interface SelectFilesMenuItemProps {
   onFilesSelected?: (paths: string[]) => void;
@@ -118,7 +118,10 @@ export function AttachmentSelector({ onImagesSelected, onFilesSelected }: Attach
             <ImageIcon className="w-4 h-4" />
             <span>Add images</span>
           </Button>
-          <SelectFilesMenuItem onFilesSelected={onFilesSelected} onAfterSelect={() => setOpenState(false)} />
+          <SelectFilesMenuItem
+            onFilesSelected={onFilesSelected}
+            onAfterSelect={() => setOpenState(false)}
+          />
           {/* Screenshot button */}
           <ScreenshotPopover
             onScreenshotTaken={(path) => {

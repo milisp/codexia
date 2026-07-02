@@ -1,6 +1,6 @@
+import { useConfigStore } from '@/components/codex/stores';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from '@/components/ui/use-toast';
-import { useConfigStore } from '@/components/codex/stores';
 
 interface TipsProps {
   onTipClick?: (tip: string) => void;

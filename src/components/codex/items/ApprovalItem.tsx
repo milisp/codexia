@@ -1,8 +1,8 @@
-import { useApprovalStore } from '@/components/codex/stores';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
+import { useApprovalStore } from '@/components/codex/stores';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 export function ApprovalItem() {
   const { currentApproval, pendingApprovals, respondToApproval } = useApprovalStore();
@@ -94,9 +94,7 @@ export function ApprovalItem() {
           <div>
             <div className="font-medium mb-1">File Access Request:</div>
             <div className="text-muted-foreground p-2 bg-muted rounded">
-              <div className="text-xs mb-1">
-                Allow file writes under:
-              </div>
+              <div className="text-xs mb-1">Allow file writes under:</div>
               <div className="font-mono text-xs break-all">{currentApproval.grantRoot}</div>
             </div>
           </div>
@@ -107,7 +105,9 @@ export function ApprovalItem() {
             <div>
               <div className="font-medium mb-1 flex items-center gap-2">
                 <span>Policy Amendment</span>
-                <Badge variant="secondary" className="text-xs">Will skip future approvals</Badge>
+                <Badge variant="secondary" className="text-xs">
+                  Will skip future approvals
+                </Badge>
               </div>
               <div className="text-muted-foreground p-2 bg-muted rounded font-mono text-xs break-all">
                 {currentApproval.proposedExecpolicyAmendment.join(' ')}
@@ -127,7 +127,6 @@ export function ApprovalItem() {
               </div>
             </div>
           )}
-
         </div>
       )}
 

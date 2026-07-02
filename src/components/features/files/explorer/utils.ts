@@ -13,24 +13,18 @@ export const sortNodes = (nodes: FileNode[]): FileNode[] =>
     return a.name.localeCompare(b.name);
   });
 
-export const normalizeName = (name: string): string =>
-  name.replace(/^\.+/, '').toLowerCase();
+export const normalizeName = (name: string): string => name.replace(/^\.+/, '').toLowerCase();
 
 export const shouldSkipEntry = (name: string, hiddenSet: Set<string>): boolean =>
   name === '.git' || hiddenSet.has(normalizeName(name));
 
-export const isLatexFile = (ext: string): boolean =>
-  ['tex', 'latex', 'ltx'].includes(ext);
+export const isLatexFile = (ext: string): boolean => ['tex', 'latex', 'ltx'].includes(ext);
 
 export const isPdfFile = (ext: string): boolean => ext === 'pdf';
 
-export const isOfficeFile = (ext: string): boolean =>
-  ['docx', 'xlsx', 'xls', 'pptx'].includes(ext);
+export const isOfficeFile = (ext: string): boolean => ['docx', 'xlsx', 'xls', 'pptx'].includes(ext);
 
-export const buildSearchTree = (
-  rootNode: FileNode,
-  matches: TauriFileEntry[],
-): FileNode => {
+export const buildSearchTree = (rootNode: FileNode, matches: TauriFileEntry[]): FileNode => {
   const pathSeparator = rootNode.path.includes('\\') ? '\\' : '/';
   const treeRoot: FileNode = {
     name: rootNode.name,
@@ -43,9 +37,7 @@ export const buildSearchTree = (
   for (const match of matches) {
     if (!match.path.startsWith(rootNode.path)) continue;
 
-    const relativePath = match.path
-      .slice(rootNode.path.length)
-      .replace(/^[/\\]/, '');
+    const relativePath = match.path.slice(rootNode.path.length).replace(/^[/\\]/, '');
     if (!relativePath) continue;
 
     const segments = relativePath.split(/[/\\]+/).filter(Boolean);

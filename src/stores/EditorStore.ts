@@ -34,7 +34,6 @@ interface EditorState {
 }
 
 export const useEditorStore = create<EditorState>((set, get) => ({
-
   // Search state
   searchTerm: '',
   searchResults: [],

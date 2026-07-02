@@ -1,11 +1,11 @@
-import { memo, useMemo } from 'react';
 import type { AnchorHTMLAttributes } from 'react';
+import { memo, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { cn } from '@/lib/utils';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { cn } from '@/lib/utils';
 import { useLayoutStore } from '@/stores';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
 interface MarkdownProps {
   value: string;
@@ -34,7 +34,7 @@ function normalizeFileLinkPath(path: string, cwd: string | null | undefined) {
 
   const separator = cwd.includes('\\') && !cwd.includes('/') ? '\\' : '/';
   const cleanCwd = cwd.replace(/[\\/]+$/, '');
-  const cleanPath = path.replace(/^[.][\/\\]/, '').replace(/^[\/\\]+/, '');
+  const cleanPath = path.replace(/^[.][/\\]/, '').replace(/^[/\\]+/, '');
   return `${cleanCwd}${separator}${cleanPath}`;
 }
 
@@ -78,9 +78,7 @@ export const Markdown = memo<MarkdownProps>(({ value, className = '', inline = f
                 let candidatePath: string = hrefPath ?? '';
 
                 if (isFileProtocol && hrefPath) {
-                  candidatePath = decodeURIComponent(
-                    hrefPath.replace(new RegExp('^file://', 'i'), '')
-                  );
+                  candidatePath = decodeURIComponent(hrefPath.replace(/^file:\/\//i, ''));
                 }
 
                 const resolvedPath = normalizeFileLinkPath(candidatePath, cwd);

@@ -1,2 +1,2 @@
-export { GitStatsIndicator } from './GitStatsIndicator';
 export { GitActions } from './GitActions';
+export { GitStatsIndicator } from './GitStatsIndicator';

@@ -1,4 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { Copy, Database, RefreshCw, Trash2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -8,8 +10,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Database, Trash2, RefreshCw, Copy } from 'lucide-react';
-import { toast } from 'sonner';
 
 type LocalStorageEntry = {
   key: string;
@@ -103,7 +103,13 @@ export function LocalStorageDialog({ defaultOpen = false }: { defaultOpen?: bool
               <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
                 Keys
               </span>
-              <Button variant="ghost" size="icon" className="size-6" onClick={refresh} title="Refresh">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-6"
+                onClick={refresh}
+                title="Refresh"
+              >
                 <RefreshCw className="size-3" />
               </Button>
             </div>
@@ -138,7 +144,9 @@ export function LocalStorageDialog({ defaultOpen = false }: { defaultOpen?: bool
             {selectedEntry ? (
               <>
                 <div className="flex items-center justify-between px-4 py-2 border-b shrink-0">
-                  <span className="text-sm font-mono font-medium truncate">{selectedEntry.key}</span>
+                  <span className="text-sm font-mono font-medium truncate">
+                    {selectedEntry.key}
+                  </span>
                   <div className="flex gap-1 shrink-0">
                     <Button
                       variant="ghost"
@@ -176,7 +184,9 @@ export function LocalStorageDialog({ defaultOpen = false }: { defaultOpen?: bool
 
         <div className="px-6 py-3 border-t flex justify-end">
           <DialogClose asChild>
-            <Button variant="outline" size="sm">Close</Button>
+            <Button variant="outline" size="sm">
+              Close
+            </Button>
           </DialogClose>
         </div>
       </DialogContent>

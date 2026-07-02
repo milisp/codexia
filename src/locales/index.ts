@@ -1,6 +1,6 @@
 import { en } from './en';
-import { zh } from './zh';
 import { ja } from './ja';
+import { zh } from './zh';
 
 export const localeResources = {
   en: { ...en },

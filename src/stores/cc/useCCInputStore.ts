@@ -26,9 +26,10 @@ export const useCCInputStore = create<CCInputStore>()(
           const normalizedCwd = toPosix(cwd).replace(/\/+$/, '');
           const links = paths.map((path) => {
             const normalizedPath = toPosix(path);
-            const relativePath = normalizedCwd && normalizedPath.startsWith(`${normalizedCwd}/`)
-              ? normalizedPath.slice(normalizedCwd.length + 1)
-              : normalizedPath;
+            const relativePath =
+              normalizedCwd && normalizedPath.startsWith(`${normalizedCwd}/`)
+                ? normalizedPath.slice(normalizedCwd.length + 1)
+                : normalizedPath;
             const fileName = normalizedPath.split('/').filter(Boolean).pop() ?? normalizedPath;
             return `[${fileName}](${relativePath})`;
           });

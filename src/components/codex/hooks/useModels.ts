@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { listModels, listOtherModels } from '@/services/tauri';
 import type { Model } from '@/bindings/v2';
+import { listModels, listOtherModels } from '@/services/tauri';
 import { useModelSettingsStore } from '@/stores/settings';
-import type { FrontendProviderModels } from '../composer/ModelList';
-import { ModelListItem } from '../composer/ModelList';
+import type { FrontendProviderModels, ModelListItem } from '../composer/ModelList';
 
 export function useModels() {
   const [openAiModels, setOpenAiModels] = useState<Model[]>([]);
@@ -13,7 +12,7 @@ export function useModels() {
   useEffect(() => {
     void listModels()
       .then((res) => setOpenAiModels(res.data))
-      .catch(() => { });
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -28,7 +27,7 @@ export function useModels() {
         }
         setOtherModels(grouped);
       })
-      .catch(() => { });
+      .catch(() => {});
   }, []);
 
   const allProviders = useMemo(() => {
@@ -51,7 +50,7 @@ export function useModels() {
       const others = otherModels[provider] ?? [];
       return [...stored, ...others];
     },
-    [openAiModels, otherModels, storedModels],
+    [openAiModels, otherModels, storedModels]
   );
 
   return {

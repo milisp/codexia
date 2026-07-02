@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { type SkillScope } from '@/services';
+import type { SkillScope } from '@/services';
 
 export type McpScope = 'local' | 'project' | 'global';
 

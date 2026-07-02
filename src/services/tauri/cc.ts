@@ -1,4 +1,4 @@
-import { invokeTauri, isDesktopTauri, postNoContent, postJson, getJson } from './shared';
+import { getJson, invokeTauri, isDesktopTauri, postJson, postNoContent } from './shared';
 
 export async function ccNewSession(options: Record<string, unknown>) {
   if (isDesktopTauri()) {
@@ -59,12 +59,11 @@ type CcListSessionsOptions = {
 
 export type CcSessionListResult<T> = { sessions: T[]; total: number };
 
-export async function ccListSessions<T = unknown>(directory?: string | null, options: CcListSessionsOptions = {}) {
-  const {
-    offset = 0,
-    includeWorktrees = true,
-    limit,
-  } = options;
+export async function ccListSessions<T = unknown>(
+  directory?: string | null,
+  options: CcListSessionsOptions = {}
+) {
+  const { offset = 0, includeWorktrees = true, limit } = options;
 
   if (isDesktopTauri()) {
     return await invokeTauri<CcSessionListResult<T>>('cc_list_sessions', {

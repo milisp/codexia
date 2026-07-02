@@ -18,10 +18,7 @@ export function ClaudeSettings() {
                   Display permission requests at the bottom of the chat.
                 </div>
               </div>
-              <Switch
-                checked={showPermissionCards}
-                onCheckedChange={toggleShowPermissionCards}
-              />
+              <Switch checked={showPermissionCards} onCheckedChange={toggleShowPermissionCards} />
             </div>
           </CardContent>
         </Card>

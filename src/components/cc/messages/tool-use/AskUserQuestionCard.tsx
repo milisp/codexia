@@ -1,9 +1,9 @@
+import { CheckCircle2, MessageCircleQuestion } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MessageCircleQuestion, CheckCircle2 } from 'lucide-react';
-import { useCCStore } from '@/stores/cc';
 import { ccSendMessage } from '@/services';
+import { useCCStore } from '@/stores/cc';
 import type { ToolUseBlock } from '../../types/messages';
 
 interface QuestionOption {
@@ -38,22 +38,20 @@ export function AskUserQuestionCard({ block }: Props) {
   const { activeSessionId, addMessage, setLoading } = useCCStore();
 
   // Track selected options per question index
-  const [answers, setAnswers] = useState<QuestionAnswer[]>(
-    () => questions.map(() => ({ selected: [] }))
+  const [answers, setAnswers] = useState<QuestionAnswer[]>(() =>
+    questions.map(() => ({ selected: [] }))
   );
   const [submitted, setSubmitted] = useState<string[] | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleOption = (qIdx: number, value: string, multiSelect: boolean) => {
     if (submitted) return;
-    setAnswers(prev => {
+    setAnswers((prev) => {
       const next = [...prev];
       if (multiSelect) {
         const cur = next[qIdx].selected;
         next[qIdx] = {
-          selected: cur.includes(value)
-            ? cur.filter(v => v !== value)
-            : [...cur, value],
+          selected: cur.includes(value) ? cur.filter((v) => v !== value) : [...cur, value],
         };
       } else {
         next[qIdx] = { selected: [value] };
@@ -66,14 +64,14 @@ export function AskUserQuestionCard({ block }: Props) {
     if (!activeSessionId || isSubmitting) return;
 
     // Build response: for each question, collect selected option labels
-    const responseLines = questions.map((q, i) => {
-      const sel = answers[i].selected;
-      if (sel.length === 0) return null;
-      const labels = q.options
-        .filter(o => sel.includes(o.value))
-        .map(o => o.label);
-      return labels.join(', ');
-    }).filter(Boolean) as string[];
+    const responseLines = questions
+      .map((q, i) => {
+        const sel = answers[i].selected;
+        if (sel.length === 0) return null;
+        const labels = q.options.filter((o) => sel.includes(o.value)).map((o) => o.label);
+        return labels.join(', ');
+      })
+      .filter(Boolean) as string[];
 
     if (responseLines.length === 0) return;
 
@@ -102,13 +100,15 @@ export function AskUserQuestionCard({ block }: Props) {
           <span className="text-xs font-medium">Answered</span>
         </div>
         {submitted.map((ans, i) => (
-          <div key={i} className="text-xs text-foreground/80 pl-5">{ans}</div>
+          <div key={i} className="text-xs text-foreground/80 pl-5">
+            {ans}
+          </div>
         ))}
       </div>
     );
   }
 
-  const allAnswered = answers.every(a => a.selected.length > 0);
+  const allAnswered = answers.every((a) => a.selected.length > 0);
 
   return (
     <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-3 space-y-3">
@@ -122,16 +122,17 @@ export function AskUserQuestionCard({ block }: Props) {
           <p className="text-sm text-foreground">{q.question}</p>
 
           <div className="flex flex-col gap-1.5">
-            {q.options.map(opt => {
+            {q.options.map((opt) => {
               const isSelected = answers[qIdx].selected.includes(opt.value);
               if (q.multiSelect) {
                 return (
                   <label
                     key={opt.value}
                     className={`flex items-center gap-2 px-3 py-2 rounded-md border text-sm cursor-pointer transition-colors
-                      ${isSelected
-                        ? 'border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-300'
-                        : 'border-border hover:border-blue-500/30 hover:bg-blue-500/5'
+                      ${
+                        isSelected
+                          ? 'border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-300'
+                          : 'border-border hover:border-blue-500/30 hover:bg-blue-500/5'
                       }`}
                   >
                     <Checkbox
@@ -148,9 +149,10 @@ export function AskUserQuestionCard({ block }: Props) {
                   variant="outline"
                   size="sm"
                   className={`justify-start h-auto py-2 px-3 text-sm font-normal transition-colors
-                    ${isSelected
-                      ? 'border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/15'
-                      : 'hover:border-blue-500/30 hover:bg-blue-500/5'
+                    ${
+                      isSelected
+                        ? 'border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/15'
+                        : 'hover:border-blue-500/30 hover:bg-blue-500/5'
                     }`}
                   onClick={() => toggleOption(qIdx, opt.value, false)}
                 >

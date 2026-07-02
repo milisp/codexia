@@ -1,6 +1,6 @@
 import { CheckCircle2, Circle, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 export interface TodoItem {
   activeForm: string;
@@ -25,9 +25,7 @@ export function CCTodoList({ todos }: Props) {
           key={todo.content + idx}
           className={cn(
             'flex items-center gap-2 rounded px-2 py-1',
-            todo.status === 'in_progress'
-              ? 'text-blue-700 dark:text-blue-300'
-              : 'opacity-40'
+            todo.status === 'in_progress' ? 'text-blue-700 dark:text-blue-300' : 'opacity-40'
           )}
         >
           <div className="shrink-0 flex items-center justify-center w-3.5 h-3.5">
@@ -39,7 +37,9 @@ export function CCTodoList({ todos }: Props) {
               <Circle className="h-3.5 w-3.5 text-muted-foreground/40" />
             )}
           </div>
-          <span className={cn('min-w-0 flex-1 text-xs', todo.status === 'completed' && 'line-through')}>
+          <span
+            className={cn('min-w-0 flex-1 text-xs', todo.status === 'completed' && 'line-through')}
+          >
             {todo.status === 'in_progress' ? todo.activeForm || todo.content : todo.content}
           </span>
         </div>

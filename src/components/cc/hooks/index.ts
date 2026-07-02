@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
-import { useCCStore } from '@/stores/cc';
+import { useEffect } from 'react';
 import { buildUrl, isDesktopTauri } from '@/hooks/runtime';
+import { useCCStore } from '@/stores/cc';
 import type { CCMessage, SystemMessage } from '../types/messages';
 
 const CC_LISTENER_READY_EVENT = 'cc-session-listener-ready';
@@ -57,7 +57,9 @@ export function useCCSessionListener({ disabled = false, sessionId }: CCListener
       void unlistenPromise.then(() => {
         console.info('[CCSession] Message listener ready (Tauri)', { targetSessionId });
         if (!sessionId) {
-          window.dispatchEvent(new CustomEvent(CC_LISTENER_READY_EVENT, { detail: { sessionId: targetSessionId } }));
+          window.dispatchEvent(
+            new CustomEvent(CC_LISTENER_READY_EVENT, { detail: { sessionId: targetSessionId } })
+          );
         }
       });
 
@@ -68,21 +70,28 @@ export function useCCSessionListener({ disabled = false, sessionId }: CCListener
 
     // SSE path for non-Tauri (iOS via P2P).
     const sseUrl = buildUrl('/api/events');
-    console.info('[CCSession] Opening SSE connection', { url: sseUrl, targetSessionId, isTauri: 'isDesktopTauri=' + isDesktopTauri() });
+    console.info('[CCSession] Opening SSE connection', {
+      url: sseUrl,
+      targetSessionId,
+      isTauri: 'isDesktopTauri=' + isDesktopTauri(),
+    });
     const es = new EventSource(sseUrl);
     es.onopen = () => console.info('[CCSession] SSE connected', { url: sseUrl });
-    es.onerror = (err) => console.error('[CCSession] SSE error', { url: sseUrl, readyState: es.readyState, err });
+    es.onerror = (err) =>
+      console.error('[CCSession] SSE error', { url: sseUrl, readyState: es.readyState, err });
     es.onmessage = (e) => {
       try {
         const envelope = JSON.parse(e.data as string) as { event?: string; payload?: unknown };
         if (envelope.event === 'cc-message') {
           handleMessage(envelope.payload as CCMessage);
         }
-      } catch { }
+      } catch {}
     };
     console.info('[CCSession] Message listener ready (SSE)', { targetSessionId });
     if (!sessionId) {
-      window.dispatchEvent(new CustomEvent(CC_LISTENER_READY_EVENT, { detail: { sessionId: targetSessionId } }));
+      window.dispatchEvent(
+        new CustomEvent(CC_LISTENER_READY_EVENT, { detail: { sessionId: targetSessionId } })
+      );
     }
 
     return () => {
@@ -113,7 +122,13 @@ export function useCCPermissionListener({ disabled = false, sessionId }: CCListe
     };
 
     const handlePermission = (payload: PermPayload) => {
-      const { requestId, sessionId: evtSessionId, toolName, toolInput, alwaysAllowTarget } = payload;
+      const {
+        requestId,
+        sessionId: evtSessionId,
+        toolName,
+        toolInput,
+        alwaysAllowTarget,
+      } = payload;
       if (evtSessionId !== targetSessionId) {
         if (!sessionId) {
           console.warn('[CCSession] Ignoring permission request for inactive session', {
@@ -149,7 +164,11 @@ export function useCCPermissionListener({ disabled = false, sessionId }: CCListe
       void unlistenPromise.then(() => {
         console.info('[CCSession] Permission listener ready (Tauri)', { targetSessionId });
         if (!sessionId) {
-          window.dispatchEvent(new CustomEvent(CC_PERMISSION_LISTENER_READY_EVENT, { detail: { sessionId: targetSessionId } }));
+          window.dispatchEvent(
+            new CustomEvent(CC_PERMISSION_LISTENER_READY_EVENT, {
+              detail: { sessionId: targetSessionId },
+            })
+          );
         }
       });
 
@@ -163,18 +182,27 @@ export function useCCPermissionListener({ disabled = false, sessionId }: CCListe
     console.info('[CCSession] Opening permission SSE connection', { url: sseUrl, targetSessionId });
     const es = new EventSource(sseUrl);
     es.onopen = () => console.info('[CCSession] Permission SSE connected', { url: sseUrl });
-    es.onerror = (err) => console.error('[CCSession] Permission SSE error', { url: sseUrl, readyState: es.readyState, err });
+    es.onerror = (err) =>
+      console.error('[CCSession] Permission SSE error', {
+        url: sseUrl,
+        readyState: es.readyState,
+        err,
+      });
     es.onmessage = (e) => {
       try {
         const envelope = JSON.parse(e.data as string) as { event?: string; payload?: unknown };
         if (envelope.event === 'cc-permission-request') {
           handlePermission(envelope.payload as PermPayload);
         }
-      } catch { }
+      } catch {}
     };
     console.info('[CCSession] Permission listener ready (SSE)', { targetSessionId });
     if (!sessionId) {
-      window.dispatchEvent(new CustomEvent(CC_PERMISSION_LISTENER_READY_EVENT, { detail: { sessionId: targetSessionId } }));
+      window.dispatchEvent(
+        new CustomEvent(CC_PERMISSION_LISTENER_READY_EVENT, {
+          detail: { sessionId: targetSessionId },
+        })
+      );
     }
 
     return () => {

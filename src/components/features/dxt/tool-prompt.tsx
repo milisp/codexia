@@ -1,5 +1,5 @@
-import { DxtManifestSchema } from './schemas';
-import { z } from 'zod';
+import type { z } from 'zod';
+import type { DxtManifestSchema } from './schemas';
 
 // ToolPrompt component displays tools and prompts from the manifest
 export function ToolPrompt({ manifest }: { manifest: z.infer<typeof DxtManifestSchema> }) {

@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
 import * as Diff from 'diff';
 import { Copy } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getDiffCounts, normalizeUnifiedDiff } from '@/utils/diff';
@@ -95,18 +95,22 @@ export function DiffViewer({
 
   const diffLines = useMemo((): DiffLine[] => {
     if (viewMode === 'old') {
-      return left.split('\n').map((content, i): DiffLine => ({
-        type: 'normal',
-        content,
-        lineNumber: { old: i + 1 },
-      }));
+      return left.split('\n').map(
+        (content, i): DiffLine => ({
+          type: 'normal',
+          content,
+          lineNumber: { old: i + 1 },
+        })
+      );
     }
     if (viewMode === 'new') {
-      return right.split('\n').map((content, i): DiffLine => ({
-        type: 'normal',
-        content,
-        lineNumber: { new: i + 1 },
-      }));
+      return right.split('\n').map(
+        (content, i): DiffLine => ({
+          type: 'normal',
+          content,
+          lineNumber: { new: i + 1 },
+        })
+      );
     }
     const changes = Diff.diffLines(left, right) as Diff.Change[];
     let oldLineNum = 0;
@@ -145,10 +149,7 @@ export function DiffViewer({
     return result;
   }, [left, right, viewMode]);
 
-  const { addedCount, removedCount } = useMemo(
-    () => getDiffCounts({ diffLines }),
-    [diffLines]
-  );
+  const { addedCount, removedCount } = useMemo(() => getDiffCounts({ diffLines }), [diffLines]);
 
   const handleCopy = () => {
     const text =
@@ -160,8 +161,8 @@ export function DiffViewer({
             })
             .join('\n')
         : viewMode === 'old'
-        ? left
-        : right;
+          ? left
+          : right;
     navigator.clipboard.writeText(text);
     setCopied(true);
     if (copyTimeoutRef.current) window.clearTimeout(copyTimeoutRef.current);
@@ -216,10 +217,7 @@ export function DiffViewer({
         </div>
       </div>
       <div
-        className={cn(
-          'font-mono text-sm overflow-x-auto max-h-[500px]',
-          collapsed && 'max-h-32'
-        )}
+        className={cn('font-mono text-sm overflow-x-auto max-h-[500px]', collapsed && 'max-h-32')}
       >
         {diffLines.map((line, i) => (
           <div

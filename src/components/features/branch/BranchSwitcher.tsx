@@ -1,5 +1,6 @@
+import { Check, ChevronDown, GitBranch, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { GitBranch, Check, Loader2, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,15 +8,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  gitListBranches,
-  gitCheckoutBranch,
-  gitBranchInfo,
-  gitStatus,
-  type GitBranchInfoResponse,
-} from '@/services/tauri/git';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import {
+  type GitBranchInfoResponse,
+  gitBranchInfo,
+  gitCheckoutBranch,
+  gitListBranches,
+  gitStatus,
+} from '@/services/tauri/git';
 import { DirtyBranchAlertDialog } from './DirtyBranchAlertDialog';
 import { NewBranchSubMenu } from './NewBranchSubMenu';
 

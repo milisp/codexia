@@ -5,7 +5,7 @@ import type { DiffSection } from './types';
 
 type GitStatsIndicatorProps = {
   diffSection?: DiffSection;
-}
+};
 
 export function GitStatsIndicator({ diffSection }: GitStatsIndicatorProps) {
   const { stats } = useGitStatsStore();

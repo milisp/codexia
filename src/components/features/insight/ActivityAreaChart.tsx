@@ -1,12 +1,17 @@
+import { eachDayOfInterval, format, subDays } from 'date-fns';
+import { TrendingUp } from 'lucide-react';
 import { useMemo } from 'react';
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, CartesianGrid,
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
-import { eachDayOfInterval, subDays, format } from 'date-fns';
-import { TrendingUp } from 'lucide-react';
 import type { AgentHeatmaps } from '@/services/tauri/insights';
-import { type Range, type AgentKey, AGENT_CONFIG } from './constants';
+import { AGENT_CONFIG, type AgentKey, type Range } from './constants';
 import { weeksForRange } from './utils';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -33,14 +38,14 @@ export function ActivityAreaChart({ heatmaps, range }: { heatmaps: AgentHeatmaps
   const startDate = subDays(today, weeks * 7 - 1);
 
   const { chartData, activeKeys } = useMemo(() => {
-    const keys = (Object.keys(AGENT_CONFIG) as AgentKey[]).filter(k => !!heatmaps[k]);
+    const keys = (Object.keys(AGENT_CONFIG) as AgentKey[]).filter((k) => !!heatmaps[k]);
     const maps = {} as Record<AgentKey, Map<string, number>>;
     for (const key of keys) {
       maps[key] = new Map();
       for (const d of heatmaps[key]!.data) maps[key].set(d.date, d.count);
     }
     const days = eachDayOfInterval({ start: startDate, end: today });
-    const data = days.map(day => {
+    const data = days.map((day) => {
       const ds = format(day, 'yyyy-MM-dd');
       const entry: Record<string, any> = { date: format(day, 'MMM d') };
       for (const key of keys) entry[key] = maps[key].get(ds) ?? 0;
@@ -61,9 +66,12 @@ export function ActivityAreaChart({ heatmaps, range }: { heatmaps: AgentHeatmaps
           <h3 className="text-sm font-semibold text-slate-200">Activity Trend</h3>
         </div>
         <div className="flex items-center gap-3">
-          {activeKeys.map(k => (
+          {activeKeys.map((k) => (
             <div key={k} className="flex items-center gap-1.5 text-xs text-slate-500">
-              <div className="h-2 w-2 rounded-full" style={{ backgroundColor: AGENT_CONFIG[k].color }} />
+              <div
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: AGENT_CONFIG[k].color }}
+              />
               {AGENT_CONFIG[k].label}
             </div>
           ))}
@@ -72,7 +80,7 @@ export function ActivityAreaChart({ heatmaps, range }: { heatmaps: AgentHeatmaps
       <ResponsiveContainer width="100%" height={170}>
         <AreaChart data={chartData} margin={{ top: 4, right: 0, bottom: 0, left: -20 }}>
           <defs>
-            {activeKeys.map(k => (
+            {activeKeys.map((k) => (
               <linearGradient key={k} id={`act-grad-${k}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={AGENT_CONFIG[k].color} stopOpacity={0.28} />
                 <stop offset="95%" stopColor={AGENT_CONFIG[k].color} stopOpacity={0} />
@@ -98,7 +106,7 @@ export function ActivityAreaChart({ heatmaps, range }: { heatmaps: AgentHeatmaps
             content={<CustomTooltip />}
             cursor={{ stroke: 'rgba(255,255,255,0.07)', strokeWidth: 1 }}
           />
-          {activeKeys.map(k => (
+          {activeKeys.map((k) => (
             <Area
               key={k}
               type="monotone"

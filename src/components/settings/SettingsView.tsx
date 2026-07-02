@@ -1,14 +1,9 @@
-import { useState } from 'react';
 import { ChevronDown, ChevronLeft } from 'lucide-react';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarInset,
-  SidebarProvider,
-} from '@/components/ui/sidebar';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -16,24 +11,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { GeneralSettings } from './GeneralSettings';
-import { ExplorerSettings } from './ExplorerSettings';
-import { useLayoutStore } from '@/stores';
 import {
-  ConfigSettings,
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarInset,
+  SidebarProvider,
+} from '@/components/ui/sidebar';
+import { isTauri } from '@/hooks/runtime';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useLayoutStore } from '@/stores';
+import { CodexAuth } from '../codex/CodexAuth';
+import { ClaudeSettings } from './ClaudeSettings';
+import {
   ArchivedThreadSettings,
+  ConfigSettings,
   PersonalizationSettings,
   SettingsAgentsSection,
+  TaskSettings,
 } from './codex';
-import { ClaudeSettings } from './ClaudeSettings';
-import { CodexAuth } from '../codex/CodexAuth';
-import { ProjectsSettings } from './ProjectsSettings';
-import { TaskSettings } from './codex';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { isTauri } from '@/hooks/runtime';
+import { ExplorerSettings } from './ExplorerSettings';
+import { GeneralSettings } from './GeneralSettings';
 import { PrivacySettings } from './PrivacySettings';
-import { useTranslation } from 'react-i18next';
+import { ProjectsSettings } from './ProjectsSettings';
 
 type SettingsSection =
   | 'general'
@@ -46,9 +46,16 @@ type SettingsSection =
   | 'explorer'
   | 'task'
   | 'agents'
-  | 'claude'
+  | 'claude';
 
-const codexSections = ['codexauth', 'task', 'agents', 'config', 'personalization', 'archived'] as const;
+const codexSections = [
+  'codexauth',
+  'task',
+  'agents',
+  'config',
+  'personalization',
+  'archived',
+] as const;
 const topLevelSections = ['general', 'projects', 'privacy', 'claude', 'explorer'] as const;
 
 export default function SettingsView() {
@@ -87,7 +94,10 @@ export default function SettingsView() {
             <ChevronLeft className="h-4 w-4" />
             <span className="text-xs">Back</span>
           </Button>
-          <Select value={activeSection} onValueChange={(value) => setActiveSection(value as SettingsSection)}>
+          <Select
+            value={activeSection}
+            onValueChange={(value) => setActiveSection(value as SettingsSection)}
+          >
             <SelectTrigger className="h-9 flex-1">
               <SelectValue />
             </SelectTrigger>
@@ -148,10 +158,11 @@ export default function SettingsView() {
                   <button
                     type="button"
                     onClick={() => setActiveSection(section)}
-                    className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${activeSection === section
-                      ? 'bg-accent text-foreground'
-                      : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
-                      }`}
+                    className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${
+                      activeSection === section
+                        ? 'bg-accent text-foreground'
+                        : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                    }`}
                   >
                     {t(section)}
                   </button>
@@ -176,10 +187,11 @@ export default function SettingsView() {
                         key={section}
                         type="button"
                         onClick={() => setActiveSection(section)}
-                        className={`w-full rounded-lg px-6 py-2 text-left transition-colors ${activeSection === section
-                          ? 'bg-accent text-foreground'
-                          : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
-                          }`}
+                        className={`w-full rounded-lg px-6 py-2 text-left transition-colors ${
+                          activeSection === section
+                            ? 'bg-accent text-foreground'
+                            : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                        }`}
                       >
                         {t(section)}
                       </button>

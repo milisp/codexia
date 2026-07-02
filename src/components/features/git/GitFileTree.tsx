@@ -1,12 +1,4 @@
-import {
-  ChevronDown,
-  ChevronRight,
-  FileText,
-  Folder,
-  FolderOpen,
-  Minus,
-  Plus,
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, FileText, Folder, FolderOpen, Minus, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { DiffSection, TreeNode } from './types';

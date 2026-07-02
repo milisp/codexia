@@ -1,9 +1,9 @@
-import { useState } from 'react';
 import { openUrl } from '@tauri-apps/plugin-opener';
-import { ExternalLink, Terminal, Copy, Check } from 'lucide-react';
+import { Check, Copy, ExternalLink, Terminal } from 'lucide-react';
+import { useState } from 'react';
+import recommendData from '@/assets/recommend.json';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import recommendData from '@/assets/recommend.json';
 
 interface Tool {
   name: string;

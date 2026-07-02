@@ -1,5 +1,5 @@
-import { Codex, ClaudeCode, Gemini } from '@/components/icons';
 import type { ReactNode } from 'react';
+import { ClaudeCode, Codex, Gemini } from '@/components/icons';
 
 export type Range = 'day' | 'week' | 'month' | 'year' | 'all';
 export type AgentKey = 'claude' | 'codex' | 'gemini';

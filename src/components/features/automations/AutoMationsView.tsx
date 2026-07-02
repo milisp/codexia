@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
 import { Clock, ShoppingBag } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from '@/components/ui/use-toast';
 import type { AutomationTask } from '@/services/tauri';
 import { listAutomations, setAutomationPaused } from '@/services/tauri';
-import { toast } from '@/components/ui/use-toast';
 import { useLayoutStore } from '@/stores';
 import { getErrorMessage } from '@/utils/errorUtils';
-import { BUILTIN_TEMPLATES } from './constants';
 import { AutomationTaskList } from './AutomationTaskList';
+import { BUILTIN_TEMPLATES } from './constants';
 import { ManageDialog } from './ManageDialog';
 import { TaskDetailPanel } from './TaskDetailPanel';
 import type { DialogMode, TemplateTask } from './types';

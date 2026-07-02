@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
 import { Camera, Monitor, Square } from 'lucide-react';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import {
-  getScreenshotableWindows,
-  getScreenshotableMonitors,
-  getWindowScreenshot,
   getMonitorScreenshot,
-  type ScreenshotableWindow,
+  getScreenshotableMonitors,
+  getScreenshotableWindows,
+  getWindowScreenshot,
   type ScreenshotableMonitor,
+  type ScreenshotableWindow,
 } from 'tauri-plugin-screenshots-api';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface ScreenshotPopoverProps {
   onScreenshotTaken: (path: string) => void;

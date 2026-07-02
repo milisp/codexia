@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { AppLocale } from '@/locales';
+import type { AppLocale } from '@/locales';
 
 interface LocaleState {
   locale: AppLocale | 'auto';

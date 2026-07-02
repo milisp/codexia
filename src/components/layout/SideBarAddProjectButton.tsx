@@ -1,6 +1,6 @@
-import { useCallback } from 'react';
-import { FolderPlus } from 'lucide-react';
 import { open } from '@tauri-apps/plugin-dialog';
+import { FolderPlus } from 'lucide-react';
+import { useCallback } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
@@ -27,4 +27,3 @@ export function SideBarAddProjectButton() {
     </Button>
   );
 }
-

@@ -1,7 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { ProjectSelector } from '@/components/project-selector';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { usePluginStore, useWorkspaceStore, type McpScope } from '@/stores';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { type McpScope, usePluginStore, useWorkspaceStore } from '@/stores';
 
 interface McpConfigScopeSelectorProps {
   onProjectChange?: () => void;
@@ -25,9 +31,7 @@ export function McpConfigScopeSelector({ onProjectChange }: McpConfigScopeSelect
       Scope:
       <Select value={mcpScope} onValueChange={(s) => setMcpScope(s as McpScope)}>
         <SelectTrigger>
-          <SelectValue placeholder="Select Scope">
-            {mcpScope}
-          </SelectValue>
+          <SelectValue placeholder="Select Scope">{mcpScope}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="local">Local (This Project Only)</SelectItem>
@@ -35,9 +39,7 @@ export function McpConfigScopeSelector({ onProjectChange }: McpConfigScopeSelect
           <SelectItem value="global">Global (User Level)</SelectItem>
         </SelectContent>
       </Select>
-      {mcpScope !== 'global' && (
-        <ProjectSelector />
-      )}
+      {mcpScope !== 'global' && <ProjectSelector />}
     </div>
   );
 }

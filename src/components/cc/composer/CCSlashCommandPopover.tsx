@@ -1,15 +1,15 @@
-import { useEffect, useRef, useCallback } from 'react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { useCCStore } from '@/stores/cc';
-import { ccGetSlashCommands } from '@/services';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { useCallback, useEffect, useRef } from 'react';
 import {
-  useComposerPopover,
+  applyEditorReplacement,
   detectWordBoundaryTrigger,
   replaceAtTrigger,
-  applyEditorReplacement,
+  useComposerPopover,
 } from '@/components/common/useComposerPopover';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ccGetSlashCommands } from '@/services';
+import { useCCStore } from '@/stores/cc';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
 interface CCSlashCommandPopoverProps {
   input: string;
@@ -46,7 +46,7 @@ export function CCSlashCommandPopover({
       if (newValue !== null) applyEditorReplacement(newValue, setInput, editorRef);
       else editorRef.current?.focus();
     },
-    [input, setInput, editorRef],
+    [input, setInput, editorRef]
   );
 
   const { open, setOpen, filteredItems, selectedIndex, setSelectedIndex, itemRefs } =
@@ -95,7 +95,9 @@ export function CCSlashCommandPopover({
             filteredItems.map((cmd, index) => (
               <Button
                 key={cmd}
-                ref={(el) => { itemRefs.current[index] = el; }}
+                ref={(el) => {
+                  itemRefs.current[index] = el;
+                }}
                 variant={index === selectedIndex ? 'secondary' : 'ghost'}
                 className="w-full justify-start text-xs h-7 font-mono rounded-none"
                 onClick={() => handleSelect(cmd)}

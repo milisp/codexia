@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import type { ClaudeCodeMcpServer } from '@/types/cc/cc-mcp';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { McpServerCard } from '@/components/cc/mcp/McpServerCard';
-import { useWorkspaceStore } from '@/stores';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { ccMcpList } from '@/services';
+import { useWorkspaceStore } from '@/stores';
+import type { ClaudeCodeMcpServer } from '@/types/cc/cc-mcp';
 
 interface CCMcpViewProps {
   refreshKey?: number;

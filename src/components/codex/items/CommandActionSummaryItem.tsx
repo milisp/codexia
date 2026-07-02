@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { ChevronDown, ChevronRight, SquareTerminal } from 'lucide-react';
+import { useState } from 'react';
 import type { CommandAction } from '@/bindings/v2';
 import { CommandActionItem } from './CommandActionItem';
 
@@ -28,7 +28,12 @@ function buildSummaryParts(actions: CommandAction[]): string[] {
   return parts;
 }
 
-export const CommandActionSummaryItem = ({ actions, commandItemId, aggregatedOutput, completed }: Props) => {
+export const CommandActionSummaryItem = ({
+  actions,
+  commandItemId,
+  aggregatedOutput,
+  completed,
+}: Props) => {
   const [expanded, setExpanded] = useState(false);
 
   if (actions.length === 0) return null;
@@ -45,12 +50,21 @@ export const CommandActionSummaryItem = ({ actions, commandItemId, aggregatedOut
         >
           <SquareTerminal className="h-3 w-3" />
           {parts.join(', ')}
-          {expanded ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0" />}
+          {expanded ? (
+            <ChevronDown className="w-3 h-3 shrink-0" />
+          ) : (
+            <ChevronRight className="w-3 h-3 shrink-0" />
+          )}
         </button>
         {expanded && (
           <div className="mt-1 ml-2 space-y-1 border-l pl-1 border-border/50">
             {actions.map((action, i) => (
-              <CommandActionItem key={i} action={action} commandItemId={commandItemId} aggregatedOutput={aggregatedOutput} />
+              <CommandActionItem
+                key={i}
+                action={action}
+                commandItemId={commandItemId}
+                aggregatedOutput={aggregatedOutput}
+              />
             ))}
           </div>
         )}
@@ -73,12 +87,21 @@ export const CommandActionSummaryItem = ({ actions, commandItemId, aggregatedOut
           >
             <SquareTerminal className="h-3 w-3" />
             {hiddenParts.join(', ')}
-            {expanded ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0" />}
+            {expanded ? (
+              <ChevronDown className="w-3 h-3 shrink-0" />
+            ) : (
+              <ChevronRight className="w-3 h-3 shrink-0" />
+            )}
           </button>
           {expanded && (
             <div className="ml-2 space-y-1 border-l pl-1 border-border/50">
               {hiddenActions.map((action, i) => (
-                <CommandActionItem key={i} action={action} commandItemId={commandItemId} aggregatedOutput={aggregatedOutput} />
+                <CommandActionItem
+                  key={i}
+                  action={action}
+                  commandItemId={commandItemId}
+                  aggregatedOutput={aggregatedOutput}
+                />
               ))}
             </div>
           )}
@@ -87,7 +110,11 @@ export const CommandActionSummaryItem = ({ actions, commandItemId, aggregatedOut
       {/* Last action always visible during streaming */}
       <div className="flex items-center gap-1 py-0.5">
         <SquareTerminal className="h-3 w-3 shrink-0" />
-        <CommandActionItem action={lastAction} commandItemId={commandItemId} aggregatedOutput={aggregatedOutput} />
+        <CommandActionItem
+          action={lastAction}
+          commandItemId={commandItemId}
+          aggregatedOutput={aggregatedOutput}
+        />
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
-import { buildUrl, isDesktopTauri, isTauri } from '@/hooks/runtime';
-import { toast } from '@/components/ui/use-toast';
 import { invoke } from '@tauri-apps/api/core';
+import { toast } from '@/components/ui/use-toast';
+import { buildUrl, isDesktopTauri, isTauri } from '@/hooks/runtime';
 
 export type MarketplaceSkillItem = {
   name: string;
@@ -96,7 +96,7 @@ async function extractErrorMessage(response: Response) {
     if (payload?.error) {
       return payload.error;
     }
-  } catch { }
+  } catch {}
   return `Request failed: ${response.status}`;
 }
 

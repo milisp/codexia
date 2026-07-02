@@ -1,11 +1,11 @@
-import { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { McpServerForm } from '@/components/features/mcp/McpServerForm';
-import { useWorkspaceStore } from '@/stores';
-import { unifiedAddMcpServer, ccMcpAdd } from '@/services';
-import type { McpServerConfig } from '@/types';
+import { useState } from 'react';
 import { toast } from 'sonner';
+import { McpServerForm } from '@/components/features/mcp/McpServerForm';
+import { Button } from '@/components/ui/button';
+import { ccMcpAdd, unifiedAddMcpServer } from '@/services';
+import { useWorkspaceStore } from '@/stores';
+import type { McpServerConfig } from '@/types';
 
 interface McpAddPanelProps {
   onAdded: () => void;
@@ -26,8 +26,12 @@ export function McpAddPanel({ onAdded }: McpAddPanelProps) {
   };
 
   const parseEnv = (raw: string): Record<string, string> | null => {
-    try { return JSON.parse(raw); }
-    catch { toast.error('Invalid JSON for environment variables'); return null; }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      toast.error('Invalid JSON for environment variables');
+      return null;
+    }
   };
 
   const splitArgs = (raw: string) => raw.split(' ').filter((a) => a.trim());
@@ -38,7 +42,11 @@ export function McpAddPanel({ onAdded }: McpAddPanelProps) {
       if (selectedAgent === 'codex') {
         let config: McpServerConfig;
         if (protocol === 'stdio') {
-          config = { type: 'stdio', command: commandConfig.command, args: splitArgs(commandConfig.args) };
+          config = {
+            type: 'stdio',
+            command: commandConfig.command,
+            args: splitArgs(commandConfig.args),
+          };
           if (commandConfig.env.trim()) {
             const env = parseEnv(commandConfig.env);
             if (!env) return;
@@ -51,7 +59,10 @@ export function McpAddPanel({ onAdded }: McpAddPanelProps) {
       } else {
         const request: any = { name: serverName, type: protocol, scope: 'local', enabled: true };
         if (protocol === 'stdio') {
-          if (!commandConfig.command.trim()) { toast.error('Command is required'); return; }
+          if (!commandConfig.command.trim()) {
+            toast.error('Command is required');
+            return;
+          }
           request.command = commandConfig.command;
           if (commandConfig.args) request.args = splitArgs(commandConfig.args);
           if (commandConfig.env.trim()) {
@@ -60,7 +71,10 @@ export function McpAddPanel({ onAdded }: McpAddPanelProps) {
             request.env = env;
           }
         } else {
-          if (!httpConfig.url.trim()) { toast.error('URL is required'); return; }
+          if (!httpConfig.url.trim()) {
+            toast.error('URL is required');
+            return;
+          }
           request.url = httpConfig.url;
         }
         await ccMcpAdd(request, cwd || '');

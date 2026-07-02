@@ -1,5 +1,14 @@
+import {
+  ChevronDown,
+  ChevronRight,
+  Ellipsis,
+  FolderClosed,
+  FolderOpen,
+  ScrollText,
+  SquarePen,
+  X,
+} from 'lucide-react';
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, Ellipsis, FolderClosed, FolderOpen, ScrollText, SquarePen, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
@@ -8,9 +17,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { getFilename } from '@/utils/getFilename';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useLayoutStore } from '@/stores';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { getFilename } from '@/utils/getFilename';
 
 type Props = {
   onNewAction: (project: string) => void;
@@ -48,22 +57,20 @@ export function SideBarProjectList({ onNewAction, newActionTitle, renderList }: 
             onMouseLeave={() => setHoveredProject(null)}
           >
             <CollapsibleTrigger className="flex min-w-0 flex-1 items-center gap-2 text-left">
-              {
-                isOpen(project) ? (
-                  <FolderOpen
-                    className={`h-3.5 w-3.5 shrink-0 transition-transform`}
-                  />
-                ) : (
-                  <FolderClosed
-                    className={`h-3.5 w-3.5 shrink-0 transition-transform`}
-                  />
-                )
-              }
+              {isOpen(project) ? (
+                <FolderOpen className={`h-3.5 w-3.5 shrink-0 transition-transform`} />
+              ) : (
+                <FolderClosed className={`h-3.5 w-3.5 shrink-0 transition-transform`} />
+              )}
               <span className="truncate font-medium">{getFilename(project) || project}</span>
               {isOpen(project) ? (
-                <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-opacity ${hoveredProject === project ? 'opacity-100' : 'opacity-0'}`} />
+                <ChevronDown
+                  className={`h-3.5 w-3.5 shrink-0 transition-opacity ${hoveredProject === project ? 'opacity-100' : 'opacity-0'}`}
+                />
               ) : (
-                <ChevronRight className={`h-3.5 w-3.5 shrink-0 transition-opacity ${hoveredProject === project ? 'opacity-100' : 'opacity-0'}`} />
+                <ChevronRight
+                  className={`h-3.5 w-3.5 shrink-0 transition-opacity ${hoveredProject === project ? 'opacity-100' : 'opacity-0'}`}
+                />
               )}
             </CollapsibleTrigger>
 

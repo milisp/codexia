@@ -10,29 +10,24 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { AutomationTask } from '@/services/tauri';
-import {
-  ccInterrupt,
-  listModels,
-  runAutomationNow,
-  turnInterrupt,
-} from '@/services/tauri';
 import type { ServerNotification } from '@/bindings';
 import type { Model } from '@/bindings/v2';
-import { codexService } from '@/services/codexService';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/components/ui/use-toast';
-import { listSessions } from '@/lib/sessions';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
+import { listSessions } from '@/lib/sessions';
+import { codexService } from '@/services/codexService';
+import type { AutomationTask } from '@/services/tauri';
+import { ccInterrupt, listModels, runAutomationNow, turnInterrupt } from '@/services/tauri';
 import { useLayoutStore } from '@/stores';
 import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { getFilename } from '@/utils/getFilename';
 import { getErrorMessage } from '@/utils/errorUtils';
+import { getFilename } from '@/utils/getFilename';
 import type { RunMeta } from './useAutomationRuns';
 import { useRunEvents } from './useAutomationRuns';
 import { describeSchedule, formatStartsIn, getNextRunAt } from './utils';
@@ -155,9 +150,9 @@ function RunRow({
   const status =
     agent === 'codex'
       ? (() => {
-        const fromEvents = deriveRunStatusFromEvents(events);
-        return fromEvents === 'idle' ? storedStatus : fromEvents;
-      })()
+          const fromEvents = deriveRunStatusFromEvents(events);
+          return fromEvents === 'idle' ? storedStatus : fromEvents;
+        })()
       : storedStatus;
   const [isCancelling, setIsCancelling] = useState(false);
   const statusLabel = status === 'idle' ? 'queued' : status;
@@ -273,7 +268,9 @@ export function TaskDetailPanel({ task, now, runs, togglingPauseTaskId }: TaskDe
     setView('agent');
     // If the session is already active, just switch to it without a full reconnect
     if (activeSessionIds.includes(run.threadId)) {
-      console.info('[TaskDetailPanel] Switch to already-active cc session', { sessionId: run.threadId });
+      console.info('[TaskDetailPanel] Switch to already-active cc session', {
+        sessionId: run.threadId,
+      });
       switchToSession(run.threadId);
       return;
     }

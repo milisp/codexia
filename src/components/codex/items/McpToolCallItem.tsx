@@ -1,18 +1,18 @@
-import { useState } from "react";
-import { ThreadItem } from "@/bindings/v2";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, X, ChevronDown, ChevronRight } from "lucide-react";
-import { fmtElapsed } from "@/components/agent/utils";
+import { ChevronDown, ChevronRight, Loader2, X } from 'lucide-react';
+import { useState } from 'react';
+import type { ThreadItem } from '@/bindings/v2';
+import { fmtElapsed } from '@/components/agent/utils';
+import { Badge } from '@/components/ui/badge';
 
 type Props = {
-  item: ThreadItem
-}
+  item: ThreadItem;
+};
 
 export function McpToolCallItem({ item }: Props) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (item.type !== 'mcpToolCall') return null;
-  const status = item.status
+  const status = item.status;
 
   const hasDetails = item.result || item.error;
 
@@ -22,7 +22,6 @@ export function McpToolCallItem({ item }: Props) {
         className={`flex items-center gap-2 ${hasDetails ? 'cursor-pointer select-none' : ''}`}
         onClick={() => hasDetails && setIsExpanded(!isExpanded)}
       >
-
         <Badge>{item.server}</Badge>
         <span className="font-mono font-medium">{item.tool}</span>
 
@@ -30,17 +29,17 @@ export function McpToolCallItem({ item }: Props) {
           {status === 'inProgress' && (
             <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-500" />
           )}
-          {status === 'failed' && (
-            <X className="h-3.5 w-3.5 text-red-500 stroke-[2.5]" />
-          )}
-          {status === 'completed' && (
-            <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-          )}
+          {status === 'failed' && <X className="h-3.5 w-3.5 text-red-500 stroke-[2.5]" />}
+          {status === 'completed' && <div className="h-1.5 w-1.5 rounded-full bg-green-500" />}
         </div>
 
         {hasDetails && (
           <div className="text-neutral-400">
-            {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+            {isExpanded ? (
+              <ChevronDown className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5" />
+            )}
           </div>
         )}
 
@@ -69,8 +68,7 @@ export function McpToolCallItem({ item }: Props) {
             <div className="text-xs font-mono p-2 rounded bg-neutral-50 dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 text-neutral-500 max-h-[200px] overflow-y-auto whitespace-pre-wrap">
               {item.result.structuredContent
                 ? JSON.stringify(item.result.structuredContent, null, 2)
-                : JSON.stringify(item.result.content, null, 2)
-              }
+                : JSON.stringify(item.result.content, null, 2)}
             </div>
           )}
         </div>

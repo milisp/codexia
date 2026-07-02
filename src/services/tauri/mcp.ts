@@ -1,10 +1,10 @@
 import {
-  type UnifiedMcpClientName,
-  type UnifiedMcpConfig,
   invokeTauri,
   isDesktopTauri,
   postJson,
   postNoContent,
+  type UnifiedMcpClientName,
+  type UnifiedMcpConfig,
 } from './shared';
 
 export async function unifiedReadMcpConfig(

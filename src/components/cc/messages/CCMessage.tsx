@@ -1,17 +1,17 @@
+import { AddToNote, CopyButton } from '@/components/common';
+import { Card } from '@/components/ui/card';
+import { useCCStore } from '@/stores/cc';
+import { useCCSettingsStore } from '@/stores/settings/useCCSettingsStore';
 import type { CCMessage as CCMessageType, ToolResultBlock } from '../types/messages';
 import { isToolResultBlock } from '../types/messages';
-import { useCCSettingsStore } from '@/stores/settings/useCCSettingsStore';
-import { PermissionRequestCard } from './PermissionRequestCard';
-import { useCCStore } from '@/stores/cc';
 import type { PermissionDecision } from '../types/permission';
 import { CCMessageContent } from './CCMessageContent';
-import { SystemInitCard } from './SystemInitCard';
-import { ResultCard } from './ResultCard';
+import { PermissionRequestCard } from './PermissionRequestCard';
 import { RateLimitCard } from './RateLimitCard';
-import { safeStringify } from './utils';
-import { Card } from '@/components/ui/card';
-import { CopyButton, AddToNote } from '@/components/common';
+import { ResultCard } from './ResultCard';
+import { SystemInitCard } from './SystemInitCard';
 import { UserMessage } from './UserMessage';
+import { safeStringify } from './utils';
 
 interface CCMessageProps {
   message: CCMessageType;
@@ -19,8 +19,7 @@ interface CCMessageProps {
   inlineErrors?: Record<string, ToolResultBlock>;
 }
 
-const isToolBlock = (b: { type: string }) =>
-  b.type === 'tool_use' || b.type === 'tool_result';
+const isToolBlock = (b: { type: string }) => b.type === 'tool_use' || b.type === 'tool_result';
 
 export function CCMessage({ message: msg, index: idx, inlineErrors }: CCMessageProps) {
   const { showPermissionCards } = useCCSettingsStore();
@@ -77,9 +76,7 @@ export function CCMessage({ message: msg, index: idx, inlineErrors }: CCMessageP
       return <PermissionRequestCard msg={msg} onResolve={handleResolvePermission} />;
 
     case 'system':
-      return msg.subtype === 'init' ? (
-        <SystemInitCard msg={msg} />
-      ) : null;
+      return msg.subtype === 'init' ? <SystemInitCard msg={msg} /> : null;
 
     case 'result':
       return <ResultCard msg={msg} />;
@@ -100,4 +97,3 @@ export function CCMessage({ message: msg, index: idx, inlineErrors }: CCMessageP
       );
   }
 }
-

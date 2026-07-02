@@ -1,11 +1,11 @@
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus } from 'lucide-react';
-import { toast } from 'sonner';
-import { McpServerFormFields } from './McpServerFormFields';
-import type { ClaudeCodeMcpServer } from '@/types/cc/cc-mcp';
 import { ccMcpAdd } from '@/services';
+import type { ClaudeCodeMcpServer } from '@/types/cc/cc-mcp';
+import { McpServerFormFields } from './McpServerFormFields';
 
 type ServerType = 'stdio' | 'http' | 'sse';
 
@@ -40,7 +40,7 @@ export function McpAddServerForm({
       return;
     }
 
-    let request: any = {
+    const request: any = {
       name: newServerName,
       type: newServerType,
       scope: 'local', // Default to local when adding from UI

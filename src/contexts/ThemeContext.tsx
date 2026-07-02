@@ -1,5 +1,5 @@
-import React, { ReactNode, useEffect, useState } from 'react';
-import { useThemeStore, type Accent, type Theme } from '@/stores/settings/useThemeStore';
+import React, { type ReactNode, useEffect, useState } from 'react';
+import { type Accent, type Theme, useThemeStore } from '@/stores/settings/useThemeStore';
 
 interface ThemeContextType {
   theme: Theme;

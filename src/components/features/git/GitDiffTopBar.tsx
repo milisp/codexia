@@ -14,9 +14,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useLayoutStore } from '@/stores';
-import type { DiffSection, DiffSource } from './types';
-import { GitStatsIndicator } from './GitStatsIndicator';
 import { GitActions } from './GitActions';
+import { GitStatsIndicator } from './GitStatsIndicator';
+import type { DiffSection, DiffSource } from './types';
 
 interface GitDiffTopBarProps {
   cwd: string | null;

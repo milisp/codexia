@@ -1,14 +1,9 @@
 import { useEffect, useState } from 'react';
-import { AgentIcon } from '@/components/common/AgentIcon';
 import { CCSessionManager } from '@/components/cc/CCSessionManager';
 import { CodexThreadManager } from '@/components/codex/CodexThreadManager';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { AgentIcon } from '@/components/common/AgentIcon';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 type AgentTab = 'cc' | 'codex';
 

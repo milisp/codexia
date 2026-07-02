@@ -1,6 +1,6 @@
+import { nanoid } from 'nanoid';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { nanoid } from 'nanoid';
 
 export type SkillGroup = {
   id: string;
@@ -34,8 +34,7 @@ export const useSkillGroupsStore = create<SkillGroupsState>()(
           groups: s.groups.map((g) => (g.id === id ? { ...g, name } : g)),
         })),
 
-      removeGroup: (id) =>
-        set((s) => ({ groups: s.groups.filter((g) => g.id !== id) })),
+      removeGroup: (id) => set((s) => ({ groups: s.groups.filter((g) => g.id !== id) })),
 
       addSkillToGroup: (groupId, skillName) =>
         set((s) => ({
@@ -49,9 +48,7 @@ export const useSkillGroupsStore = create<SkillGroupsState>()(
       removeSkillFromGroup: (groupId, skillName) =>
         set((s) => ({
           groups: s.groups.map((g) =>
-            g.id === groupId
-              ? { ...g, skillNames: g.skillNames.filter((n) => n !== skillName) }
-              : g
+            g.id === groupId ? { ...g, skillNames: g.skillNames.filter((n) => n !== skillName) } : g
           ),
         })),
 

@@ -1,24 +1,18 @@
 import { History, PanelRight, SquareTerminal } from 'lucide-react';
 import { useCallback } from 'react';
+import { useCodexStore, useCurrentThread } from '@/components/codex/stores';
+import { NewAgentButton } from '@/components/common/NewAgentButton';
+import { GitActions } from '@/components/features/git';
 import { Button } from '@/components/ui/button';
+import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { useTrafficLightConfig } from '@/hooks';
 import { codexService } from '@/services/codexService';
 import { useCCStore, useLayoutStore } from '@/stores';
-import { useCodexStore, useCurrentThread } from '@/components/codex/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { useTrafficLightConfig } from '@/hooks';
-import { NewAgentButton } from '@/components/common/NewAgentButton';
-import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { UpdateButton } from '../features/UpdateButton';
-import { GitActions } from '@/components/features/git';
 export function AgentViewHeader() {
-  const {
-    setView,
-    view,
-    isRightPanelOpen,
-    toggleRightPanel,
-    isTerminalOpen,
-    setIsTerminalOpen,
-  } = useLayoutStore();
+  const { setView, view, isRightPanelOpen, toggleRightPanel, isTerminalOpen, setIsTerminalOpen } =
+    useLayoutStore();
   const { open: isSidebarOpen, openMobile, isMobile } = useSidebar();
   const { setHistoryMode, selectedAgent } = useWorkspaceStore();
   const { needsTrafficLightOffset } = useTrafficLightConfig(isSidebarOpen);
@@ -71,7 +65,7 @@ export function AgentViewHeader() {
           )}
       </div>
       <span className="flex items-center pr-2">
-        {!isRightPanelOpen &&
+        {!isRightPanelOpen && (
           <>
             {hasActiveSession && <GitActions />}
             <Button
@@ -82,16 +76,11 @@ export function AgentViewHeader() {
             >
               <SquareTerminal className="size-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleRightPanel}
-              title="Hide right panel"
-            >
+            <Button variant="ghost" size="icon" onClick={toggleRightPanel} title="Hide right panel">
               <PanelRight className="size-4" />
             </Button>
           </>
-        }
+        )}
       </span>
     </div>
   );

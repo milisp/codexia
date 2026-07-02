@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import { Composer as CCComposer } from '@/components/cc/composer';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { AgentSwitcher } from './AgentSwitcher';
-import { useAgentCenterStore } from '@/stores';
 import { Composer as CodexComposer } from '@/components/codex/composer';
+import { useAgentCenterStore } from '@/stores';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { WorkspaceSwitcher } from '../common';
+import { AgentSwitcher } from './AgentSwitcher';
 
 const focusCCInput = () => window.dispatchEvent(new Event('cc-input-focus-request'));
 
@@ -27,7 +27,7 @@ export function AgentComposer() {
       </div>
 
       {/* Input area */}
-      <div className={`shrink-0 ${currentAgentCardId && "pb-2"}`}>
+      <div className={`shrink-0 ${currentAgentCardId && 'pb-2'}`}>
         {selectedAgent === 'cc' ? <CCComposer /> : <CodexComposer />}
       </div>
       {!currentAgentCardId && <WorkspaceSwitcher />}

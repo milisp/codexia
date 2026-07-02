@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useRequestUserInputStore } from '@/components/codex/stores';
+import { useConfigStore } from '@/components/codex/stores/useConfigStore';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -10,8 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useRequestUserInputStore } from '@/components/codex/stores';
-import { useConfigStore } from '@/components/codex/stores/useConfigStore';
+import { Textarea } from '@/components/ui/textarea';
 import { codexService } from '@/services/codexService';
 
 type RequestUserInputItemProps = {
@@ -128,7 +128,10 @@ export function RequestUserInputItem({ currentThreadId }: RequestUserInputItemPr
                         setOtherAnswers(nextOtherAnswers);
                       }
 
-                      if (nextValue !== '__other__' && !hasMissingAnswer(nextAnswers, nextOtherAnswers)) {
+                      if (
+                        nextValue !== '__other__' &&
+                        !hasMissingAnswer(nextAnswers, nextOtherAnswers)
+                      ) {
                         void handleSubmit(nextAnswers, nextOtherAnswers);
                       }
                     }}

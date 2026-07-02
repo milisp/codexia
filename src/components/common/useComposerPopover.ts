@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // ---------------------------------------------------------------------------
 // Detection helpers
@@ -53,7 +53,7 @@ export function detectWordBoundaryTrigger(trigger: string) {
 export function replaceAtTrigger(
   input: string,
   trigger: string,
-  replacement: string,
+  replacement: string
 ): string | null {
   const pos = input.lastIndexOf(trigger);
   if (pos === -1) return null;
@@ -120,7 +120,9 @@ export function useComposerPopover<T>({
   }, [input, detect]);
 
   // Reset selection when visible list changes
-  useEffect(() => { setSelectedIndex(0); }, [query, open]);
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [query, open]);
 
   // Scroll focused item into view
   useEffect(() => {
@@ -136,17 +138,21 @@ export function useComposerPopover<T>({
     const handler = (e: KeyboardEvent) => {
       if (filteredItems.length === 0) return;
       if (e.key === 'ArrowDown') {
-        e.preventDefault(); e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
         setSelectedIndex((p) => (p + 1) % filteredItems.length);
       } else if (e.key === 'ArrowUp') {
-        e.preventDefault(); e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
         setSelectedIndex((p) => (p - 1 + filteredItems.length) % filteredItems.length);
       } else if (e.key === 'Enter' || e.key === 'Tab') {
-        e.preventDefault(); e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
         const item = filteredItems[selectedIndex];
         if (item !== undefined) stableOnKeySelect.current(item);
       } else if (e.key === 'Escape') {
-        e.preventDefault(); e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
         setOpen(false);
       }
     };
@@ -167,7 +173,7 @@ export function useComposerPopover<T>({
 export function applyEditorReplacement(
   newValue: string,
   setInput: (v: string) => void,
-  editorRef: React.RefObject<HTMLTextAreaElement | null>,
+  editorRef: React.RefObject<HTMLTextAreaElement | null>
 ) {
   setInput(newValue);
   const ta = editorRef.current;

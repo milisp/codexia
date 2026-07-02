@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
-import { useAgentCenterStore } from '@/stores';
 import { useCodexStore } from '@/components/codex/stores';
-import { useCCStore } from '@/stores/cc';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { codexService } from '@/services/codexService';
 import { gitRemoveWorktree } from '@/services/tauri/git';
-import { AgentCard } from './AgentCard';
+import { useAgentCenterStore } from '@/stores';
+import { useCCStore } from '@/stores/cc';
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { AgentCard } from './AgentCard';
 
 function ColumnLabel({
   dot,
@@ -27,22 +27,14 @@ function ColumnLabel({
       <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
         {label}
       </span>
-      <span className="text-[10px] text-muted-foreground/50 ml-auto">
-        {count}
-      </span>
+      <span className="text-[10px] text-muted-foreground/50 ml-auto">{count}</span>
     </div>
   );
 }
 
 export default function TasksPanel() {
-  const { cards, removeCard, setCurrentAgentCardId, currentAgentCardId } =
-    useAgentCenterStore();
-  const {
-    switchToSession,
-    sessionLoadingMap,
-    activeSessionId,
-    setActiveSessionId,
-  } = useCCStore();
+  const { cards, removeCard, setCurrentAgentCardId, currentAgentCardId } = useAgentCenterStore();
+  const { switchToSession, sessionLoadingMap, activeSessionId, setActiveSessionId } = useCCStore();
   const { threadStatusMap, currentThreadId } = useCodexStore();
   const { setSelectedAgent } = useWorkspaceStore();
 
@@ -83,23 +75,19 @@ export default function TasksPanel() {
 
   const runningCards = useMemo(
     () => cards.filter((c) => isRunning(c)),
-    [cards, threadStatusMap, sessionLoadingMap],
+    [cards, threadStatusMap, sessionLoadingMap]
   );
 
   const idleCards = useMemo(
     () => cards.filter((c) => !isRunning(c)),
-    [cards, threadStatusMap, sessionLoadingMap],
+    [cards, threadStatusMap, sessionLoadingMap]
   );
 
   return (
     <div className="flex flex-row h-full w-full min-w-0 overflow-hidden">
       {/* Running section */}
       <div className="flex-1 min-w-0 flex flex-col border-r border-white/10">
-        <ColumnLabel
-          dot="green"
-          label="Running"
-          count={runningCards.length}
-        />
+        <ColumnLabel dot="green" label="Running" count={runningCards.length} />
         <div className="flex-1 min-h-0 overflow-y-auto p-2 flex flex-col gap-2">
           {runningCards.length === 0 ? (
             <div className="flex h-full items-center justify-center text-xs text-muted-foreground/40 py-4">
@@ -107,11 +95,7 @@ export default function TasksPanel() {
             </div>
           ) : (
             runningCards.map((card) => (
-              <div
-                key={card.id}
-                onClick={() => selectCard(card)}
-                className="cursor-pointer"
-              >
+              <div key={card.id} onClick={() => selectCard(card)} className="cursor-pointer">
                 <AgentCard
                   card={card}
                   onRemove={() => handleRemove(card)}
@@ -133,11 +117,7 @@ export default function TasksPanel() {
             </div>
           ) : (
             idleCards.map((card) => (
-              <div
-                key={card.id}
-                onClick={() => selectCard(card)}
-                className="cursor-pointer"
-              >
+              <div key={card.id} onClick={() => selectCard(card)} className="cursor-pointer">
                 <AgentCard
                   card={card}
                   onRemove={() => handleRemove(card)}

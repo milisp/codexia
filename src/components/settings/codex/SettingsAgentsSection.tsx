@@ -1,6 +1,6 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useSettingsStore, AGENTS_MAX_THREADS_CAP, AGENTS_MAX_DEPTH_CAP } from '@/stores/settings';
+import { AGENTS_MAX_DEPTH_CAP, AGENTS_MAX_THREADS_CAP, useSettingsStore } from '@/stores/settings';
 
 /**
  * Settings panel for multi-agent runtime limits.
@@ -8,12 +8,8 @@ import { useSettingsStore, AGENTS_MAX_THREADS_CAP, AGENTS_MAX_DEPTH_CAP } from '
  * Product caps: max_threads ≤ 12, max_depth ≤ 4.
  */
 export function SettingsAgentsSection() {
-  const {
-    agentsMaxThreads,
-    agentsMaxDepth,
-    setAgentsMaxThreads,
-    setAgentsMaxDepth,
-  } = useSettingsStore();
+  const { agentsMaxThreads, agentsMaxDepth, setAgentsMaxThreads, setAgentsMaxDepth } =
+    useSettingsStore();
 
   const handleThreadsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value, 10);
@@ -30,7 +26,6 @@ export function SettingsAgentsSection() {
       <section className="space-y-3">
         <h3 className="text-sm sm:text-base font-medium">Multi-agent</h3>
         <div className="flex flex-col gap-3 sm:gap-4">
-
           {/* max_threads */}
           <div className="flex items-center justify-between gap-3 rounded-md border p-3 sm:p-4">
             <div className="space-y-0.5 flex-1 min-w-0">
@@ -68,7 +63,6 @@ export function SettingsAgentsSection() {
               className="w-20 text-right"
             />
           </div>
-
         </div>
       </section>
     </div>

@@ -39,10 +39,10 @@ export interface AgentHeatmaps {
 }
 
 export interface InsightFilters {
-  range?: string;      // "day" | "week" | "month" | "year" | "all"
+  range?: string; // "day" | "week" | "month" | "year" | "all"
   cwd?: string;
   session_id?: string;
-  agent?: string;      // "Claude" | "Codex" | "Gemini"
+  agent?: string; // "Claude" | "Codex" | "Gemini"
 }
 
 export interface FilterOptions {

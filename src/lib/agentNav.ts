@@ -1,6 +1,6 @@
 import { codexService } from '@/services/codexService';
+import { useAgentCenterStore, useLayoutStore } from '@/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { useLayoutStore, useAgentCenterStore } from '@/stores';
 
 export interface AgentNavParams {
   agent: string | null;
@@ -12,7 +12,12 @@ export interface AgentNavParams {
 // Shared navigation logic used by both web-mode URL params (useUrlParamThread)
 // and OS-level deep links (useAppDeepLink). Dispatches the same store updates
 // that a sidebar row click does, opening the given agent session.
-export function navigateToAgentSession({ agent, cwd, threadId, sessionId }: AgentNavParams): boolean {
+export function navigateToAgentSession({
+  agent,
+  cwd,
+  threadId,
+  sessionId,
+}: AgentNavParams): boolean {
   if (!agent || !cwd || (agent !== 'codex' && agent !== 'cc')) return false;
 
   const { addProject, setCwd, setSelectedAgent } = useWorkspaceStore.getState();

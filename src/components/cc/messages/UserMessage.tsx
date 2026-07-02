@@ -1,8 +1,8 @@
-import { useState, useRef, useLayoutEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { AddToNote, CopyButton } from '@/components/common';
 import { Markdown } from '@/components/Markdown';
-import { CopyButton, AddToNote } from '@/components/common';
+import { Button } from '@/components/ui/button';
 
 const MAX_COLLAPSED_HEIGHT = 128;
 

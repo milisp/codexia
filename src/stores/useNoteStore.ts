@@ -1,7 +1,7 @@
-import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import { createNote, getNotes } from '@/services/tauri';
+import { create } from 'zustand';
 import type { NoteSummary } from '@/hooks/useNotes';
+import { createNote, getNotes } from '@/services/tauri';
 
 type NoteViewMode = 'list' | 'editor';
 

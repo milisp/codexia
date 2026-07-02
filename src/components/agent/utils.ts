@@ -1,7 +1,7 @@
 // ─── Codex Utilities ──────────────────────────────────────────────────────
 
-import { ServerNotification } from "@/bindings";
-import type { TurnTiming } from "@/components/codex/stores/useCodexStore";
+import type { ServerNotification } from '@/bindings';
+import type { TurnTiming } from '@/components/codex/stores/useCodexStore';
 
 /**
  * Extracts the current active turn ID from a TurnTiming record.

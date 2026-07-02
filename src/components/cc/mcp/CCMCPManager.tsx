@@ -1,3 +1,4 @@
+import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Trash2, Plus } from 'lucide-react';
 import type { CCMcpServerConfig, CCMcpServers } from '@/types/cc/cc-mcp';
 
 interface CCMCPManagerProps {

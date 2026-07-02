@@ -1,13 +1,13 @@
-import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { FolderOpen, Hash, Zap, Search } from 'lucide-react';
+import { FolderOpen, Hash, Search, Zap } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
+import type { RankItem, Rankings } from '@/services/tauri/insights';
 import { fmtTokens } from './utils';
-import type { Rankings, RankItem } from '@/services/tauri/insights';
 
 const AGENT_COLORS: Record<string, string> = {
   Claude: '#a78bfa',
-  Codex:  '#34d399',
+  Codex: '#34d399',
   Gemini: '#60a5fa',
 };
 
@@ -25,7 +25,7 @@ export function RankingsTab({ rankings }: Props) {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return q ? items.filter(i => i.key.toLowerCase().includes(q)) : items;
+    return q ? items.filter((i) => i.key.toLowerCase().includes(q)) : items;
   }, [items, search]);
 
   const maxTokens = filtered[0]?.total_tokens ?? 1;
@@ -39,7 +39,6 @@ export function RankingsTab({ rankings }: Props) {
 
   return (
     <div className="space-y-4">
-
       {/* controls */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center rounded-lg border border-slate-800 bg-slate-900/60 p-0.5">
@@ -76,7 +75,7 @@ export function RankingsTab({ rankings }: Props) {
           <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
           <Input
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder={mode === 'cwd' ? 'Filter path…' : 'Filter session ID…'}
             className="h-8 pl-7 text-xs bg-slate-900 border-slate-800 text-slate-200 placeholder:text-slate-600"
           />
@@ -115,12 +114,13 @@ interface RowProps {
 
 function RankRow({ item, rank, maxTokens, mode, shortKey }: RowProps) {
   const pct = maxTokens > 0 ? item.total_tokens / maxTokens : 0;
-  const inputPct  = item.total_tokens > 0 ? item.input_tokens / item.total_tokens : 0;
+  const inputPct = item.total_tokens > 0 ? item.input_tokens / item.total_tokens : 0;
   const outputPct = item.total_tokens > 0 ? item.output_tokens / item.total_tokens : 0;
-  const cachePct  = item.total_tokens > 0 ? item.cache_read_tokens / item.total_tokens : 0;
+  const cachePct = item.total_tokens > 0 ? item.cache_read_tokens / item.total_tokens : 0;
   // remainder = cache_creation etc.
 
-  const rankColor = rank === 1 ? '#f59e0b' : rank === 2 ? '#94a3b8' : rank === 3 ? '#cd7f32' : '#334155';
+  const rankColor =
+    rank === 1 ? '#f59e0b' : rank === 2 ? '#94a3b8' : rank === 3 ? '#cd7f32' : '#334155';
 
   return (
     <motion.div
@@ -150,7 +150,7 @@ function RankRow({ item, rank, maxTokens, mode, shortKey }: RowProps) {
             <div className="flex shrink-0 items-center gap-3">
               {/* agent badges */}
               <div className="flex items-center gap-1">
-                {item.agents.map(a => (
+                {item.agents.map((a) => (
                   <span
                     key={a}
                     className="rounded-full px-1.5 py-0.5 text-[10px] font-medium"

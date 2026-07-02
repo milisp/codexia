@@ -1,11 +1,18 @@
+import {
+  AlertCircle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  HelpCircle,
+  Loader2,
+  XCircle,
+} from 'lucide-react';
 import { useState } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import { CheckCircle2, XCircle, AlertCircle, Loader2, HelpCircle } from 'lucide-react';
-import { useCodexStore } from '@/components/codex/stores';
-import { Badge } from '@/components/ui/badge';
 import { useTranslation } from 'react-i18next';
 import { fmtElapsed } from '@/components/agent/utils';
+import { useCodexStore } from '@/components/codex/stores';
 import { CopyButton } from '@/components/common';
+import { Badge } from '@/components/ui/badge';
 
 interface ShellCommandProps {
   command: string;
@@ -88,10 +95,7 @@ export const ShellCommand = ({ command, commandItemId, aggregatedOutput }: Shell
                 {fmtElapsed(durationMs)}
               </span>
             )}
-            <Badge
-              variant={variant}
-              className="flex items-center gap-1.5 px-2.5 py-1 w-fit"
-            >
+            <Badge variant={variant} className="flex items-center gap-1.5 px-2.5 py-1 w-fit">
               <Icon className={`h-3.5 w-3.5 ${status === 'inProgress' ? 'animate-spin' : ''}`} />
               <span>{t(status ?? '')}</span>
             </Badge>

@@ -41,14 +41,14 @@ export const useWebviewStore = create<WebviewState>()(
       goBack: () => {
         const { index } = get();
         if (index > 0) {
-          set(state => ({ index: state.index - 1 }));
+          set((state) => ({ index: state.index - 1 }));
         }
       },
 
       goForward: () => {
         const { history, index } = get();
         if (index < history.length - 1) {
-          set(state => ({ index: state.index + 1 }));
+          set((state) => ({ index: state.index + 1 }));
         }
       },
     }),

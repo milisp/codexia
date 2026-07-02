@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useState, useRef } from 'react';
-import { Archive, GitFork, FolderX, Loader2 } from 'lucide-react';
 import { listen } from '@tauri-apps/api/event';
-import { codexService } from '@/services/codexService';
+import { Archive, FolderX, GitFork, Loader2 } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ServerNotification } from '@/bindings/ServerNotification';
+import type {
+  Thread,
+  ThreadListParams,
+  ThreadListResponse,
+  ThreadNameUpdatedNotification,
+} from '@/bindings/v2';
+import { RenameThreadDialog } from '@/components/codex/RenameThreadDialog';
 import { useCodexStore, useThreadListStore } from '@/components/codex/stores';
-import {
-  listThreads,
-  deleteThread,
-  renameThread,
-} from '@/services/tauri';
 import { Button } from '@/components/ui/button';
 import {
   ContextMenu,
@@ -16,19 +18,18 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import { formatThreadAge } from '@/utils/formatThreadAge';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { useLayoutStore, useAgentCenterStore } from '@/stores';
-import { gitRemoveWorktree } from '@/services/tauri/git';
 import { toast } from '@/components/ui/use-toast';
-import { RenameThreadDialog } from '@/components/codex/RenameThreadDialog';
-import type { Thread, ThreadListParams, ThreadListResponse, ThreadNameUpdatedNotification } from '@/bindings/v2';
-import type { ServerNotification } from '@/bindings/ServerNotification';
+import { codexService } from '@/services/codexService';
+import { deleteThread, listThreads, renameThread } from '@/services/tauri';
+import { gitRemoveWorktree } from '@/services/tauri/git';
+import { useAgentCenterStore, useLayoutStore } from '@/stores';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { formatThreadAge } from '@/utils/formatThreadAge';
 
 interface ThreadListProps {
   cwd: string;
 }
-export const modelProviders = ["openai", "atlascloud", "ollama", "openrouter", "nvidia", "custom"];
+export const modelProviders = ['openai', 'atlascloud', 'ollama', 'openrouter', 'nvidia', 'custom'];
 
 const EMPTY_LIST: ThreadListResponse = { data: [], nextCursor: null, backwardsCursor: null };
 
@@ -83,7 +84,9 @@ export function ThreadList({ cwd }: ThreadListProps) {
       }
     };
     void load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [cwd, sortKey, searchTerm, refreshCounter]);
 
   const refresh = useCallback(() => setRefreshCounter((n) => n + 1), []);
@@ -103,12 +106,12 @@ export function ThreadList({ cwd }: ThreadListProps) {
       const { threadId, threadName } = params as ThreadNameUpdatedNotification;
       setResponse((prev) => ({
         ...prev,
-        data: prev.data.map((t) =>
-          t.id === threadId ? { ...t, name: threadName ?? null } : t
-        ),
+        data: prev.data.map((t) => (t.id === threadId ? { ...t, name: threadName ?? null } : t)),
       }));
     });
-    return () => { void unlisten.then((fn) => fn()); };
+    return () => {
+      void unlisten.then((fn) => fn());
+    };
   }, []);
 
   // --- Thread actions ---
@@ -135,13 +138,24 @@ export function ThreadList({ cwd }: ThreadListProps) {
       setView('agent');
       await handleSelectThread(threadId, { resume: true });
     },
-    [handleSelectThread, historyMode, setHistoryMode, setView, setCurrentAgentCardId, addAgentCard, cwd]
+    [
+      handleSelectThread,
+      historyMode,
+      setHistoryMode,
+      setView,
+      setCurrentAgentCardId,
+      addAgentCard,
+      cwd,
+    ]
   );
 
-  const handleArchive = useCallback(async (threadId: string) => {
-    await codexService.archiveThread(threadId);
-    refresh();
-  }, [refresh]);
+  const handleArchive = useCallback(
+    async (threadId: string) => {
+      await codexService.archiveThread(threadId);
+      refresh();
+    },
+    [refresh]
+  );
 
   const handleFork = useCallback(
     async (threadId: string) => {
@@ -204,14 +218,11 @@ export function ThreadList({ cwd }: ThreadListProps) {
     }
   }, [cwd, isLoadingMore, nextCursor, sortKey, searchTerm]);
 
-  const openRenameDialog = useCallback(
-    (thread: Thread) => {
-      // Prefer explicit name, fall back to preview (first message).
-      setRenameThreadId(thread.id);
-      setRenameValue(thread.name ?? thread.preview);
-    },
-    []
-  );
+  const openRenameDialog = useCallback((thread: Thread) => {
+    // Prefer explicit name, fall back to preview (first message).
+    setRenameThreadId(thread.id);
+    setRenameValue(thread.name ?? thread.preview);
+  }, []);
 
   const handleRenameSubmit = useCallback(async () => {
     if (!renameThreadId || !renameValue.trim()) return;
@@ -230,8 +241,9 @@ export function ThreadList({ cwd }: ThreadListProps) {
                 onClick={() => void handleOpenThread(thread.id, thread.preview)}
                 role="button"
                 tabIndex={0}
-                className={`group grid grid-cols-[1fr_auto] items-center gap-2 w-full text-left p-2 rounded-lg transition-colors ${currentThreadId === thread.id ? 'bg-zinc-700/50' : 'hover:bg-zinc-800/30'
-                  }`}
+                className={`group grid grid-cols-[1fr_auto] items-center gap-2 w-full text-left p-2 rounded-lg transition-colors ${
+                  currentThreadId === thread.id ? 'bg-zinc-700/50' : 'hover:bg-zinc-800/30'
+                }`}
               >
                 <div className="text-sm font-medium truncate min-w-0 pr-2 flex items-center gap-1.5">
                   {threadStatusMap[thread.id]?.type === 'active' && (
@@ -246,7 +258,10 @@ export function ThreadList({ cwd }: ThreadListProps) {
                   <button
                     type="button"
                     aria-label="Archive thread"
-                    onClick={(e) => { e.stopPropagation(); void handleArchive(thread.id); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleArchive(thread.id);
+                    }}
                     className="absolute right-0 inline-flex items-center justify-center h-6 w-6 rounded hover:bg-accent/50 transition-colors text-muted-foreground opacity-0 group-hover:opacity-100 max-md:opacity-100"
                   >
                     <Archive className="h-3.5 w-3.5" />
@@ -260,17 +275,16 @@ export function ThreadList({ cwd }: ThreadListProps) {
                 <GitFork className="mr-2 h-4 w-4" />
                 Fork
               </ContextMenuItem>
-              <ContextMenuItem onSelect={() => void handleArchive(thread.id)}>Archive</ContextMenuItem>
+              <ContextMenuItem onSelect={() => void handleArchive(thread.id)}>
+                Archive
+              </ContextMenuItem>
               {thread.cwd.includes('/.codexia/worktrees/') && (
                 <ContextMenuItem onSelect={() => void handleDeleteWorktree(thread)}>
                   <FolderX className="mr-2 h-4 w-4" />
                   Delete Worktree
                 </ContextMenuItem>
               )}
-              <ContextMenuItem
-                variant="destructive"
-                onSelect={() => void handleDelete(thread.id)}
-              >
+              <ContextMenuItem variant="destructive" onSelect={() => void handleDelete(thread.id)}>
                 Delete
               </ContextMenuItem>
               <ContextMenuSeparator />

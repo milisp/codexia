@@ -1,9 +1,9 @@
 import { Plus } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { McpServerConfig } from '@/types';
-import { toast } from 'sonner';
 import { unifiedAddMcpServer } from '@/services';
+import type { McpServerConfig } from '@/types';
 
 interface DefaultMcpServersProps {
   servers: Record<string, McpServerConfig>;
@@ -51,7 +51,7 @@ export function DefaultMcpServers({ servers, onServerAdded }: DefaultMcpServersP
       <h3 className="text-lg font-semibold mb-3">Quick Add Servers</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {defaultServers.map((defaultServer) => {
-          const isAlreadyAdded = Object.hasOwnProperty.call(servers, defaultServer.name);
+          const isAlreadyAdded = defaultServer.name in servers;
           return (
             <Card key={defaultServer.name} className={isAlreadyAdded ? 'opacity-50' : ''}>
               <CardContent>

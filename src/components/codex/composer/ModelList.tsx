@@ -1,5 +1,5 @@
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 // Matches Rust FrontendModel
@@ -54,7 +54,7 @@ export function ModelList({ items, selectedId, onSelect }: ModelListProps) {
           'flex-1 rounded-md border px-2 py-1 text-left transition-colors',
           selectedId === item.id
             ? 'border-primary bg-accent font-medium'
-            : 'border-transparent hover:bg-accent/60',
+            : 'border-transparent hover:bg-accent/60'
         )}
       >
         <Tooltip>

@@ -1,5 +1,5 @@
-import { useCodexStore } from '@/components/codex/stores';
 import type { ThreadStatus } from '@/bindings/v2/ThreadStatus';
+import { useCodexStore } from '@/components/codex/stores';
 
 /** Full ThreadStatus for a given thread (or currentThreadId). */
 export function useThreadStatus(threadId?: string | null): ThreadStatus | undefined {

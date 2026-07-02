@@ -11,11 +11,7 @@ export async function readFile(filePath: string, options?: { suppressToast?: boo
   if (isDesktopTauri()) {
     return await invokeTauri<string>('read_file', { filePath });
   }
-  return await postJsonWithOptions<string>(
-    '/api/filesystem/read-file',
-    { filePath },
-    options
-  );
+  return await postJsonWithOptions<string>('/api/filesystem/read-file', { filePath }, options);
 }
 
 export async function readTextFileLines(filePath: string) {
@@ -96,14 +92,20 @@ export async function searchFilesByName(params: {
   maxResults?: number;
 }) {
   if (isDesktopTauri()) {
-    return await invokeTauri<Array<import('./shared').TauriFileEntry>>('search_files_by_name', params);
+    return await invokeTauri<Array<import('./shared').TauriFileEntry>>(
+      'search_files_by_name',
+      params
+    );
   }
-  return await postJson<Array<import('./shared').TauriFileEntry>>('/api/filesystem/search-files-by-name', {
-    root: params.root,
-    query: params.query,
-    exclude_folders: params.excludeFolders,
-    max_results: params.maxResults,
-  });
+  return await postJson<Array<import('./shared').TauriFileEntry>>(
+    '/api/filesystem/search-files-by-name',
+    {
+      root: params.root,
+      query: params.query,
+      exclude_folders: params.excludeFolders,
+      max_results: params.maxResults,
+    }
+  );
 }
 
 export async function canonicalizePath(path: string) {

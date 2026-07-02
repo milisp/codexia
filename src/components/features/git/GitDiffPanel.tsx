@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import '@git-diff-view/react/styles/diff-view-pure.css';
+import {
+  type AggregatedFileChange,
+  aggregateTurnChangesFromContext,
+  getDiffViewerProps,
+  type RenderEventContext,
+} from '@/components/codex/items/fileChangeLogic';
+import { SummaryFileChanges } from '@/components/codex/items/SummaryFileChanges';
+import { useCodexStore } from '@/components/codex/stores/useCodexStore';
 import { useGitWatch } from '@/hooks/useGitWatch';
 import {
   type GitStatusResponse,
@@ -9,15 +17,12 @@ import {
 } from '@/services/tauri';
 import { isGitRepo } from '@/services/tauri/git';
 import { useLayoutStore, useWorkspaceStore } from '@/stores';
-import { useCodexStore } from '@/components/codex/stores/useCodexStore';
 import { GitDiffDialogs } from './GitDiffDialogs';
 import { GitDiffFileList } from './GitDiffFileList';
 import { GitDiffTopBar } from './GitDiffTopBar';
 import { GitFileTreePanel } from './GitFileTreePanel';
 import type { DiffSection, DiffSource, GitDiffPanelProps } from './types';
 import { buildFileTree } from './utils';
-import { aggregateTurnChangesFromContext, type AggregatedFileChange, type RenderEventContext, getDiffViewerProps } from '@/components/codex/items/fileChangeLogic';
-import { SummaryFileChanges } from '@/components/codex/items/SummaryFileChanges';
 
 export default function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
   const { activeFile, openFile } = useWorkspaceStore();
@@ -362,7 +367,10 @@ export default function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
                 No file changes in latest turn
               </div>
             ) : (
-              <SummaryFileChanges changes={latestTurnChanges} getDiffViewerProps={getDiffViewerProps} />
+              <SummaryFileChanges
+                changes={latestTurnChanges}
+                getDiffViewerProps={getDiffViewerProps}
+              />
             )}
           </div>
         </div>

@@ -26,7 +26,7 @@ export type SessionListResult = {
 
 export async function listSessions(
   directory?: string | null,
-  options: GetSessionsOptions = {},
+  options: GetSessionsOptions = {}
 ): Promise<SessionListResult> {
   try {
     const result = await ccListSessions<SdkSessionInfo>(directory, options);

@@ -1,12 +1,7 @@
-import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { Check, ChevronDown, Trash2 } from 'lucide-react';
-import type { AutomationSchedule, AutomationTask } from '@/services/tauri';
-import {
-  createAutomation,
-  deleteAutomation,
-  setAutomationPaused,
-  updateAutomation,
-} from '@/services/tauri';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CodexModelSelector } from '@/components/codex/composer/index';
+import { useConfigStore } from '@/components/codex/stores';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -35,11 +30,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { CodexModelSelector } from '@/components/codex/composer/index';
-import { useConfigStore } from '@/components/codex/stores';
+import { toast } from '@/components/ui/use-toast';
+import type { AutomationSchedule, AutomationTask } from '@/services/tauri';
+import {
+  createAutomation,
+  deleteAutomation,
+  setAutomationPaused,
+  updateAutomation,
+} from '@/services/tauri';
 import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { toast } from '@/components/ui/use-toast';
 import { getErrorMessage } from '@/utils/errorUtils';
 import { getFilename } from '@/utils/getFilename';
 import { DEFAULT_FORM } from './constants';
@@ -75,21 +75,22 @@ export function ManageDialog({
   const [form, setForm] = useState<FormState>({ ...DEFAULT_FORM });
   const [resetTrigger, setResetTrigger] = useState(0);
 
-  const getDefaultModel = useCallback(
-    (agent: 'codex' | 'cc', provider: string): string => {
-      if (agent === 'cc') {
-        return useCCStore.getState().options.model ?? 'sonnet';
-      }
-      return useConfigStore.getState().providerModels[provider] ?? '';
-    },
-    []
-  );
+  const getDefaultModel = useCallback((agent: 'codex' | 'cc', provider: string): string => {
+    if (agent === 'cc') {
+      return useCCStore.getState().options.model ?? 'sonnet';
+    }
+    return useConfigStore.getState().providerModels[provider] ?? '';
+  }, []);
 
   const prevOpenRef = useRef(open);
   const prevModeTypeRef = useRef(mode?.type ?? null);
   const prevTaskIdRef = useRef(existingTask?.id ?? null);
 
-  if (open !== prevOpenRef.current || mode?.type !== prevModeTypeRef.current || existingTask?.id !== prevTaskIdRef.current) {
+  if (
+    open !== prevOpenRef.current ||
+    mode?.type !== prevModeTypeRef.current ||
+    existingTask?.id !== prevTaskIdRef.current
+  ) {
     prevOpenRef.current = open;
     prevModeTypeRef.current = mode?.type ?? null;
     prevTaskIdRef.current = existingTask?.id ?? null;

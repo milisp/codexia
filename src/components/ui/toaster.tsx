@@ -59,7 +59,7 @@ export function Toaster({ viewportClassName }: ToasterProps) {
         return (
           <ToastProvider key={position}>
             {positionToasts.map(({ id, title, description, action, timeoutRef: _timeoutRef, ...props }) => (
-              <Toast key={id} {...props}>
+              <Toast {...props} key={id}>
                 <div className="grid gap-1">
                   {title ? <ToastTitle>{title}</ToastTitle> : null}
                   {description ? <ToastDescription>{description}</ToastDescription> : null}

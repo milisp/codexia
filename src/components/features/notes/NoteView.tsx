@@ -1,17 +1,17 @@
-import { useCallback, useMemo, useState } from 'react';
+import { ArrowLeft, Plus, Search, Trash2, X } from 'lucide-react';
 import type { MouseEvent } from 'react';
-import { useNoteStore } from '@/stores/useNoteStore';
-import { NoteList } from './NoteList';
-import { NoteEditor } from './NoteEditor';
+import { useCallback, useMemo, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Input } from '@/components/ui/input';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNotes } from '@/hooks/useNotes';
-import { useInputStore } from '@/stores/useInputStore';
-import { ArrowLeft, Plus, Trash2, Search, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { v4 as uuidv4 } from 'uuid';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { createNote, deleteNote, getNoteById, toggleFavorite } from '@/services/tauri';
+import { useInputStore } from '@/stores/useInputStore';
+import { useNoteStore } from '@/stores/useNoteStore';
+import { NoteEditor } from './NoteEditor';
+import { NoteList } from './NoteList';
 
 export default function NoteView() {
   const { selectedNoteId, setSelectedNoteId, viewMode, openEditor, closeEditor } = useNoteStore();

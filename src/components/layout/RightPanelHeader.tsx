@@ -3,19 +3,19 @@ import {
   Diff,
   Files,
   ListTodo,
+  type LucideIcon,
   Maximize2,
   Minimize2,
   PanelRight,
   SquareTerminal,
   StickyNote,
-  type LucideIcon,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useLayoutStore } from '@/stores';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useTrafficLightConfig } from '@/hooks';
-import { SidebarTrigger } from '@/components/ui/sidebar';
 import { NewAgentButton } from '@/components/common/NewAgentButton';
+import { Button } from '@/components/ui/button';
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { useTrafficLightConfig } from '@/hooks';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useLayoutStore } from '@/stores';
 
 export type RightPanelTab = 'diff' | 'tasks' | 'note' | 'files' | 'webpreview';
 
@@ -56,9 +56,16 @@ export function RightPanelHeader() {
   };
 
   return (
-    <div className={`flex items-center justify-between gap-1 py-1 h-11 border-b border-white/10 shrink-0 ${needsTrafficLightOffset && isRightPanelFocused && !isMobile ? 'pl-20' : ''}`}>
+    <div
+      className={`flex items-center justify-between gap-1 py-1 h-11 border-b border-white/10 shrink-0 ${needsTrafficLightOffset && isRightPanelFocused && !isMobile ? 'pl-20' : ''}`}
+    >
       <div className="flex items-center gap-0.5 min-w-0 overflow-x-auto">
-        {isRightPanelFocused && !isMobile && <><SidebarTrigger /><NewAgentButton /></>}
+        {isRightPanelFocused && !isMobile && (
+          <>
+            <SidebarTrigger />
+            <NewAgentButton />
+          </>
+        )}
         {TAB_BUTTONS.map(({ tab, icon: Icon, label }) => (
           <Button
             key={tab}
@@ -80,7 +87,11 @@ export function RightPanelHeader() {
             onClick={toggleRightPanelFocused}
             title={isRightPanelFocused ? 'Exit focus mode' : 'Focus on this panel'}
           >
-            {isRightPanelFocused ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            {isRightPanelFocused ? (
+              <Minimize2 className="size-4" />
+            ) : (
+              <Maximize2 className="size-4" />
+            )}
           </Button>
         )}
         <Button
@@ -91,12 +102,7 @@ export function RightPanelHeader() {
         >
           <SquareTerminal className="size-4" />
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleRightPanel}
-          title="Hide right panel"
-        >
+        <Button variant="ghost" size="icon" onClick={toggleRightPanel} title="Hide right panel">
           <PanelRight className="size-4" />
         </Button>
       </div>

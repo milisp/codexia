@@ -1,6 +1,6 @@
 import type { GitStatusEntry } from '@/services/tauri';
-import type { DiffSection, DiffSource } from './types';
 import { GitDiffFileItem } from './GitDiffFileItem';
+import type { DiffSection, DiffSource } from './types';
 
 interface GitDiffFileListProps {
   cwd: string | null;

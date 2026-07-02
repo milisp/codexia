@@ -1,8 +1,8 @@
-import { useEffect, useCallback, useRef } from 'react';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
-import { watchDirectory, unwatchDirectory } from '@/services/tauri/filesystem';
-import { isGitRepo } from '@/services/tauri/git';
+import { useCallback, useEffect, useRef } from 'react';
 import { isDesktopTauri } from '@/hooks/runtime';
+import { unwatchDirectory, watchDirectory } from '@/services/tauri/filesystem';
+import { isGitRepo } from '@/services/tauri/git';
 
 /**
  * Hook to watch cwd for any fs changes and trigger Git status refresh.
@@ -69,7 +69,7 @@ export function useGitWatch(cwd: string | null, onRefresh: () => void, enabled =
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
       }
-      void unwatchDirectory(cwd).catch(() => { });
+      void unwatchDirectory(cwd).catch(() => {});
     };
   }, [cwd, enabled, debouncedRefresh]);
 }

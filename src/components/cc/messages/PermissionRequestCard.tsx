@@ -1,15 +1,21 @@
-import type { PermissionRequestMessage } from '../types/messages';
-import { Card } from '@/components/ui/card';
+import { ShieldAlert, ShieldCheck, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ShieldAlert, X, ShieldCheck } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import type { PermissionRequestMessage } from '../types/messages';
+import type { PermissionDecision } from '../types/permission';
+import { NO_RAW_INPUT_TOOLS } from '.';
 import { ToolInputDisplay } from './ToolInputDisplay';
 import {
-  ReadTool, EditTool, WriteTool, BashTool,
-  GlobTool, GrepTool, TodoWriteTool, AskUserQuestionTool,
+  AskUserQuestionTool,
+  BashTool,
+  EditTool,
+  GlobTool,
+  GrepTool,
+  ReadTool,
+  TodoWriteTool,
+  WriteTool,
 } from './tool-use';
-import { NO_RAW_INPUT_TOOLS } from '.';
-import type { PermissionDecision } from '../types/permission';
 
 const RESOLVED_LABEL: Record<PermissionDecision, string> = {
   allow: 'Allowed Once',
@@ -50,19 +56,28 @@ export function PermissionRequestCard({ msg, onResolve }: Props) {
               type: 'tool_use',
               name: msg.toolName,
               input: msg.toolInput,
-              id: msg.requestId
+              id: msg.requestId,
             } as any;
-            const errorProps = { inlineError: null, showError: false, onToggleError: () => { } };
+            const errorProps = { inlineError: null, showError: false, onToggleError: () => {} };
             switch (msg.toolName) {
-              case 'Read': return <ReadTool block={block} {...errorProps} />;
-              case 'Edit': return <EditTool block={block} {...errorProps} />;
-              case 'Write': return <WriteTool block={block} {...errorProps} />;
-              case 'Bash': return <BashTool block={block} {...errorProps} />;
-              case 'Glob': return <GlobTool block={block} {...errorProps} />;
-              case 'Grep': return <GrepTool block={block} {...errorProps} />;
-              case 'TodoWrite': return <TodoWriteTool block={block} {...errorProps} />;
-              case 'AskUserQuestion': return <AskUserQuestionTool block={block} {...errorProps} />;
-              default: return null;
+              case 'Read':
+                return <ReadTool block={block} {...errorProps} />;
+              case 'Edit':
+                return <EditTool block={block} {...errorProps} />;
+              case 'Write':
+                return <WriteTool block={block} {...errorProps} />;
+              case 'Bash':
+                return <BashTool block={block} {...errorProps} />;
+              case 'Glob':
+                return <GlobTool block={block} {...errorProps} />;
+              case 'Grep':
+                return <GrepTool block={block} {...errorProps} />;
+              case 'TodoWrite':
+                return <TodoWriteTool block={block} {...errorProps} />;
+              case 'AskUserQuestion':
+                return <AskUserQuestionTool block={block} {...errorProps} />;
+              default:
+                return null;
             }
           })()
         ) : (
@@ -80,7 +95,7 @@ export function PermissionRequestCard({ msg, onResolve }: Props) {
             'text-[10px] font-bold px-2 py-1.5 rounded-md border text-center uppercase tracking-widest flex items-center justify-center gap-1.5',
             resolved === 'deny'
               ? 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400'
-              : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400',
+              : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
           )}
         >
           {resolved === 'deny' ? <X className="w-3 h-3" /> : <ShieldCheck className="w-3 h-3" />}

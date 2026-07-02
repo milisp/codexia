@@ -1,4 +1,4 @@
-import { CheckCircle, Circle, ArrowRight } from 'lucide-react';
+import { ArrowRight, CheckCircle, Circle } from 'lucide-react';
 
 export type PlanStatus = 'pending' | 'in_progress' | 'completed';
 

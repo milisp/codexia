@@ -1,8 +1,8 @@
-import { useLayoutStore } from '@/stores';
-import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Plus, Terminal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Plus, X, Terminal } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
+import { useLayoutStore } from '@/stores';
 import { TerminalPane } from './TerminalPane';
 
 export function BottomTerminal() {
@@ -22,7 +22,7 @@ export function BottomTerminal() {
       style={{ height: isTerminalOpen ? (isMobile ? '42dvh' : '18rem') : '0px' }}
       className={cn(
         'border-t border-border/80 bg-black text-zinc-100 transition-[height,opacity] duration-200 ease-out flex flex-col min-h-0',
-        isTerminalOpen ? 'opacity-100' : 'opacity-0 pointer-events-none',
+        isTerminalOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
       )}
     >
       {/* Tab bar */}
@@ -42,7 +42,7 @@ export function BottomTerminal() {
               'group flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border-r border-zinc-800 transition-colors cursor-pointer select-none',
               activeTerminalId === tab.id
                 ? 'bg-black text-zinc-100'
-                : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900',
+                : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'
             )}
           >
             {/* Close/Icon container */}
@@ -50,7 +50,7 @@ export function BottomTerminal() {
               <Terminal
                 className={cn(
                   'size-3 transition-opacity group-hover:opacity-0',
-                  activeTerminalId === tab.id ? 'text-zinc-400' : 'text-zinc-500',
+                  activeTerminalId === tab.id ? 'text-zinc-400' : 'text-zinc-500'
                 )}
               />
               <Button

@@ -1,5 +1,3 @@
-import { Switch } from '@/components/ui/switch';
-import { useSettingsStore, type TaskCompleteBeepMode, type TaskDetail } from '@/stores/settings';
 import {
   Select,
   SelectContent,
@@ -7,6 +5,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { type TaskCompleteBeepMode, type TaskDetail, useSettingsStore } from '@/stores/settings';
 
 export function TaskSettings() {
   const {

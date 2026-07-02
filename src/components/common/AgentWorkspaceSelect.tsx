@@ -1,10 +1,17 @@
+import { Check, ChevronDown, Monitor, Split } from 'lucide-react';
 import { useState } from 'react';
-import { Monitor, Split, ChevronDown, Check } from 'lucide-react';
 import type { ThreadCwdMode } from '@/components/codex/stores';
-import { RateLimitTrigger, RateLimitContent, useRateLimits } from '../codex/widget/RateLimitWidget';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useWorkspaceStore } from '@/stores';
+import { RateLimitContent, RateLimitTrigger, useRateLimits } from '../codex/widget/RateLimitWidget';
 
 interface AgentWorkspaceSelectProps {
   value: ThreadCwdMode;
@@ -22,7 +29,7 @@ const MODE_LABELS: Record<ThreadCwdMode, string> = {
 };
 
 export function AgentWorkspaceSelect({ value, onValueChange }: AgentWorkspaceSelectProps) {
-  const { selectedAgent } = useWorkspaceStore()
+  const { selectedAgent } = useWorkspaceStore();
   const [rateLimitOpen, setRateLimitOpen] = useState(false);
   // Fetch eagerly so data is ready when user expands
   const rateLimits = useRateLimits();
@@ -31,54 +38,49 @@ export function AgentWorkspaceSelect({ value, onValueChange }: AgentWorkspaceSel
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 text-xs px-2 gap-1"
-        >
+        <Button variant="ghost" size="sm" className="h-7 text-xs px-2 gap-1">
           {MODE_ICONS[value]}
           <span>{MODE_LABELS[value]}</span>
           <ChevronDown size={10} className="opacity-60" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
-        <DropdownMenuItem
-          onClick={() => onValueChange('local')}
-          className='flex justify-between'
-        >
-          <span className='flex gap-2'>
-            <Monitor className='h-4 w-4' />
+        <DropdownMenuItem onClick={() => onValueChange('local')} className="flex justify-between">
+          <span className="flex gap-2">
+            <Monitor className="h-4 w-4" />
             <span>Local</span>
           </span>
           {value === 'local' && <Check />}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => onValueChange('worktree')}
-          className='flex justify-between item-center'
+          className="flex justify-between item-center"
         >
-          <span className='flex gap-2'>
-            <Split className='h-4 w-4' />
+          <span className="flex gap-2">
+            <Split className="h-4 w-4" />
             <span>Worktree</span>
           </span>
           {value === 'worktree' && <Check />}
         </DropdownMenuItem>
-        {selectedAgent === 'codex' && <>
-          <DropdownMenuSeparator />
-          {/* Rate limit toggle — participates in ↑↓ navigation */}
-          <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault(); // prevent menu close
-              setRateLimitOpen(o => !o);
-            }}
-          >
-            <RateLimitTrigger isOpen={rateLimitOpen} />
-          </DropdownMenuItem>
-          {rateLimitOpen && (
-            <DropdownMenuLabel className="font-normal p-0">
-              <RateLimitContent primaryWindow={primaryWindow} />
-            </DropdownMenuLabel>
-          )}
-        </>}
+        {selectedAgent === 'codex' && (
+          <>
+            <DropdownMenuSeparator />
+            {/* Rate limit toggle — participates in ↑↓ navigation */}
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault(); // prevent menu close
+                setRateLimitOpen((o) => !o);
+              }}
+            >
+              <RateLimitTrigger isOpen={rateLimitOpen} />
+            </DropdownMenuItem>
+            {rateLimitOpen && (
+              <DropdownMenuLabel className="font-normal p-0">
+                <RateLimitContent primaryWindow={primaryWindow} />
+              </DropdownMenuLabel>
+            )}
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

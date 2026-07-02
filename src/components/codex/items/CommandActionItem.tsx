@@ -1,5 +1,5 @@
-import { Badge } from '@/components/ui/badge';
 import type { CommandAction } from '@/bindings/v2';
+import { Badge } from '@/components/ui/badge';
 import { getFilename } from '@/utils/getFilename';
 import { ShellCommand } from './ShellCommand';
 
@@ -19,7 +19,13 @@ export const CommandActionItem = ({
   aggregatedOutput?: string | null;
 }) => {
   if (action.type === 'unknown') {
-    return <ShellCommand command={action.command} commandItemId={commandItemId} aggregatedOutput={aggregatedOutput} />;
+    return (
+      <ShellCommand
+        command={action.command}
+        commandItemId={commandItemId}
+        aggregatedOutput={aggregatedOutput}
+      />
+    );
   }
 
   return (
@@ -28,7 +34,12 @@ export const CommandActionItem = ({
       {action.type === 'search' && (
         <>
           <Badge variant="secondary">{action.query}</Badge>
-          {action.path && <> in <Badge variant="secondary">{getFilename(action.path)}</Badge></>}
+          {action.path && (
+            <>
+              {' '}
+              in <Badge variant="secondary">{getFilename(action.path)}</Badge>
+            </>
+          )}
         </>
       )}
       {(action.type === 'read' || action.type === 'listFiles') && action.path && (

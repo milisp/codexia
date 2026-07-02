@@ -1,24 +1,24 @@
 import { invokeTauri, isDesktopTauri } from './shared';
 
-export {
-  type DbNote,
-  type InstalledSkillItem,
-  type MarketplaceSkillItem,
-  type SkillAgent,
-  type SkillScope,
-  type TauriFileEntry,
-  type TerminalStartResponse,
-  type UnifiedMcpClientName,
-  type UnifiedMcpConfig,
-} from './shared';
+export * from './automation';
 
 export * from './cc';
-export * from './automation';
 export * from './codex';
 export * from './dxt';
 export * from './filesystem';
 export * from './git';
 export * from './note';
+export type {
+  DbNote,
+  InstalledSkillItem,
+  MarketplaceSkillItem,
+  SkillAgent,
+  SkillScope,
+  TauriFileEntry,
+  TerminalStartResponse,
+  UnifiedMcpClientName,
+  UnifiedMcpConfig,
+} from './shared';
 export * from './terminal';
 
 const SESSION_META_STORAGE_KEY = 'codexia.session_meta';

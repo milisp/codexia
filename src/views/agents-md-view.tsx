@@ -1,13 +1,13 @@
+import MarkdownIt from 'markdown-it';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import MdEditor from 'react-markdown-editor-lite';
-import MarkdownIt from 'markdown-it';
 import 'react-markdown-editor-lite/lib/index.css';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getErrorMessage } from '@/utils/errorUtils';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { useWorkspaceStore } from '@/stores';
 import { readFile, writeFile } from '@/services';
+import { useWorkspaceStore } from '@/stores';
+import { getErrorMessage } from '@/utils/errorUtils';
 
 const CODEX_INSTRUCTIONS_FILE_NAME = 'AGENTS.md';
 const CC_INSTRUCTIONS_FILE_NAME = 'CLAUDE.md';

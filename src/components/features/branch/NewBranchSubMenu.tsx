@@ -1,12 +1,12 @@
-import { useState } from 'react';
 import { GitBranchPlus, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenuSub,
-  DropdownMenuSubTrigger,
   DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { gitCreateBranch } from '@/services/tauri/git';
 
 interface NewBranchSubMenuProps {
@@ -79,9 +79,7 @@ export function NewBranchSubMenu({ cwd, onBranchCreated, onCloseMenu }: NewBranc
             }}
             className="h-7 text-xs font-mono"
           />
-          {error && (
-            <p className="text-[10px] text-destructive px-1">{error}</p>
-          )}
+          {error && <p className="text-[10px] text-destructive px-1">{error}</p>}
           <div className="flex gap-1">
             <Button
               size="sm"
@@ -89,11 +87,7 @@ export function NewBranchSubMenu({ cwd, onBranchCreated, onCloseMenu }: NewBranc
               onClick={handleCreateBranch}
               disabled={!newBranchName.trim() || creating}
             >
-              {creating ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                'Create'
-              )}
+              {creating ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Create'}
             </Button>
             <Button
               size="sm"

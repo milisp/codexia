@@ -1,10 +1,10 @@
-import { useRef } from 'react';
 import { X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { FileTreeNode } from './FileTreeNode';
-import { useFileTree } from './useFileTree';
 import type { FileTreeProps } from './types';
+import { useFileTree } from './useFileTree';
 
 export function FileTree({ folder, onFileSelect }: FileTreeProps) {
   const searchInputRef = useRef<HTMLInputElement | null>(null);

@@ -1,7 +1,7 @@
-import { Button } from '@/components/ui/button';
 import { open } from '@tauri-apps/plugin-dialog';
-import { Folder, ChevronDown } from 'lucide-react';
+import { ChevronDown, Folder } from 'lucide-react';
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useWorkspaceStore } from '@/stores';
 

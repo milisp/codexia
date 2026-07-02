@@ -1,17 +1,17 @@
-import { useWindowFocus } from '@/hooks/useWindowFocus';
-import type { UserInput } from '@/bindings/v2';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { Pencil } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import type { UserInput } from '@/bindings/v2';
+import { useEventPreferencesStore } from '@/components/codex/stores';
+import { AddToNote, CopyButton } from '@/components/common';
 import { Markdown } from '@/components/Markdown';
-import { CopyButton, AddToNote } from '@/components/common';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
+import { useWindowFocus } from '@/hooks/useWindowFocus';
 import { codexService } from '@/services/codexService';
 import { useInputStore } from '@/stores';
-import { useEventPreferencesStore } from '@/components/codex/stores';
-import { toast } from '@/components/ui/use-toast';
 import { getErrorMessage } from '@/utils/errorUtils';
 import { EditRollbackConfirmDialog } from './EditRollbackConfirmDialog';
-import { useState } from 'react';
 
 type UserMessageItemProps = {
   content: Array<UserInput>;
@@ -19,7 +19,11 @@ type UserMessageItemProps = {
   editDisabled?: boolean;
 };
 
-export const UserMessageItem = ({ content, onEdit, editDisabled = false }: UserMessageItemProps) => {
+export const UserMessageItem = ({
+  content,
+  onEdit,
+  editDisabled = false,
+}: UserMessageItemProps) => {
   const isWindowFocused = useWindowFocus();
   const images = content.filter((m) => m.type === 'image').map((m) => m.url);
   const localImages = content
@@ -63,8 +67,11 @@ export const UserMessageItem = ({ content, onEdit, editDisabled = false }: UserM
           {text.length > 0 && <Markdown className="min-w-0 max-w-full" value={text} />}
         </div>
         <div
-          className={`flex min-w-0 items-center gap-1 px-1 ${isWindowFocused ? 'invisible group-hover:visible group-focus-within:visible' : 'invisible'
-            }`}
+          className={`flex min-w-0 items-center gap-1 px-1 ${
+            isWindowFocused
+              ? 'invisible group-hover:visible group-focus-within:visible'
+              : 'invisible'
+          }`}
         >
           {onEdit && (
             <Button

@@ -1,11 +1,9 @@
-import { UserConfigForm, Footer, ToolPrompt } from '@/components/features/dxt';
+import { Plus } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import type { z } from 'zod';
+import { Footer, ToolPrompt, UserConfigForm } from '@/components/features/dxt';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { DxtManifestSchema } from './schemas';
-import { useEffect, useState, useRef } from 'react';
-import { z } from 'zod';
-import { MCPConfigType } from '@/types/cc/cc-mcp';
-import { useWorkspaceStore, usePluginStore } from '@/stores';
 import {
   loadManifest,
   unifiedAddMcpServer,
@@ -14,7 +12,9 @@ import {
   unifiedReadMcpConfig,
   unifiedRemoveMcpServer,
 } from '@/services';
-import { Plus } from 'lucide-react';
+import { usePluginStore, useWorkspaceStore } from '@/stores';
+import type { MCPConfigType } from '@/types/cc/cc-mcp';
+import { DxtManifestSchema } from './schemas';
 
 // Helper function to validate URLs
 function isValidUrl(url: any): boolean {

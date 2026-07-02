@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useCCStore } from '@/stores/cc';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { ccNewSession, ccResumeSession, ccSendMessage } from '@/services';
 import { gitCreateWorktree } from '@/services/tauri/git';
+import { useCCStore } from '@/stores/cc';
+import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
 const CC_LISTENER_READY_EVENT = 'cc-session-listener-ready';
 const CC_PERMISSION_LISTENER_READY_EVENT = 'cc-permission-listener-ready';
@@ -47,10 +47,7 @@ function waitForPermissionListenerReady(sessionId: string, timeoutMs = 400): Pro
     const cleanup = () => {
       if (done) return;
       done = true;
-      window.removeEventListener(
-        CC_PERMISSION_LISTENER_READY_EVENT,
-        handleReady as EventListener
-      );
+      window.removeEventListener(CC_PERMISSION_LISTENER_READY_EVENT, handleReady as EventListener);
       clearTimeout(timer);
       resolve();
     };
@@ -63,10 +60,7 @@ function waitForPermissionListenerReady(sessionId: string, timeoutMs = 400): Pro
     };
 
     const timer = setTimeout(cleanup, timeoutMs);
-    window.addEventListener(
-      CC_PERMISSION_LISTENER_READY_EVENT,
-      handleReady as EventListener
-    );
+    window.addEventListener(CC_PERMISSION_LISTENER_READY_EVENT, handleReady as EventListener);
   });
 }
 
@@ -120,7 +114,10 @@ export function useCCSessionManager() {
           sessionCwd = prepared.worktree_path;
           sessionWorktreePath = prepared.worktree_path;
         } catch (err) {
-          console.warn('[useCCSessionManager] Failed to prepare worktree, falling back to cwd', err);
+          console.warn(
+            '[useCCSessionManager] Failed to prepare worktree, falling back to cwd',
+            err
+          );
         }
       }
 
@@ -160,7 +157,13 @@ export function useCCSessionManager() {
       addMessage({ type: 'user', text: initialMessage });
       setConnected(true);
       setSessionLoading(sessionId, true);
-      addAgentCard({ kind: 'cc', id: sessionId, preview: initialMessage, worktreePath: sessionWorktreePath, cwd });
+      addAgentCard({
+        kind: 'cc',
+        id: sessionId,
+        preview: initialMessage,
+        worktreePath: sessionWorktreePath,
+        cwd,
+      });
       setCurrentAgentCardId(sessionId);
       setPendingNewSession({
         session_id: sessionId,
@@ -229,13 +232,20 @@ export function useCCSessionManager() {
         ClaudeAgentOptions.disallowedTools = options.disallowedTools;
 
       await ccResumeSession(sessionId, ClaudeAgentOptions);
-      console.info('[useCCSessionManager] Resume session success', { sessionId, cwd: effectiveCwd });
+      console.info('[useCCSessionManager] Resume session success', {
+        sessionId,
+        cwd: effectiveCwd,
+      });
 
       // Session history loaded, but not connected yet
       // Connection will happen when user sends first message
       setConnected(false);
     } catch (error) {
-      console.error('[useCCSessionManager] Failed to resume session', { sessionId, cwd: projectPath ?? cwd, error });
+      console.error('[useCCSessionManager] Failed to resume session', {
+        sessionId,
+        cwd: projectPath ?? cwd,
+        error,
+      });
     } finally {
       setLoading(false);
       setIsLoading(false);
@@ -248,7 +258,9 @@ export function useCCSessionManager() {
     // If session is already active (in activeSessionIds), just switch to it — no backend resume needed
     const currentActiveSessionIds = useCCStore.getState().activeSessionIds;
     if (currentActiveSessionIds.includes(sessionId)) {
-      console.info('[useCCSessionManager] Session already active, switching without resume', { sessionId });
+      console.info('[useCCSessionManager] Session already active, switching without resume', {
+        sessionId,
+      });
       switchToSession(sessionId);
       return;
     }

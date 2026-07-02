@@ -1,5 +1,5 @@
-import { FileUpdateChange } from '@/bindings/v2';
 import type { ServerNotification } from '@/bindings';
+import type { FileUpdateChange } from '@/bindings/v2';
 import { getDiffCounts, normalizeUnifiedDiff, splitUnifiedDiffByFile } from '@/utils/diff';
 
 export type AggregatedFileChange = {
@@ -141,7 +141,7 @@ export const aggregateFileChanges = (changes: FileUpdateChange[]): AggregatedFil
       const key = path;
       const existing = merged.get(key);
       const normalizedDiff = normalizeChangeDiff(change.kind, entry.diff ?? '');
-      const nextDiff = normalizedDiff.trim() ? normalizedDiff : existing?.diff ?? '';
+      const nextDiff = normalizedDiff.trim() ? normalizedDiff : (existing?.diff ?? '');
 
       if (existing) {
         existing.kind = change.kind;
