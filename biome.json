@@ -5,7 +5,13 @@
     "clientKind": "git",
     "useIgnoreFile": true
   },
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
   "linter": {
     "enabled": true,
     "rules": {
@@ -66,6 +72,8 @@
       "src/**/*.ts",
       "src/**/*.tsx",
       "!src/components/ui/*",
+      "!src/bindings/*",
+      "!biome.json",
       "!**/node_modules",
       "!**/dist",
       "!**/src-tauri",
