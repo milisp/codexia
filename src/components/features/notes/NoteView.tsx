@@ -13,7 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { createNote, deleteNote, getNoteById, toggleFavorite } from '@/services/tauri';
 
-export function NoteView() {
+export default function NoteView() {
   const { selectedNoteId, setSelectedNoteId, viewMode, openEditor, closeEditor } = useNoteStore();
   const { appendInputValue } = useInputStore();
   const { resolvedTheme } = useThemeContext();

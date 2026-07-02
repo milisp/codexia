@@ -1,37 +1,35 @@
-import { History } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
+import { History, PanelRight, SquareTerminal } from 'lucide-react';
+import { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { codexService } from '@/services/codexService';
-import { useLayoutStore, useAgentCenterStore } from '@/stores';
+import { useCCStore, useLayoutStore } from '@/stores';
 import { useCodexStore, useCurrentThread } from '@/components/codex/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { RightPanelHeader } from './RightPanelHeader';
-import { useCCStore } from '@/stores/cc';
 import { useTrafficLightConfig } from '@/hooks';
 import { NewAgentButton } from '@/components/common/NewAgentButton';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { UpdateButton } from '../features/UpdateButton';
-
-export function AppHeader() {
-  const { setView, view } = useLayoutStore();
+import { GitActions } from '@/components/features/git';
+export function AgentViewHeader() {
+  const {
+    setView,
+    view,
+    isRightPanelOpen,
+    toggleRightPanel,
+    isTerminalOpen,
+    setIsTerminalOpen,
+  } = useLayoutStore();
   const { open: isSidebarOpen, openMobile, isMobile } = useSidebar();
   const { setHistoryMode, selectedAgent } = useWorkspaceStore();
-  const { cards } = useAgentCenterStore();
   const { needsTrafficLightOffset } = useTrafficLightConfig(isSidebarOpen);
+  const { activeThreadIds, currentThreadId } = useCodexStore();
+  const { activeSessionId } = useCCStore();
   // Show trigger when sidebar is closed; on mobile the Sheet is transient so always show
   const showTrigger = isMobile ? !openMobile : !isSidebarOpen;
+  const hasActiveSession = currentThreadId || activeSessionId;
 
-  const { activeSessionId } = useCCStore();
-  const { currentThreadId, activeThreadIds } = useCodexStore();
   const currentThread = useCurrentThread();
   const isHistoryView = view === 'history';
-
-  const activeAgentId = selectedAgent === 'codex' ? currentThreadId : activeSessionId;
-
-  const hasCurrentCard = useMemo(
-    () => (activeAgentId ? cards.some((c) => c.kind === selectedAgent && c.id === activeAgentId) : false),
-    [activeAgentId, cards, selectedAgent],
-  );
 
   const handleToggleHistoryMode = useCallback(async () => {
     const nextMode = !isHistoryView;
@@ -59,11 +57,6 @@ export function AppHeader() {
             <UpdateButton />
           </div>
         )}
-        {view === 'agent' && !hasCurrentCard && (
-          <span className="text-xs text-muted-foreground/60 pl-2">
-            New {selectedAgent === 'codex' ? 'thread' : 'session'}
-          </span>
-        )}
         {selectedAgent === 'codex' &&
           currentThreadId &&
           (view === 'agent' || view === 'history') && (
@@ -77,7 +70,29 @@ export function AppHeader() {
             </Button>
           )}
       </div>
-      <RightPanelHeader />
+      <span className="flex items-center pr-2">
+        {!isRightPanelOpen &&
+          <>
+            {hasActiveSession && <GitActions />}
+            <Button
+              variant={isTerminalOpen ? 'secondary' : 'ghost'}
+              size="icon"
+              onClick={() => setIsTerminalOpen(!isTerminalOpen)}
+              title={isTerminalOpen ? 'Hide terminal' : 'Show terminal'}
+            >
+              <SquareTerminal className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleRightPanel}
+              title="Hide right panel"
+            >
+              <PanelRight className="size-4" />
+            </Button>
+          </>
+        }
+      </span>
     </div>
   );
 }

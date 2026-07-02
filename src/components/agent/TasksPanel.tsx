@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
-import { useAgentCenterStore, useLayoutStore } from '@/stores';
+import { useAgentCenterStore } from '@/stores';
 import { useCodexStore } from '@/components/codex/stores';
 import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { codexService } from '@/services/codexService';
 import { gitRemoveWorktree } from '@/services/tauri/git';
-import { AgentCard } from './AgentView';
+import { AgentCard } from './AgentCard';
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
 
 function ColumnLabel({
@@ -34,10 +34,9 @@ function ColumnLabel({
   );
 }
 
-export function TasksPanel() {
+export default function TasksPanel() {
   const { cards, removeCard, setCurrentAgentCardId, currentAgentCardId } =
     useAgentCenterStore();
-  const { setIsAgentExpanded } = useLayoutStore();
   const {
     switchToSession,
     sessionLoadingMap,
@@ -72,17 +71,6 @@ export function TasksPanel() {
       if (cwd && worktreeKey) {
         void gitRemoveWorktree(cwd, worktreeKey);
       }
-    }
-  };
-
-  const expand = async (card: AgentCenterCard) => {
-    setCurrentAgentCardId(card.id);
-    setSelectedAgent(card.kind);
-    setIsAgentExpanded(true);
-    if (card.kind === 'codex') {
-      await codexService.setCurrentThread(card.id);
-    } else {
-      switchToSession(card.id);
     }
   };
 
@@ -126,7 +114,6 @@ export function TasksPanel() {
               >
                 <AgentCard
                   card={card}
-                  onExpand={() => void expand(card)}
                   onRemove={() => handleRemove(card)}
                   isSelected={card.id === currentAgentCardId}
                 />
@@ -153,7 +140,6 @@ export function TasksPanel() {
               >
                 <AgentCard
                   card={card}
-                  onExpand={() => void expand(card)}
                   onRemove={() => handleRemove(card)}
                   isSelected={card.id === currentAgentCardId}
                 />

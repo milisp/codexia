@@ -1,4 +1,4 @@
-import { Columns2, Folder, FolderOpen, Menu, RefreshCw, SquareDashedBottom, SquareStack } from 'lucide-react';
+import { Columns2, Folder, FolderOpen, Menu, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,6 +15,8 @@ import {
 } from '@/components/ui/select';
 import { useLayoutStore } from '@/stores';
 import type { DiffSection, DiffSource } from './types';
+import { GitStatsIndicator } from './GitStatsIndicator';
+import { GitActions } from './GitActions';
 
 interface GitDiffTopBarProps {
   cwd: string | null;
@@ -35,6 +37,8 @@ export function GitDiffTopBar({
   gitLoading,
   diffSource,
   onDiffSourceChange,
+  selectedDiffSection,
+  onDiffSectionChange,
   unstagedCount,
   stagedCount,
   showFileTree,
@@ -42,11 +46,20 @@ export function GitDiffTopBar({
   onRefresh,
 }: GitDiffTopBarProps) {
   const { diffWordWrap, setDiffWordWrap, diffSplitMode, setDiffSplitMode } = useLayoutStore();
+
   return (
     <div className="border-b border-white/10 flex items-center gap-2">
-      {/* Source selector — hidden on mobile, shown via dropdown instead */}
-      <div className="hidden md:block shrink-0">
-        <Select value={diffSource} onValueChange={(value) => onDiffSourceChange(value as DiffSource)}>
+      <div className="shrink-0">
+        <Select
+          value={diffSource}
+          onValueChange={(value) => {
+            const src = value as DiffSource;
+            onDiffSourceChange(src);
+            if (src === 'unstaged' || src === 'staged') {
+              onDiffSectionChange(src);
+            }
+          }}
+        >
           <SelectTrigger className="h-8 text-xs">
             <SelectValue />
           </SelectTrigger>
@@ -58,9 +71,12 @@ export function GitDiffTopBar({
         </Select>
       </div>
 
+      {diffSource !== 'latest-turn' && <GitStatsIndicator diffSection={selectedDiffSection} />}
+
       <div className="flex-1" />
 
       <div className="flex items-center">
+        <GitActions />
         <Button
           variant={diffSplitMode ? 'secondary' : 'ghost'}
           size="icon-sm"
@@ -92,17 +108,6 @@ export function GitDiffTopBar({
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setDiffWordWrap(!diffWordWrap)}>
               {diffWordWrap ? 'Disable word wrap' : 'Enable word wrap'}
-            </DropdownMenuItem>
-            {/* Source selector — shown here on mobile only */}
-            <DropdownMenuItem
-              className="md:hidden"
-              onClick={() => onDiffSourceChange(diffSource === 'latest-turn' ? 'unstaged' : 'latest-turn')}
-            >
-              {diffSource === 'latest-turn' ? (
-                <><SquareDashedBottom className="h-4 w-4" /> Unstaged changes</>
-              ) : (
-                <><SquareStack className="h-4 w-4" /> Latest turn changes</>
-              )}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

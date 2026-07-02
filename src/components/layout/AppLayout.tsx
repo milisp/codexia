@@ -1,18 +1,15 @@
 import { Suspense, lazy, useEffect, useRef } from 'react';
 import type { ImperativePanelHandle } from 'react-resizable-panels';
 import { useLayoutStore } from '@/stores';
-import { AppSideBar, RightPanel, AppHeader } from '@/components/layout';
+import { AppSideBar, RightPanel } from '@/components/layout';
 import { History } from '@/components/codex/history';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { SidebarInset, SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { SidebarInset, SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { BottomTerminal } from '@/components/features/terminal/BottomTerminal';
-import { useTrafficLightConfig } from '@/hooks';
 import { useEdgeSwipe } from '@/hooks/useEdgeSwipe';
 
-const SettingsView = lazy(() =>
-  import('@/components/settings').then((module) => ({ default: module.SettingsView })),
-);
+const SettingsView = lazy(() => import('@/components/settings/SettingsView'));
 const PluginsView = lazy(() => import('@/views/PluginsView'));
 const AgentsMdView = lazy(() => import('@/views/agents-md-view'));
 const AgentView = lazy(() => import('@/components/agent/AgentView'));
@@ -35,11 +32,15 @@ function LayoutContent({ mainContent }: { mainContent: React.ReactNode }) {
     rightPanelSize,
     setRightPanelSize,
     view,
+    isRightPanelFocused,
   } = useLayoutStore();
+  // Right panel (diff/tasks/notes/files/preview) only makes sense alongside the
+  // agent thread — other views (history, automations, settings, ...) hide it.
+  const canShowRightPanel = view === 'agent';
+  const isRightPanelVisible = canShowRightPanel && isRightPanelOpen;
   const rightPanelRef = useRef<ImperativePanelHandle>(null);
   const isMobile = useIsMobile();
   const hasInitializedMobileLayoutRef = useRef(false);
-  const { needsTrafficLightOffset } = useTrafficLightConfig(isSidebarOpen);
   const { setOpenMobile } = useSidebar();
 
   useEdgeSwipe({ onSwipeRight: () => setOpenMobile(true), enabled: isMobile });
@@ -51,7 +52,7 @@ function LayoutContent({ mainContent }: { mainContent: React.ReactNode }) {
       panel.collapse();
       return;
     }
-    if (isRightPanelOpen) {
+    if (isRightPanelVisible) {
       const nextSize = clamp(rightPanelSize, MIN_RIGHT_PANEL_SIZE, MAX_RIGHT_PANEL_SIZE);
       panel.resize(nextSize);
       panel.expand();
@@ -59,7 +60,7 @@ function LayoutContent({ mainContent }: { mainContent: React.ReactNode }) {
     } else {
       panel.collapse();
     }
-  }, [isMobile, isRightPanelOpen, rightPanelSize, setRightPanelSize]);
+  }, [isMobile, isRightPanelVisible, rightPanelSize, setRightPanelSize]);
 
   useEffect(() => {
     if (!isMobile) {
@@ -73,50 +74,54 @@ function LayoutContent({ mainContent }: { mainContent: React.ReactNode }) {
   }, [isMobile, isRightPanelOpen, isSidebarOpen, setRightPanelOpen, setSidebarOpen]);
 
   const handleRightPanelResize = (size: number) => {
-    if (!isRightPanelOpen || size <= 0) return;
+    if (!isRightPanelVisible || size <= 0) return;
     const nextSize = clamp(size, MIN_RIGHT_PANEL_SIZE, MAX_RIGHT_PANEL_SIZE);
     if (nextSize !== rightPanelSize) setRightPanelSize(nextSize);
   };
 
-  const showAppHeader = view === 'agent' || view === 'history';
-  const triggerButton = (
-    <div className={`absolute z-20 flex h-11 items-center ${needsTrafficLightOffset ? 'left-20 top-0' : 'left-0 top-0 pl-2'}`}>
-      <SidebarTrigger />
-    </div>
-  );
+  // Focus mode hides the main agent thread so the right panel (diff/tasks/etc.)
+  // can take the full width — useful when reviewing a diff or reading notes
+  // without the agent chat competing for attention.
+  const isFocusModeActive = canShowRightPanel && isRightPanelVisible && isRightPanelFocused && !isMobile;
 
   return (
     <SidebarInset className="min-w-0 overflow-hidden h-full">
-      {showAppHeader ? (
-        <AppHeader />
-      ) : (
-        (isMobile || !isSidebarOpen) && triggerButton
-      )}
       <div className="relative flex flex-1 flex-col min-h-0 h-full">
-        <ResizablePanelGroup
-          direction="horizontal"
-          className="flex min-h-0 min-w-0 w-full flex-1"
-        >
-          <ResizablePanel defaultSize={isRightPanelOpen && !isMobile ? 32 : 100} minSize={25}>
-            {mainContent}
-          </ResizablePanel>
-          <ResizableHandle withHandle className={isMobile ? 'hidden' : ''} />
-          <ResizablePanel
-            ref={rightPanelRef}
-            defaultSize={isRightPanelOpen && !isMobile ? rightPanelSize : 0}
-            minSize={MIN_RIGHT_PANEL_SIZE}
-            maxSize={MAX_RIGHT_PANEL_SIZE}
-            onResize={handleRightPanelResize}
-            collapsible
-            collapsedSize={0}
-            onCollapse={() => setRightPanelOpen(false)}
-            onExpand={() => setRightPanelOpen(true)}
+        {isFocusModeActive ? (
+          // Focus mode: right panel takes the full width, main agent thread is hidden.
+          <div className="flex min-h-0 min-w-0 w-full flex-1">
+            <RightPanel />
+          </div>
+        ) : (
+          <ResizablePanelGroup
+            direction="horizontal"
+            className="flex min-h-0 min-w-0 w-full flex-1"
           >
-            {!isMobile && <RightPanel />}
-          </ResizablePanel>
-        </ResizablePanelGroup>
+            <ResizablePanel defaultSize={isRightPanelVisible && !isMobile ? 32 : 100} minSize={25}>
+              {mainContent}
+            </ResizablePanel>
+            {canShowRightPanel && (
+              <>
+                <ResizableHandle withHandle className={isMobile ? 'hidden' : ''} />
+                <ResizablePanel
+                  ref={rightPanelRef}
+                  defaultSize={isRightPanelVisible && !isMobile ? rightPanelSize : 0}
+                  minSize={MIN_RIGHT_PANEL_SIZE}
+                  maxSize={MAX_RIGHT_PANEL_SIZE}
+                  onResize={handleRightPanelResize}
+                  collapsible
+                  collapsedSize={0}
+                  onCollapse={() => setRightPanelOpen(false)}
+                  onExpand={() => setRightPanelOpen(true)}
+                >
+                  {!isMobile && <RightPanel />}
+                </ResizablePanel>
+              </>
+            )}
+          </ResizablePanelGroup>
+        )}
 
-        {isMobile && isRightPanelOpen && (
+        {isMobile && canShowRightPanel && isRightPanelOpen && (
           <>
             <button
               type="button"

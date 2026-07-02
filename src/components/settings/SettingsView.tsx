@@ -51,7 +51,7 @@ type SettingsSection =
 const codexSections = ['codexauth', 'task', 'agents', 'config', 'personalization', 'archived'] as const;
 const topLevelSections = ['general', 'projects', 'privacy', 'claude', 'explorer'] as const;
 
-export function SettingsView() {
+export default function SettingsView() {
   const { t } = useTranslation('settings');
   const { setView } = useLayoutStore();
   const isMobile = useIsMobile();

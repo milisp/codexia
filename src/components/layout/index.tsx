@@ -1,4 +1,3 @@
-export * from './AppHeader';
 export * from './AppSidebar';
 export * from './RightPanel';
 export * from './UserInfo';

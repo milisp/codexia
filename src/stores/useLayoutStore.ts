@@ -32,8 +32,10 @@ interface LayoutStore {
   setRightPanelSize: (size: number) => void;
   view: viewType;
   setView: (view: viewType) => void;
-  isAgentExpanded: boolean;
-  setIsAgentExpanded: (expanded: boolean) => void;
+  // Focus mode: hides the left main content and lets the right panel fill the width
+  isRightPanelFocused: boolean;
+  setIsRightPanelFocused: (focused: boolean) => void;
+  toggleRightPanelFocused: () => void;
   activeSidebarTab: AgentType;
   setActiveSidebarTab: (tab: AgentType) => void;
   activeRightPanelTab: 'diff' | 'tasks' | 'note' | 'files' | 'webpreview';
@@ -74,8 +76,10 @@ export const useLayoutStore = create<LayoutStore>()(
         set({ view });
         posthog.capture('view_type', { view });
       },
-      isAgentExpanded: false,
-      setIsAgentExpanded: (expanded) => set({ isAgentExpanded: expanded }),
+      isRightPanelFocused: false,
+      setIsRightPanelFocused: (focused: boolean) => set({ isRightPanelFocused: focused }),
+      toggleRightPanelFocused: () =>
+        set((state) => ({ isRightPanelFocused: !state.isRightPanelFocused })),
       activeSidebarTab: 'codex',
       setActiveSidebarTab: (tab) => set({ activeSidebarTab: tab }),
       activeRightPanelTab: 'tasks',
@@ -142,7 +146,7 @@ export const useLayoutStore = create<LayoutStore>()(
         isRightPanelOpen: state.isRightPanelOpen,
         rightPanelSize: state.rightPanelSize,
         view: state.view,
-        isAgentExpanded: state.isAgentExpanded,
+        isRightPanelFocused: state.isRightPanelFocused,
         activeSidebarTab: state.activeSidebarTab,
         activeRightPanelTab: state.activeRightPanelTab,
         diffWordWrap: state.diffWordWrap,
