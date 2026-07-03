@@ -38,7 +38,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
   const { setView } = useLayoutStore();
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
   const { currentThreadId, threadStatusMap, threads: storeThreads } = useCodexStore();
-  const { searchTerm, sortKey } = useThreadListStore();
+  const { sortKey } = useThreadListStore();
   const [response, setResponse] = useState<ThreadListResponse>(EMPTY_LIST);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [renameThreadId, setRenameThreadId] = useState<string | null>(null);
@@ -65,18 +65,16 @@ export function ThreadList({ cwd }: ThreadListProps) {
   useEffect(() => {
     let cancelled = false;
     const params: ThreadListParams = {
-      cursor: null,
-      limit: refreshCounter > 0 ? 20 : 3,
-      modelProviders: modelProviders,
+      limit: 3,
       sortKey,
-      archived: false,
+      modelProviders: modelProviders,
       cwd,
       useStateDbOnly: true,
-      searchTerm: searchTerm || null,
     };
     const load = async () => {
       try {
         const res = await listThreads(params);
+        console.log('res', res);
         if (cancelled) return;
         setResponse(res);
       } catch (err) {
@@ -87,7 +85,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
     return () => {
       cancelled = true;
     };
-  }, [cwd, sortKey, searchTerm, refreshCounter]);
+  }, [cwd, sortKey, refreshCounter]);
 
   const refresh = useCallback(() => setRefreshCounter((n) => n + 1), []);
 
@@ -203,7 +201,6 @@ export function ThreadList({ cwd }: ThreadListProps) {
         useStateDbOnly: true,
         sortKey,
         cwd,
-        searchTerm: searchTerm || null,
       };
       const res = await listThreads(params);
       setResponse((prev) => {
@@ -216,7 +213,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [cwd, isLoadingMore, nextCursor, sortKey, searchTerm]);
+  }, [cwd, isLoadingMore, nextCursor, sortKey]);
 
   const openRenameDialog = useCallback((thread: Thread) => {
     // Prefer explicit name, fall back to preview (first message).
@@ -241,9 +238,8 @@ export function ThreadList({ cwd }: ThreadListProps) {
                 onClick={() => void handleOpenThread(thread.id, thread.preview)}
                 role="button"
                 tabIndex={0}
-                className={`group grid grid-cols-[1fr_auto] items-center gap-2 w-full text-left p-2 rounded-lg transition-colors ${
-                  currentThreadId === thread.id ? 'bg-zinc-700/50' : 'hover:bg-zinc-800/30'
-                }`}
+                className={`group grid grid-cols-[1fr_auto] items-center gap-2 w-full text-left p-2 rounded-lg transition-colors ${currentThreadId === thread.id ? 'bg-zinc-700/50' : 'hover:bg-zinc-800/30'
+                  }`}
               >
                 <div className="text-sm font-medium truncate min-w-0 pr-2 flex items-center gap-1.5">
                   {threadStatusMap[thread.id]?.type === 'active' && (
@@ -295,8 +291,8 @@ export function ThreadList({ cwd }: ThreadListProps) {
           </ContextMenu>
         ))}
         {threads.length === 0 && (
-          <div className="text-center text-sm text-sidebar-foreground/50 py-8 px-4">
-            {searchTerm ? 'No matching tasks.' : 'No tasks yet.'}
+          <div className="text-xs p-2 text-sidebar-foreground/50">
+            No chats.
           </div>
         )}
       </div>
