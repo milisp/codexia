@@ -1,6 +1,6 @@
 import { CopyButton } from '@/components/common';
-import { Markdown } from '@/components/Markdown';
 import { useWindowFocus } from '@/hooks/useWindowFocus';
+import { Streamdown } from 'streamdown';
 
 type AgentMessageItemProps = {
   text: string;
@@ -14,12 +14,11 @@ export const AgentMessageItem = ({ text }: AgentMessageItemProps) => {
   return (
     <div className="group flex flex-col items-start gap-1">
       <div className="flex w-fit rounded-md border p-2">
-        <Markdown value={text} />
+        <Streamdown>{text}</Streamdown>
       </div>
       <div
-        className={`flex h-7 items-center gap-1 px-1 ${
-          isWindowFocused ? 'invisible group-hover:visible group-focus-within:visible' : 'invisible'
-        }`}
+        className={`flex h-7 items-center gap-1 px-1 ${isWindowFocused ? 'invisible group-hover:visible group-focus-within:visible' : 'invisible'
+          }`}
       >
         <CopyButton text={text} className="h-7 w-7 text-muted-foreground" />
       </div>
