@@ -1,7 +1,7 @@
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { Clock3, FolderPlus, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { BrowserProjects } from '@/components/project-selector/BrowserProjects';
+import { BrowserProjects } from '@/components/ProjectSelector/BrowserProjects';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {

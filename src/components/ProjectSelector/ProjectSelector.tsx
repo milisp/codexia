@@ -1,7 +1,7 @@
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { ChevronDown, Folder, FolderPlus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { BrowserProjects, WorkspaceProjects } from '@/components/project-selector';
+import { BrowserProjects, WorkspaceProjects } from '@/components/ProjectSelector';
 import { Button } from '@/components/ui/button';
 import { Command } from '@/components/ui/command';
 import {

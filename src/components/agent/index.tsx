@@ -4,6 +4,6 @@ export * from './AgentComposer';
 export * from './AgentSwitcher';
 export * from './AgentView';
 export * from './AgentViewHeader';
-export * from './cc-agent-card';
-export * from './codex-agent-card';
+export * from './CcAgentCard';
+export * from './CodexAgentCard';
 export * from './TasksPanel';

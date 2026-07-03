@@ -11,8 +11,8 @@ import { useAgentCenterStore } from '@/stores';
 import { useCCStore } from '@/stores/cc';
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
 import { AgentCardHeader } from './AgentCardHeader';
-import { CCAgentCard } from './cc-agent-card';
-import { CodexAgentCard } from './codex-agent-card';
+import { CCAgentCard } from './CcAgentCard';
+import { CodexAgentCard } from './CodexAgentCard';
 
 type AgentStatus = 'running' | 'pending' | 'idle';
 
@@ -38,11 +38,11 @@ export function AgentCard({ card, onRemove, isSelected }: AgentCardProps) {
     card.kind === 'codex'
       ? codexStatus?.type === 'active' && codexStatus.activeFlags.length > 0
       : (sessionMessagesMap[card.id] ?? []).some(
-          (m: CCMessage): m is PermissionRequestMessage =>
-            m.type === 'permission_request' && !m.resolved
-        ) ||
-        pendingApprovals.some((a: ApprovalRequest) => a.threadId === card.id) ||
-        pendingRequests.some((r: RequestUserInputRequest) => r.threadId === card.id);
+        (m: CCMessage): m is PermissionRequestMessage =>
+          m.type === 'permission_request' && !m.resolved
+      ) ||
+      pendingApprovals.some((a: ApprovalRequest) => a.threadId === card.id) ||
+      pendingRequests.some((r: RequestUserInputRequest) => r.threadId === card.id);
 
   const status: AgentStatus = running ? 'running' : pending ? 'pending' : 'idle';
 

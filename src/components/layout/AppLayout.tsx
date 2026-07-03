@@ -11,7 +11,7 @@ import { useLayoutStore } from '@/stores';
 
 const SettingsView = lazy(() => import('@/components/settings/SettingsView'));
 const PluginsView = lazy(() => import('@/views/PluginsView'));
-const AgentsMdView = lazy(() => import('@/views/agents-md-view'));
+const AgentsMdView = lazy(() => import('@/views/AgentsMdView'));
 const AgentView = lazy(() => import('@/components/agent/AgentView'));
 const AutoMationsView = lazy(() =>
   import('../features/automations').then((module) => ({ default: module.AutoMationsView }))

@@ -19,7 +19,7 @@ import { InstalledTab } from '@/components/features/skills/InstalledTab';
 import SkillsViewContent from '@/components/features/skills/SkillsView';
 import { RecommendToolsView } from '@/components/features/tools/RecommendToolsView';
 import { MCP } from '@/components/icons';
-import { ProjectSelector } from '@/components/project-selector';
+import { ProjectSelector } from '@/components/ProjectSelector';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -95,7 +95,7 @@ export default function PluginsView() {
   useEffect(() => {
     readSkillGroups()
       .then(setGroupsConfig)
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const saveGroups = useCallback(async (config: SkillGroupsConfig) => {

@@ -2,7 +2,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { Check, ChevronDown, FolderOpen, FolderPlus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { type ThreadCwdMode, useConfigStore } from '@/components/codex/stores';
-import { BrowserProjects } from '@/components/project-selector';
+import { BrowserProjects } from '@/components/ProjectSelector';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
