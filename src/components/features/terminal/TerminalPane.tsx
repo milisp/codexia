@@ -1,5 +1,5 @@
 import { listen } from '@tauri-apps/api/event';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
@@ -18,15 +18,30 @@ const TERMINAL_THEME = {
 type TerminalDataPayload = { session_id: string; data: string };
 type TerminalExitPayload = { session_id: string; message: string };
 
+// xterm@5.x's Viewport schedules an internal setTimeout/rAF chain inside
+// open() (Viewport -> _refresh -> _innerRefresh -> RenderService.dimensions).
+// term.dispose() does not cancel that pending timer, so if a pane is
+// unmounted (tab closed/switched quickly) before it fires, the callback
+// runs against an already-disposed RenderService and throws
+// "undefined is not an object (evaluating 'this._renderer.value.dimensions')"
+// as an uncaught error outside our call stack — it cannot be caught with a
+// normal try/catch around fit()/open(). Suppress just this known, benign
+// error globally so it doesn't crash the app or show the dev error overlay.
+if (typeof window !== 'undefined') {
+  window.addEventListener('error', (event) => {
+    if (event.message?.includes('_renderer.value.dimensions')) {
+      event.preventDefault();
+    }
+  });
+}
+
 interface TerminalPaneProps {
-  id: string;
   active: boolean;
   panelOpen: boolean;
 }
 
-export function TerminalPane({ id, active, panelOpen }: TerminalPaneProps) {
+export function TerminalPane({ active, panelOpen }: TerminalPaneProps) {
   const { cwd } = useWorkspaceStore();
-  console.log(id, active, panelOpen);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
@@ -35,11 +50,8 @@ export function TerminalPane({ id, active, panelOpen }: TerminalPaneProps) {
   const isStartingRef = useRef(false);
   const isAttachedRef = useRef(false);
 
-  const [, setSessionId] = useState<string | null>(null);
-
   const setSession = useCallback((sid: string | null) => {
     sessionIdRef.current = sid;
-    setSessionId(sid);
   }, []);
 
   // Create Terminal instance once per pane
@@ -104,7 +116,6 @@ export function TerminalPane({ id, active, panelOpen }: TerminalPaneProps) {
 
     isStartingRef.current = true;
     try {
-      fitAddon.fit();
       const { session_id } = await terminalStart(
         cwd,
         Math.max(term.cols, 2),
@@ -123,44 +134,55 @@ export function TerminalPane({ id, active, panelOpen }: TerminalPaneProps) {
     void startSession();
   }, [active, panelOpen, startSession]);
 
-  // Tauri desktop event listeners — scoped to this pane's session
+  // Shared handlers for terminal data/exit events, used by both
+  // the Tauri event listener and the web WebSocket listener below.
+  const handleTerminalData = useCallback((payload: TerminalDataPayload) => {
+    if (payload.session_id !== sessionIdRef.current) return;
+    terminalRef.current?.write(payload.data);
+  }, []);
+
+  const handleTerminalExit = useCallback(
+    (payload: TerminalExitPayload) => {
+      if (payload.session_id !== sessionIdRef.current) return;
+      terminalRef.current?.writeln(`\r\n[${payload.message}]`);
+      setSession(null);
+    },
+    [setSession]
+  );
+
+  // Transport listener — Tauri event bus on desktop, WebSocket on web.
+  // Both paths funnel into the same two handlers, so they share one effect.
   useEffect(() => {
-    if (!IS_TAURI) return;
-    let cancelled = false;
-    let unlistenData: (() => void) | null = null;
-    let unlistenExit: (() => void) | null = null;
+    if (IS_TAURI) {
+      let cancelled = false;
+      let unlistenData: (() => void) | null = null;
+      let unlistenExit: (() => void) | null = null;
 
-    const setup = async () => {
-      const dataFn = await listen<TerminalDataPayload>('terminal:data', (event) => {
-        if (event.payload.session_id !== sessionIdRef.current) return;
-        terminalRef.current?.write(event.payload.data);
-      });
-      const exitFn = await listen<TerminalExitPayload>('terminal:exit', (event) => {
-        if (event.payload.session_id !== sessionIdRef.current) return;
-        terminalRef.current?.writeln(`\r\n[${event.payload.message}]`);
-        setSession(null);
-      });
-      if (cancelled) {
-        dataFn();
-        exitFn();
-        return;
-      }
-      unlistenData = dataFn;
-      unlistenExit = exitFn;
-    };
-    void setup();
+      const setup = async () => {
+        const dataFn = await listen<TerminalDataPayload>('terminal:data', (event) =>
+          handleTerminalData(event.payload)
+        );
+        const exitFn = await listen<TerminalExitPayload>('terminal:exit', (event) =>
+          handleTerminalExit(event.payload)
+        );
+        if (cancelled) {
+          dataFn();
+          exitFn();
+          return;
+        }
+        unlistenData = dataFn;
+        unlistenExit = exitFn;
+      };
+      void setup();
 
-    return () => {
-      cancelled = true;
-      unlistenData?.();
-      unlistenExit?.();
-    };
-  }, [setSession]);
+      return () => {
+        cancelled = true;
+        unlistenData?.();
+        unlistenExit?.();
+      };
+    }
 
-  // Web mode: WebSocket listener for terminal:data and terminal:exit
-  useEffect(() => {
-    if (IS_TAURI) return;
-
+    // Web mode: WebSocket with auto-reconnect
     let ws: WebSocket | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     let closedByCleanup = false;
@@ -176,14 +198,9 @@ export function TerminalPane({ id, active, panelOpen }: TerminalPaneProps) {
           };
 
           if (envelope.event === 'terminal:data' && envelope.payload) {
-            const payload = envelope.payload as TerminalDataPayload;
-            if (payload.session_id !== sessionIdRef.current) return;
-            terminalRef.current?.write(payload.data);
+            handleTerminalData(envelope.payload as TerminalDataPayload);
           } else if (envelope.event === 'terminal:exit' && envelope.payload) {
-            const payload = envelope.payload as TerminalExitPayload;
-            if (payload.session_id !== sessionIdRef.current) return;
-            terminalRef.current?.writeln(`\r\n[${payload.message}]`);
-            setSession(null);
+            handleTerminalExit(envelope.payload as TerminalExitPayload);
           }
         } catch (error) {
           console.warn('[TerminalPane] Failed to parse websocket message:', error);
@@ -207,7 +224,7 @@ export function TerminalPane({ id, active, panelOpen }: TerminalPaneProps) {
       if (reconnectTimer) clearTimeout(reconnectTimer);
       ws?.close();
     };
-  }, [setSession]);
+  }, [handleTerminalData, handleTerminalExit]);
 
   // Resize — only when this pane is active and visible
   useEffect(() => {

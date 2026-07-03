@@ -100,7 +100,6 @@ export function BottomTerminal() {
         {terminals.map((tab) => (
           <TerminalPane
             key={tab.id}
-            id={tab.id}
             active={tab.id === activeTerminalId}
             panelOpen={isTerminalOpen}
           />
