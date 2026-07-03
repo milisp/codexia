@@ -44,14 +44,14 @@ export const ShellCommand = ({ command, commandItemId, aggregatedOutput }: Shell
   const { variant, icon: Icon } = STATUS_STYLE_MAP[status ?? ''] ?? DEFAULT_STYLE;
 
   return (
-    <div className="flex flex-col gap-2 w-full">
+    <div className="flex flex-col gap-2 w-full min-w-0">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="group flex gap-2 items-center text-sm font-mono text-muted-foreground hover:text-foreground transition-colors text-left w-full cursor-pointer"
       >
         <span className="shrink-0">Ran</span>
 
-        <code className="bg-muted/40 px-1.5 py-0.5 rounded border border-transparent group-hover:border-border min-w-0 flex-1 truncate">
+        <code className="bg-muted/40 px-1.5 py-0.5 rounded border border-transparent group-hover:border-border w-0 flex-1 block truncate">
           {command}
         </code>
 
