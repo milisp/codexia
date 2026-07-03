@@ -1,5 +1,5 @@
 export { AccessModePopover } from './AccessModePopover';
-export { AttachmentSelector } from './AttachmentSelector';
+export { ComposerMenu } from './ComposerMenu';
 export { Composer } from './Composer';
 export { CodexModelSelector, ModelReasonSelector } from './ModelReasonSelector';
 export { ScreenshotPopover } from './ScreenshotPopover';

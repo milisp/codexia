@@ -1,7 +1,7 @@
 import { open } from '@tauri-apps/plugin-dialog';
 import { Image as ImageIcon, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { SelectFilesMenuItem } from '@/components/codex/composer/AttachmentSelector';
+import { SelectFilesMenuItem } from '@/components/codex/composer/ComposerMenu';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';

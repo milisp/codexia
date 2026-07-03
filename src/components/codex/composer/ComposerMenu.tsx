@@ -52,12 +52,12 @@ export function SelectFilesMenuItem({
   );
 }
 
-export interface AttachmentSelectorProps {
+export interface ComposerMenuProps {
   onImagesSelected?: (paths: string[]) => void;
   onFilesSelected?: (paths: string[]) => void;
 }
 
-export function AttachmentSelector({ onImagesSelected, onFilesSelected }: AttachmentSelectorProps) {
+export function ComposerMenu({ onImagesSelected, onFilesSelected }: ComposerMenuProps) {
   const { webSearchRequest, setWebSearch } = useConfigStore();
   const [openState, setOpenState] = useState(false);
 

@@ -11,7 +11,7 @@ import { useAgentCenterStore } from '@/stores';
 import { useInputStore } from '@/stores/useInputStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { AccessModePopover } from './AccessModePopover';
-import { AttachmentSelector } from './AttachmentSelector';
+import { ComposerMenu } from './ComposerMenu';
 import { ComposerToolbarProvider } from './ComposerToolbarContext';
 import { ModelReasonSelector } from './ModelReasonSelector';
 import { SkillsInputPopover } from './SkillsPopover';
@@ -175,7 +175,7 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
           <div className="flex items-center justify-between px-1 bg-muted/20 border-t">
             <ComposerToolbarProvider className="flex items-center justify-between w-full">
               <div className="flex items-center">
-                <AttachmentSelector
+                <ComposerMenu
                   onImagesSelected={(paths) => setImages((prev) => [...prev, ...paths])}
                   onFilesSelected={appendFileLinks}
                 />
