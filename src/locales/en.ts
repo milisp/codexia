@@ -49,6 +49,7 @@ export const en = {
     askApproval: 'Ask for approval',
     approvalForMe: 'Approval for me',
     fullAccess: 'Full Access',
+    goal: 'Goal',
   },
   sidebar: {
     newChat: 'New Chat',

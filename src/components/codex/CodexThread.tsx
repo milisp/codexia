@@ -1,10 +1,6 @@
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import type { ServerNotification } from '@/bindings';
-import type { CommandAction } from '@/bindings/v2';
+import { type ReactNode, useEffect, useMemo, useRef } from 'react';
 import { useCodexStore } from '@/components/codex/stores';
-import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { codexService } from '@/services/codexService';
 import { CodexAuth } from './CodexAuth';
 import { Composer } from './composer';
 import { renderEvent } from './items';
@@ -12,94 +8,10 @@ import { ApprovalItem } from './items/ApprovalItem';
 import { CommandActionSummaryItem } from './items/CommandActionSummaryItem';
 import { RequestUserInputItem } from './items/RequestUserInputItem';
 import { WorkingIndicator } from './widget/WorkingIndicator';
-
-// Intermediate render item: either a raw event or an aggregated command group.
-type RenderItem =
-  | { kind: 'event'; event: ServerNotification; index: number }
-  | {
-      kind: 'cmdGroup';
-      actions: CommandAction[];
-      key: string;
-      commandItemId?: string | null;
-      aggregatedOutput?: string | null;
-      completed: boolean;
-    };
-
-/** Pre-process events into render items, grouping commandExecution runs between agentMessages. */
-function deriveRenderItems(events: ServerNotification[]): RenderItem[] {
-  const items: RenderItem[] = [];
-  let cmdBuffer: CommandAction[] = [];
-  let cmdBufferKey = '';
-  let cmdItemId: string | null = null;
-  let cmdAggregatedOutput: string | null = null;
-
-  const flushCmdBuffer = (completed: boolean) => {
-    if (cmdBuffer.length === 0) return;
-    items.push({
-      kind: 'cmdGroup',
-      actions: cmdBuffer,
-      key: cmdBufferKey,
-      commandItemId: cmdItemId,
-      aggregatedOutput: cmdAggregatedOutput,
-      completed,
-    });
-    cmdBuffer = [];
-    cmdBufferKey = '';
-    cmdItemId = null;
-    cmdAggregatedOutput = null;
-  };
-
-  for (let i = 0; i < events.length; i++) {
-    const event = events[i];
-
-    // Accumulate commandExecution into buffer — never flush here.
-    if (event.method === 'item/started' && event.params.item.type === 'commandExecution') {
-      if (cmdBuffer.length === 0) {
-        cmdBufferKey = `cmd-${i}`;
-        cmdItemId = event.params.item.id;
-      }
-      cmdBuffer.push(...(event.params.item.commandActions as CommandAction[]));
-      continue;
-    }
-
-    // Capture aggregatedOutput from completed commandExecution.
-    if (event.method === 'item/completed' && event.params.item.type === 'commandExecution') {
-      cmdAggregatedOutput = event.params.item.aggregatedOutput ?? null;
-      continue;
-    }
-
-    // agentMessage started = flush commands that came before it (completed).
-    if (event.method === 'item/started' && event.params.item.type === 'agentMessage') {
-      flushCmdBuffer(true);
-      items.push({ kind: 'event', event, index: i });
-      continue;
-    }
-
-    // agentMessage completed = just push (content rendered here).
-    if (event.method === 'item/completed' && event.params.item.type === 'agentMessage') {
-      items.push({ kind: 'event', event, index: i });
-      continue;
-    }
-
-    // turn/completed = boundary, flush then push.
-    if (event.method === 'turn/completed') {
-      flushCmdBuffer(true);
-      items.push({ kind: 'event', event, index: i });
-      continue;
-    }
-
-    // Everything else: just push, never flush.
-    items.push({ kind: 'event', event, index: i });
-  }
-
-  // Flush trailing buffer (agent still running — not completed yet).
-  flushCmdBuffer(false);
-  return items;
-}
+import { deriveRenderItems } from './deriveRenderItems';
 
 export function CodexThread({ hideComposer = false }: { hideComposer?: boolean } = {}) {
-  const { currentThreadId, events, hasAccount, activeThreadIds, turnTimingMap } = useCodexStore();
-  const isLive = !!currentThreadId && activeThreadIds.includes(currentThreadId);
+  const { currentThreadId, events, hasAccount, turnTimingMap } = useCodexStore();
   const bottomAnchorRef = useRef<HTMLDivElement>(null);
 
   // Get events for the current thread
@@ -174,35 +86,9 @@ export function CodexThread({ hideComposer = false }: { hideComposer?: boolean }
       {/* Input Area */}
       {!hideComposer && (
         <div className="absolute bottom-0 left-0 right-0 px-2 sm:px-0 max-w-3xl mx-auto">
-          {currentThreadId && !isLive ? (
-            <ResumeThreadButton threadId={currentThreadId} />
-          ) : (
-            <Composer />
-          )}
+          <Composer />
         </div>
       )}
-    </div>
-  );
-}
-
-function ResumeThreadButton({ threadId }: { threadId: string }) {
-  const [busy, setBusy] = useState(false);
-  const onClick = async () => {
-    setBusy(true);
-    try {
-      await codexService.threadResume(threadId);
-    } catch (err) {
-      console.error('[ResumeThreadButton] threadResume failed:', err);
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <div className="flex items-center justify-between gap-3 p-4 mb-2 rounded-lg border border-border bg-muted/40 text-sm">
-      <span className="text-muted-foreground">Reviewing history. Resume to send messages.</span>
-      <Button onClick={onClick} disabled={busy} size="sm">
-        {busy ? 'Resuming…' : 'Resume session'}
-      </Button>
     </div>
   );
 }

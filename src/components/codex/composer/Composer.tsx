@@ -1,7 +1,8 @@
 import { convertFileSrc } from '@tauri-apps/api/core';
-import { ArrowUp, Square, X } from 'lucide-react';
+import { ArrowUp, Pause, Play, Square, Target, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useThreadStatus } from '@/components/codex/hooks';
+import type { ThreadGoal } from '@/bindings/v2';
+import { useThreadGoal, useThreadStatus } from '@/components/codex/hooks';
 import { useCodexStore } from '@/components/codex/stores';
 import { ContextWindowWidget } from '@/components/codex/widget';
 import { FileMentionPopover } from '@/components/common';
@@ -22,13 +23,36 @@ interface ComposerProps {
   onAfterSend?: (threadId: string, text: string) => void;
 }
 
+// Compact status label per goal status, mirroring
+// codex-rs/tui/src/bottom_pane/footer.rs::goal_status_indicator_line.
+function goalStatusLabel(status: ThreadGoal['status']): string {
+  switch (status) {
+    case 'active':
+      return 'Pursuing goal';
+    case 'paused':
+      return 'Goal paused';
+    case 'blocked':
+      return 'Goal blocked';
+    case 'usageLimited':
+      return 'Goal hit usage limits';
+    case 'budgetLimited':
+      return 'Goal unmet';
+    case 'complete':
+      return 'Goal achieved';
+  }
+}
+
 export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
   const [images, setImages] = useState<string[]>([]);
   const { inputValue, setInputValue, appendFileLinks } = useInputStore();
-  const { currentThreadId, currentTurnId, inputFocusTrigger } = useCodexStore();
+  const { currentThreadId, currentTurnId, inputFocusTrigger, goalEnabled, setGoalEnabled } = useCodexStore();
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
   const { cwd } = useWorkspaceStore.getState();
   const threadStatus = useThreadStatus();
+  // Actual goal state for the current thread, driven by thread/goal/updated
+  // (mirrors codex-rs/tui's GoalStatusIndicator, which is derived purely
+  // from ThreadGoal.status rather than a local UI toggle).
+  const threadGoal = useThreadGoal();
 
   const isComposing = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -92,6 +116,22 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
       }
     }
 
+    // If goal is enabled, set the goal first before starting the turn
+    if (goalEnabled) {
+      try {
+        await codexService.threadGoalSet({
+          threadId: targetThreadId,
+          objective: text,
+        });
+        setGoalEnabled(false);
+      } catch (error) {
+        console.error('Failed to set goal:', error);
+      }
+      // Don't proceed with turnStart when setting goal - user will submit again for actual task
+      setInputValue('');
+      return;
+    }
+
     addAgentCard({ kind: 'codex', id: targetThreadId, preview: text, worktreePath, cwd });
     setCurrentAgentCardId(targetThreadId);
     onAfterSend?.(targetThreadId, text);
@@ -108,6 +148,36 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
   const handleStop = async () => {
     if (currentThreadId && currentTurnId) {
       await codexService.turnInterrupt(currentThreadId, currentTurnId);
+    }
+  };
+
+  // Toggle the goal between active and paused, matching the TUI's `/goal pause`
+  // and `/goal resume` commands (see codex-rs/tui/src/chatwidget/goal_menu.rs).
+  const handleToggleGoalPause = async () => {
+    if (!currentThreadId || !threadGoal) {
+      return;
+    }
+    const nextStatus = threadGoal.status === 'active' ? 'paused' : 'active';
+    try {
+      await codexService.threadGoalSet({ threadId: currentThreadId, status: nextStatus });
+    } catch (error) {
+      console.error('Failed to update goal status:', error);
+    }
+  };
+
+  // Clear the goal server-side. Local goalMap state is updated via the
+  // thread/goal/cleared notification once the server confirms, so we don't
+  // optimistically mutate the store here (avoids it being resurrected by a
+  // late thread/goal/updated event).
+  const handleClearGoal = async () => {
+    setGoalEnabled(false);
+    if (!currentThreadId) {
+      return;
+    }
+    try {
+      await codexService.threadGoalClear({ threadId: currentThreadId });
+    } catch (error) {
+      console.error('Failed to clear goal:', error);
     }
   };
 
@@ -167,10 +237,22 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
               onCompositionEnd={() => {
                 isComposing.current = false;
               }}
-              placeholder="Do anything... / $ @"
+              placeholder={goalEnabled ? 'Enter goal...' : 'Do anything... / $ @'}
               className="w-full min-h-[44px] resize-none bg-transparent text-base md:text-sm outline-none placeholder:text-muted-foreground"
             />
           </div>
+
+          {threadGoal && (
+            <div className="flex items-center gap-1.5 px-3 pb-1 text-xs text-muted-foreground">
+              <Target className="h-3 w-3 shrink-0" />
+              <span className="truncate">{goalStatusLabel(threadGoal.status)}</span>
+              {threadGoal.status !== 'complete' && (
+                <span className="truncate text-muted-foreground/70">
+                  · {threadGoal.objective}
+                </span>
+              )}
+            </div>
+          )}
 
           <div className="flex items-center justify-between px-1 bg-muted/20 border-t">
             <ComposerToolbarProvider className="flex items-center justify-between w-full">
@@ -180,6 +262,52 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
                   onFilesSelected={appendFileLinks}
                 />
                 <AccessModePopover />
+                {/* Draft mode: entering a new goal, not yet set on the thread. */}
+                {goalEnabled && !threadGoal && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setGoalEnabled(false)}
+                    title="Cancel goal draft"
+                    className="group relative ml-1 h-8 w-8 text-blue-600 hover:bg-blue-50"
+                  >
+                    {/* Target Icon: Visible by default, shrinks/fades on hover */}
+                    <Target className="h-4 w-4 transition-all duration-200 group-hover:scale-0 group-hover:opacity-0" />
+
+                    {/* X Icon: Hidden by default, grows/fades in on hover */}
+                    <X className="absolute h-4 w-4 scale-0 opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100" />
+                  </Button>
+                )}
+                {/* A goal is actually set on the thread: allow pause/resume and clear
+                    based on its real status, matching /goal pause|resume|clear in the TUI. */}
+                {threadGoal && (
+                  <>
+                    {(threadGoal.status === 'active' || threadGoal.status === 'paused') && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleToggleGoalPause}
+                        title={threadGoal.status === 'active' ? 'Pause goal' : 'Resume goal'}
+                        className="ml-1 h-8 w-8 text-blue-600 hover:bg-blue-50"
+                      >
+                        {threadGoal.status === 'active' ? (
+                          <Pause className="h-4 w-4" />
+                        ) : (
+                          <Play className="h-4 w-4" />
+                        )}
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleClearGoal}
+                      title="Clear goal"
+                      className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <ContextWindowWidget />

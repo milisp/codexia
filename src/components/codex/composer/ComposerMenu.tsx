@@ -1,12 +1,12 @@
 import { open } from '@tauri-apps/plugin-dialog';
-import { Check, File, Globe, Image as ImageIcon, PlusIcon } from 'lucide-react';
-import { useState } from 'react';
 import { ScreenshotPopover } from '@/components/codex/composer/ScreenshotPopover';
-import { useConfigStore } from '@/components/codex/stores';
+import { Check, File, Globe, Image as ImageIcon, PlusIcon, Target } from 'lucide-react';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useCodexStore, useConfigStore } from '@/components/codex/stores';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-
 interface SelectFilesMenuItemProps {
   onFilesSelected?: (paths: string[]) => void;
   onAfterSelect?: () => void;
@@ -59,6 +59,8 @@ export interface ComposerMenuProps {
 
 export function ComposerMenu({ onImagesSelected, onFilesSelected }: ComposerMenuProps) {
   const { webSearchRequest, setWebSearch } = useConfigStore();
+  const { goalEnabled, setGoalEnabled } = useCodexStore();
+  const { t } = useTranslation('composer');
   const [openState, setOpenState] = useState(false);
 
   const handleSelectImage = async () => {
@@ -131,6 +133,20 @@ export function ComposerMenu({ onImagesSelected, onFilesSelected }: ComposerMenu
               setOpenState(false);
             }}
           />
+          <Button
+            variant="ghost"
+            className={cn(
+              'justify-start gap-2 px-2 hover:bg-blue-500 hover:text-white transition-colors',
+              goalEnabled && 'bg-blue-50 text-blue-700'
+            )}
+            onClick={() => {
+              setGoalEnabled(!goalEnabled);
+              setOpenState(false);
+            }}
+          >
+            <Target className="w-4 h-4" />
+            <span className="flex-1 text-left">{t('goal')}</span>
+          </Button>
         </div>
       </PopoverContent>
     </Popover>

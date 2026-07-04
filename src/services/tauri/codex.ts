@@ -26,6 +26,12 @@ import type {
   TurnStartResponse,
   TurnSteerParams,
   TurnSteerResponse,
+  ThreadGoalSetParams,
+  ThreadGoalGetParams,
+  ThreadGoalClearParams,
+  ThreadGoalSetResponse,
+  ThreadGoalGetResponse,
+  ThreadGoalClearResponse,
 } from '@/bindings/v2';
 import type { EnvStatusItem, FrontendProviderModels } from '@/components/codex/composer/ModelList';
 import { getJson, invokeTauri, isDesktopTauri, postJson, postNoContent, toast } from './shared';
@@ -247,4 +253,25 @@ export async function setEnv(key: string, value: string) {
     return await invokeTauri('set_env', { key, value });
   }
   return null;
+}
+
+export async function threadGoalSet(params: ThreadGoalSetParams) {
+  if (isDesktopTauri()) {
+    return await invokeTauri<ThreadGoalSetResponse>('thread_goal_set', { params });
+  }
+  return await postJson<ThreadGoalSetResponse>('/api/codex/thread/goal/set', params);
+}
+
+export async function threadGoalGet(params: ThreadGoalGetParams) {
+  if (isDesktopTauri()) {
+    return await invokeTauri<ThreadGoalGetResponse>('thread_goal_get', { params });
+  }
+  return await postJson<ThreadGoalGetResponse>('/api/codex/thread/goal/get', params);
+}
+
+export async function threadGoalClear(params: ThreadGoalClearParams) {
+  if (isDesktopTauri()) {
+    return await invokeTauri<ThreadGoalClearResponse>('thread_goal_clear', { params });
+  }
+  return await postJson<ThreadGoalClearResponse>('/api/codex/thread/goal/clear', params);
 }

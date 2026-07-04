@@ -181,13 +181,15 @@ export const renderEvent = (event: ServerNotification, context?: RenderEventCont
           <code className="whitespace-pre-wrap break-all">{event.params.stdin}</code>
         </div>
       );
+    case 'thread/started':
     case 'thread/tokenUsage/updated':
     case 'thread/status/changed':
+    case 'thread/goal/updated':
+    case 'thread/goal/cleared':
     case 'turn/diff/updated':
     case 'rawResponseItem/completed':
     case 'item/commandExecution/outputDelta':
     case 'turn/started':
-    case 'thread/started':
     case 'mcpServer/startupStatus/updated':
       return null;
 

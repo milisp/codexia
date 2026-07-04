@@ -49,6 +49,7 @@ export const zh = {
     askApproval: '请示批准',
     approvalForMe: '替我批准',
     fullAccess: '完全访问',
+    goal: '目标',
   },
   sidebar: {
     newChat: '新聊天',

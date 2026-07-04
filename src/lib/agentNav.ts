@@ -33,7 +33,7 @@ export function navigateToAgentSession({
     addAgentCard({ kind: 'codex', id: threadId, cwd });
     setCurrentAgentCardId(threadId);
     setView('agent');
-    void codexService.setCurrentThread(threadId, { resume: true });
+    void codexService.setCurrentThread(threadId);
     return true;
   }
 

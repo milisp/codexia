@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import type { ServerNotification } from '@/bindings';
-import type { CommandExecutionStatus, Thread, ThreadStatus, ThreadTokenUsage } from '@/bindings/v2';
+import type {
+  CommandExecutionStatus,
+  Thread,
+  ThreadStatus,
+  ThreadTokenUsage,
+  ThreadGoal,
+} from '@/bindings/v2';
 import { codexService } from '@/services/codexService';
 
 /**
@@ -94,11 +100,14 @@ interface CodexStore {
   threadListNextCursor: string | null;
   /** Per-thread token usage from thread/tokenUsage/updated */
   tokenUsageMap: Record<string, ThreadTokenUsage>;
+  /** Per-thread goal from thread/goal/updated */
+  goalMap: Record<string, ThreadGoal>;
+  /** Whether the goal-tracking button is shown in the composer toolbar. */
+  goalEnabled: boolean;
   /** Queue for messages that arrived while thread was busy */
   queuedMessages: Array<{ text: string; images: string[] }>;
   /** Flag to prevent processing multiple queued messages simultaneously */
   isProcessingQueued: boolean;
-
   // Basic Setters
   setCurrentThreadId: (id: string | null) => void;
   setThreads: (threads: Thread[]) => void;
@@ -108,6 +117,9 @@ interface CodexStore {
   addEvent: (threadId: string, event: ServerNotification) => void;
   triggerInputFocus: () => void;
   setTokenUsage: (threadId: string, data: ThreadTokenUsage) => void;
+  setGoal: (threadId: string, goal: ThreadGoal) => void;
+  clearGoal: (threadId: string) => void;
+  setGoalEnabled: (goalEnabled: boolean) => void;
   // Queue management
   queueMessage: (text: string, images: string[]) => void;
   getQueuedMessages: () => Array<{ text: string; images: string[] }>;
@@ -133,6 +145,8 @@ export const useCodexStore = create<CodexStore>((set, get) => ({
   inputFocusTrigger: 0,
   threadListNextCursor: null,
   tokenUsageMap: {},
+  goalMap: {},
+  goalEnabled: false,
   queuedMessages: [],
   isProcessingQueued: false,
 
@@ -252,6 +266,14 @@ export const useCodexStore = create<CodexStore>((set, get) => ({
       // Update command status map
       let commandStatusMap = state.commandStatusMap;
       let commandDurationMap = state.commandDurationMap;
+      let goalMap = state.goalMap;
+      if (event.method === 'thread/goal/updated') {
+        goalMap = { ...goalMap, [threadId]: event.params.goal };
+      } else if (event.method === 'thread/goal/cleared') {
+        const newGoalMap = { ...goalMap };
+        delete newGoalMap[threadId];
+        goalMap = newGoalMap;
+      }
       if (event.method === 'item/started' && event.params.item?.type === 'commandExecution') {
         commandStatusMap = {
           ...commandStatusMap,
@@ -277,6 +299,7 @@ export const useCodexStore = create<CodexStore>((set, get) => ({
         turnTimingMap,
         commandStatusMap,
         commandDurationMap,
+        goalMap,
       };
     });
   },
@@ -292,6 +315,27 @@ export const useCodexStore = create<CodexStore>((set, get) => ({
         [threadId]: data,
       },
     }));
+  },
+
+  setGoal: (threadId: string, goal: ThreadGoal) => {
+    set((state: CodexStore) => ({
+      goalMap: {
+        ...state.goalMap,
+        [threadId]: goal,
+      },
+    }));
+  },
+
+  clearGoal: (threadId: string) => {
+    set((state: CodexStore) => {
+      const newGoalMap = { ...state.goalMap };
+      delete newGoalMap[threadId];
+      return { goalMap: newGoalMap };
+    });
+  },
+
+  setGoalEnabled: (goalEnabled: boolean) => {
+    set({ goalEnabled });
   },
 
   // Queue management

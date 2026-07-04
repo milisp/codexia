@@ -3,6 +3,8 @@ import type {
   SandboxPolicy,
   Thread,
   ThreadForkParams,
+  ThreadGoalSetParams,
+  ThreadGoalClearParams,
   ThreadListParams,
   ThreadRollbackParams,
   ThreadStartParams,
@@ -24,6 +26,8 @@ import {
   turnInterrupt,
   turnStart,
   turnSteer,
+  threadGoalSet,
+  threadGoalClear,
 } from './tauri';
 
 const sandboxModeToPolicy = (mode: SandboxMode, networkAccess: boolean): SandboxPolicy => {
@@ -179,14 +183,10 @@ export const codexService = {
       throw error;
     }
   },
-  async setCurrentThread(threadId: string | null, options?: { resume?: boolean }) {
-    // Review-first behavior: setting the current thread no longer auto-resumes
-    // the agent process. Live threads (already in activeThreadIds with cached
-    // events) just switch view + derive activeTurnId. Dormant threads switch
-    // view but stay disconnected — CodexThread renders an explicit Resume
-    // button to spawn the agent on demand. Lets users peek at history without
-    // paying the agent-spawn cost. The `options.resume` parameter is preserved
-    // for API compat and will trigger a resume when requested.
+  async setCurrentThread(threadId: string | null) {
+    // Live threads (already in activeThreadIds with cached events) just
+    // switch view + derive activeTurnId. Dormant threads are resumed
+    // automatically so the agent process is ready for the next message.
     const set = useCodexStore.setState;
     try {
       if (!threadId) {
@@ -221,15 +221,13 @@ export const codexService = {
           inputFocusTrigger: state.inputFocusTrigger + 1,
         }));
       } else {
-        // Dormant — view-only. User clicks Resume in CodexThread to connect.
+        // Dormant — switch view and resume the agent process immediately.
         set((state) => ({
           currentThreadId: threadId,
           currentTurnId: null,
           inputFocusTrigger: state.inputFocusTrigger + 1,
         }));
-        if (options?.resume) {
-          await codexService.threadResume(threadId);
-        }
+        await codexService.threadResume(threadId);
       }
     } catch (error: unknown) {
       console.error('[CodexService] setCurrentThread error:', error);
@@ -281,15 +279,15 @@ export const codexService = {
           // Inject plan mode when selected.
           ...(collaborationMode === 'plan'
             ? {
-                collaboration_mode: {
-                  mode: 'plan',
-                  settings: {
-                    model,
-                    reasoning_effort: reasoningEffort,
-                    developer_instructions: null,
-                  },
+              collaboration_mode: {
+                mode: 'plan',
+                settings: {
+                  model,
+                  reasoning_effort: reasoningEffort,
+                  developer_instructions: null,
                 },
-              }
+              },
+            }
             : {}),
         },
       };
@@ -420,6 +418,24 @@ export const codexService = {
       return response.data;
     } catch (error: unknown) {
       console.error('[CodexService] listSkills error:', error);
+      throw error;
+    }
+  },
+  async threadGoalSet(params: ThreadGoalSetParams) {
+    try {
+      const response = await threadGoalSet(params);
+      return response;
+    } catch (error: unknown) {
+      console.error('[CodexService] threadGoalSet error:', error);
+      throw error;
+    }
+  },
+  async threadGoalClear(params: ThreadGoalClearParams) {
+    try {
+      const response = await threadGoalClear(params);
+      return response;
+    } catch (error: unknown) {
+      console.error('[CodexService] threadGoalClear error:', error);
       throw error;
     }
   },
