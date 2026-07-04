@@ -9,12 +9,7 @@
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "tauri": "tauri",
-    "tauri:ios": "tauri ios dev",
-    "tauri:dev": "tauri dev",
-    "tauri:dev:desktop": "tauri dev",
     "tauri:dev:web": "cargo run --bin codexia-web",
-    "lint": "biome check",
-    "lint:fix": "biome check --write",
     "format": "biome format --write"
   },
   "dependencies": {
