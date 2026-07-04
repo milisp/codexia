@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { CCSessionManager } from '@/components/cc/session';
-import { CodexThreadManager } from '@/components/codex/CodexThreadManager';
+import { CodexThreadManager } from '@/components/codex/thread/CodexThreadManager';
 import { AgentIcon } from '@/components/common/AgentIcon';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';

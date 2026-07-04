@@ -8,7 +8,7 @@ import type {
   ThreadListResponse,
   ThreadNameUpdatedNotification,
 } from '@/bindings/v2';
-import { RenameThreadDialog } from '@/components/codex/RenameThreadDialog';
+import { RenameThreadDialog } from '@/components/codex/thread/RenameThreadDialog';
 import { useCodexStore, useThreadListStore } from '@/components/codex/stores';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,7 +25,7 @@ import { gitRemoveWorktree } from '@/services/tauri/git';
 import { useAgentCenterStore, useLayoutStore } from '@/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { formatThreadAge } from '@/utils/formatThreadAge';
-import { modelProviders } from './constants';
+import { modelProviders } from '../constants';
 
 interface ThreadListProps {
   cwd: string;

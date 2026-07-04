@@ -1,13 +1,13 @@
 import { type ReactNode, useEffect, useMemo, useRef } from 'react';
 import { useCodexStore } from '@/components/codex/stores';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CodexAuth } from './CodexAuth';
-import { Composer } from './composer';
-import { renderEvent } from './items';
-import { ApprovalItem } from './items/ApprovalItem';
-import { CommandActionSummaryItem } from './items/CommandActionSummaryItem';
-import { RequestUserInputItem } from './items/RequestUserInputItem';
-import { WorkingIndicator } from './widget/WorkingIndicator';
+import { CodexAuth } from '../CodexAuth';
+import { Composer } from '../composer';
+import { renderEvent } from '../items';
+import { ApprovalItem } from '../items/ApprovalItem';
+import { CommandActionSummaryItem } from '../items/CommandActionSummaryItem';
+import { RequestUserInputItem } from '../items/RequestUserInputItem';
+import { WorkingIndicator } from '../widget/WorkingIndicator';
 import { deriveRenderItems } from './deriveRenderItems';
 
 export function CodexThread({ hideComposer = false }: { hideComposer?: boolean } = {}) {

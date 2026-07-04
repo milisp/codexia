@@ -1,4 +1,4 @@
-import { ThreadList } from '@/components/codex/ThreadList';
+import { ThreadList } from '@/components/codex/thread/ThreadList';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
 import { SessionList } from '@/components/cc/session';
 import { SideBarProjectList } from './SideBarProjectList';

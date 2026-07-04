@@ -6,7 +6,7 @@ import { AgentComposer } from './AgentComposer';
 import { AgentViewHeader } from './AgentViewHeader';
 
 const CodexThread = lazy(() =>
-  import('@/components/codex/CodexThread').then((m) => ({ default: m.CodexThread }))
+  import('@/components/codex/thread/CodexThread').then((m) => ({ default: m.CodexThread }))
 );
 const CCSession = lazy(() => import('@/components/cc/session/CCSession'));
 

@@ -13,7 +13,7 @@ import { useAgentCenterStore, useLayoutStore } from '@/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { formatThreadAge } from '@/utils/formatThreadAge';
 import { getFilename } from '@/utils/getFilename';
-import { modelProviders } from './constants';
+import { modelProviders } from '../constants';
 
 interface CodexThreadManagerProps {
   onClose: () => void;
