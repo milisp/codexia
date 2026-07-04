@@ -25,11 +25,11 @@ import { gitRemoveWorktree } from '@/services/tauri/git';
 import { useAgentCenterStore, useLayoutStore } from '@/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { formatThreadAge } from '@/utils/formatThreadAge';
+import { modelProviders } from './constants';
 
 interface ThreadListProps {
   cwd: string;
 }
-export const modelProviders = ['openai', 'atlascloud', 'ollama', 'openrouter', 'nvidia', 'custom'];
 
 const EMPTY_LIST: ThreadListResponse = { data: [], nextCursor: null, backwardsCursor: null };
 
@@ -115,26 +115,26 @@ export function ThreadList({ cwd }: ThreadListProps) {
   // --- Thread actions ---
 
   const handleSelectThread = useCallback(
-    async (threadId: string, options?: { resume?: boolean }) => {
+    async (threadId: string) => {
       if (threadId === currentThreadId) return;
       if (cwd !== workspaceCwd) setCwd(cwd);
-      await codexService.setCurrentThread(threadId, { resume: options?.resume ?? !historyMode });
+      await codexService.setCurrentThread(threadId);
     },
-    [currentThreadId, cwd, historyMode, workspaceCwd, setCwd]
+    [currentThreadId, cwd, workspaceCwd, setCwd]
   );
 
   const handleOpenThread = useCallback(
     async (threadId: string, preview?: string) => {
       if (historyMode) {
         setView('history');
-        await handleSelectThread(threadId, { resume: false });
+        await handleSelectThread(threadId);
         return;
       }
       setHistoryMode(false);
       addAgentCard({ kind: 'codex', id: threadId, preview, cwd });
       setCurrentAgentCardId(threadId);
       setView('agent');
-      await handleSelectThread(threadId, { resume: true });
+      await handleSelectThread(threadId);
     },
     [
       handleSelectThread,
@@ -183,7 +183,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
     async (threadId: string) => {
       await deleteThread(threadId);
       if (currentThreadId === threadId) {
-        await codexService.setCurrentThread(null, { resume: false });
+        await codexService.setCurrentThread(null);
       }
       refresh();
     },

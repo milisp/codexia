@@ -13,7 +13,7 @@ import { useAgentCenterStore, useLayoutStore } from '@/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { formatThreadAge } from '@/utils/formatThreadAge';
 import { getFilename } from '@/utils/getFilename';
-import { modelProviders } from './ThreadList';
+import { modelProviders } from './constants';
 
 interface CodexThreadManagerProps {
   onClose: () => void;
@@ -58,7 +58,7 @@ export function CodexThreadManager({ onClose }: CodexThreadManagerProps) {
     setCurrentAgentCardId(thread.id);
     setView('agent');
     onClose();
-    await codexService.setCurrentThread(thread.id, { resume: true });
+    await codexService.setCurrentThread(thread.id);
   };
 
   // Fetch a page of threads directly via listThreads, optionally
@@ -151,7 +151,7 @@ export function CodexThreadManager({ onClose }: CodexThreadManagerProps) {
       try {
         await deleteFile(item.path);
         if (currentThreadId === item.id) {
-          await codexService.setCurrentThread(null, { resume: false });
+          await codexService.setCurrentThread(null);
         }
       } catch {
         failed++;
