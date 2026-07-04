@@ -7,7 +7,6 @@ use codex_app_server_protocol::{
     ThreadSetNameParams, ThreadResumeParams, ThreadRollbackParams, ThreadStartParams, TurnInterruptParams,
     TurnStartParams, TurnSteerParams,
     ThreadGoalSetParams, ThreadGoalGetParams, ThreadGoalClearParams,
-    ThreadGoalSetResponse, ThreadGoalGetResponse, ThreadGoalClearResponse,
 };
 use serde_json::Value;
 use serde_json::json;
