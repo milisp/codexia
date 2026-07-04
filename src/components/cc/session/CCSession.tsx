@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CCScrollControls } from '@/components/cc/CCScrollControls';
+import { CCScrollControls } from './CCScrollControls';
 import { Composer } from '@/components/cc/composer/Composer';
-import { CCMessage } from '@/components/cc/messages';
-import { PermissionRequestCard } from '@/components/cc/messages/PermissionRequestCard';
+import { CCMessage } from '@/components/cc/session/messages';
+import { PermissionRequestCard } from '@/components/cc/session/messages/PermissionRequestCard';
 import { Button } from '@/components/ui/button';
 import { ccGetSessionMessages, ccResumeSession } from '@/services/tauri/cc';
 import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { useCCPermissionListener, useCCSessionListener } from './hooks';
+import { useCCPermissionListener, useCCSessionListener } from '../hooks';
 import { buildMessageGroups, CCExploredMessageGroup } from './messages/group';
 import { buildInlineErrorsMap } from './messages/inlineErrors';
-import type { PermissionRequestMessage } from './types/messages';
-import type { PermissionDecision } from './types/permission';
-import { fromSdkMessages } from './utils/fromSdkMessages';
+import type { PermissionRequestMessage } from '../types/messages';
+import type { PermissionDecision } from '../types/permission';
+import { fromSdkMessages } from '../utils/fromSdkMessages';
 
 interface CCSessionProps {
   /** When provided, renders in embedded (grid-card) mode for this specific session. */

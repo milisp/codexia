@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import type { RateLimitEvent } from '../types/messages';
+import type { RateLimitEvent } from '../../types/messages';
 
 interface Props {
   msg: RateLimitEvent;

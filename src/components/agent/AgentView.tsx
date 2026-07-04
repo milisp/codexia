@@ -8,7 +8,7 @@ import { AgentViewHeader } from './AgentViewHeader';
 const CodexThread = lazy(() =>
   import('@/components/codex/CodexThread').then((m) => ({ default: m.CodexThread }))
 );
-const CCSession = lazy(() => import('@/components/cc/CCSession'));
+const CCSession = lazy(() => import('@/components/cc/session/CCSession'));
 
 export default function AgentView() {
   const { selectedAgent } = useWorkspaceStore();

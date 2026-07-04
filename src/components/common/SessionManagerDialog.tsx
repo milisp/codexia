@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CCSessionManager } from '@/components/cc/CCSessionManager';
+import { CCSessionManager } from '@/components/cc/session';
 import { CodexThreadManager } from '@/components/codex/CodexThreadManager';
 import { AgentIcon } from '@/components/common/AgentIcon';
 import { Button } from '@/components/ui/button';

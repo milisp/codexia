@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ccSendMessage } from '@/services';
 import { useCCStore } from '@/stores/cc';
-import type { ToolUseBlock } from '../../types/messages';
+import type { ToolUseBlock } from '../../../types/messages';
 
 interface QuestionOption {
   label: string;
@@ -129,10 +129,9 @@ export function AskUserQuestionCard({ block }: Props) {
                   <label
                     key={opt.value}
                     className={`flex items-center gap-2 px-3 py-2 rounded-md border text-sm cursor-pointer transition-colors
-                      ${
-                        isSelected
-                          ? 'border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-300'
-                          : 'border-border hover:border-blue-500/30 hover:bg-blue-500/5'
+                      ${isSelected
+                        ? 'border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-300'
+                        : 'border-border hover:border-blue-500/30 hover:bg-blue-500/5'
                       }`}
                   >
                     <Checkbox
@@ -149,10 +148,9 @@ export function AskUserQuestionCard({ block }: Props) {
                   variant="outline"
                   size="sm"
                   className={`justify-start h-auto py-2 px-3 text-sm font-normal transition-colors
-                    ${
-                      isSelected
-                        ? 'border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/15'
-                        : 'hover:border-blue-500/30 hover:bg-blue-500/5'
+                    ${isSelected
+                      ? 'border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/15'
+                      : 'hover:border-blue-500/30 hover:bg-blue-500/5'
                     }`}
                   onClick={() => toggleOption(qIdx, opt.value, false)}
                 >

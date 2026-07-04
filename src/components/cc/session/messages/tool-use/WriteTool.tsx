@@ -1,7 +1,9 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { ToolResultBlock, ToolUseBlock } from '../../types/messages';
+import { getFilename } from '@/utils/getFilename';
+import type { ToolResultBlock, ToolUseBlock } from '../../../types/messages';
 
 interface Props {
   block: ToolUseBlock;
@@ -10,7 +12,9 @@ interface Props {
   onToggleError: () => void;
 }
 
-export function GlobTool({ block, inlineError, showError, onToggleError }: Props) {
+export function WriteTool({ block, inlineError, showError, onToggleError }: Props) {
+  const [showContent, setShowContent] = useState(false);
+
   return (
     <>
       <div className="flex items-center flex-wrap gap-0.5">
@@ -18,9 +22,19 @@ export function GlobTool({ block, inlineError, showError, onToggleError }: Props
           variant="secondary"
           className="text-[10px] h-4 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border-none"
         >
-          Glob
+          Write
         </Badge>
-        <Badge variant="outline">{block.input?.pattern}</Badge>
+        <Badge variant="outline" title={block.input?.file_path}>
+          {getFilename(block.input?.file_path)}
+        </Badge>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setShowContent((p) => !p)}
+          className="h-4 w-4"
+        >
+          {showContent ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+        </Button>
         {inlineError && (
           <Button
             variant="ghost"
@@ -32,6 +46,11 @@ export function GlobTool({ block, inlineError, showError, onToggleError }: Props
           </Button>
         )}
       </div>
+      {showContent && (
+        <pre className="mt-2 text-xs overflow-auto bg-gray-200 dark:bg-gray-800 rounded-md p-3 max-h-60 break-all whitespace-pre-wrap font-mono">
+          <code>{block.input?.content}</code>
+        </pre>
+      )}
       {inlineError && showError && (
         <div className="mt-1 text-xs whitespace-pre-wrap break-words text-red-600 dark:text-red-400 border-t border-red-500/20 pt-1">
           {typeof inlineError.content === 'string'

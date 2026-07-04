@@ -1,5 +1,5 @@
-import type { CCMessage, ContentBlock, ToolResultBlock } from '../types/messages';
-import { isToolResultBlock } from '../types/messages';
+import type { CCMessage, ContentBlock, ToolResultBlock } from '../../types/messages';
+import { isToolResultBlock } from '../../types/messages';
 
 /**
  * Collect tool_result errors from a user message that immediately follows an

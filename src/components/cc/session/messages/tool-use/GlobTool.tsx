@@ -1,7 +1,7 @@
-import { ChevronDown, ChevronRight, FileCode, Folder, Search } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { ToolResultBlock, ToolUseBlock } from '../../types/messages';
+import type { ToolResultBlock, ToolUseBlock } from '../../../types/messages';
 
 interface Props {
   block: ToolUseBlock;
@@ -10,7 +10,7 @@ interface Props {
   onToggleError: () => void;
 }
 
-export function GrepTool({ block, inlineError, showError, onToggleError }: Props) {
+export function GlobTool({ block, inlineError, showError, onToggleError }: Props) {
   return (
     <>
       <div className="flex items-center flex-wrap gap-0.5">
@@ -18,25 +18,9 @@ export function GrepTool({ block, inlineError, showError, onToggleError }: Props
           variant="secondary"
           className="text-[10px] h-4 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border-none"
         >
-          Grep
+          Glob
         </Badge>
-        <span className="flex items-center gap-0.5">
-          <Badge variant="outline">
-            <Search className="h-3 w-3" />
-            {block.input?.pattern}
-          </Badge>
-          in
-          <Badge variant="outline">
-            <Folder className="h-3 w-3" />
-            {block.input?.path}
-          </Badge>
-          {block.input?.glob && (
-            <Badge variant="outline">
-              <FileCode className="h-3 w-3" />
-              {block.input.glob}
-            </Badge>
-          )}
-        </span>
+        <Badge variant="outline">{block.input?.pattern}</Badge>
         {inlineError && (
           <Button
             variant="ghost"

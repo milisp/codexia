@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { ToolResultBlock, ToolUseBlock } from '../../types/messages';
+import type { ToolResultBlock, ToolUseBlock } from '../../../types/messages';
 import { AskUserQuestionCard } from './AskUserQuestionCard';
 
 interface Props {

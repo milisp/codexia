@@ -1,6 +1,6 @@
 import { ThreadList } from '@/components/codex/ThreadList';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
-import { ClaudeCodeSessionList } from '../cc/SessionList';
+import { SessionList } from '@/components/cc/session';
 import { SideBarProjectList } from './SideBarProjectList';
 
 type SideBarClaudeTabProps = {
@@ -15,7 +15,7 @@ export function SideBarClaudeTab({ onStartNewSession }: SideBarClaudeTabProps) {
       onNewAction={onStartNewSession}
       newActionTitle={(name) => `Start new session in ${name}`}
       renderList={(directory) => (
-        <ClaudeCodeSessionList directory={directory} onSelectSession={handleSessionSelect} />
+        <SessionList directory={directory} onSelectSession={handleSessionSelect} />
       )}
     />
   );

@@ -4,8 +4,8 @@ import type {
   ContentBlock,
   ToolResultBlock,
   ToolUseBlock,
-} from '../types/messages';
-import { isToolResultBlock } from '../types/messages';
+} from '../../types/messages';
+import { isToolResultBlock } from '../../types/messages';
 import { ExploredGroup } from './ExploredGroup';
 
 export const SILENT_TOOLS = new Set(['Read', 'Glob', 'Grep']);
@@ -127,18 +127,18 @@ export function CCExploredMessageGroup({
 
 export type RenderItem =
   | {
-      kind: 'single';
-      block: ContentBlock;
-      blockIndex: number;
-      inlineError: ToolResultBlock | null;
-      mt: string;
-    }
+    kind: 'single';
+    block: ContentBlock;
+    blockIndex: number;
+    inlineError: ToolResultBlock | null;
+    mt: string;
+  }
   | {
-      kind: 'explored';
-      items: Array<{ block: ToolUseBlock; inlineError: ToolResultBlock | null }>;
-      mt: string;
-      isLocallyCompleted: boolean;
-    };
+    kind: 'explored';
+    items: Array<{ block: ToolUseBlock; inlineError: ToolResultBlock | null }>;
+    mt: string;
+    isLocallyCompleted: boolean;
+  };
 
 export function buildRenderItems(
   blocks: ContentBlock[],

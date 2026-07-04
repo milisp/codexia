@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getFilename } from '@/utils/getFilename';
-import type { ToolResultBlock, ToolUseBlock } from '../../types/messages';
+import type { ToolResultBlock, ToolUseBlock } from '../../../types/messages';
 import { DiffMessage } from '../DiffMessage';
 
 interface Props {

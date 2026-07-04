@@ -4,7 +4,7 @@ import { Streamdown } from 'streamdown';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useCCSettingsStore } from '@/stores/settings';
-import type { ContentBlock, ToolResultBlock } from '../types/messages';
+import type { ContentBlock, ToolResultBlock } from '../../types/messages';
 import { NO_RAW_INPUT_TOOLS } from '.';
 import {
   AskUserQuestionTool,

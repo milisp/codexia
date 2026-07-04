@@ -10,7 +10,7 @@ import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { getFilename } from '@/utils/getFilename';
 
-const CCSession = lazy(() => import('@/components/cc/CCSession'));
+const CCSession = lazy(() => import('@/components/cc/session/CCSession'));
 
 import { toast } from 'sonner';
 import type { ResultMessage } from '@/components/cc/types/messages';

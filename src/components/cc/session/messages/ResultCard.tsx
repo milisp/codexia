@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import type { ResultMessage } from '../types/messages';
+import type { ResultMessage } from '../../types/messages';
 
 interface Props {
   msg: ResultMessage;

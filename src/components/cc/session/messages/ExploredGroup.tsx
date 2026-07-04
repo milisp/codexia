@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import type { ToolResultBlock, ToolUseBlock } from '../types/messages';
+import type { ToolResultBlock, ToolUseBlock } from '../../types/messages';
 import { GlobTool, GrepTool, ReadTool } from './tool-use';
 
 const MAX_VISIBLE_LOADING = 5;

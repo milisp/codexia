@@ -2,8 +2,8 @@ import { ShieldAlert, ShieldCheck, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import type { PermissionRequestMessage } from '../types/messages';
-import type { PermissionDecision } from '../types/permission';
+import type { PermissionRequestMessage } from '../../types/messages';
+import type { PermissionDecision } from '../../types/permission';
 import { NO_RAW_INPUT_TOOLS } from '.';
 import { ToolInputDisplay } from './ToolInputDisplay';
 import {
@@ -58,7 +58,7 @@ export function PermissionRequestCard({ msg, onResolve }: Props) {
               input: msg.toolInput,
               id: msg.requestId,
             } as any;
-            const errorProps = { inlineError: null, showError: false, onToggleError: () => {} };
+            const errorProps = { inlineError: null, showError: false, onToggleError: () => { } };
             switch (msg.toolName) {
               case 'Read':
                 return <ReadTool block={block} {...errorProps} />;

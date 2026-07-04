@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
-import type { SystemMessage } from '../types/messages';
+import type { SystemMessage } from '../../types/messages';
 
 interface Props {
   msg: SystemMessage;
