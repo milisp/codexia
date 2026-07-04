@@ -2,7 +2,7 @@ import { BarChart2, Bug, ListFilter, Package2, Search, Timer } from 'lucide-reac
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AgentSwitcher } from '@/components/agent';
-import { useThreadList } from '@/components/codex/hooks';
+import { useNewThread, useThreadList } from '@/components/codex/hooks';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -44,9 +44,10 @@ export function AppSideBar() {
   const { setView, view, activeSidebarTab, setActiveSidebarTab } = useLayoutStore();
   const { open: isSidebarOpen } = useSidebar();
   const { isMacos } = useTrafficLightConfig(isSidebarOpen);
-  const { sortKey, setSortKey, handleNewThread } = useThreadList({
+  const { sortKey, setSortKey } = useThreadList({
     enabled: isSidebarOpen && selectedAgent === 'codex',
   });
+  const { handleNewThread } = useNewThread();
   const { handleNewSession } = useCCSessionManager();
   const [sessionManagerOpen, setSessionManagerOpen] = useState(false);
 

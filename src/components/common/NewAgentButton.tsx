@@ -1,7 +1,7 @@
 import { SquarePen } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useThreadList } from '@/components/codex/hooks';
+import { useNewThread } from '@/components/codex/hooks';
 import { Button } from '@/components/ui/button';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
 import { useAgentCenterStore, useLayoutStore } from '@/stores';
@@ -19,7 +19,7 @@ export function NewAgentButton({ showLabel = false }: Props) {
   const { setCurrentAgentCardId } = useAgentCenterStore();
   const { view, setView, setActiveSidebarTab } = useLayoutStore();
   const { handleNewSession } = useCCSessionManager();
-  const { handleNewThread } = useThreadList({ enabled: false });
+  const { handleNewThread } = useNewThread();
 
   const handleCreateNew = useCallback(
     async (project?: string) => {
@@ -48,24 +48,14 @@ export function NewAgentButton({ showLabel = false }: Props) {
   );
 
   // Keyboard shortcut: Cmd/Ctrl+N → new thread / session
+  // NOTE: this must fire even when focus is inside the composer textarea
+  // (e.g. an existing thread is open), so it intentionally does NOT skip
+  // editable targets like other shortcuts do.
   useEffect(() => {
-    const isEditableTarget = (target: EventTarget | null): boolean => {
-      if (!(target instanceof HTMLElement)) return false;
-      if (target.isContentEditable) return true;
-      const tag = target.tagName;
-      return (
-        tag === 'INPUT' ||
-        tag === 'TEXTAREA' ||
-        tag === 'SELECT' ||
-        Boolean(target.closest('[contenteditable="true"]'))
-      );
-    };
-
     const handleKeyDown = (e: KeyboardEvent) => {
       const isNew = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n';
       if (!isNew || e.shiftKey || e.altKey || e.repeat) return;
       if (view !== 'agent') return;
-      if (isEditableTarget(e.target)) return;
       e.preventDefault();
       e.stopPropagation();
       void handleCreateNew();
