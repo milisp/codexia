@@ -39,16 +39,9 @@ export function WorkingIndicator({ turnTiming }: { turnTiming: TurnTiming | unde
 
   if (turnTiming.durationMs === null) return null;
 
-  const label =
-    turnTiming.status === 'failed'
-      ? 'Failed after'
-      : turnTiming.status === 'interrupted'
-        ? 'Stopped after'
-        : 'Worked';
-
   return (
     <div className="text-xs text-muted-foreground/60">
-      {label} {fmtElapsed(turnTiming.durationMs)}
+      Worked {fmtElapsed(turnTiming.durationMs)}
     </div>
   );
 }
