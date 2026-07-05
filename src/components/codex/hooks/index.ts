@@ -4,3 +4,4 @@ export * from './useThreadFilter';
 export * from './useThreadGoal';
 export * from './useThreadList';
 export * from './useNewThread';
+export * from './useScrollToBottom';

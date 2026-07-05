@@ -1,27 +1,26 @@
-import { type ReactNode, useEffect, useMemo, useRef } from 'react';
+import { type ReactNode, useMemo } from 'react';
 import { useCodexStore } from '@/components/codex/stores';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useScrollToBottom } from '../hooks';
 import { CodexAuth } from '../CodexAuth';
 import { Composer } from '../composer';
 import { renderEvent } from '../items';
 import { ApprovalItem } from '../items/ApprovalItem';
 import { CommandActionSummaryItem } from '../items/CommandActionSummaryItem';
 import { RequestUserInputItem } from '../items/RequestUserInputItem';
+import { ScrollToBottomButton } from '../widget/ScrollToBottomButton';
 import { WorkingIndicator } from '../widget/WorkingIndicator';
 import { deriveRenderItems } from './deriveRenderItems';
 
 export function CodexThread({ hideComposer = false }: { hideComposer?: boolean } = {}) {
   const { currentThreadId, events, hasAccount, turnTimingMap } = useCodexStore();
-  const bottomAnchorRef = useRef<HTMLDivElement>(null);
 
   // Get events for the current thread
   const currentThreadEvents = currentThreadId ? events[currentThreadId] || [] : [];
   const turnTiming = currentThreadId ? turnTimingMap[currentThreadId] : undefined;
 
-  // Auto-scroll to bottom when new events arrive
-  useEffect(() => {
-    bottomAnchorRef.current?.scrollIntoView({ block: 'end' });
-  }, [currentThreadEvents]);
+  const { scrollAreaRootRef, bottomAnchorRef, isAtBottom, scrollToBottom } =
+    useScrollToBottom(currentThreadEvents);
 
   const renderItems = useMemo(() => deriveRenderItems(currentThreadEvents), [currentThreadEvents]);
 
@@ -69,7 +68,7 @@ export function CodexThread({ hideComposer = false }: { hideComposer?: boolean }
     <div className="flex-1 flex flex-col min-h-0 h-full relative">
       {/* Messages Area */}
       <div className="flex-1 min-h-0 overflow-hidden">
-        <ScrollArea className={`h-full px-4 ${hideComposer ? '' : 'pb-32'}`}>
+        <ScrollArea ref={scrollAreaRootRef} className={`h-full px-4 ${hideComposer ? '' : 'pb-32'}`}>
           <div className="max-w-3xl mx-auto space-y-2 py-4">
             {renderedEvents.map((entry) => (
               <div key={entry.key}>{entry.content}</div>
@@ -82,6 +81,14 @@ export function CodexThread({ hideComposer = false }: { hideComposer?: boolean }
           </div>
         </ScrollArea>
       </div>
+
+      {/* Scroll-to-bottom button, shown when the view isn't already at the bottom */}
+      {!isAtBottom && (
+        <ScrollToBottomButton
+          onClick={() => scrollToBottom('smooth')}
+          bottomClassName={hideComposer ? 'bottom-4' : 'bottom-36'}
+        />
+      )}
 
       {/* Input Area */}
       {!hideComposer && (
