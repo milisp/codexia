@@ -75,14 +75,18 @@ export const createEventsSlice: StateCreator<CodexStore, [], [], EventsSlice> = 
           };
         }
       } else if (event.method === 'error') {
-        // Standalone error notification: if it targets the turn we're tracking
-        // and no turn/completed has landed yet, mark it failed so the UI stops
-        // showing "Working..." even if turn/completed never arrives.
+        // Standalone error notification: if it targets the turn we're tracking,
+        // no turn/completed has landed yet, and the server isn't about to retry,
+        // mark it failed so the UI stops showing "Working..." even if
+        // turn/completed never arrives. If willRetry is true, the turn is still
+        // in progress (a retry or further turn/completed is expected), so keep
+        // ticking instead of freezing the duration prematurely.
         const existing = turnTimingMap[threadId];
         if (
           existing &&
           existing.turnId === event.params.turnId &&
-          existing.status === 'inProgress'
+          existing.status === 'inProgress' &&
+          !event.params.willRetry
         ) {
           turnTimingMap = {
             ...turnTimingMap,
