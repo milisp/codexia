@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import {
   canonicalizePath,
   readDirectory,
   searchFilesByName,
   type TauriFileEntry,
+  watchDirectory,
+  unwatchDirectory,
 } from '@/services/tauri';
 import { useWorkspaceStore } from '@/stores';
 import { useSettingsStore } from '@/stores/settings';
 import { getFilename } from '@/utils/getFilename';
 import type { FileNode } from './types';
 import { buildSearchTree, normalizeName, shouldSkipEntry, sortNodes } from './utils';
+import { isTauri } from '@/hooks/runtime';
 
 export type UseFileTreeReturn = {
   treeContainerRef: React.RefObject<HTMLDivElement | null>;
@@ -324,6 +328,58 @@ export function useFileTree(folder: string): UseFileTreeReturn {
     );
     row?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, [selectedFilePath]);
+
+  // Watch the root folder for fs_change events so we can auto-refresh on deletions/creations
+    useEffect(() => {
+      if (!folder || !isTauri()) {
+        return;
+      }
+
+      let unlisten: UnlistenFn | null = null;
+      const setup = async () => {
+        try {
+          await watchDirectory(folder);
+        } catch {}
+        unlisten = await listen<{ path: string; kind: string; is_dir: boolean }>(
+          'fs_change',
+          async (event) => {
+            const changed = event.payload.path;
+            const kind = event.payload.kind;
+
+            // Check if the changed path is within our watched folder
+            if (!root || !changed.startsWith(root.path)) {
+              return;
+            }
+
+            // Ignore if we're currently searching
+            if (isSearching) {
+              return;
+            }
+
+            // Handle file/folder removal or creation - trigger refresh
+            if (kind === 'remove' || kind === 'create') {
+              // Increment refreshKey to trigger a full reload of the tree
+              setRefreshKey((prev) => prev + 1);
+            }
+          }
+        );
+      };
+      const stopPrev = async () => {
+        try {
+          await unwatchDirectory(folder);
+        } catch {}
+      };
+      setup();
+      stopPrev();
+      return () => {
+        if (unlisten) unlisten();
+        (async () => {
+          try {
+            await unwatchDirectory(folder);
+          } catch {}
+        })();
+      };
+    }, [folder, root, isSearching, isTauri]);
 
   const activeExpanded = isSearching ? searchExpanded : expanded;
   const visibleNodes = displayRoot?.children ?? [];
