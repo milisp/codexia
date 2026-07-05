@@ -15,9 +15,6 @@
 
 Lightweight Agent Workstation for Codex CLI + Claude Code — with task scheduler, git worktree & remote control, skills management, and a prompt notepad in one workspace
 
-### Support & Sponsors
-
-If you find this project helpful, consider supporting its development.
 > [Want to become a sponsor?](mailto:milisp@proton.me)
 
 ![Codexia Home](docs/images/codexia-agent-command-center.png)
@@ -52,6 +49,11 @@ brew install --cask codexia
 2. Add your project directory.
 3. Enter a prompt and start your agent session.
 4. Create an Agent Task Scheduler job for recurring workflows.
+
+## Recommend tools
+
+- [rtc](https://github.com/rtk-ai/rtk) - CLI proxy that reduces LLM token consumption by 60-90% on common dev commands. Single Rust binary, zero dependencies
+- [ctx](https://github.com/ctxrs/ctx) - Search the coding agent history already on your machine
 
 ## Architecture at a Glance
 - Codex app-server integration
