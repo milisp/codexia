@@ -5,6 +5,9 @@ export type AgentCenterCard =
   | { kind: 'codex'; id: string; preview?: string; worktreePath?: string; cwd?: string | null }
   | { kind: 'cc'; id: string; preview?: string; worktreePath?: string; cwd?: string | null };
 
+// Multi-agent view layout mode: grid of cards, compact list (header only), or single active card.
+export type AgentCardsViewMode = 'grid' | 'list' | 'single';
+
 interface AgentCenterState {
   cards: AgentCenterCard[];
   addAgentCard: (card: AgentCenterCard) => boolean;
@@ -12,6 +15,8 @@ interface AgentCenterState {
   updateCard: (card: AgentCenterCard) => void;
   currentAgentCardId: string | null;
   setCurrentAgentCardId: (id: string | null) => void;
+  cardsViewMode: AgentCardsViewMode;
+  setCardsViewMode: (mode: AgentCardsViewMode) => void;
 }
 
 export const useAgentCenterStore = create<AgentCenterState>()(
@@ -53,13 +58,17 @@ export const useAgentCenterStore = create<AgentCenterState>()(
 
       currentAgentCardId: null,
       setCurrentAgentCardId: (id) => set({ currentAgentCardId: id }),
+
+      cardsViewMode: 'grid',
+      setCardsViewMode: (mode) => set({ cardsViewMode: mode }),
     }),
     {
       name: 'agent-center-store',
-      version: 1,
+      version: 2,
       // currentAgentCardId is runtime-only — not persisted
       partialize: (state) => ({
         cards: state.cards,
+        cardsViewMode: state.cardsViewMode,
       }),
     }
   )

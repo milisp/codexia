@@ -1,4 +1,4 @@
-import { History, PanelRight, SquareTerminal } from 'lucide-react';
+import { History, LayoutGrid, List, PanelRight, Square, SquareTerminal } from 'lucide-react';
 import { useCallback } from 'react';
 import { useCodexStore, useCurrentThread } from '@/components/codex/stores';
 import { NewAgentButton } from '@/components/common/NewAgentButton';
@@ -8,11 +8,21 @@ import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useTrafficLightConfig } from '@/hooks';
 import { codexService } from '@/services/codexService';
 import { useCCStore, useLayoutStore } from '@/stores';
+import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
+import type { AgentCardsViewMode } from '@/stores/useAgentCenterStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { UpdateButton } from '../features/UpdateButton';
+
+const CARDS_VIEW_MODES: { mode: AgentCardsViewMode; icon: typeof LayoutGrid; title: string }[] = [
+  { mode: 'grid', icon: LayoutGrid, title: 'Grid view' },
+  { mode: 'list', icon: List, title: 'List view' },
+  { mode: 'single', icon: Square, title: 'Single view' },
+];
+
 export function AgentViewHeader() {
   const { setView, view, isRightPanelOpen, toggleRightPanel, isTerminalOpen, setIsTerminalOpen } =
     useLayoutStore();
+  const { cardsViewMode, setCardsViewMode } = useAgentCenterStore();
   const { open: isSidebarOpen, openMobile, isMobile } = useSidebar();
   const { setHistoryMode, selectedAgent } = useWorkspaceStore();
   const { needsTrafficLightOffset } = useTrafficLightConfig(isSidebarOpen);
@@ -64,7 +74,21 @@ export function AgentViewHeader() {
             </Button>
           )}
       </div>
-      <span className="flex items-center pr-2">
+      <span className="flex items-center gap-1 pr-2">
+        <span className="flex items-center gap-0.5 border rounded-md p-0.5">
+          {CARDS_VIEW_MODES.map(({ mode, icon: Icon, title }) => (
+            <Button
+              key={mode}
+              variant={cardsViewMode === mode ? 'secondary' : 'ghost'}
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => setCardsViewMode(mode)}
+              title={title}
+            >
+              <Icon className="size-3.5" />
+            </Button>
+          ))}
+        </span>
         {!isRightPanelOpen && (
           <>
             {hasActiveSession && <GitActions />}
