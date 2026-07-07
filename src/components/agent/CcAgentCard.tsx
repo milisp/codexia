@@ -9,6 +9,8 @@ import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { getFilename } from '@/utils/getFilename';
+import { CardResizeHandles } from './CardResizeHandles';
+import { useCardResize } from './useCardResize';
 
 const CCSession = lazy(() => import('@/components/cc/session/CCSession'));
 
@@ -57,6 +59,7 @@ export function CCAgentCard({ card, onRemove: _onRemove, header, isSelected }: C
   const { setCurrentAgentCardId, updateCard } = useAgentCenterStore();
   const [isResumingSession, setIsResumingSession] = useState(false);
   const [isApplyingWorktree, setIsApplyingWorktree] = useState(false);
+  const { size, startDrag, onDragMove, endDrag } = useCardResize(card.id);
 
   const messages = sessionMessagesMap[card.id] ?? [];
   const isActive = activeSessionIds.includes(card.id);
@@ -153,7 +156,9 @@ export function CCAgentCard({ card, onRemove: _onRemove, header, isSelected }: C
 
   return (
     <div
-      className={`flex flex-col ${attentionBorder} rounded-lg bg-background overflow-hidden h-72 transition-shadow`}
+      data-card-root
+      style={{ width: size.width, height: size.height }}
+      className={`relative flex flex-col ${size.width ? 'flex-none' : 'flex-1 basis-72'} min-w-[260px] ${attentionBorder} rounded-lg bg-background overflow-hidden transition-shadow`}
     >
       {header}
 
@@ -233,6 +238,8 @@ export function CCAgentCard({ card, onRemove: _onRemove, header, isSelected }: C
           )}
         </div>
       </div>
+
+      <CardResizeHandles startDrag={startDrag} onDragMove={onDragMove} endDrag={endDrag} />
     </div>
   );
 }

@@ -36,7 +36,11 @@ export default function AgentView() {
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
           <div className="flex-1 min-h-0 overflow-y-auto p-2">
             {cardsViewMode === 'grid' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              // flex-wrap (not CSS grid) so each card's manually-resized width/height
+              // (see useCardResize) can take effect independently, Ghostty-pane style.
+              // Cards without a saved width fall back to flex-basis so they still tile
+              // responsively like the old grid.
+              <div className="flex flex-wrap gap-2 items-start">
                 {cards.map((card) => (
                   <AgentCard
                     key={`${card.kind}-${card.id}`}
@@ -74,7 +78,7 @@ export default function AgentView() {
           {/* Active card's full session */}
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <Suspense fallback={null}>
-              {selectedAgent === 'codex' ? <CodexThread hideComposer /> : <CCSession hideComposer />}
+              {selectedAgent === 'codex' ? <CodexThread /> : <CCSession />}
             </Suspense>
           </div>
 
@@ -91,9 +95,9 @@ export default function AgentView() {
             <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <Suspense fallback={null}>
                 {selectedAgent === 'codex' ? (
-                  <CodexThread hideComposer />
+                  <CodexThread />
                 ) : (
-                  <CCSession hideComposer />
+                  <CCSession />
                 )}
               </Suspense>
             </div>

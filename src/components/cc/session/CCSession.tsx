@@ -1,9 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { CCScrollControls } from './CCScrollControls';
-import { Composer } from '@/components/cc/composer/Composer';
 import { CCMessage } from '@/components/cc/session/messages';
 import { PermissionRequestCard } from '@/components/cc/session/messages/PermissionRequestCard';
-import { Button } from '@/components/ui/button';
 import { ccGetSessionMessages, ccResumeSession } from '@/services/tauri/cc';
 import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
@@ -17,8 +15,6 @@ import { fromSdkMessages } from '../utils/fromSdkMessages';
 interface CCSessionProps {
   /** When provided, renders in embedded (grid-card) mode for this specific session. */
   sessionId?: string;
-  /** Suppress the internal composer (e.g. when a parent renders its own composer). */
-  hideComposer?: boolean;
   /**
    * Disable the internal event listeners. Use when a sibling standalone CCSession
    * is already listening to the same session to prevent double-writing messages.
@@ -28,7 +24,6 @@ interface CCSessionProps {
 
 export default function CCSession({
   sessionId,
-  hideComposer = false,
   disableListener = false,
 }: CCSessionProps = {}) {
   const isEmbedded = !!sessionId;
@@ -196,69 +191,6 @@ export default function CCSession({
           onResolve={handleResolvePermission}
         />
       )}
-      {!isEmbedded &&
-        !hideComposer &&
-        pendingPermissionIdx === -1 &&
-        (activeSessionId && !activeSessionIds.includes(activeSessionId) ? (
-          <ResumeSessionButton
-            sessionId={activeSessionId}
-            cwd={cwd}
-            permissionMode={options.permissionMode}
-            model={options.model}
-            onResumed={() => addActiveSessionId(activeSessionId)}
-          />
-        ) : (
-          <Composer />
-        ))}
-    </div>
-  );
-}
-
-function ResumeSessionButton({
-  sessionId,
-  cwd,
-  permissionMode,
-  model,
-  onResumed,
-}: {
-  sessionId: string;
-  cwd: string | null;
-  permissionMode?: string;
-  model?: string;
-  onResumed: () => void;
-}) {
-  const [busy, setBusy] = useState(false);
-  const onClick = async () => {
-    if (!cwd) {
-      console.warn('[ResumeSessionButton] no cwd set; pick a project first');
-      return;
-    }
-    setBusy(true);
-    try {
-      await ccResumeSession(sessionId, {
-        cwd,
-        permissionMode,
-        resume: sessionId,
-        continueConversation: true,
-        ...(model ? { model } : {}),
-      });
-      onResumed();
-    } catch (err) {
-      console.error('[ResumeSessionButton] ccResumeSession failed:', err);
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <div className="flex items-center justify-between gap-3 p-4 m-2 rounded-lg border border-border bg-muted/40 text-sm">
-      <span className="text-muted-foreground">
-        {cwd
-          ? 'Reviewing history. Resume to send messages.'
-          : 'Pick a project to resume this session.'}
-      </span>
-      <Button onClick={onClick} disabled={busy || !cwd} size="sm">
-        {busy ? 'Resuming…' : 'Resume session'}
-      </Button>
     </div>
   );
 }

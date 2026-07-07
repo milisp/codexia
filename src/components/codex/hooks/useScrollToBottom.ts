@@ -30,6 +30,12 @@ export function useScrollToBottom<T>(
   const bottomAnchorRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  // Mirrors isAtBottom for use inside the ResizeObserver callback below, which
+  // must read the latest value without re-subscribing on every state change.
+  const isAtBottomRef = useRef(isAtBottom);
+  useEffect(() => {
+    isAtBottomRef.current = isAtBottom;
+  }, [isAtBottom]);
 
   // Locate the scrollable viewport element once mounted
   useEffect(() => {
@@ -57,6 +63,28 @@ export function useScrollToBottom<T>(
     viewport.addEventListener('scroll', handleScroll, { passive: true });
     return () => viewport.removeEventListener('scroll', handleScroll);
   }, [checkIsAtBottom]);
+
+  // Height/width of the viewport (or its content) can change without a 'scroll'
+  // event ever firing — e.g. dragging a card's resize handle (see useCardResize),
+  // a header wrapping to a second line, or fonts/images loading late. Without
+  // this, isAtBottom goes stale and the view can silently drift away from the
+  // latest message. A ResizeObserver re-derives isAtBottom on every box-size
+  // change, and — if we were pinned to the bottom right before the resize —
+  // re-anchors to the bottom so shrinking/growing a card feels like a terminal
+  // (content stays pinned) rather than leaving the scroll position stranded.
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const observer = new ResizeObserver(() => {
+      if (isAtBottomRef.current) {
+        scrollToBottom('auto');
+      }
+      setIsAtBottom(checkIsAtBottom());
+    });
+    observer.observe(viewport);
+    return () => observer.disconnect();
+  }, [checkIsAtBottom, scrollToBottom]);
 
   // Auto-scroll to bottom on new content, but only if the user is already near the bottom
   useEffect(() => {

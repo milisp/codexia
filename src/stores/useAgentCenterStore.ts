@@ -8,6 +8,14 @@ export type AgentCenterCard =
 // Multi-agent view layout mode: grid of cards, compact list (header only), or single active card.
 export type AgentCardsViewMode = 'grid' | 'list' | 'single';
 
+// User-adjusted size for a single card in grid mode (Ghostty-style manual resize).
+// width is omitted until the user drags the right edge, letting the card fall back
+// to the layout's natural flex-basis; height always has a value (defaults to h-72).
+export interface AgentCardSize {
+  width?: number;
+  height: number;
+}
+
 interface AgentCenterState {
   cards: AgentCenterCard[];
   addAgentCard: (card: AgentCenterCard) => boolean;
@@ -17,6 +25,8 @@ interface AgentCenterState {
   setCurrentAgentCardId: (id: string | null) => void;
   cardsViewMode: AgentCardsViewMode;
   setCardsViewMode: (mode: AgentCardsViewMode) => void;
+  cardSizeMap: Record<string, AgentCardSize>;
+  setCardSize: (cardId: string, size: AgentCardSize) => void;
 }
 
 export const useAgentCenterStore = create<AgentCenterState>()(
@@ -61,14 +71,19 @@ export const useAgentCenterStore = create<AgentCenterState>()(
 
       cardsViewMode: 'grid',
       setCardsViewMode: (mode) => set({ cardsViewMode: mode }),
+
+      cardSizeMap: {},
+      setCardSize: (cardId, size) =>
+        set((state) => ({ cardSizeMap: { ...state.cardSizeMap, [cardId]: size } })),
     }),
     {
       name: 'agent-center-store',
-      version: 2,
+      version: 3,
       // currentAgentCardId is runtime-only — not persisted
       partialize: (state) => ({
         cards: state.cards,
         cardsViewMode: state.cardsViewMode,
+        cardSizeMap: state.cardSizeMap,
       }),
     }
   )

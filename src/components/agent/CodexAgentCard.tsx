@@ -1,7 +1,6 @@
 import { Check, RotateCcw, Square } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { renderEvent } from '@/components/codex/items';
 import {
   useApprovalStore,
   useCodexStore,
@@ -18,6 +17,8 @@ import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { getFilename } from '@/utils/getFilename';
+import { CardResizeHandles } from './CardResizeHandles';
+import { useCardResize } from './useCardResize';
 import {
   fmtElapsed,
   fmtTokens,
@@ -25,6 +26,10 @@ import {
   getCodexContextWindow,
   getCodexTokens,
 } from './utils';
+
+const CodexThread = lazy(() =>
+  import('@/components/codex/thread/CodexThread').then((m) => ({ default: m.CodexThread }))
+);
 
 // ─── ContextWindowBar ────────────────────────────────────────────────────────
 
@@ -66,10 +71,10 @@ export function CodexAgentCard({
   const { pendingRequests } = useRequestUserInputStore();
   const { setCurrentAgentCardId, updateCard } = useAgentCenterStore();
   const { cwd } = useWorkspaceStore();
-  const scrollRef = useRef<HTMLDivElement>(null);
   const [resuming, setResuming] = useState(false);
   const [isApplyingWorktree, setIsApplyingWorktree] = useState(false);
   const [worktreeHasChanges, setWorktreeHasChanges] = useState(false);
+  const { size, startDrag, onDragMove, endDrag } = useCardResize(card.id);
 
   const threadEvents = events[card.id] ?? [];
   const processing = threadStatusMap[card.id]?.type === 'active';
@@ -106,11 +111,6 @@ export function CodexAgentCard({
   }, [turnInProgress]);
 
   const elapsed = turnInProgress && turnTiming ? Date.now() - turnTiming.startedAtMs : 0;
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [threadEvents.length]);
 
   useEffect(() => {
     const checkWorktreeChanges = async () => {
@@ -168,17 +168,6 @@ export function CodexAgentCard({
     }
   };
 
-  const codexItems = useMemo(
-    () =>
-      threadEvents
-        .map((event, i) => {
-          const rendered = renderEvent(event, { events: threadEvents, eventIndex: i });
-          return rendered ? <div key={i}>{rendered}</div> : null;
-        })
-        .filter(Boolean),
-    [threadEvents]
-  );
-
   const attentionBorder = hasPending
     ? 'ring-2 ring-amber-500/70 border-amber-500/30'
     : isSelected
@@ -187,16 +176,16 @@ export function CodexAgentCard({
 
   return (
     <div
-      className={`flex flex-col ${attentionBorder} rounded-lg bg-background overflow-hidden h-72 transition-shadow`}
+      data-card-root
+      style={{ width: size.width, height: size.height }}
+      className={`relative flex flex-col ${size.width ? 'flex-none' : 'flex-1 basis-72'} min-w-[260px] ${attentionBorder} rounded-lg bg-background overflow-hidden transition-shadow`}
     >
       {header}
 
-      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto [scrollbar-width:thin]">
-        {codexItems.length === 0 ? (
-          <p className="text-xs text-muted-foreground p-3">No messages yet.</p>
-        ) : (
-          <div className="flex flex-col gap-1.5 p-3">{codexItems}</div>
-        )}
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <Suspense fallback={null}>
+          <CodexThread threadId={card.id} fillHeight={false} />
+        </Suspense>
       </div>
 
       {ctxWindow && <ContextWindowBar used={ctxWindow.used} window={ctxWindow.window} />}
@@ -257,6 +246,8 @@ export function CodexAgentCard({
           </Button>
         )}
       </div>
+
+      <CardResizeHandles startDrag={startDrag} onDragMove={onDragMove} endDrag={endDrag} />
     </div>
   );
 }
