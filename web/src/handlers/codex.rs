@@ -6,7 +6,7 @@ use super::types::{
 };
 use axum::{Json, extract::State as AxumState, http::StatusCode};
 use codex_app_server_protocol::{
-    GetAccountParams, LoginAccountParams, ModelListParams,
+    GetAccountParams, LoginAccountParams, ModelListParams, ThreadUnarchiveParams,
     ReviewStartParams, SkillsConfigWriteParams, SkillsListParams, ThreadArchiveParams,
     ThreadForkParams, ThreadListParams, ThreadResumeParams, ThreadRollbackParams,
     ThreadStartParams, TurnInterruptParams, TurnStartParams,
@@ -94,6 +94,19 @@ pub(crate) async fn api_archive_thread(
     let result = require_codex(&state)?
         .codex
         .send_request("thread/archive", params_value)
+        .await
+        .map_err(to_error_response)?;
+    Ok(Json(result))
+}
+
+pub(crate) async fn api_unarchive_thread(
+    AxumState(state): AxumState<WebServerState>,
+    Json(params): Json<ThreadArchiveParams>,
+) -> Result<Json<Value>, ErrorResponse> {
+    let params_value = serde_json::to_value(params).map_err(to_error_response)?;
+    let result = require_codex(&state)?
+        .codex
+        .send_request("thread/unarchive", params_value)
         .await
         .map_err(to_error_response)?;
     Ok(Json(result))

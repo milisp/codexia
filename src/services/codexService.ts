@@ -19,7 +19,6 @@ import {
   gitCreateWorktree,
   listThreads,
   skillList,
-  threadArchive,
   threadFork,
   threadResume,
   threadRollback,
@@ -173,14 +172,6 @@ export const codexService = {
       console.error('[CodexService] Failed to load threads:', error);
       useCodexStore.getState().setThreadListNextCursor(null);
       useCodexStore.getState().setThreads([]);
-    }
-  },
-  async archiveThread(threadId: string) {
-    try {
-      await threadArchive(threadId);
-    } catch (error: unknown) {
-      console.error('[CodexService] archiveThread error:', error);
-      throw error;
     }
   },
   async setCurrentThread(threadId: string | null) {

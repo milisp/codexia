@@ -81,6 +81,18 @@ pub async fn archive_thread(
 }
 
 #[tauri::command]
+pub async fn unarchive_thread(
+    thread_id: String,
+    state: State<'_, AppState>,
+) -> Result<Value, String> {
+    let params = json!({
+        "threadId": thread_id
+    });
+    let result = state.codex.send_request("thread/unarchive", params).await?;
+    Ok(from_value(result)?)
+}
+
+#[tauri::command]
 pub async fn delete_thread(
     thread_id: String,
     state: State<'_, AppState>,

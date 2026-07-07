@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { Thread, ThreadListParams, ThreadListResponse } from '@/bindings/v2';
 import type { ThreadId } from '@/bindings';
-import type { ThreadListParams, ThreadListResponse } from '@/bindings/v2';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { listThreads, threadUnarchive } from '@/services/tauri';
+import { listThreads, unarchiveThread } from '@/services/tauri';
 import { formatThreadAge } from '@/utils/formatThreadAge';
 import { getFilename } from '@/utils/getFilename';
 import { modelProviders } from '@/components/codex/constants';
@@ -38,23 +38,30 @@ export function ArchivedThreadSettings() {
     }
   }, []);
 
-  const unarchiveThread = useCallback(async (threadId: ThreadId) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await threadUnarchive(threadId);
-      await loadArchivedThreads();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     void loadArchivedThreads();
   }, [loadArchivedThreads]);
+
+  const handleUnarchive = useCallback(async (threadId: ThreadId) => {
+    let backupData: Thread[] = [];
+
+    setResponse(prev => {
+      backupData = prev.data || [];
+      return {
+        ...prev,
+        data: backupData.filter(thread => thread.id !== threadId)
+      };
+    });
+
+    try {
+      await unarchiveThread(threadId);
+    } catch (err) {
+      setResponse(prev => ({ ...prev, data: backupData }));
+
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+    }
+  }, [unarchiveThread, setError, setResponse]);
 
   return (
     <section className="space-y-3">
@@ -89,7 +96,7 @@ export function ArchivedThreadSettings() {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => unarchiveThread(thread.id)}
+                onClick={() => handleUnarchive(thread.id)}
                 disabled={isLoading}
               >
                 Unarchive

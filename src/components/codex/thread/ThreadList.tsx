@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/context-menu';
 import { toast } from '@/components/ui/use-toast';
 import { codexService } from '@/services/codexService';
-import { deleteThread, listThreads, renameThread } from '@/services/tauri';
+import { archiveThread, deleteThread, listThreads, renameThread } from '@/services/tauri';
 import { gitRemoveWorktree } from '@/services/tauri/git';
 import { useAgentCenterStore, useLayoutStore } from '@/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
@@ -140,7 +140,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
 
   const handleArchive = useCallback(
     async (threadId: string) => {
-      await codexService.archiveThread(threadId);
+      await archiveThread(threadId);
       refresh();
     },
     [refresh]

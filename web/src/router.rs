@@ -108,6 +108,7 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/codex/thread/rollback", post(api_rollback_thread))
         .route("/api/codex/thread/list", post(api_list_threads))
         .route("/api/codex/thread/archive", post(api_archive_thread))
+        .route("/api/codex/thread/unarchive", post(api_unarchive_thread))
         .route("/api/codex/turn/start", post(api_turn_start))
         .route("/api/codex/turn/interrupt", post(api_turn_interrupt))
         .route(

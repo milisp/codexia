@@ -63,6 +63,7 @@ pub fn run() {
                 commands::codex::rollback_thread,
                 commands::codex::list_threads,
                 commands::codex::archive_thread,
+                commands::codex::unarchive_thread,
                 commands::codex::delete_thread,
                 commands::codex::rename_thread,
                 commands::codex::turn_start,

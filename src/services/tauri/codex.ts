@@ -112,11 +112,18 @@ export async function listThreads(params: ThreadListParams) {
   return await postJson<ThreadListResponse>('/api/codex/thread/list', { ...params });
 }
 
-export async function threadArchive(threadId: ThreadId) {
+export async function archiveThread(threadId: ThreadId) {
   if (isDesktopTauri()) {
     return await invokeTauri('archive_thread', { threadId });
   }
   return await postJson('/api/codex/thread/archive', { threadId });
+}
+
+export async function unarchiveThread(threadId: ThreadId) {
+  if (isDesktopTauri()) {
+    return await invokeTauri('unarchive_thread', { threadId });
+  }
+  return await postJson('/api/codex/thread/unarchive', { threadId });
 }
 
 export async function deleteThread(threadId: ThreadId) {
@@ -131,14 +138,7 @@ export async function renameThread(threadId: ThreadId, name: string) {
   if (isDesktopTauri()) {
     return await invokeTauri('rename_thread', { params });
   }
-  return await postJson('/api/codex/thread/delete', { params });
-}
-
-export async function threadUnarchive(threadId: ThreadId) {
-  if (isDesktopTauri()) {
-    return await invokeTauri('thread_unarchive', { threadId });
-  }
-  return await postJson('/api/codex/thread/unarchive', { threadId });
+  return await postJson('/api/codex/thread/rename', { params });
 }
 
 export async function loginChatGpt() {
