@@ -46,6 +46,9 @@ codexia/
 │   └── shared/             # Shared crate
 - use `@/hooks` `@/types` etc.
 
+## Skill
+- when remove a key from zustand persist store, you must update store version and migrate
+
 ## docs
 - docs/ROADMAP-MULTI-CLIENT.md
 
