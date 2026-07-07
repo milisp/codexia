@@ -1,11 +1,18 @@
-## What's New
+## What's new
 
-### New Features & Layouts
-- Right Panel Focus Mode: Added a dedicated Focus Mode for the right panel alongside new Agent Cards, helping you concentrate on your active work.
-- Streamlined Git Actions: Moved the Git commit dialog into its own standalone view and grouped Git actions into a clean dropdown menu to save screen space.
-- Updated Kanban Header: Refreshed the right panel header with a dedicated Kanban label and icon for better task tracking.
+### ✨ New Features
+- Agent Card View Modes: You can now toggle between grid, list, and single view modes for agent cards, allowing for a more customizable layout.
+- Manual Card Resizing: AgentView now supports manual card resizing for better control over your workspace.
+- Unarchive Threads: A new command to unarchive threads has been added, complete with optimistic UI updates in the ArchivedThreadSettings to make the interaction feel instantly responsive.
 
-### Enhanced Visuals & Experience
-- Better Message Appearance: Replaced the message rendering style with a new design, giving agent messages a much cleaner and sharper look.
-- Cleaner Thread List: Updated the Thread List layout to look more organized and refreshed the empty state visual when no threads are active.
-- Improved Narrow Screens: Fixed an issue where command lines and code blocks would overflow or look broken on narrow layouts; they now truncate and fit properly.
+### 🎨 UI & UX Improvements
+- AgentView Refinements: The layout logic for the AgentView has been updated, including better visibility conditions for card bodies and improved reliability for scrolling to the bottom of views.
+- Cleaned Up Legacy Interfaces: The outdated legacy history view and its associated components have been completely removed to streamline the interface.
+
+### 🛠️ Under the Hood (Refactoring & Maintenance)
+- Event Handling Modularization: Server-Sent Events (SSE) and Tauri listener logic have been extracted into dedicated hooks, making the event handling system cleaner and more modular.
+- Directory Watching Hook: File and Git monitoring logic has been consolidated into a reusable useDirWatch hook.
+- Codex Commands Organization: Codex commands have been split into separate files for significantly better code maintainability.
+
+### 📝 Documentation
+- Zustand Migration Guide: Added new documentation covering the requirements for Zustand persist store migrations.
