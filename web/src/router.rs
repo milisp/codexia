@@ -9,7 +9,7 @@ use tower_http::services::{ServeDir, ServeFile};
 
 use super::{
     handlers::{
-        api_account_rate_limits, api_allow_sleep, api_archive_thread, api_canonicalize_path,
+        api_account_rate_limits, api_allow_sleep, api_archive_thread, api_unarchive_thread, api_canonicalize_path,
         api_cc_list_projects, api_cc_mcp_add, api_cc_mcp_disable, api_cc_mcp_enable,
         api_cc_mcp_get, api_cc_mcp_list, api_cc_mcp_remove,
         api_cc_connect, api_cc_disconnect, api_cc_get_installed_skills,

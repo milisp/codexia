@@ -1,6 +1,6 @@
 use super::to_error_response;
 use super::types::{
-    CommandExecutionApprovalParams, FileChangeApprovalParams, ListThreadsRequest,
+    CommandExecutionApprovalParams, FileChangeApprovalParams,
     UnifiedMcpAddParams, UnifiedMcpReadParams, UnifiedMcpRemoveParams, UnifiedMcpToggleParams,
     UserInputResponseParams,
 };
@@ -14,7 +14,6 @@ use codex_app_server_protocol::{
 use serde_json::{Value, json};
 use crate::types::{ErrorResponse, WebServerState};
 
-use codexia_codex::scan::list_threads_payload;
 use codexia_codex::AppState;
 use codexia_cc::mcp_unified as mcp;
 
@@ -77,12 +76,15 @@ pub(crate) async fn api_rollback_thread(
 }
 
 pub(crate) async fn api_list_threads(
-    AxumState(_state): AxumState<WebServerState>,
-    Json(request): Json<ListThreadsRequest>,
+    AxumState(state): AxumState<WebServerState>,
+    Json(params): Json<ThreadListParams>,
 ) -> Result<Json<Value>, ErrorResponse> {
-    let params_value = serde_json::to_value(request.params).map_err(to_error_response)?;
-    let result =
-        list_threads_payload(params_value, request.cwd.as_deref()).map_err(to_error_response)?;
+    let params_value = serde_json::to_value(params).map_err(to_error_response)?;
+    let result = require_codex(&state)?
+        .codex
+        .send_request("thread/list", params_value)
+        .await
+        .map_err(to_error_response)?;
     Ok(Json(result))
 }
 
@@ -101,7 +103,7 @@ pub(crate) async fn api_archive_thread(
 
 pub(crate) async fn api_unarchive_thread(
     AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<ThreadArchiveParams>,
+    Json(params): Json<ThreadUnarchiveParams>,
 ) -> Result<Json<Value>, ErrorResponse> {
     let params_value = serde_json::to_value(params).map_err(to_error_response)?;
     let result = require_codex(&state)?

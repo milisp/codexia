@@ -7,7 +7,6 @@ use tokio::sync::broadcast;
 
 use super::{router::create_router, types::WebServerState};
 use codexia_cc::CCState;
-use codexia_codex::scan::start_history_scanner;
 use codexia_codex::{AppState, CodexInitializationState, connect_codex, initialize_codex};
 use codexia_shared::event_sink::{EventSink, WebSocketEventSink};
 use codexia_shared::sleep::SleepState;
@@ -36,8 +35,6 @@ pub async fn start_web_server_with_events(
     .await
     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
 
-    let history_sink: Arc<dyn EventSink> = Arc::new(WebSocketEventSink::new(event_tx.clone()));
-    start_history_scanner(history_sink);
     codexia_cc::scan::start_session_scanner();
 
     let state = WebServerState {

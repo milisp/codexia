@@ -1,5 +1,5 @@
 use codex_app_server_protocol::{
-    CommandExecutionApprovalDecision, FileChangeApprovalDecision, RequestId, ThreadListParams,
+    CommandExecutionApprovalDecision, FileChangeApprovalDecision, RequestId,
     ToolRequestUserInputResponse,
 };
 use serde::Deserialize;
@@ -8,13 +8,6 @@ use serde_json::Value;
 use codexia_cc::mcp::ClaudeCodeMcpServer;
 use codexia_cc::types::AgentOptions;
 use codexia_cc::automation::AutomationSchedule;
-
-#[derive(Deserialize)]
-pub(crate) struct ListThreadsRequest {
-    #[serde(flatten)]
-    pub(crate) params: ThreadListParams,
-    pub(crate) cwd: Option<String>,
-}
 
 #[derive(Deserialize)]
 pub(crate) struct CommandExecutionApprovalParams {
