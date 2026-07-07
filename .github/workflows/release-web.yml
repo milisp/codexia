@@ -1,6 +1,9 @@
 name: Publish Web Packages
 
 on:
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
 
 env:
@@ -76,9 +79,7 @@ jobs:
     permissions:
       contents: write
     runs-on: macos-latest
-    env:
-      NODE_OPTIONS: --max-old-space-size=4096
-    # if: false # Temporarily disabled
+    if: false # Temporarily disabled
     steps:
       - uses: actions/checkout@v5
 
