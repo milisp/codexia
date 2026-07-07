@@ -14,7 +14,6 @@ export type viewType =
   | 'automations'
   | 'agents-md'
   | 'agent'
-  | 'history'
   | 'learn'
   | 'plugins'
   | 'settings'
@@ -140,7 +139,7 @@ export const useLayoutStore = create<LayoutStore>()(
     }),
     {
       name: 'layout-storage',
-      version: 4,
+      version: 5,
       partialize: (state) => ({
         isSidebarOpen: state.isSidebarOpen,
         isRightPanelOpen: state.isRightPanelOpen,
@@ -153,6 +152,14 @@ export const useLayoutStore = create<LayoutStore>()(
         diffSplitMode: state.diffSplitMode,
         expandedProjects: state.expandedProjects,
       }),
+      migrate: (persistedState: any, version: number) => {
+        if (version < 5) {
+          if (persistedState && 'history' in persistedState) {
+            delete persistedState.history;
+          }
+        }
+        return persistedState;
+      },
     }
   )
 );

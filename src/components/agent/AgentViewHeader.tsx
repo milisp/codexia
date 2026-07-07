@@ -1,16 +1,13 @@
-import { History, LayoutGrid, List, PanelRight, Square, SquareTerminal } from 'lucide-react';
-import { useCallback } from 'react';
-import { useCodexStore, useCurrentThread } from '@/components/codex/stores';
+import { LayoutGrid, List, PanelRight, Square, SquareTerminal } from 'lucide-react';
+import { useCodexStore } from '@/components/codex/stores';
 import { NewAgentButton } from '@/components/common/NewAgentButton';
 import { GitActions } from '@/components/features/git';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useTrafficLightConfig } from '@/hooks';
-import { codexService } from '@/services/codexService';
 import { useCCStore, useLayoutStore } from '@/stores';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import type { AgentCardsViewMode } from '@/stores/useAgentCenterStore';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { UpdateButton } from '../features/UpdateButton';
 
 const CARDS_VIEW_MODES: { mode: AgentCardsViewMode; icon: typeof LayoutGrid; title: string }[] = [
@@ -20,33 +17,16 @@ const CARDS_VIEW_MODES: { mode: AgentCardsViewMode; icon: typeof LayoutGrid; tit
 ];
 
 export function AgentViewHeader() {
-  const { setView, view, isRightPanelOpen, toggleRightPanel, isTerminalOpen, setIsTerminalOpen } =
+  const { isRightPanelOpen, toggleRightPanel, isTerminalOpen, setIsTerminalOpen } =
     useLayoutStore();
   const { cardsViewMode, setCardsViewMode } = useAgentCenterStore();
   const { open: isSidebarOpen, openMobile, isMobile } = useSidebar();
-  const { setHistoryMode, selectedAgent } = useWorkspaceStore();
   const { needsTrafficLightOffset } = useTrafficLightConfig(isSidebarOpen);
-  const { activeThreadIds, currentThreadId } = useCodexStore();
+  const { currentThreadId } = useCodexStore();
   const { activeSessionId } = useCCStore();
   // Show trigger when sidebar is closed; on mobile the Sheet is transient so always show
   const showTrigger = isMobile ? !openMobile : !isSidebarOpen;
   const hasActiveSession = currentThreadId || activeSessionId;
-
-  const currentThread = useCurrentThread();
-  const isHistoryView = view === 'history';
-
-  const handleToggleHistoryMode = useCallback(async () => {
-    const nextMode = !isHistoryView;
-    setHistoryMode(nextMode);
-    setView(nextMode ? 'history' : 'agent');
-
-    if (!nextMode) {
-      const targetThreadId = currentThreadId ?? currentThread?.id ?? null;
-      if (targetThreadId && !activeThreadIds.includes(targetThreadId)) {
-        await codexService.setCurrentThread(targetThreadId);
-      }
-    }
-  }, [isHistoryView, setHistoryMode, setView, currentThreadId, currentThread, activeThreadIds]);
 
   return (
     <div
@@ -61,18 +41,6 @@ export function AgentViewHeader() {
             <UpdateButton />
           </div>
         )}
-        {selectedAgent === 'codex' &&
-          currentThreadId &&
-          (view === 'agent' || view === 'history') && (
-            <Button
-              variant={isHistoryView ? 'secondary' : 'ghost'}
-              size="icon"
-              onClick={handleToggleHistoryMode}
-              title={isHistoryView ? 'Exit history mode' : 'Enter history mode'}
-            >
-              <History />
-            </Button>
-          )}
       </div>
       <span className="flex items-center gap-1 pr-2">
         <span className="flex items-center gap-0.5 border rounded-md p-0.5">

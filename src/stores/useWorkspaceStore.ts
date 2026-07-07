@@ -64,8 +64,6 @@ interface WorkspaceStore {
   clearHistoryProjects: () => void;
   projectSort: ProjectSortKey;
   setProjectSort: (sortKey: ProjectSortKey) => void;
-  historyMode: boolean;
-  setHistoryMode: (historyMode: boolean) => void;
   cwd: string | null;
   setCwd: (path: string | null) => void;
   // Multi-file tab state
@@ -137,8 +135,6 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   clearHistoryProjects: () => set({ historyProjects: [] }),
   projectSort: 'added_desc',
   setProjectSort: (sortKey) => set({ projectSort: sortKey }),
-  historyMode: false,
-  setHistoryMode: (historyMode) => set({ historyMode }),
   cwd: null,
   setCwd: (path) => {
     const normalized = path ? normalizeProjectPath(path) : null;

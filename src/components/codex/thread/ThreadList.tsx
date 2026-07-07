@@ -34,7 +34,7 @@ interface ThreadListProps {
 const EMPTY_LIST: ThreadListResponse = { data: [], nextCursor: null, backwardsCursor: null };
 
 export function ThreadList({ cwd }: ThreadListProps) {
-  const { cwd: workspaceCwd, historyMode, setCwd, setHistoryMode } = useWorkspaceStore();
+  const { cwd: workspaceCwd, setCwd } = useWorkspaceStore();
   const { setView } = useLayoutStore();
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
   const { currentThreadId, threadStatusMap, threads: storeThreads } = useCodexStore();
@@ -96,7 +96,6 @@ export function ThreadList({ cwd }: ThreadListProps) {
     refresh();
   }, [refreshTrigger, refresh]);
 
-  // Patch thread name when thread/name/updated notification arrives.
   useEffect(() => {
     const unlisten = listen<ServerNotification>('codex:notification', (event) => {
       const { method, params } = event.payload;
@@ -125,12 +124,6 @@ export function ThreadList({ cwd }: ThreadListProps) {
 
   const handleOpenThread = useCallback(
     async (threadId: string, preview?: string) => {
-      if (historyMode) {
-        setView('history');
-        await handleSelectThread(threadId);
-        return;
-      }
-      setHistoryMode(false);
       addAgentCard({ kind: 'codex', id: threadId, preview, cwd });
       setCurrentAgentCardId(threadId);
       setView('agent');
@@ -138,8 +131,6 @@ export function ThreadList({ cwd }: ThreadListProps) {
     },
     [
       handleSelectThread,
-      historyMode,
-      setHistoryMode,
       setView,
       setCurrentAgentCardId,
       addAgentCard,

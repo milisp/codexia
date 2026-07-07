@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect, useRef } from 'react';
 import type { ImperativePanelHandle } from 'react-resizable-panels';
-import { History } from '@/components/codex/history';
 import { BottomTerminal } from '@/components/features/terminal/BottomTerminal';
 import { AppSideBar, RightPanel } from '@/components/layout';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
@@ -167,7 +166,6 @@ export function AppLayout() {
           {view === 'agents-md' && <AgentsMdView />}
           {view === 'agent' && <AgentView />}
           {view === 'automations' && <AutoMationsView />}
-          {view === 'history' && <History />}
           {view === 'plugins' && <PluginsView />}
           {view === 'insights' && <InsightsView />}
         </Suspense>
