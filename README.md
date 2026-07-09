@@ -15,7 +15,7 @@
 
 Lightweight Agent Workstation for Codex CLI + Claude Code — with task scheduler, git worktree & remote control, skills management, and a prompt notepad in one workspace
 
-> [Want to become a sponsor?](mailto:milisp@proton.me)
+> [Want to become a sponsor?](mailto:milisp@proton.me) · [Need custom dev / consulting?](mailto:milisp@proton.me) — AI agent integrations, MCP servers, multi-agent orchestration, Codex/Claude Agent SDK
 
 ![Codexia Home](docs/images/codexia-agent-command-center.png)
 
