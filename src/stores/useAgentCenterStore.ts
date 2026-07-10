@@ -5,10 +5,10 @@ export type AgentCenterCard =
   | { kind: 'codex'; id: string; preview?: string; worktreePath?: string; cwd?: string | null }
   | { kind: 'cc'; id: string; preview?: string; worktreePath?: string; cwd?: string | null };
 
-// Multi-agent view layout mode: grid of cards, compact list (header only), or single active card.
-export type AgentCardsViewMode = 'grid' | 'list' | 'single';
+// Multi-agent view layout mode: grid of cards, compact list (header only), or solo active card.
+export type AgentCardsViewMode = 'grid' | 'list' | 'solo';
 
-// User-adjusted size for a single card in grid mode (Ghostty-style manual resize).
+// User-adjusted size for a solo card in grid mode (Ghostty-style manual resize).
 // width is omitted until the user drags the right edge, letting the card fall back
 // to the layout's natural flex-basis; height always has a value (defaults to h-72).
 export interface AgentCardSize {
@@ -69,7 +69,7 @@ export const useAgentCenterStore = create<AgentCenterState>()(
       currentAgentCardId: null,
       setCurrentAgentCardId: (id) => set({ currentAgentCardId: id }),
 
-      cardsViewMode: 'grid',
+      cardsViewMode: 'solo',
       setCardsViewMode: (mode) => set({ cardsViewMode: mode }),
 
       cardSizeMap: {},
@@ -78,7 +78,13 @@ export const useAgentCenterStore = create<AgentCenterState>()(
     }),
     {
       name: 'agent-center-store',
-      version: 3,
+      version: 4,
+      migrate: (persistedState: any, version: number) => {
+        if (version === 3 && persistedState?.cardsViewMode === 'single') {
+          persistedState.cardsViewMode = 'solo';
+        }
+        return persistedState;
+      },
       // currentAgentCardId is runtime-only — not persisted
       partialize: (state) => ({
         cards: state.cards,

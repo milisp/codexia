@@ -11,9 +11,9 @@ import type { AgentCardsViewMode } from '@/stores/useAgentCenterStore';
 import { UpdateButton } from '../features/UpdateButton';
 
 const CARDS_VIEW_MODES: { mode: AgentCardsViewMode; icon: typeof LayoutGrid; title: string }[] = [
+  { mode: 'solo', icon: Square, title: 'Solo view' },
   { mode: 'grid', icon: LayoutGrid, title: 'Grid view' },
   { mode: 'list', icon: List, title: 'List view' },
-  { mode: 'single', icon: Square, title: 'Single view' },
 ];
 
 export function AgentViewHeader() {
