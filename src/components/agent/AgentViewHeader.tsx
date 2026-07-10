@@ -5,10 +5,12 @@ import { GitActions } from '@/components/features/git';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useTrafficLightConfig } from '@/hooks';
-import { useCCStore, useLayoutStore } from '@/stores';
+import { useCCStore, useLayoutStore, useWorkspaceStore } from '@/stores';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import type { AgentCardsViewMode } from '@/stores/useAgentCenterStore';
 import { UpdateButton } from '../features/UpdateButton';
+import { getFilename } from '@/utils/getFilename';
+import { Badge } from '@/components/ui/badge';
 
 const CARDS_VIEW_MODES: { mode: AgentCardsViewMode; icon: typeof LayoutGrid; title: string }[] = [
   { mode: 'solo', icon: Square, title: 'Solo view' },
@@ -24,6 +26,7 @@ export function AgentViewHeader() {
   const { needsTrafficLightOffset } = useTrafficLightConfig(isSidebarOpen);
   const { currentThreadId } = useCodexStore();
   const { activeSessionId } = useCCStore();
+  const { cwd } = useWorkspaceStore();
   // Show trigger when sidebar is closed; on mobile the Sheet is transient so always show
   const showTrigger = isMobile ? !openMobile : !isSidebarOpen;
   const hasActiveSession = currentThreadId || activeSessionId;
@@ -41,6 +44,7 @@ export function AgentViewHeader() {
             <UpdateButton />
           </div>
         )}
+        {!hasActiveSession && <Badge variant="secondary">{getFilename(cwd)}</Badge>}
       </div>
       <span className="flex items-center gap-1 pr-2">
         <span className="flex items-center gap-0.5 border rounded-md p-0.5">
