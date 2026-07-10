@@ -60,7 +60,7 @@ export function RightPanelHeader() {
       className={`flex items-center justify-between gap-1 py-1 h-11 border-b border-white/10 shrink-0 ${needsTrafficLightOffset && isRightPanelFocused && !isMobile ? 'pl-20' : ''}`}
     >
       <div className="flex items-center gap-0.5 min-w-0 overflow-x-auto">
-        {isRightPanelFocused && !isMobile && (
+        {isRightPanelFocused && !isMobile && !isSidebarOpen && (
           <>
             <SidebarTrigger />
             <NewAgentButton />
