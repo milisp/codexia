@@ -5,6 +5,12 @@
             "description": "Use Garry Tan's exact Claude Code setup: 23 opinionated tools that serve as CEO, Designer, Eng Manager, Release Manager, Doc Engineer, and QA",
             "url": "https://github.com/garrytan/gstack",
             "setup": "git clone --single-branch --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/gstack && cd ~/.claude/skills/gstack && ./setup"
+        },
+        {
+            "name": "Codex Skin Pack Installer",
+            "description": "Install verified public-safe Codex desktop skin packs from a Codex plugin and Skill, with theme validation and restore guidance.",
+            "url": "https://github.com/ChannelerH/codex-skin-packs",
+            "setup": "codex plugin marketplace add ChannelerH/codex-skin-packs --ref main --sparse .agents/plugins --sparse plugins/codex-skin-pack-installer\ncodex plugin add codex-skin-pack-installer@codex-skin-packs"
         }
     ]
 }
