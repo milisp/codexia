@@ -36,8 +36,6 @@ Lightweight Agent Workstation for Codex CLI + Claude Code — with task schedule
 
 ### Homebrew (macOS)
 ```sh
-brew tap milisp/codexia
-brew trust milisp/codexia
 brew install --cask codexia
 ```
 

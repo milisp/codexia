@@ -126,21 +126,3 @@ jobs:
         run: |
           security delete-keychain build.keychain
           rm -f certificate.p12
-
-  update-homebrew:
-    permissions:
-      contents: write
-    needs: publish-tauri
-    runs-on: ubuntu-24.04
-    if: startsWith(github.ref, 'refs/tags/')
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Update Homebrew tap
-        env:
-          GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-        run: |
-          bash scripts/update-homebrew-tap.sh
