@@ -95,7 +95,7 @@ export default function PluginsView() {
   useEffect(() => {
     readSkillGroups()
       .then(setGroupsConfig)
-      .catch(() => { });
+      .catch(() => {});
   }, []);
 
   const saveGroups = useCallback(async (config: SkillGroupsConfig) => {

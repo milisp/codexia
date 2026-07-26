@@ -28,7 +28,7 @@ export function useServerNotificationHandler(
       if (method === 'thread/started') {
         threadId = payload.params.thread.id;
       } else if ('threadId' in payload.params) {
-        threadId = payload.params.threadId
+        threadId = payload.params.threadId;
       }
 
       if (method === 'account/updated') {
@@ -68,15 +68,13 @@ export function useServerNotificationHandler(
           const { threadName } = payload.params;
           useCodexStore.setState((state) => ({
             threads: state.threads.map((thread) =>
-              thread.id === threadId
-                ? { ...thread, preview: threadName ?? thread.preview }
-                : thread
+              thread.id === threadId ? { ...thread, preview: threadName ?? thread.preview } : thread
             ),
           }));
         }
 
         if (method === 'thread/tokenUsage/updated') {
-          const { tokenUsage } = payload.params
+          const { tokenUsage } = payload.params;
           useCodexStore.getState().setTokenUsage(threadId, tokenUsage);
         }
 

@@ -82,10 +82,7 @@ export function GitActions() {
             <span>Commit</span>
           </DropdownMenuItem>
 
-          <DropdownMenuItem
-            className="gap-2 text-xs cursor-pointer"
-            onClick={handleGitPush}
-          >
+          <DropdownMenuItem className="gap-2 text-xs cursor-pointer" onClick={handleGitPush}>
             <CloudUpload className="size-3.5 text-primary" />
             <span>Push</span>
           </DropdownMenuItem>

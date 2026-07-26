@@ -66,7 +66,7 @@ export function useSessionSelection({ directory, onSelectSession }: UseSessionSe
       sessionMessagesMap,
       addMessageToSession,
       setSessionLoading,
-    ],
+    ]
   );
 
   return {

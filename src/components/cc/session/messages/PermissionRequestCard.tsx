@@ -58,7 +58,7 @@ export function PermissionRequestCard({ msg, onResolve }: Props) {
               input: msg.toolInput,
               id: msg.requestId,
             } as any;
-            const errorProps = { inlineError: null, showError: false, onToggleError: () => { } };
+            const errorProps = { inlineError: null, showError: false, onToggleError: () => {} };
             switch (msg.toolName) {
               case 'Read':
                 return <ReadTool block={block} {...errorProps} />;

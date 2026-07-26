@@ -22,6 +22,7 @@ export const zh = {
   settings: {
     backToApp: '返回应用',
     general: '通用',
+    dictation: '语音输入',
     projects: '项目',
     privacy: '隐私',
     claude: 'Claude',
@@ -42,6 +43,15 @@ export const zh = {
     auto: '自动',
     accentColorDescription: '为活动的控件和口音选择高光颜色。',
     keepInTouch: '保持联系和社区',
+    dictationModel: '语音输入模型',
+    dictationModelDescription:
+      '选择用于设备端语音识别的 Whisper 模型。更大的模型更准确，但需要更多磁盘空间和内存。',
+    currentModel: '当前: {{label}} ({{size}})',
+    modelReady: '就绪',
+    modelNotDownloaded: '未下载',
+    modelDownloading: '下载中…',
+    modelError: '错误',
+    unknownError: '未知',
   },
   composer: {
     plan: '计划',

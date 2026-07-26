@@ -1,5 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { useApprovalStore, useCodexStore, useRequestUserInputStore } from '@/components/codex/stores';
+import {
+  useApprovalStore,
+  useCodexStore,
+  useRequestUserInputStore,
+} from '@/components/codex/stores';
 import { isDesktopTauri } from '@/hooks/runtime';
 import { getAccountWithParams } from '@/services';
 import { useLayoutStore } from '@/stores';

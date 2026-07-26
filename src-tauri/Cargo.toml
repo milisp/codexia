@@ -86,11 +86,19 @@ notify-debouncer-full = { workspace = true }
 portable-pty = { workspace = true }
 ignore = { workspace = true }
 nucleo = { workspace = true }
+cpal = "0.15"
+whisper-rs = "0.12"
+sha2 = "0.10"
 
 # Platform-specific dependencies
 [target.'cfg(windows)'.dependencies]
 encoding_rs = "0.8"
 winreg = "0.52"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-av-foundation = "0.3"
+block2 = "0.6"
 
 [dev-dependencies]
 tokio-tungstenite = "0.24"

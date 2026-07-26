@@ -1,4 +1,5 @@
 pub mod watcher;
+mod event_sink;
 mod handlers;
 pub mod router;
 mod server;

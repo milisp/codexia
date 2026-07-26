@@ -17,8 +17,9 @@ export const AgentMessageItem = ({ text }: AgentMessageItemProps) => {
         <Streamdown>{text}</Streamdown>
       </div>
       <div
-        className={`flex h-7 items-center gap-1 px-1 ${isWindowFocused ? 'invisible group-hover:visible group-focus-within:visible' : 'invisible'
-          }`}
+        className={`flex h-7 items-center gap-1 px-1 ${
+          isWindowFocused ? 'invisible group-hover:visible group-focus-within:visible' : 'invisible'
+        }`}
       >
         <CopyButton text={text} className="h-7 w-7 text-muted-foreground" />
       </div>

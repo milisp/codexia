@@ -27,8 +27,7 @@ export interface AgentCardProps {
 
 export function AgentCard({ card, onRemove, isSelected, hideBody = false }: AgentCardProps) {
   const { setCurrentAgentCardId } = useAgentCenterStore();
-  const { sessionLoadingMap, sessionMessagesMap, activeSessionIds, switchToSession } =
-    useCCStore();
+  const { sessionLoadingMap, sessionMessagesMap, activeSessionIds, switchToSession } = useCCStore();
   const { threadStatusMap } = useCodexStore();
   const { pendingApprovals } = useApprovalStore();
   const { pendingRequests } = useRequestUserInputStore();
@@ -43,11 +42,11 @@ export function AgentCard({ card, onRemove, isSelected, hideBody = false }: Agen
     card.kind === 'codex'
       ? codexStatus?.type === 'active' && codexStatus.activeFlags.length > 0
       : (sessionMessagesMap[card.id] ?? []).some(
-        (m: CCMessage): m is PermissionRequestMessage =>
-          m.type === 'permission_request' && !m.resolved
-      ) ||
-      pendingApprovals.some((a: ApprovalRequest) => a.threadId === card.id) ||
-      pendingRequests.some((r: RequestUserInputRequest) => r.threadId === card.id);
+          (m: CCMessage): m is PermissionRequestMessage =>
+            m.type === 'permission_request' && !m.resolved
+        ) ||
+        pendingApprovals.some((a: ApprovalRequest) => a.threadId === card.id) ||
+        pendingRequests.some((r: RequestUserInputRequest) => r.threadId === card.id);
 
   const status: AgentStatus = running ? 'running' : pending ? 'pending' : 'idle';
 
@@ -72,7 +71,9 @@ export function AgentCard({ card, onRemove, isSelected, hideBody = false }: Agen
   // List view: render header only, no body/footer.
   if (hideBody) {
     const attentionBorder = isSelected ? 'ring-2 ring-primary/60 border-primary/30' : 'border';
-    return <div className={`rounded-lg bg-background overflow-hidden ${attentionBorder}`}>{header}</div>;
+    return (
+      <div className={`rounded-lg bg-background overflow-hidden ${attentionBorder}`}>{header}</div>
+    );
   }
 
   if (card.kind === 'codex') {

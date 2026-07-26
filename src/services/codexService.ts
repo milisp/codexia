@@ -270,15 +270,15 @@ export const codexService = {
           // Inject plan mode when selected.
           ...(collaborationMode === 'plan'
             ? {
-              collaboration_mode: {
-                mode: 'plan',
-                settings: {
-                  model,
-                  reasoning_effort: reasoningEffort,
-                  developer_instructions: null,
+                collaboration_mode: {
+                  mode: 'plan',
+                  settings: {
+                    model,
+                    reasoning_effort: reasoningEffort,
+                    developer_instructions: null,
+                  },
                 },
-              },
-            }
+              }
             : {}),
         },
       };

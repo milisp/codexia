@@ -8,7 +8,8 @@ use tokio::sync::broadcast;
 use super::{router::create_router, types::WebServerState};
 use codexia_cc::CCState;
 use codexia_codex::{AppState, CodexInitializationState, connect_codex, initialize_codex};
-use codexia_shared::event_sink::{EventSink, WebSocketEventSink};
+use codexia_shared::event_sink::EventSink;
+use crate::event_sink::WebSocketEventSink;
 use codexia_shared::sleep::SleepState;
 use crate::watcher::WebWatchState;
 

@@ -22,6 +22,7 @@ export const en = {
   settings: {
     backToApp: 'Back to app',
     general: 'General',
+    dictation: 'Dictation',
     projects: 'Projects',
     privacy: 'Privacy',
     claude: 'Claude',
@@ -42,6 +43,15 @@ export const en = {
     auto: 'Auto',
     accentColorDescription: 'Pick a highlight color for active controls and accents.',
     keepInTouch: 'Keep in touch and community',
+    dictationModel: 'Dictation Model',
+    dictationModelDescription:
+      'Select the Whisper model for on-device speech recognition. Larger models are more accurate but require more disk space and memory.',
+    currentModel: 'Current: {{label}} ({{size}})',
+    modelReady: 'Ready',
+    modelNotDownloaded: 'Not downloaded',
+    modelDownloading: 'Downloading…',
+    modelError: 'Error',
+    unknownError: 'Unknown',
   },
   composer: {
     plan: 'Plan',

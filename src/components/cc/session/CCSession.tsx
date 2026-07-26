@@ -22,10 +22,7 @@ interface CCSessionProps {
   disableListener?: boolean;
 }
 
-export default function CCSession({
-  sessionId,
-  disableListener = false,
-}: CCSessionProps = {}) {
+export default function CCSession({ sessionId, disableListener = false }: CCSessionProps = {}) {
   const isEmbedded = !!sessionId;
 
   const {

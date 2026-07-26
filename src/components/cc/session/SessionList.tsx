@@ -1,6 +1,9 @@
 import { DeleteSessionDialog } from '@/components/cc/session/DeleteSessionDialog';
 import { SessionListItem } from '@/components/cc/session/SessionListItem';
-import { DEFAULT_VISIBLE, useSessionPagination } from '@/components/cc/session/useSessionPagination';
+import {
+  DEFAULT_VISIBLE,
+  useSessionPagination,
+} from '@/components/cc/session/useSessionPagination';
 import { useSessionActions } from '@/components/cc/session/useSessionActions';
 import { useSessionSelection } from '@/components/cc/session/useSessionSelection';
 import type { SdkSessionInfo } from '@/lib/sessions';
@@ -25,8 +28,10 @@ export function SessionList({ directory, sessions, onSelectSession }: Props) {
     removeSession,
   } = useSessionPagination({ directory, sessions });
 
-  const { activeSessionIds, activeSessionId, isLoading, handleSessionClick } =
-    useSessionSelection({ directory, onSelectSession });
+  const { activeSessionIds, activeSessionId, isLoading, handleSessionClick } = useSessionSelection({
+    directory,
+    onSelectSession,
+  });
 
   const { pendingDeleteId, setPendingDeleteId, doDeleteSession, doDeleteWorktree, copySessionId } =
     useSessionActions({ onSessionDeleted: removeSession });
@@ -93,11 +98,7 @@ export function SessionList({ directory, sessions, onSelectSession }: Props) {
             void loadMoreSessions();
           }}
         >
-          {loadingMore
-            ? 'Loading...'
-            : expanded && allLoaded
-              ? 'Show less'
-              : `Load more`}
+          {loadingMore ? 'Loading...' : expanded && allLoaded ? 'Show less' : `Load more`}
         </button>
       )}
 

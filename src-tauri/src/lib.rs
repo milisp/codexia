@@ -1,5 +1,6 @@
 // Core modules
 mod commands;
+pub mod dictation;
 mod event_sink;
 #[cfg(all(any(windows, target_os = "linux")))]
 mod window;
@@ -11,6 +12,7 @@ pub fn run() {
     // Desktop: full app with all plugins, commands, and setup.
     let builder = {
         use cc::CCState;
+        use dictation::DictationState;
         use codexia_shared::terminal::TerminalState;
         use codexia_shared::sleep::SleepState;
         use codexia_shared::state::WatchState;
@@ -54,6 +56,7 @@ pub fn run() {
             .manage(WatchState::new())
             .manage(TerminalState::default())
             .manage(SleepState::default())
+            .manage(DictationState::default())
             .invoke_handler(tauri::generate_handler![
                 commands::codex::list_other_models,
                 commands::codex::load_env_keys,
@@ -174,6 +177,14 @@ pub fn run() {
                 commands::terminal::terminal_write,
                 commands::terminal::terminal_resize,
                 commands::terminal::terminal_stop,
+                commands::dictation::dictation_model_status,
+                commands::dictation::dictation_download_model,
+                commands::dictation::dictation_cancel_download,
+                commands::dictation::dictation_remove_model,
+                commands::dictation::dictation_start,
+                commands::dictation::dictation_request_permission,
+                commands::dictation::dictation_stop,
+                commands::dictation::dictation_cancel,
                 commands::insights::get_agent_heatmaps,
                 commands::insights::get_insight_filter_options,
                 commands::insights::get_insight_rankings,

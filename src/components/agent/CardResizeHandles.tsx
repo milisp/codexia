@@ -1,6 +1,9 @@
 import type { useCardResize } from './useCardResize';
 
-type ResizeHandlers = Pick<ReturnType<typeof useCardResize>, 'startDrag' | 'onDragMove' | 'endDrag'>;
+type ResizeHandlers = Pick<
+  ReturnType<typeof useCardResize>,
+  'startDrag' | 'onDragMove' | 'endDrag'
+>;
 
 /**
  * Right-edge (width), bottom-edge (height), and corner (both) drag handles for

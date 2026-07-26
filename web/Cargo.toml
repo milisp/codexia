@@ -58,7 +58,7 @@ claude-agent-sdk-rs = { workspace = true }
 codex-finder = { workspace = true }
 
 codexia-git = { workspace = true }
-codexia-shared = { path = "../crates/shared", features = ["web"] }
+codexia-shared = { path = "../crates/shared" }
 codexia-cc = { path = "../crates/cc" }
 codexia-db = { path = "../crates/db" }
 codexia-codex = { path = "../crates/codex" }

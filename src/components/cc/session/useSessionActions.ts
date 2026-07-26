@@ -23,7 +23,7 @@ export function useSessionActions({ onSessionDeleted }: UseSessionActionsArgs) {
         toast({ description: 'Failed to delete session', variant: 'destructive' });
       }
     },
-    [onSessionDeleted, toast],
+    [onSessionDeleted, toast]
   );
 
   const doDeleteWorktree = useCallback(
@@ -40,7 +40,7 @@ export function useSessionActions({ onSessionDeleted }: UseSessionActionsArgs) {
         toast({ description: 'Failed to delete worktree', variant: 'destructive' });
       }
     },
-    [toast],
+    [toast]
   );
 
   const copySessionId = useCallback(
@@ -49,7 +49,7 @@ export function useSessionActions({ onSessionDeleted }: UseSessionActionsArgs) {
       navigator.clipboard.writeText(id);
       toast({ description: 'Session ID copied to clipboard' });
     },
-    [toast],
+    [toast]
   );
 
   return {

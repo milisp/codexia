@@ -32,11 +32,13 @@ import {
 } from './codex';
 import { ExplorerSettings } from './ExplorerSettings';
 import { GeneralSettings } from './GeneralSettings';
+import { DictationSettings } from './DictationSettings';
 import { PrivacySettings } from './PrivacySettings';
 import { ProjectsSettings } from './ProjectsSettings';
 
 type SettingsSection =
   | 'general'
+  | 'dictation'
   | 'projects'
   | 'codexauth'
   | 'config'
@@ -56,7 +58,14 @@ const codexSections = [
   'personalization',
   'archived',
 ] as const;
-const topLevelSections = ['general', 'projects', 'privacy', 'claude', 'explorer'] as const;
+const topLevelSections = [
+  'general',
+  'dictation',
+  'projects',
+  'privacy',
+  'claude',
+  'explorer',
+] as const;
 
 export default function SettingsView() {
   const { t } = useTranslation('settings');
@@ -68,6 +77,7 @@ export default function SettingsView() {
   const activeSectionContent = (
     <>
       {activeSection === 'general' && <GeneralSettings />}
+      {activeSection === 'dictation' && <DictationSettings />}
       {activeSection === 'projects' && <ProjectsSettings />}
       {activeSection === 'privacy' && <PrivacySettings />}
       {activeSection === 'codexauth' && <CodexAuth />}

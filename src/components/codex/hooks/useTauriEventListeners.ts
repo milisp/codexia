@@ -32,10 +32,7 @@ export function useTauriEventListeners({
     let cancelled = false;
     const unlisteners: (() => void)[] = [];
 
-    const registerListener = async <T>(
-      event: string,
-      handler: (event: { payload: T }) => void
-    ) => {
+    const registerListener = async <T>(event: string, handler: (event: { payload: T }) => void) => {
       const unlisten = await listen<T>(event, handler);
       if (cancelled) {
         unlisten();

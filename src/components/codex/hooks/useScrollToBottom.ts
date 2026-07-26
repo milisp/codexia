@@ -24,7 +24,7 @@ interface UseScrollToBottomResult {
 // and exposes isAtBottom so callers can render a "jump to bottom" affordance otherwise.
 export function useScrollToBottom<T>(
   dependencyList: T,
-  { viewportSelector = '[data-slot="scroll-area-viewport"]' }: UseScrollToBottomOptions = {},
+  { viewportSelector = '[data-slot="scroll-area-viewport"]' }: UseScrollToBottomOptions = {}
 ): UseScrollToBottomResult {
   const scrollAreaRootRef = useRef<HTMLDivElement>(null);
   const bottomAnchorRef = useRef<HTMLDivElement>(null);

@@ -129,13 +129,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
       setView('agent');
       await handleSelectThread(threadId);
     },
-    [
-      handleSelectThread,
-      setView,
-      setCurrentAgentCardId,
-      addAgentCard,
-      cwd,
-    ]
+    [handleSelectThread, setView, setCurrentAgentCardId, addAgentCard, cwd]
   );
 
   const handleArchive = useCallback(
@@ -229,8 +223,9 @@ export function ThreadList({ cwd }: ThreadListProps) {
                 onClick={() => void handleOpenThread(thread.id, thread.preview)}
                 role="button"
                 tabIndex={0}
-                className={`group grid grid-cols-[1fr_auto] items-center gap-2 w-full text-left p-2 rounded-lg transition-colors ${currentThreadId === thread.id ? 'bg-zinc-700/50' : 'hover:bg-zinc-800/30'
-                  }`}
+                className={`group grid grid-cols-[1fr_auto] items-center gap-2 w-full text-left p-2 rounded-lg transition-colors ${
+                  currentThreadId === thread.id ? 'bg-zinc-700/50' : 'hover:bg-zinc-800/30'
+                }`}
               >
                 <div className="text-sm font-medium truncate min-w-0 pr-2 flex items-center gap-1.5">
                   {threadStatusMap[thread.id]?.type === 'active' && (
@@ -282,9 +277,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
           </ContextMenu>
         ))}
         {threads.length === 0 && (
-          <div className="text-xs p-2 text-sidebar-foreground/50">
-            No chats.
-          </div>
+          <div className="text-xs p-2 text-sidebar-foreground/50">No chats.</div>
         )}
       </div>
       {nextCursor && (

@@ -1,6 +1,7 @@
 pub mod automation;
 pub mod cc;
 pub mod codex;
+pub mod dictation;
 pub mod dxt;
 pub mod env;
 pub mod fs;

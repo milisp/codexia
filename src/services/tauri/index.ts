@@ -4,6 +4,7 @@ export * from './automation';
 
 export * from './cc';
 export * from './codex';
+export * from './dictation';
 export * from './dxt';
 export * from './filesystem';
 export * from './git';

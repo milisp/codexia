@@ -14,6 +14,7 @@ import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { AccessModePopover } from './AccessModePopover';
 import { ComposerMenu } from './ComposerMenu';
 import { ComposerToolbarProvider } from './ComposerToolbarContext';
+import { DictationButton } from './DictationButton';
 import { ModelReasonSelector } from './ModelReasonSelector';
 import { SkillsInputPopover } from './SkillsPopover';
 import { SlashCommandPopover } from './SlashCommandsSelector';
@@ -45,7 +46,8 @@ function goalStatusLabel(status: ThreadGoal['status']): string {
 export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
   const [images, setImages] = useState<string[]>([]);
   const { inputValue, setInputValue, appendFileLinks } = useInputStore();
-  const { currentThreadId, currentTurnId, inputFocusTrigger, goalEnabled, setGoalEnabled } = useCodexStore();
+  const { currentThreadId, currentTurnId, inputFocusTrigger, goalEnabled, setGoalEnabled } =
+    useCodexStore();
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
   const { cwd } = useWorkspaceStore.getState();
   const threadStatus = useThreadStatus();
@@ -247,9 +249,7 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
               <Target className="h-3 w-3 shrink-0" />
               <span className="truncate">{goalStatusLabel(threadGoal.status)}</span>
               {threadGoal.status !== 'complete' && (
-                <span className="truncate text-muted-foreground/70">
-                  · {threadGoal.objective}
-                </span>
+                <span className="truncate text-muted-foreground/70">· {threadGoal.objective}</span>
               )}
             </div>
           )}
@@ -312,6 +312,11 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
               <div className="flex items-center gap-2">
                 <ContextWindowWidget />
                 <ModelReasonSelector />
+                <DictationButton
+                  onTranscript={(text) => {
+                    setInputValue(inputValue ? `${inputValue} ${text}` : text);
+                  }}
+                />
                 {threadStatus?.type === 'active' ? (
                   <Button
                     onClick={handleStop}

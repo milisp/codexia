@@ -27,10 +27,7 @@ interface CodexThreadProps {
   fillHeight?: boolean;
 }
 
-export function CodexThread({
-  threadId,
-  fillHeight = true,
-}: CodexThreadProps = {}) {
+export function CodexThread({ threadId, fillHeight = true }: CodexThreadProps = {}) {
   const { currentThreadId, events, hasAccount, turnTimingMap } = useCodexStore();
 
   // Use the explicitly provided threadId when embedded, otherwise fall back
@@ -106,10 +103,7 @@ export function CodexThread({
 
       {/* Scroll-to-bottom button, shown when the view isn't already at the bottom */}
       {!isAtBottom && (
-        <ScrollToBottomButton
-          onClick={() => scrollToBottom('smooth')}
-          bottomClassName="bottom-4"
-        />
+        <ScrollToBottomButton onClick={() => scrollToBottom('smooth')} bottomClassName="bottom-4" />
       )}
     </div>
   );

@@ -22,6 +22,7 @@ export const ja = {
   settings: {
     backToApp: 'アプリに戻る',
     general: '一般',
+    dictation: 'ディクテーション',
     projects: 'プロジェクト',
     privacy: 'プライバシー',
     claude: 'Claude',
@@ -42,6 +43,15 @@ export const ja = {
     auto: '自動',
     accentColorDescription: 'アクティブなコントロールやアクセントのハイライトカラーを選択します。',
     keepInTouch: 'コミュニケーションとコミュニティ',
+    dictationModel: 'ディクテーション モデル',
+    dictationModelDescription:
+      'オンデバイス音声認識用の Whisper モデルを選択します。より大きなモデルは精度が高いですが、より多くのディスク容量とメモリを必要とします。',
+    currentModel: '現在: {{label}} ({{size}})',
+    modelReady: '準備完了',
+    modelNotDownloaded: '未ダウンロード',
+    modelDownloading: 'ダウンロード中…',
+    modelError: 'エラー',
+    unknownError: '不明',
   },
   sidebar: {
     usage: '使用状況',

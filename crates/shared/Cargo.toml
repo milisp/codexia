@@ -8,7 +8,6 @@ workspace = "../../"
 [features]
 default = []
 desktop = []
-web = []
 
 [dependencies]
 anyhow = { workspace = true }

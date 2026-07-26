@@ -94,11 +94,7 @@ export default function AgentView() {
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <Suspense fallback={null}>
-                {selectedAgent === 'codex' ? (
-                  <CodexThread />
-                ) : (
-                  <CCSession />
-                )}
+                {selectedAgent === 'codex' ? <CodexThread /> : <CCSession />}
               </Suspense>
             </div>
             <div className="shrink-0 flex justify-center">
