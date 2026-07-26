@@ -5,7 +5,7 @@ export const createThreadsSlice: StateCreator<CodexStore, [], [], ThreadsSlice> 
   threads: [],
   currentThreadId: null,
   currentTurnId: null,
-  hasAccount: null,
+  hasAccount: false,
   activeThreadIds: [],
   inputFocusTrigger: 0,
   threadListNextCursor: null,
