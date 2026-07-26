@@ -1,8 +1,8 @@
 import { Search } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { BrowseTab } from '@/components/features/skills/BrowseTab';
-import { SkillGroupsBar } from '@/components/features/skills/SkillGroupsBar';
+import { BrowseTab } from '@/features/skills/BrowseTab';
+import { SkillGroupsBar } from '@/features/skills/SkillGroupsBar';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import { useTrafficLightConfig } from '@/hooks';
@@ -29,7 +29,7 @@ export default function SkillsView() {
   useEffect(() => {
     listCentralSkills(scope, cwd ?? undefined)
       .then((skills) => setInstalledNames(new Set(skills.map((s) => s.name))))
-      .catch(() => {});
+      .catch(() => { });
   }, [scope, cwd, installedRefreshKey]);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export default function SkillsView() {
         setGroupsConfig(cfg);
         setSelectedGroupId((prev) => (prev && cfg.groups.some((g) => g.id === prev) ? prev : null));
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const saveGroups = useCallback(async (config: SkillGroupsConfig) => {

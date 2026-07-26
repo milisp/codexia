@@ -1,7 +1,7 @@
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { McpServerForm } from '@/components/features/mcp/McpServerForm';
+import { McpServerForm } from '@/features/mcp/McpServerForm';
 import { Button } from '@/components/ui/button';
 import { ccMcpAdd, unifiedAddMcpServer } from '@/services';
 import { useWorkspaceStore } from '@/stores';

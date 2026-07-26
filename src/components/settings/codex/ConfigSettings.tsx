@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CodeEditor } from '@/components/features/files';
+import { CodeEditor } from '@/features/files';
 import { getCodexHome, readFile, writeFile } from '@/services/tauri';
 import { getErrorMessage } from '@/utils/errorUtils';
 

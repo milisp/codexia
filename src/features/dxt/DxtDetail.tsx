@@ -1,7 +1,7 @@
 import { Plus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { z } from 'zod';
-import { Footer, ToolPrompt, UserConfigForm } from '@/components/features/dxt';
+import { Footer, ToolPrompt, UserConfigForm } from '@/features/dxt';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -311,7 +311,7 @@ export default function DxtDetail({ user, repo }: { user: string; repo: string }
       };
       try {
         await unifiedEnableMcpServer(_serverItem);
-      } catch (error) {}
+      } catch (error) { }
     }
   }
 

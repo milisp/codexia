@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef } from 'react';
 import type { ImperativePanelHandle } from 'react-resizable-panels';
-import { BottomTerminal } from '@/components/features/terminal/BottomTerminal';
+import { BottomTerminal } from '@/features/terminal/BottomTerminal';
 import { AppSideBar, RightPanel } from '@/components/layout';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { SidebarInset, SidebarProvider, useSidebar } from '@/components/ui/sidebar';
@@ -13,9 +13,9 @@ const PluginsView = lazy(() => import('@/views/PluginsView'));
 const AgentsMdView = lazy(() => import('@/views/AgentsMdView'));
 const AgentView = lazy(() => import('@/components/agent/AgentView'));
 const AutoMationsView = lazy(() =>
-  import('../features/automations').then((module) => ({ default: module.AutoMationsView }))
+  import('../../features/automations').then((module) => ({ default: module.AutoMationsView }))
 );
-const InsightsView = lazy(() => import('@/components/features/insight/InsightsView'));
+const InsightsView = lazy(() => import('@/features/insight/InsightsView'));
 
 // Inner component so it can call useSidebar() inside SidebarProvider
 function LayoutContent({ mainContent }: { mainContent: React.ReactNode }) {

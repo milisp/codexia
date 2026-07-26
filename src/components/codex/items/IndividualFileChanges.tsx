@@ -1,7 +1,7 @@
 import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import type { FileUpdateChange } from '@/bindings/v2';
-import { DiffViewer } from '@/components/features/DiffViewer';
+import { DiffViewer } from '@/features/DiffViewer';
 import { Markdown } from '@/components/Markdown';
 import { Button } from '@/components/ui/button';
 import { getFilename } from '@/utils/getFilename';

@@ -13,7 +13,7 @@ import {
 import { isDesktopTauri } from '@/hooks/runtime';
 import { useCCStore } from '@/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { BranchSwitcher } from '../features/branch';
+import { BranchSwitcher } from '../../features/branch';
 import { AgentWorkspaceSelect } from './AgentWorkspaceSelect';
 
 export function WorkspaceSwitcher() {

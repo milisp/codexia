@@ -25,7 +25,7 @@ import { useLayoutStore } from '@/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { NewAgentButton } from '../common/NewAgentButton';
 import { SessionManagerDialog } from '../common/SessionManagerDialog';
-import { UpdateButton } from '../features/UpdateButton';
+import { UpdateButton } from '../../features/UpdateButton';
 import { SideBarAddProjectButton } from './SideBarAddProjectButton';
 import { SideBarClaudeTab, SideBarCodexTab } from './SideBarTab';
 import { UserInfo } from './UserInfo';

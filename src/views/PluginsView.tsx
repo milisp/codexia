@@ -11,13 +11,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { AgentSwitcher } from '@/components/agent';
 import CCMcpView from '@/components/cc/mcp/CCMcpView';
 import { McpConfigScopeSelector } from '@/components/cc/mcp/McpConfigScopeSelector';
-import DxtView from '@/components/features/dxt/DxtView';
-import { CodexMcpView } from '@/components/features/mcp/CodexMcpView';
-import { McpAddPanel } from '@/components/features/mcp/McpAddPanel';
-import { Clone } from '@/components/features/skills/Clone';
-import { InstalledTab } from '@/components/features/skills/InstalledTab';
-import SkillsViewContent from '@/components/features/skills/SkillsView';
-import { RecommendToolsView } from '@/components/features/tools/RecommendToolsView';
+import DxtView from '@/features/dxt/DxtView';
+import { CodexMcpView } from '@/features/mcp/CodexMcpView';
+import { McpAddPanel } from '@/features/mcp/McpAddPanel';
+import { Clone } from '@/features/skills/Clone';
+import { InstalledTab } from '@/features/skills/InstalledTab';
+import SkillsViewContent from '@/features/skills/SkillsView';
+import { RecommendToolsView } from '@/features/tools/RecommendToolsView';
 import { MCP } from '@/components/icons';
 import { ProjectSelector } from '@/components/ProjectSelector';
 import { Button } from '@/components/ui/button';
@@ -95,7 +95,7 @@ export default function PluginsView() {
   useEffect(() => {
     readSkillGroups()
       .then(setGroupsConfig)
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const saveGroups = useCallback(async (config: SkillGroupsConfig) => {

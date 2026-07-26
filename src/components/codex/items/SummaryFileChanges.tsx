@@ -1,5 +1,5 @@
 import type { FileUpdateChange } from '@/bindings/v2';
-import { DiffViewer } from '@/components/features/DiffViewer';
+import { DiffViewer } from '@/features/DiffViewer';
 import type { AggregatedFileChange, DiffViewerInput } from './fileChangeLogic';
 
 type SummaryFileChangesProps = {

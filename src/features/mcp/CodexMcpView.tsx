@@ -6,7 +6,7 @@ import {
   getServerProtocol,
   McpServerCard,
   McpServerForm,
-} from '@/components/features/mcp';
+} from '@/features/mcp';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { unifiedAddMcpServer, unifiedReadMcpConfig, unifiedRemoveMcpServer } from '@/services';

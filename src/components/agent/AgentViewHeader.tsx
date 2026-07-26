@@ -1,14 +1,14 @@
 import { LayoutGrid, List, PanelRight, Square, SquareTerminal } from 'lucide-react';
 import { useCodexStore } from '@/components/codex/stores';
 import { NewAgentButton } from '@/components/common/NewAgentButton';
-import { GitActions } from '@/components/features/git';
+import { GitActions } from '@/features/git';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useTrafficLightConfig } from '@/hooks';
 import { useCCStore, useLayoutStore, useWorkspaceStore } from '@/stores';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import type { AgentCardsViewMode } from '@/stores/useAgentCenterStore';
-import { UpdateButton } from '../features/UpdateButton';
+import { UpdateButton } from '../../features/UpdateButton';
 import { getFilename } from '@/utils/getFilename';
 import { Badge } from '@/components/ui/badge';
 

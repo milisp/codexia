@@ -3,14 +3,14 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useGitWatch } from '@/hooks/useGitWatch';
 import { useLayoutStore, useWorkspaceStore } from '@/stores';
 import { useGitStatsStore } from '@/stores/useGitStatsStore';
-import { detectWebFramework } from '../features/web-preview/webFrameworkDetection';
+import { detectWebFramework } from '../../features/web-preview/webFrameworkDetection';
 import { RightPanelHeader } from './RightPanelHeader';
 
-const NoteView = lazy(() => import('@/components/features/notes/NoteView'));
-const FilesPanel = lazy(() => import('@/components/features/files/FilesPanel'));
-const GitDiffPanel = lazy(() => import('@/components/features/git/GitDiffPanel'));
+const NoteView = lazy(() => import('@/features/notes/NoteView'));
+const FilesPanel = lazy(() => import('@/features/files/FilesPanel'));
+const GitDiffPanel = lazy(() => import('@/features/git/GitDiffPanel'));
 const WebPreview = lazy(() =>
-  import('../features/web-preview/WebPreview').then((m) => ({ default: m.WebPreview }))
+  import('../../features/web-preview/WebPreview').then((m) => ({ default: m.WebPreview }))
 );
 const TasksPanel = lazy(() => import('@/components/agent/TasksPanel'));
 
