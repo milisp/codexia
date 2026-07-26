@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { ProjectSelector } from '@/components/ProjectSelector';
+import { ProjectSelector } from '@/features/ProjectSelector';
 import {
   Select,
   SelectContent,

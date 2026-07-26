@@ -19,7 +19,7 @@ import { InstalledTab } from '@/features/skills/InstalledTab';
 import SkillsViewContent from '@/features/skills/SkillsView';
 import { RecommendToolsView } from '@/features/tools/RecommendToolsView';
 import { MCP } from '@/components/icons';
-import { ProjectSelector } from '@/components/ProjectSelector';
+import { ProjectSelector } from '@/features/ProjectSelector';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
