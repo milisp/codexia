@@ -1,4 +1,4 @@
-import { ArrowLeft, MoreHorizontal, Plus, RotateCcw, Settings } from 'lucide-react';
+import { ArrowLeft, ChevronRight, MoreHorizontal, Plus, RotateCcw, Settings } from 'lucide-react';
 import { AgentSwitcher } from '@/components/agent';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,7 +10,7 @@ import {
 import { useTrafficLightConfig } from '@/hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLayoutStore } from '@/stores';
-import { usePluginsViewContext } from '../hooks/PluginsViewContext';
+import { usePluginsViewContext } from '../hooks';
 import { TabSwitcher } from './TabSwitcher';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 
@@ -29,6 +29,8 @@ export function PluginsViewHeader() {
     selectedDxt,
     setSelectedDxt,
     setRefreshTrigger,
+    selectedPluginDetail,
+    handlePluginDetail,
   } = usePluginsViewContext();
 
   return (
@@ -62,14 +64,19 @@ export function PluginsViewHeader() {
           onChange={setAddTab}
           showLabel={!isMobile}
         />
+      ) : overlay === 'detail' ? (
+        <PluginDetailHeader displayName={selectedPluginDetail?.summary?.interface?.displayName ?? selectedPluginDetail?.summary?.name ?? ''} onBack={() => handlePluginDetail(null)} />
       ) : (
-        !selectedDxt && (<>
-          <TabSwitcher
-            tabs={['Plugins', 'Skills', 'Tools', 'MCP'] as const}
-            active={mainTab}
-            onChange={setMainTab}
-            showLabel={!isMobile}
-          /></>
+        !overlay &&
+        !selectedDxt && (
+          <>
+            <TabSwitcher
+              tabs={['Plugins', 'Skills', 'Tools', 'MCP'] as const}
+              active={mainTab}
+              onChange={setMainTab}
+              showLabel={!isMobile}
+            />
+          </>
         )
       )}
 
@@ -78,12 +85,11 @@ export function PluginsViewHeader() {
       {!overlay && !selectedDxt && (
         <Button
           variant="ghost"
-          size="sm"
-          className="h-8 gap-1.5 text-sm"
+          size="icon"
+          className="h-8 w-8"
           onClick={() => setOverlay('manage')}
         >
           <Settings className="h-3.5 w-3.5" />
-          {isMobile ? '' : 'Manage'}
         </Button>
       )}
 
@@ -125,3 +131,24 @@ export function PluginsViewHeader() {
     </div>
   );
 }
+
+export interface PluginDetailHeaderProps {
+  displayName: string;
+  onBack?: () => void;
+}
+
+export function PluginDetailHeader({ displayName, onBack }: PluginDetailHeaderProps) {
+  return (
+    <header className="flex items-center gap-1">
+      <Button
+        variant="ghost"
+        onClick={onBack}
+      >
+        Plugin
+      </Button>
+      <ChevronRight className="h-3.5 w-3.5" />
+      <span className="font-medium text-foreground">{displayName}</span>
+    </header>
+  );
+}
+

@@ -13,6 +13,8 @@ import type {
   PluginInstallResponse,
   PluginListParams,
   PluginListResponse,
+  PluginReadParams,
+  PluginReadResponse,
   PluginUninstallParams,
   PluginUninstallResponse,
   ReviewStartParams,
@@ -287,6 +289,13 @@ export async function pluginList(params: PluginListParams) {
     return await invokeTauri<PluginListResponse>('plugin_list', { params });
   }
   return await postJson<PluginListResponse>('/api/codex/plugin/list', params);
+}
+
+export async function pluginRead(params: PluginReadParams) {
+  if (isDesktopTauri()) {
+    return await invokeTauri<PluginReadResponse>('plugin_read', { params });
+  }
+  return await postJson<PluginReadResponse>('/api/codex/plugin/read', params);
 }
 
 export async function pluginInstall(params: PluginInstallParams) {

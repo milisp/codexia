@@ -1,6 +1,6 @@
 use codex_app_server_protocol::{
     PluginInstallParams, PluginInstallResponse, PluginListParams, PluginListResponse,
-    PluginUninstallParams, PluginUninstallResponse,
+    PluginReadParams, PluginReadResponse, PluginUninstallParams, PluginUninstallResponse,
 };
 use tauri::State;
 
@@ -15,6 +15,16 @@ pub async fn plugin_list(
 ) -> Result<PluginListResponse, String> {
     let params_value = to_value(params)?;
     let result = state.codex.send_request("plugin/list", params_value).await?;
+    Ok(from_value(result)?)
+}
+
+#[tauri::command]
+pub async fn plugin_read(
+    params: PluginReadParams,
+    state: State<'_, AppState>,
+) -> Result<PluginReadResponse, String> {
+    let params_value = to_value(params)?;
+    let result = state.codex.send_request("plugin/read", params_value).await?;
     Ok(from_value(result)?)
 }
 

@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ProjectSelector } from '@/features/ProjectSelector';
 import { cn } from '@/lib/utils';
 import { useWorkspaceStore } from '@/stores';
-import { usePluginsViewContext } from '../hooks/PluginsViewContext';
+import { usePluginsViewContext } from '../hooks';
 
 /** Bottom bar: skill scope switcher or MCP config scope selector, depending on tab. */
 export function PluginsViewBottomBar() {

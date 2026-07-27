@@ -12,6 +12,7 @@ interface PluginCardProps {
   onInstall?: () => void;
   onUninstall?: () => void;
   onUse?: () => void;
+  onDetail?: () => void;
   showManageActions?: boolean;
 }
 
@@ -37,6 +38,7 @@ export function PluginCard({
   onInstall,
   onUninstall,
   onUse,
+  onDetail,
   showManageActions,
 }: PluginCardProps) {
   const displayName = plugin.interface?.displayName ?? plugin.name;
@@ -44,11 +46,23 @@ export function PluginCard({
   const iconPath = getPluginIconPath(plugin);
   const iconSrc = iconPath ? convertFileSrc(iconPath) : null;
 
+  const handleDetailClick = (e: React.MouseEvent) => {
+    if (onDetail) {
+      // Don't trigger detail if clicking on action buttons
+      const target = e.target as HTMLElement;
+      if (target.closest('button')) return;
+      onDetail();
+    }
+  };
+
   return (
-    <Card className="py-0">
+    <Card className="py-0" onClick={handleDetailClick}>
       <CardHeader className="px-5 py-4">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
+          <div
+            className="flex items-start gap-3 cursor-pointer"
+            style={onDetail ? { cursor: 'pointer' } : {}}
+          >
             {iconSrc && (
               <img
                 src={iconSrc}
@@ -69,7 +83,10 @@ export function PluginCard({
                 className="h-8 w-8"
                 title="Uninstall"
                 disabled={isUninstalling}
-                onClick={onUninstall}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUninstall?.();
+                }}
               >
                 {isUninstalling ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -83,7 +100,10 @@ export function PluginCard({
                 variant="secondary"
                 className="h-8 w-8"
                 title={`Use ${displayName}`}
-                onClick={onUse}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUse?.();
+                }}
               >
                 <MessageCircleCode className="h-4 w-4" />
               </Button>
@@ -94,7 +114,10 @@ export function PluginCard({
                 className="h-8 w-8"
                 title={`Install ${displayName}`}
                 disabled={!canInstall || isInstalling}
-                onClick={onInstall}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onInstall?.();
+                }}
               >
                 {isInstalling ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -121,9 +144,7 @@ export function MarketplaceErrorCard({ error }: MarketplaceErrorCardProps) {
         <CardTitle className="text-sm">Marketplace load error</CardTitle>
         <CardDescription>{error.marketplacePath}</CardDescription>
       </CardHeader>
-      <CardContent className="px-5 pb-4 text-sm text-muted-foreground">
-        {error.message}
-      </CardContent>
+      <CardContent className="px-5 pb-4 text-sm text-muted-foreground">{error.message}</CardContent>
     </Card>
   );
 }

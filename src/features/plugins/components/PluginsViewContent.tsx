@@ -7,8 +7,9 @@ import { InstalledTab } from '@/features/skills/InstalledTab';
 import SkillsViewContent from '@/features/skills/SkillsView';
 import { RecommendToolsView } from '@/features/tools/RecommendToolsView';
 import { PluginsMarketplaceView } from './PluginsMarketplaceView';
+import { PluginDetailView } from './PluginDetailView';
 import { useWorkspaceStore } from '@/stores';
-import { usePluginsViewContext } from '../hooks/PluginsViewContext';
+import { usePluginsViewContext } from '../hooks';
 import { TabSwitcher } from './TabSwitcher';
 
 /** Main content area: switches between Tools / MCP / Skills, or a manage / add overlay. */
@@ -26,11 +27,19 @@ export function PluginsViewContent() {
     groupsConfig,
     saveGroups,
     handleMcpAdded,
+    selectedPluginDetail,
+    installingPluginId,
+    uninstallingPluginId,
+    handlePluginInstall,
+    handlePluginUninstall,
+    handleUsePlugin,
   } = usePluginsViewContext();
 
   return (
     <div className="flex-1 min-h-0 overflow-hidden">
-      {!overlay && mainTab === 'Plugins' && <PluginsMarketplaceView mode="browse" refreshTrigger={refreshTrigger} />}
+      {!overlay && mainTab === 'Plugins' && (
+        <PluginsMarketplaceView refreshTrigger={refreshTrigger} />
+      )}
       {!overlay && mainTab === 'Skills' && <SkillsViewContent />}
       {!overlay && mainTab === 'Tools' && <RecommendToolsView />}
       {!overlay && mainTab === 'MCP' && <DxtView refreshTrigger={refreshTrigger} />}
@@ -70,6 +79,22 @@ export function PluginsViewContent() {
       {overlay === 'add' && (
         <div className="flex-1 overflow-y-auto p-4">
           {addTab === 'MCP' ? <McpAddPanel onAdded={handleMcpAdded} /> : <Clone />}
+        </div>
+      )}
+
+      {overlay === 'detail' && selectedPluginDetail && (
+        <div className="h-full overflow-y-auto">
+          <div className="max-w-3xl mx-auto">
+            <PluginDetailView
+              plugin={selectedPluginDetail}
+              isInstalling={installingPluginId === selectedPluginDetail.summary.id}
+              isUninstalling={uninstallingPluginId === selectedPluginDetail.summary.id}
+              canInstall={!!selectedPluginDetail.marketplacePath}
+              onInstall={() => handlePluginInstall(selectedPluginDetail)}
+              onUninstall={() => handlePluginUninstall(selectedPluginDetail)}
+              onUse={() => handleUsePlugin(selectedPluginDetail)}
+            />
+          </div>
         </div>
       )}
     </div>
