@@ -45,11 +45,6 @@ jobs:
         with:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || matrix.platform == 'windows-latest' && 'x86_64-pc-windows-msvc,aarch64-pc-windows-msvc' || '' }}
 
-      - name: Setup Rust cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: "src-tauri"
-
       - name: install frontend dependencies
         run: bun install
 
@@ -74,21 +69,3 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
-
-  update-homebrew:
-    permissions:
-      contents: write
-    needs: publish-tauri
-    runs-on: ubuntu-24.04
-    if: startsWith(github.ref, 'refs/tags/')
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Update Homebrew tap
-        env:
-          GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-        run: |
-          bash scripts/update-homebrew-tap.sh
