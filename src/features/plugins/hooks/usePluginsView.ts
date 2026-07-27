@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { readSkillGroups, type SkillGroupsConfig, writeSkillGroups } from '@/services';
 import { usePluginStore } from '@/stores';
 
-/** The three primary views shown by the left-side TabSwitcher. */
-export type MainTab = 'MCP' | 'Skills' | 'Tools';
+/** The four primary views shown by the left-side TabSwitcher. */
+export type MainTab = 'Plugins' | 'Tools' | 'Skills' | 'MCP';
 /** A full-screen overlay that replaces the main content; null means "no overlay". */
 export type Overlay = 'manage' | 'add' | null;
 export type ManageTab = 'Skills' | 'MCPs';
@@ -15,7 +15,7 @@ export type SkillScope = 'user' | 'project';
  * Keeping this separate from the view lets the component stay presentational.
  */
 export function usePluginsView() {
-  const [mainTab, setMainTab] = useState<MainTab>('Tools');
+  const [mainTab, setMainTab] = useState<MainTab>('Plugins');
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [manageTab, setManageTab] = useState<ManageTab>('MCPs');
   const [addTab, setAddTab] = useState<AddTab>('MCP');
@@ -33,7 +33,7 @@ export function usePluginsView() {
   useEffect(() => {
     readSkillGroups()
       .then(setGroupsConfig)
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const saveGroups = useCallback(async (config: SkillGroupsConfig) => {

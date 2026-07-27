@@ -9,6 +9,12 @@ import type {
   LoginAccountResponse,
   ModelListParams,
   ModelListResponse,
+  PluginInstallParams,
+  PluginInstallResponse,
+  PluginListParams,
+  PluginListResponse,
+  PluginUninstallParams,
+  PluginUninstallResponse,
   ReviewStartParams,
   ReviewStartResponse,
   ThreadForkParams,
@@ -21,17 +27,17 @@ import type {
   ThreadRollbackResponse,
   ThreadStartParams,
   ThreadStartResponse,
-  TurnInterruptParams,
-  TurnStartParams,
-  TurnStartResponse,
-  TurnSteerParams,
-  TurnSteerResponse,
   ThreadGoalSetParams,
   ThreadGoalGetParams,
   ThreadGoalClearParams,
   ThreadGoalSetResponse,
   ThreadGoalGetResponse,
   ThreadGoalClearResponse,
+  TurnInterruptParams,
+  TurnStartParams,
+  TurnStartResponse,
+  TurnSteerParams,
+  TurnSteerResponse,
 } from '@/bindings/v2';
 import type { EnvStatusItem, FrontendProviderModels } from '@/components/codex/composer/ModelList';
 import { getJson, invokeTauri, isDesktopTauri, postJson, postNoContent, toast } from './shared';
@@ -274,4 +280,25 @@ export async function threadGoalClear(params: ThreadGoalClearParams) {
     return await invokeTauri<ThreadGoalClearResponse>('thread_goal_clear', { params });
   }
   return await postJson<ThreadGoalClearResponse>('/api/codex/thread/goal/clear', params);
+}
+
+export async function pluginList(params: PluginListParams) {
+  if (isDesktopTauri()) {
+    return await invokeTauri<PluginListResponse>('plugin_list', { params });
+  }
+  return await postJson<PluginListResponse>('/api/codex/plugin/list', params);
+}
+
+export async function pluginInstall(params: PluginInstallParams) {
+  if (isDesktopTauri()) {
+    return await invokeTauri<PluginInstallResponse>('plugin_install', { params });
+  }
+  return await postJson<PluginInstallResponse>('/api/codex/plugin/install', params);
+}
+
+export async function pluginUninstall(params: PluginUninstallParams) {
+  if (isDesktopTauri()) {
+    return await invokeTauri<PluginUninstallResponse>('plugin_uninstall', { params });
+  }
+  return await postJson<PluginUninstallResponse>('/api/codex/plugin/uninstall', params);
 }

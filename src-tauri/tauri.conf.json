@@ -35,6 +35,8 @@
         "scope": [
           "$APPDATA/**",
           "$RESOURCE/**",
+          "$HOME/.cache/**/*",
+          "$HOME/.codex/.tmp/**/*",
           "$HOME/**",
           "$TEMP/**"
         ]

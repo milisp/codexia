@@ -6,6 +6,7 @@ import { Clone } from '@/features/skills/Clone';
 import { InstalledTab } from '@/features/skills/InstalledTab';
 import SkillsViewContent from '@/features/skills/SkillsView';
 import { RecommendToolsView } from '@/features/tools/RecommendToolsView';
+import { PluginsMarketplaceView } from './PluginsMarketplaceView';
 import { useWorkspaceStore } from '@/stores';
 import { usePluginsViewContext } from '../hooks/PluginsViewContext';
 import { TabSwitcher } from './TabSwitcher';
@@ -29,9 +30,10 @@ export function PluginsViewContent() {
 
   return (
     <div className="flex-1 min-h-0 overflow-hidden">
+      {!overlay && mainTab === 'Plugins' && <PluginsMarketplaceView mode="browse" refreshTrigger={refreshTrigger} />}
+      {!overlay && mainTab === 'Skills' && <SkillsViewContent />}
       {!overlay && mainTab === 'Tools' && <RecommendToolsView />}
       {!overlay && mainTab === 'MCP' && <DxtView refreshTrigger={refreshTrigger} />}
-      {!overlay && mainTab === 'Skills' && <SkillsViewContent />}
 
       {overlay === 'manage' && (
         <div className="flex flex-col h-full">

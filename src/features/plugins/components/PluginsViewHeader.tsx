@@ -65,7 +65,7 @@ export function PluginsViewHeader() {
       ) : (
         !selectedDxt && (<>
           <TabSwitcher
-            tabs={['Tools', 'Skills', 'MCP'] as const}
+            tabs={['Plugins', 'Skills', 'Tools', 'MCP'] as const}
             active={mainTab}
             onChange={setMainTab}
             showLabel={!isMobile}
