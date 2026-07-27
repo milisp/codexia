@@ -12,6 +12,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useLayoutStore } from '@/stores';
 import { usePluginsViewContext } from '../hooks/PluginsViewContext';
 import { TabSwitcher } from './TabSwitcher';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 /** Top toolbar: back button, tab switcher, manage/add actions, agent switcher. */
 export function PluginsViewHeader() {
@@ -32,9 +33,10 @@ export function PluginsViewHeader() {
 
   return (
     <div
-      className={`flex items-center gap-1.5 p-2 ${needsTrafficLightOffset && 'pl-32'}`}
+      className={`flex items-center gap-1.5 p-1 ${needsTrafficLightOffset && 'pl-20'}`}
       data-tauri-drag-region
     >
+      {!isSidebarOpen && <SidebarTrigger className="h-7 w-7" />}
       {/* Back button: shown in add overlay or dxt detail */}
       {(overlay === 'add' || (mainTab === 'MCP' && !overlay && selectedDxt)) && (
         <Button
@@ -61,13 +63,13 @@ export function PluginsViewHeader() {
           showLabel={!isMobile}
         />
       ) : (
-        !selectedDxt && (
+        !selectedDxt && (<>
           <TabSwitcher
             tabs={['Tools', 'Skills', 'MCP'] as const}
             active={mainTab}
             onChange={setMainTab}
             showLabel={!isMobile}
-          />
+          /></>
         )
       )}
 

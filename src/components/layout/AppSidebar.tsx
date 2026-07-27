@@ -76,7 +76,7 @@ export function AppSideBar() {
   return (
     <>
       <Sidebar className="border-r border-sidebar-border bg-zinc-100/95 dark:bg-zinc-900/95">
-        <SidebarHeader className="gap-1 p-2">
+        <SidebarHeader className="gap-1 p-1">
           {/* Header row: toggle */}
           <div
             className={`flex items-center gap-2 ${isMacos ? 'pl-20' : 'pl-2'}`}
