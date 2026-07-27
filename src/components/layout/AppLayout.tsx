@@ -9,7 +9,7 @@ import { useEdgeSwipe } from '@/hooks/useEdgeSwipe';
 import { useLayoutStore } from '@/stores';
 
 const SettingsView = lazy(() => import('@/components/settings/SettingsView'));
-const PluginsView = lazy(() => import('@/views/PluginsView'));
+const PluginsView = lazy(() => import('@/features/plugins/components/PluginsView'));
 const AgentsMdView = lazy(() => import('@/views/AgentsMdView'));
 const AgentView = lazy(() => import('@/components/agent/AgentView'));
 const AutoMationsView = lazy(() =>
