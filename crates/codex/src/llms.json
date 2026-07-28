@@ -55,23 +55,8 @@
         {
           "id": "nvidia/nemotron-3-ultra-550b-a55b",
           "context_length": 1000000
-        },
-        {
-          "id": "openai/gpt-oss-120b",
-          "context_length": 131072
-        },
-        {
-          "id": "openai/gpt-oss-20b",
-          "context_length": 131072
         }
       ]
-    },
-    {
-      "model_provider": "custom",
-      "base_url": "http://localhost:8000/v1",
-      "signup_url": "",
-      "env_key": "CUSTOM_API_KEY",
-      "auto_discover": true
     },
     {
       "model_provider": "minimax",
@@ -108,6 +93,13 @@
           "context_length": 204800
         }
       ]
+    },
+    {
+      "model_provider": "custom",
+      "base_url": "http://localhost:8000/v1",
+      "signup_url": "",
+      "env_key": "CUSTOM_API_KEY",
+      "auto_discover": true
     }
   ]
 }

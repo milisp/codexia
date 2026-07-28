@@ -8,6 +8,7 @@ import NvidiaIcon from '@/assets/nvidia-color.svg';
 import OllamaIcon from '@/assets/ollama.svg';
 import OpenAIIcon from '@/assets/openai.svg';
 import OpenRouterIcon from '@/assets/openrouter.svg';
+import MiniMaxIcon from '@/assets/minimax-color.svg';
 
 type IconSize = 'sm' | 'md' | 'lg';
 
@@ -48,6 +49,9 @@ export function ProviderIcons({ providerId, size = 'md', className = '' }: Provi
       )}
       {providerId === 'nvidia' && (
         <img src={NvidiaIcon} alt="NVIDIA" className="h-full w-full object-contain" />
+      )}
+      {providerId === 'minimax' && (
+        <img src={MiniMaxIcon} alt="MiniMax" className="h-full w-full object-contain" />
       )}
     </div>
   );
