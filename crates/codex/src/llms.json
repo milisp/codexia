@@ -72,6 +72,42 @@
       "signup_url": "",
       "env_key": "CUSTOM_API_KEY",
       "auto_discover": true
+    },
+    {
+      "model_provider": "minimax",
+      "base_url": "https://api.minimax.io/v1",
+      "api_key_url": "https://platform.minimax.io",
+      "signup_url": "https://platform.minimax.io",
+      "env_key": "MINIMAX_API_KEY",
+      "auto_discover": false,
+      "models": [
+        {
+          "id": "MiniMax-M3",
+          "context_length": 1000000
+        },
+        {
+          "id": "MiniMax-M2.7",
+          "context_length": 204800
+        }
+      ]
+    },
+    {
+      "model_provider": "minimax_cn",
+      "base_url": "https://api.minimaxi.com/v1",
+      "api_key_url": "https://platform.minimaxi.com",
+      "signup_url": "https://platform.minimaxi.com",
+      "env_key": "MINIMAX_API_KEY",
+      "auto_discover": false,
+      "models": [
+        {
+          "id": "MiniMax-M3",
+          "context_length": 1000000
+        },
+        {
+          "id": "MiniMax-M2.7",
+          "context_length": 204800
+        }
+      ]
     }
   ]
 }
