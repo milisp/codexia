@@ -1,8 +1,11 @@
 import { Diff, Undo2 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { DiffViewer } from '@/features/DiffViewer';
 import { gitReverseFiles } from '@/services/tauri';
 import { useWorkspaceStore } from '@/stores';
+import { getDiffViewerProps } from './fileChangeLogic';
 import type { AggregatedFileChange } from './fileChangeLogic';
 import { toRelativePath, useOpenReviewTab } from './SummaryFileChanges';
 
@@ -117,13 +120,27 @@ export const ThreadFileChangesSummary = ({ changes }: ThreadFileChangesSummaryPr
             key={change.path}
             className="flex w-full items-center justify-between gap-3 py-1.5 text-sm hover:bg-muted/50 rounded-sm px-1 -mx-1"
           >
-            <button
-              type="button"
-              onClick={openReviewTab}
-              className="flex-1 min-w-0 text-left"
-            >
-              <span className="font-mono truncate block">{toRelativePath(change.path, cwd)}</span>
-            </button>
+            <HoverCard openDelay={200}>
+              <HoverCardTrigger asChild>
+                <button
+                  type="button"
+                  onClick={openReviewTab}
+                  className="flex-1 min-w-0 text-left"
+                >
+                  <span className="font-mono truncate block">
+                    {toRelativePath(change.path, cwd)}
+                  </span>
+                </button>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-[36rem] max-w-[80vw] p-0 overflow-hidden">
+                <DiffViewer
+                  {...getDiffViewerProps(change)}
+                  displayPath={toRelativePath(change.path, cwd)}
+                  isCollapsed={false}
+                  className="max-h-96"
+                />
+              </HoverCardContent>
+            </HoverCard>
             <span className="flex items-center gap-2 text-xs shrink-0">
               <span className="text-green-600 dark:text-green-400">+{change.addedCount}</span>
               <span className="text-red-600 dark:text-red-400">-{change.removedCount}</span>
