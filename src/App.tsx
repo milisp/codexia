@@ -6,7 +6,6 @@ import { useCodexEvents } from '@/components/codex/hooks';
 import { QuitDialog } from '@/components/dialogs';
 import { AppLayout } from '@/components/layout';
 import { HistoryProjectsDialog } from '@/features/ProjectSelector';
-import { StoreErrorBoundary } from '@/components/StoreErrorBoundary';
 import { AnalyticsConsentDialog } from '@/components/settings/AnalyticsConsentDialog';
 import { isTauri } from '@/hooks/runtime';
 import { useAppDeepLink } from '@/hooks/useAppDeepLink';
@@ -78,8 +77,6 @@ export default function App() {
   useAppDeepLink();
 
   return (
-    <StoreErrorBoundary>
-      <AppShell />
-    </StoreErrorBoundary>
+    <AppShell />
   );
 }
