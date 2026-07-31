@@ -1,13 +1,12 @@
-## What's New in v0.42.0
+## 🎉 What's New
 
-### 🧩 Plugin System & Marketplace
-- Plugin Detail View: Added full detail view for plugins with install/uninstall functionality and marketplace integration.
-- Marketplace UI: Integrated backend services for browsing, installing, and managing plugins directly in the UI.
-- Layout Enhancements: Added a sidebar toggle to the plugins header and refined component spacing.
+### 🗂 Multi-Tabbed Right Panel
+We’ve revamped the right panel! You can now open, select, and close multiple tabs dynamically, making multitasking within your workspace much smoother.
+### 🔄 Enhanced File Changes & Git Revert Controls
+- Compact Change Summaries: Inline diffs have been replaced with a cleaner ThreadFileChangesSummary.
+- Hover Previews & Bulk Actions: Hover over file changes for a quick preview, and toggle expand/collapse across all files with new bulk controls.
+- Undo & Revert: Revert file changes directly from the summary view—either per-file or in bulk.
 
-### 🎙️ AI & Voice Features
-- On-Device Dictation: Implemented local voice dictation with dedicated model management and UI integration.
-- OpenAI Integration: Added API key authentication support to CodexAuth and exposed status in the AgentView.
-
-### 🛠️ Architecture & Maintenance
-- Code Base Refactoring: Modularized PluginsView into feature-based components, added a dedicated hook-driven context, and updated imports to use the @/features alias.
+### ⚡ Architecture & State Cleanups
+- Decoupled Stores: useWorkspaceStore has been refactored and split into three modular stores (workspace, editor, and agent-settings) for improved maintainability and state performance.
+- Protocol Update: Upgraded codex-app-server-protocol to 0.146.0 to bring in support for experimental bindings.
