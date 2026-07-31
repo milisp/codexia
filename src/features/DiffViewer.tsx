@@ -248,11 +248,8 @@ export function DiffViewer({
                 line.type === 'remove' && 'bg-red-500/10'
               )}
             >
-              <div className="flex-shrink-0 w-16 px-2 text-right text-muted-foreground/60 select-none">
-                {line.lineNumber.old ?? ''}
-              </div>
-              <div className="flex-shrink-0 w-16 px-2 text-right text-muted-foreground/60 select-none">
-                {line.lineNumber.new ?? ''}
+              <div className="flex-shrink-0 w-10 px-2 text-right text-muted-foreground/60 select-none">
+                {line.lineNumber.new ?? line.lineNumber.old ?? ''}
               </div>
               <div className="flex-1 min-w-0 px-3 py-0.5 select-none">
                 <span
