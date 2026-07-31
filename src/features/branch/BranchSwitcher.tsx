@@ -15,7 +15,7 @@ import {
   gitCheckoutBranch,
   gitListBranches,
   gitStatus,
-} from '@/services/tauri/git';
+} from '@/services/apiAdapt/git';
 import { DirtyBranchAlertDialog } from './DirtyBranchAlertDialog';
 import { NewBranchSubMenu } from './NewBranchSubMenu';
 

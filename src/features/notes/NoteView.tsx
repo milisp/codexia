@@ -7,7 +7,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Input } from '@/components/ui/input';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNotes } from '@/hooks/useNotes';
-import { createNote, deleteNote, getNoteById, toggleFavorite } from '@/services/tauri';
+import { createNote, deleteNote, getNoteById, toggleFavorite } from '@/services/apiAdapt';
 import { useInputStore } from '@/stores/useInputStore';
 import { useNoteStore } from '@/stores/useNoteStore';
 import { NoteEditor } from './NoteEditor';

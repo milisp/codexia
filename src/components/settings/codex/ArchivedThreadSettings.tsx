@@ -3,7 +3,7 @@ import type { Thread, ThreadListParams, ThreadListResponse } from '@/bindings/v2
 import type { ThreadId } from '@/bindings';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { listThreads, unarchiveThread } from '@/services/tauri';
+import { listThreads, unarchiveThread } from '@/services/apiAdapt';
 import { formatThreadAge } from '@/utils/formatThreadAge';
 import { getFilename } from '@/utils/getFilename';
 import { modelProviders } from '@/components/codex/constants';

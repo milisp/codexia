@@ -16,7 +16,7 @@ import {
   dictationModelStatus,
   dictationStart,
   dictationStop,
-} from '@/services/tauri/dictation';
+} from '@/services/apiAdapt/dictation';
 import { DictationPopoverContent } from './DictationPopoverContent';
 import { DownloadProgressRing } from './DownloadProgressRing';
 import { useDictationStore } from '@/stores/settings/useDictationStore';

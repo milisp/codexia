@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Model } from '@/bindings/v2';
-import { listModels, listOtherModels } from '@/services/tauri';
+import { listModels, listOtherModels } from '@/services/apiAdapt';
 import { useModelSettingsStore } from '@/stores/settings';
 import type { FrontendProviderModels, ModelListItem } from '../composer/ModelList';
 

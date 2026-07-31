@@ -1,4 +1,4 @@
-import type { GitStatusEntry } from '@/services/tauri';
+import type { GitStatusEntry } from '@/services/apiAdapt';
 
 export type DiffSection = 'staged' | 'unstaged';
 export type DiffSource = 'unstaged' | 'staged' | 'latest-turn';

@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import type { AgentHeatmaps } from '@/services/tauri/insights';
+import type { AgentHeatmaps } from '@/services/apiAdapt/insights';
 import { AGENT_CONFIG, type AgentKey, type Range } from './constants';
 import { weeksForRange } from './utils';
 

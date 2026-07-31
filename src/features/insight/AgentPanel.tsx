@@ -1,5 +1,5 @@
 import { Activity, Cpu, Database, DollarSign, Zap } from 'lucide-react';
-import type { HeatmapData } from '@/services/tauri/insights';
+import type { HeatmapData } from '@/services/apiAdapt/insights';
 import { ContributionHeatmap } from './ContributionHeatmap';
 import { AGENT_CONFIG, type AgentKey, type ModelPricing, RANGES, type Range } from './constants';
 import { ModelBadges } from './ModelBadges';

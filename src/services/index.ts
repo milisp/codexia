@@ -1,1 +1,1 @@
-export * from './tauri';
+export * from './apiAdapt';

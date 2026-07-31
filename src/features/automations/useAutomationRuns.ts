@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ServerNotification } from '@/bindings';
 import { useCodexStore } from '@/components/codex/stores';
 import { buildWsUrl, isDesktopTauri } from '@/hooks/runtime';
-import { listAutomationRuns } from '@/services/tauri';
+import { listAutomationRuns } from '@/services/apiAdapt';
 
 type RunMeta = {
   threadId: string;

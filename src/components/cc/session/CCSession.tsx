@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { CCScrollControls } from './CCScrollControls';
 import { CCMessage } from '@/components/cc/session/messages';
 import { PermissionRequestCard } from '@/components/cc/session/messages/PermissionRequestCard';
-import { ccGetSessionMessages, ccResumeSession } from '@/services/tauri/cc';
+import { ccGetSessionMessages, ccResumeSession } from '@/services/apiAdapt/cc';
 import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useCCPermissionListener, useCCSessionListener } from '../hooks';

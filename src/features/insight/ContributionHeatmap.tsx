@@ -1,6 +1,6 @@
 import { subDays as _subDays, eachDayOfInterval, format } from 'date-fns';
 import { useMemo, useState } from 'react';
-import type { HeatmapData } from '@/services/tauri/insights';
+import type { HeatmapData } from '@/services/apiAdapt/insights';
 import type { Range } from './constants';
 import { weeksForRange } from './utils';
 

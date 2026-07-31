@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import type { AutomationWeekday } from '@/services/tauri';
+import type { AutomationWeekday } from '@/services/apiAdapt';
 import { WEEKDAY_OPTIONS } from './constants';
 
 type WeekdayPickerProps = {

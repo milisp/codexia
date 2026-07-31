@@ -7,7 +7,7 @@ import {
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { gitCreateBranch } from '@/services/tauri/git';
+import { gitCreateBranch } from '@/services/apiAdapt/git';
 
 interface NewBranchSubMenuProps {
   cwd: string | null;

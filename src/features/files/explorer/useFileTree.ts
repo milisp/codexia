@@ -4,7 +4,7 @@ import {
   readDirectory,
   searchFilesByName,
   type TauriFileEntry,
-} from '@/services/tauri';
+} from '@/services/apiAdapt';
 import { useEditorStore } from '@/stores';
 import { useSettingsStore } from '@/stores/settings';
 import { getFilename } from '@/utils/getFilename';

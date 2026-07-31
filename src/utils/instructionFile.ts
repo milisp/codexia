@@ -1,4 +1,4 @@
-import { readFile, writeFile } from '@/services/tauri';
+import { readFile, writeFile } from '@/services/apiAdapt';
 
 type InstructionFileOptions = {
   path: string;

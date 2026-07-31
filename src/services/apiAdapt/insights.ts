@@ -1,4 +1,4 @@
-import { invokeTauri, isDesktopTauri, postJson } from './shared';
+import { dual } from './shared';
 
 export interface DayActivity {
   date: string;
@@ -51,27 +51,30 @@ export interface FilterOptions {
 }
 
 export async function getAgentHeatmaps(filters: InsightFilters): Promise<AgentHeatmaps> {
-  if (isDesktopTauri()) {
-    return invokeTauri<AgentHeatmaps>('get_agent_heatmaps', {
+  return await dual<AgentHeatmaps>(
+    'get_agent_heatmaps',
+    {
       range: filters.range ?? null,
       cwd: filters.cwd ?? null,
       sessionId: filters.session_id ?? null,
       agent: filters.agent ?? null,
-    });
-  }
-  return postJson<AgentHeatmaps>('/api/insights/heatmaps', {
-    range: filters.range ?? null,
-    cwd: filters.cwd ?? null,
-    session_id: filters.session_id ?? null,
-    agent: filters.agent ?? null,
-  });
+    },
+    '/api/insights/heatmaps',
+    {
+      range: filters.range ?? null,
+      cwd: filters.cwd ?? null,
+      session_id: filters.session_id ?? null,
+      agent: filters.agent ?? null,
+    }
+  );
 }
 
 export async function getInsightFilterOptions(): Promise<FilterOptions> {
-  if (isDesktopTauri()) {
-    return invokeTauri<FilterOptions>('get_insight_filter_options');
-  }
-  return postJson<FilterOptions>('/api/insights/filter-options');
+  return await dual<FilterOptions>(
+    'get_insight_filter_options',
+    undefined,
+    '/api/insights/filter-options'
+  );
 }
 
 export interface RankItem {
@@ -90,18 +93,20 @@ export interface Rankings {
 }
 
 export async function getInsightRankings(filters: InsightFilters): Promise<Rankings> {
-  if (isDesktopTauri()) {
-    return invokeTauri<Rankings>('get_insight_rankings', {
+  return await dual<Rankings>(
+    'get_insight_rankings',
+    {
       range: filters.range ?? null,
       cwd: filters.cwd ?? null,
       sessionId: filters.session_id ?? null,
       agent: filters.agent ?? null,
-    });
-  }
-  return postJson<Rankings>('/api/insights/rankings', {
-    range: filters.range ?? null,
-    cwd: filters.cwd ?? null,
-    session_id: filters.session_id ?? null,
-    agent: filters.agent ?? null,
-  });
+    },
+    '/api/insights/rankings',
+    {
+      range: filters.range ?? null,
+      cwd: filters.cwd ?? null,
+      session_id: filters.session_id ?? null,
+      agent: filters.agent ?? null,
+    }
+  );
 }

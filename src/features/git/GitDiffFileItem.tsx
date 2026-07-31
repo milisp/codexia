@@ -14,7 +14,7 @@ import {
   gitReverseFiles,
   gitStageFiles,
   gitUnstageFiles,
-} from '@/services/tauri';
+} from '@/services/apiAdapt';
 import { useEditorStore, useLayoutStore } from '@/stores';
 import type { DiffSection, DiffSource } from './types';
 import {

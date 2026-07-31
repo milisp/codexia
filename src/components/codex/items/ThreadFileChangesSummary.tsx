@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { DiffViewer } from '@/features/DiffViewer';
-import { gitReverseFiles } from '@/services/tauri';
+import { gitReverseFiles } from '@/services/apiAdapt';
 import { useEditorStore, useWorkspaceStore } from '@/stores';
 import { getDiffViewerProps } from './fileChangeLogic';
 import type { AggregatedFileChange } from './fileChangeLogic';

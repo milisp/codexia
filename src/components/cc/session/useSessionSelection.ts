@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import { fromSdkMessages } from '@/components/cc/utils/fromSdkMessages';
 import type { SdkSessionInfo } from '@/lib/sessions';
-import { ccGetSessionMessages } from '@/services/tauri/cc';
+import { ccGetSessionMessages } from '@/services/apiAdapt/cc';
 import { useAgentCenterStore, useLayoutStore } from '@/stores';
 import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useCCStore } from '@/stores/cc';

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { CodeEditor } from '@/features/files';
-import { getCodexHome, readFile, writeFile } from '@/services/tauri';
+import { getCodexHome, readFile, writeFile } from '@/services/apiAdapt';
 import { getErrorMessage } from '@/utils/errorUtils';
 
 const CONFIG_FILE_NAME = 'config.toml';

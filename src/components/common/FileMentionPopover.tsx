@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { isTauri } from '@/hooks/runtime';
-import { searchFiles } from '@/services/tauri/filesystem';
+import { searchFiles } from '@/services/apiAdapt/filesystem';
 import { useWorkspaceStore } from '@/stores';
 
 interface FileItem {

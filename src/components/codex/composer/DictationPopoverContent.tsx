@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { type DictationDownloadProgress } from '@/services/tauri/dictation';
+import { type DictationDownloadProgress } from '@/services/apiAdapt/dictation';
 import { DICTATION_MODELS } from '@/stores/settings/useDictationStore';
 
 interface DictationPopoverContentProps {

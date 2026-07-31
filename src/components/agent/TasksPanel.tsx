@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useCodexStore } from '@/components/codex/stores';
 import { codexService } from '@/services/codexService';
-import { gitRemoveWorktree } from '@/services/tauri/git';
+import { gitRemoveWorktree } from '@/services/apiAdapt/git';
 import { useAgentCenterStore } from '@/stores';
 import { useCCStore } from '@/stores/cc';
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';

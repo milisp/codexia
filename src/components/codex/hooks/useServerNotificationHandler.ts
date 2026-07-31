@@ -2,7 +2,7 @@ import { useCallback, type RefObject } from 'react';
 import type { ServerNotification } from '@/bindings/ServerNotification';
 import type { AccountLoginCompletedNotification } from '@/bindings/v2';
 import { useCodexStore } from '@/components/codex/stores';
-import { allowSleep, preventSleep } from '@/services/tauri';
+import { allowSleep, preventSleep } from '@/services/apiAdapt';
 import { playBeep } from '@/utils/beep';
 import { shouldPlayCompletionBeep } from './beepOnCompletion';
 

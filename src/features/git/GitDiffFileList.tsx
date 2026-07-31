@@ -1,4 +1,4 @@
-import type { GitStatusEntry } from '@/services/tauri';
+import type { GitStatusEntry } from '@/services/apiAdapt';
 import { GitDiffFileItem } from './GitDiffFileItem';
 import type { DiffSection, DiffSource } from './types';
 

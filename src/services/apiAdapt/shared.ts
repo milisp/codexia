@@ -46,45 +46,6 @@ export type DbNote = {
   synced_at: string | null;
 };
 
-export type GitStatusEntry = {
-  path: string;
-  index_status: string;
-  worktree_status: string;
-};
-
-export type GitStatusResponse = {
-  repo_root: string;
-  entries: GitStatusEntry[];
-};
-
-export type GitFileDiffResponse = {
-  old_content: string;
-  new_content: string;
-  has_changes: boolean;
-};
-
-export type GitFileDiffMetaResponse = {
-  old_bytes: number;
-  new_bytes: number;
-  total_bytes: number;
-};
-
-export type GitDiffStatsCounts = {
-  additions: number;
-  deletions: number;
-};
-
-export type GitDiffStatsResponse = {
-  staged: GitDiffStatsCounts;
-  unstaged: GitDiffStatsCounts;
-};
-
-export type GitCreateWorktreeResponse = {
-  repo_root: string;
-  worktree_path: string;
-  existed: boolean;
-};
-
 export type TerminalStartResponse = {
   session_id: string;
   shell: string;
@@ -191,6 +152,44 @@ export async function postNoContentWithOptions(
     }
     return Promise.reject(new Error(message));
   }
+}
+
+export async function dual<T>(
+  command: string,
+  tauriArgs: Record<string, unknown> | undefined,
+  path: string,
+  body?: unknown,
+  options?: { suppressToast?: boolean }
+): Promise<T> {
+  if (isDesktopTauri()) {
+    return await invokeTauri<T>(command, tauriArgs);
+  }
+  return await postJsonWithOptions<T>(path, body, options);
+}
+
+export async function dualGet<T>(
+  command: string,
+  tauriArgs: Record<string, unknown> | undefined,
+  path: string,
+  options?: { suppressToast?: boolean }
+): Promise<T> {
+  if (isDesktopTauri()) {
+    return await invokeTauri<T>(command, tauriArgs);
+  }
+  return await getJsonWithOptions<T>(path, options);
+}
+
+export async function dualVoid(
+  command: string,
+  tauriArgs: Record<string, unknown> | undefined,
+  path: string,
+  body?: unknown
+): Promise<void> {
+  if (isDesktopTauri()) {
+    await invokeTauri(command, tauriArgs);
+    return;
+  }
+  await postNoContent(path, body);
 }
 
 export { isDesktopTauri, isTauri, toast };

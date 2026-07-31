@@ -13,7 +13,7 @@ import {
   getHomeDirectory,
   readDirectory,
   type TauriFileEntry,
-} from '@/services/tauri';
+} from '@/services/apiAdapt';
 
 function getParentPath(path: string): string | null {
   const normalized = path.replace(/[\\/]+$/, '');

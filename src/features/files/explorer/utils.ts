@@ -1,4 +1,4 @@
-import type { TauriFileEntry } from '@/services/tauri';
+import type { TauriFileEntry } from '@/services/apiAdapt';
 import type { FileNode } from './types';
 
 export const getExtension = (name: string): string => {

@@ -1,4 +1,4 @@
-import type { TokenStats } from '@/services/tauri/insights';
+import type { TokenStats } from '@/services/apiAdapt/insights';
 import type { AgentKey, ModelPricing, Range } from './constants';
 
 /** Default pricing per 1M tokens (USD).

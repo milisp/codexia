@@ -1,7 +1,7 @@
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { useEffect, useRef } from 'react';
 import { isDesktopTauri } from '@/hooks/runtime';
-import { unwatchDirectory, watchDirectory } from '@/services/tauri/filesystem';
+import { unwatchDirectory, watchDirectory } from '@/services/apiAdapt/filesystem';
 
 export type FsChangeEvent = {
   path: string;

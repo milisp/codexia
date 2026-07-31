@@ -1,4 +1,4 @@
-import type { AutomationSchedule, AutomationTask, AutomationWeekday } from '@/services/tauri';
+import type { AutomationSchedule, AutomationTask, AutomationWeekday } from '@/services/apiAdapt';
 import type { Provider } from '@/stores/settings';
 
 export type FormState = {

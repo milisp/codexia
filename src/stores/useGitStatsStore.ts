@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { gitDiffStats, gitStatus } from '@/services/tauri';
-import { isGitRepo } from '@/services/tauri/git';
+import { gitDiffStats, gitStatus } from '@/services/apiAdapt';
+import { isGitRepo } from '@/services/apiAdapt/git';
 
 interface GitStats {
   stagedFiles: number;

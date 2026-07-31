@@ -20,8 +20,8 @@ import {
 } from '@/components/ui/context-menu';
 import { toast } from '@/components/ui/use-toast';
 import { codexService } from '@/services/codexService';
-import { archiveThread, deleteThread, listThreads, renameThread } from '@/services/tauri';
-import { gitRemoveWorktree } from '@/services/tauri/git';
+import { archiveThread, deleteThread, listThreads, renameThread } from '@/services/apiAdapt';
+import { gitRemoveWorktree } from '@/services/apiAdapt/git';
 import { useAgentCenterStore, useLayoutStore } from '@/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { formatThreadAge } from '@/utils/formatThreadAge';

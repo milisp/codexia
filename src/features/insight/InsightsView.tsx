@@ -16,7 +16,7 @@ import {
   getInsightFilterOptions,
   getInsightRankings,
   type Rankings,
-} from '@/services/tauri/insights';
+} from '@/services/apiAdapt/insights';
 import { AgentPanel } from './AgentPanel';
 import { AGENT_CONFIG, type AgentKey, type ModelPricing, RANGES, type Range } from './constants';
 import { OverviewTab } from './OverviewTab';

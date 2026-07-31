@@ -1,6 +1,6 @@
 import { Layers } from 'lucide-react';
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import type { AgentHeatmaps } from '@/services/tauri/insights';
+import type { AgentHeatmaps } from '@/services/apiAdapt/insights';
 import { AGENT_CONFIG, type AgentKey, RANGES, type Range } from './constants';
 import { fmtTokens } from './utils';
 

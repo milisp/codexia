@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/components/ui/use-toast';
 import { listSessions, type SdkSessionInfo } from '@/lib/sessions';
-import { ccDeleteSession } from '@/services/tauri/cc';
+import { ccDeleteSession } from '@/services/apiAdapt/cc';
 import { useAgentCenterStore, useLayoutStore } from '@/stores';
 import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';

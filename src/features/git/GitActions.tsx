@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/components/ui/use-toast';
-import { gitCommit, gitPush } from '@/services/tauri/git';
+import { gitCommit, gitPush } from '@/services/apiAdapt/git';
 import { useGitStatsStore } from '@/stores/useGitStatsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { GitCommitDialog } from './GitCommitDialog';

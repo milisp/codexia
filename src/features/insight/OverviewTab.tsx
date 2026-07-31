@@ -1,6 +1,6 @@
 import { Activity, DollarSign, Sparkles, Zap } from 'lucide-react';
 import { useMemo } from 'react';
-import type { AgentHeatmaps } from '@/services/tauri/insights';
+import type { AgentHeatmaps } from '@/services/apiAdapt/insights';
 import { ActivityAreaChart } from './ActivityAreaChart';
 import { AgentShareChart } from './AgentShareChart';
 import { ContributionHeatmap } from './ContributionHeatmap';

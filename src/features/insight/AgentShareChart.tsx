@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import type { AgentHeatmaps } from '@/services/tauri/insights';
+import type { AgentHeatmaps } from '@/services/apiAdapt/insights';
 import { AGENT_CONFIG, type AgentKey, type ModelPricing } from './constants';
 import { estimateCost, fmtCost, fmtTokens } from './utils';
 

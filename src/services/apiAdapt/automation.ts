@@ -1,5 +1,5 @@
 import type { Provider } from '@/stores/settings';
-import { invokeTauri, isDesktopTauri, postJson, postNoContent } from './shared';
+import { dual, dualVoid } from './shared';
 
 export type AutomationScheduleMode = 'daily' | 'interval';
 export type AutomationWeekday = 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat';
@@ -37,18 +37,12 @@ export type AutomationRun = {
 };
 
 export async function listAutomations() {
-  if (isDesktopTauri()) {
-    return await invokeTauri<AutomationTask[]>('list_automations');
-  }
-  return await postJson<AutomationTask[]>('/api/automation/list', {});
+  return await dual<AutomationTask[]>('list_automations', undefined, '/api/automation/list', {});
 }
 
 export async function listAutomationRuns(payload?: { task_id?: string; limit?: number }) {
   const params = { task_id: payload?.task_id ?? null, limit: payload?.limit ?? 100 };
-  if (isDesktopTauri()) {
-    return await invokeTauri<AutomationRun[]>('list_automation_runs', params);
-  }
-  return await postJson<AutomationRun[]>('/api/automation/runs/list', params);
+  return await dual<AutomationRun[]>('list_automation_runs', params, '/api/automation/runs/list', params);
 }
 
 export async function createAutomation(payload: {
@@ -60,13 +54,12 @@ export async function createAutomation(payload: {
   model_provider?: string;
   model?: string;
 }) {
-  if (isDesktopTauri()) {
-    return await invokeTauri<AutomationTask>('create_automation', {
-      ...payload,
-      modelProvider: payload.model_provider,
-    });
-  }
-  return await postJson<AutomationTask>('/api/automation/create', payload);
+  return await dual<AutomationTask>(
+    'create_automation',
+    { ...payload, modelProvider: payload.model_provider },
+    '/api/automation/create',
+    payload
+  );
 }
 
 export async function updateAutomation(payload: {
@@ -79,34 +72,27 @@ export async function updateAutomation(payload: {
   model_provider?: string;
   model?: string;
 }) {
-  if (isDesktopTauri()) {
-    return await invokeTauri<AutomationTask>('update_automation', {
-      ...payload,
-      modelProvider: payload.model_provider,
-    });
-  }
-  return await postJson<AutomationTask>('/api/automation/update', payload);
+  return await dual<AutomationTask>(
+    'update_automation',
+    { ...payload, modelProvider: payload.model_provider },
+    '/api/automation/update',
+    payload
+  );
 }
 
 export async function setAutomationPaused(id: string, paused: boolean) {
-  if (isDesktopTauri()) {
-    return await invokeTauri<AutomationTask>('set_automation_paused', { id, paused });
-  }
-  return await postJson<AutomationTask>('/api/automation/set-paused', { id, paused });
+  return await dual<AutomationTask>(
+    'set_automation_paused',
+    { id, paused },
+    '/api/automation/set-paused',
+    { id, paused }
+  );
 }
 
 export async function deleteAutomation(id: string) {
-  if (isDesktopTauri()) {
-    await invokeTauri<void>('delete_automation', { id });
-    return;
-  }
-  await postNoContent('/api/automation/delete', { id });
+  await dualVoid('delete_automation', { id }, '/api/automation/delete', { id });
 }
 
 export async function runAutomationNow(id: string) {
-  if (isDesktopTauri()) {
-    await invokeTauri<void>('run_automation_now', { id });
-    return;
-  }
-  await postNoContent('/api/automation/run-now', { id });
+  await dualVoid('run_automation_now', { id }, '/api/automation/run-now', { id });
 }

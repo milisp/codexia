@@ -11,7 +11,7 @@ import { isTauri } from '@/hooks/runtime';
 import { useAppDeepLink } from '@/hooks/useAppDeepLink';
 import { useUrlParamThread } from '@/hooks/useUrlParamThread';
 import { initSettingsSync, loadSettings } from '@/lib/settings';
-import { initializeCodexAsync } from '@/services/tauri';
+import { initializeCodexAsync } from '@/services/apiAdapt';
 import type { InitializeResponse } from './bindings';
 
 function AppShell() {

@@ -1,4 +1,4 @@
-import type { SdkSessionMessage } from '@/services/tauri/cc';
+import type { SdkSessionMessage } from '@/services/apiAdapt/cc';
 import type { CCMessage } from '../types/messages';
 
 /**

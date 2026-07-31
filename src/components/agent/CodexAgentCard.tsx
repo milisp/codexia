@@ -12,7 +12,7 @@ import {
   gitApplyWorktreeChanges,
   gitHasWorktreeChanges,
   gitRemoveWorktree,
-} from '@/services/tauri/git';
+} from '@/services/apiAdapt/git';
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';

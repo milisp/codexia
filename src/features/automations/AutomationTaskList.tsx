@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { AutomationTask } from '@/services/tauri';
+import type { AutomationTask } from '@/services/apiAdapt';
 import { getFilename } from '@/utils/getFilename';
 import { formatStartsIn, getNextRunAt } from './utils';
 

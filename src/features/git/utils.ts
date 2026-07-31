@@ -1,4 +1,4 @@
-import type { GitStatusEntry } from '@/services/tauri';
+import type { GitStatusEntry } from '@/services/apiAdapt';
 import type { DiffSection, TreeFileNode, TreeFolderNode, TreeNode } from './types';
 
 interface MutableFolderNode {

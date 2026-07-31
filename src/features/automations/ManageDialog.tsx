@@ -31,13 +31,13 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
-import type { AutomationSchedule, AutomationTask } from '@/services/tauri';
+import type { AutomationSchedule, AutomationTask } from '@/services/apiAdapt';
 import {
   createAutomation,
   deleteAutomation,
   setAutomationPaused,
   updateAutomation,
-} from '@/services/tauri';
+} from '@/services/apiAdapt';
 import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { getErrorMessage } from '@/utils/errorUtils';

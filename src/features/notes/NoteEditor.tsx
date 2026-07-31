@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { getNoteById, updateNote } from '@/services/tauri';
+import { getNoteById, updateNote } from '@/services/apiAdapt';
 
 type NoteViewProps = {
   noteId: string | null;

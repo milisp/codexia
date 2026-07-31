@@ -1,4 +1,4 @@
-import type { AutomationWeekday } from '@/services/tauri';
+import type { AutomationWeekday } from '@/services/apiAdapt';
 import type { FormState, TemplateTask } from './types';
 
 export const WEEKDAY_OPTIONS: Array<{ label: string; value: AutomationWeekday }> = [

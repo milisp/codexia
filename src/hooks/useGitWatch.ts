@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useDirWatch, type FsChangeEvent } from '@/hooks/useDirWatch';
-import { isGitRepo } from '@/services/tauri/git';
+import { isGitRepo } from '@/services/apiAdapt/git';
 
 /**
  * Hook to watch cwd for any fs changes and trigger Git status refresh.

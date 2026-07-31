@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ccNewSession, ccResumeSession, ccSendMessage } from '@/services';
-import { gitCreateWorktree } from '@/services/tauri/git';
+import { gitCreateWorktree } from '@/services/apiAdapt/git';
 import { useCCStore } from '@/stores/cc';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';

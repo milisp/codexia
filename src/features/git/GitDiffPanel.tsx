@@ -14,8 +14,8 @@ import {
   gitStageFiles,
   gitStatus,
   gitUnstageFiles,
-} from '@/services/tauri';
-import { isGitRepo } from '@/services/tauri/git';
+} from '@/services/apiAdapt';
+import { isGitRepo } from '@/services/apiAdapt/git';
 import { useEditorStore, useLayoutStore } from '@/stores';
 import { GitDiffDialogs } from './GitDiffDialogs';
 import { GitDiffFileList } from './GitDiffFileList';

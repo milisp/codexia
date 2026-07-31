@@ -1,4 +1,4 @@
-import type { AutomationSchedule, AutomationTask, AutomationWeekday } from '@/services/tauri';
+import type { AutomationSchedule, AutomationTask, AutomationWeekday } from '@/services/apiAdapt';
 import { VALID_WEEKDAYS } from './constants';
 import type { FormState, TemplateTask } from './types';
 

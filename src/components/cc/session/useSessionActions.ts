@@ -2,8 +2,8 @@
 import { useCallback, useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import type { SdkSessionInfo } from '@/lib/sessions';
-import { ccDeleteSession } from '@/services/tauri/cc';
-import { gitRemoveWorktree } from '@/services/tauri/git';
+import { ccDeleteSession } from '@/services/apiAdapt/cc';
+import { gitRemoveWorktree } from '@/services/apiAdapt/git';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
 interface UseSessionActionsArgs {

@@ -4,7 +4,7 @@ import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
 import { buildWsUrl, isTauri } from '@/hooks/runtime';
-import { terminalResize, terminalStart, terminalStop, terminalWrite } from '@/services/tauri';
+import { terminalResize, terminalStart, terminalStop, terminalWrite } from '@/services/apiAdapt';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
 const IS_TAURI = isTauri();

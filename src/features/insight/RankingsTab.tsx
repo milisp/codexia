@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { FolderOpen, Hash, Search, Zap } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
-import type { RankItem, Rankings } from '@/services/tauri/insights';
+import type { RankItem, Rankings } from '@/services/apiAdapt/insights';
 import { fmtTokens } from './utils';
 
 const AGENT_COLORS: Record<string, string> = {

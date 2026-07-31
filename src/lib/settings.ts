@@ -7,8 +7,8 @@
  *   - Both are called in App.tsx AppShell
  */
 
-import { getHomeDirectory, readFile, writeFile } from '@/services/tauri';
-import { fetchRemoteSettings } from '@/services/tauri/settings';
+import { getHomeDirectory, readFile, writeFile } from '@/services/apiAdapt';
+import { fetchRemoteSettings } from '@/services/apiAdapt/settings';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 

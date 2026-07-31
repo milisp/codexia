@@ -28,7 +28,7 @@ import {
   turnSteer,
   threadGoalSet,
   threadGoalClear,
-} from './tauri';
+} from './apiAdapt';
 
 const sandboxModeToPolicy = (mode: SandboxMode, networkAccess: boolean): SandboxPolicy => {
   switch (mode) {
