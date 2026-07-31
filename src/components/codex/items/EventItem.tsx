@@ -15,7 +15,7 @@ import {
 } from './fileChangeLogic';
 import { IndividualFileChanges } from './IndividualFileChanges';
 import { McpToolCallItem } from './McpToolCallItem';
-import { SummaryFileChanges } from './SummaryFileChanges';
+import { ThreadFileChangesSummary } from './ThreadFileChangesSummary';
 import { TurnPlan } from './TurnPlan';
 import { EditableUserMessageItem } from './UserMessageItem';
 
@@ -164,7 +164,7 @@ export const renderEvent = (event: ServerNotification, context?: RenderEventCont
 
       return (
         <div className="space-y-2">
-          <SummaryFileChanges changes={aggregatedChanges} getDiffViewerProps={getDiffViewerProps} />
+          <ThreadFileChangesSummary changes={aggregatedChanges} />
         </div>
       );
     }

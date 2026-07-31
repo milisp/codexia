@@ -1,5 +1,5 @@
 import * as Diff from 'diff';
-import { Copy } from 'lucide-react';
+import { ChevronDown, ChevronRight, Copy } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,8 @@ interface DiffViewerProps {
   unifiedDiff?: string;
   displayPath?: string;
   isCollapsed?: boolean;
+  /** Bump to force-reset the collapsed state back to `isCollapsed` (e.g. "collapse/expand all"). */
+  resetKey?: number;
   className?: string;
 }
 
@@ -45,10 +47,12 @@ export function DiffViewer({
   unifiedDiff,
   displayPath,
   isCollapsed = true,
+  resetKey,
   className,
 }: DiffViewerProps) {
   const [viewMode, setViewMode] = useState<'old' | 'new' | 'diff'>('diff');
   const [copied, setCopied] = useState(false);
+  const [collapsed, setCollapsed] = useState(isCollapsed);
   const copyTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -59,8 +63,9 @@ export function DiffViewer({
     };
   }, []);
 
-  // Use isCollapsed prop directly instead of mirroring into state
-  const collapsed = isCollapsed;
+  useEffect(() => {
+    setCollapsed(isCollapsed);
+  }, [isCollapsed, resetKey]);
 
   const normalizedUnified = useMemo(() => normalizeUnifiedDiff(unifiedDiff), [unifiedDiff]);
 
@@ -172,9 +177,25 @@ export function DiffViewer({
   const fileName = displayPath ? getFilename(displayPath) : 'diff';
 
   return (
-    <div className={cn('rounded-lg border bg-card', className)}>
-      <div className="flex items-center justify-between border-b px-3 py-2">
-        <div className="flex items-center gap-2">
+    <div className={cn('rounded-lg border bg-card overflow-hidden flex flex-col min-w-0', className)}>
+      <div
+        className={cn(
+          'flex items-center justify-between px-3 py-2 shrink-0',
+          !collapsed && 'border-b'
+        )}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <button
+            type="button"
+            onClick={() => setCollapsed((prev) => !prev)}
+            className="flex items-center gap-1 shrink-0 text-muted-foreground hover:text-foreground"
+          >
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </button>
           <h4 className="font-mono text-sm truncate max-w-[200px]">{fileName}</h4>
           <div className="flex items-center gap-1">
             <Button
@@ -216,46 +237,37 @@ export function DiffViewer({
           )}
         </div>
       </div>
-      <div
-        className={cn('font-mono text-sm overflow-x-auto max-h-[500px]', collapsed && 'max-h-32')}
-      >
-        {diffLines.map((line, i) => (
-          <div
-            key={i}
-            className={cn(
-              'flex border-b last:border-0',
-              line.type === 'add' && 'bg-green-500/10',
-              line.type === 'remove' && 'bg-red-500/10'
-            )}
-          >
-            <div className="flex-shrink-0 w-16 px-2 text-right text-muted-foreground/60 select-none">
-              {line.lineNumber.old ?? ''}
+      {!collapsed && (
+        <div className="font-mono text-sm overflow-auto max-h-[500px] min-w-0">
+          {diffLines.map((line, i) => (
+            <div
+              key={i}
+              className={cn(
+                'flex border-b last:border-0',
+                line.type === 'add' && 'bg-green-500/10',
+                line.type === 'remove' && 'bg-red-500/10'
+              )}
+            >
+              <div className="flex-shrink-0 w-16 px-2 text-right text-muted-foreground/60 select-none">
+                {line.lineNumber.old ?? ''}
+              </div>
+              <div className="flex-shrink-0 w-16 px-2 text-right text-muted-foreground/60 select-none">
+                {line.lineNumber.new ?? ''}
+              </div>
+              <div className="flex-1 min-w-0 px-3 py-0.5 select-none">
+                <span
+                  className={cn(
+                    'whitespace-pre',
+                    line.type === 'add' && 'text-green-600',
+                    line.type === 'remove' && 'text-red-600'
+                  )}
+                >
+                  {line.content || ' '}
+                </span>
+              </div>
             </div>
-            <div className="flex-shrink-0 w-16 px-2 text-right text-muted-foreground/60 select-none">
-              {line.lineNumber.new ?? ''}
-            </div>
-            <div className="flex-1 min-w-0 px-3 py-0.5 select-none">
-              <span
-                className={cn(
-                  'whitespace-pre',
-                  line.type === 'add' && 'text-green-600',
-                  line.type === 'remove' && 'text-red-600'
-                )}
-              >
-                {line.content || ' '}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-      {collapsed && diffLines.length > 15 && (
-        <button
-          type="button"
-          onClick={() => {}}
-          className="w-full px-3 py-2 text-center text-sm text-primary hover:bg-primary/10"
-        >
-          Show {diffLines.length} lines
-        </button>
+          ))}
+        </div>
       )}
     </div>
   );
