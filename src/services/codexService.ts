@@ -6,6 +6,7 @@ import type {
   ThreadGoalSetParams,
   ThreadGoalClearParams,
   ThreadListParams,
+  ThreadResumeParams,
   ThreadRollbackParams,
   ThreadStartParams,
   UserInput,
@@ -294,10 +295,13 @@ export const codexService = {
       throw error;
     }
   },
-  async threadResume(threadId: string) {
+  async threadResume(
+    threadId: string,
+    overrides?: Omit<ThreadResumeParams, 'threadId'>,
+  ) {
     const set = useCodexStore.setState;
     try {
-      const response = await threadResume({ threadId });
+      const response = await threadResume({ threadId, ...overrides });
       console.log(response.thread.turns);
 
       const historicalEvents = convertThreadHistoryToEvents(response.thread);

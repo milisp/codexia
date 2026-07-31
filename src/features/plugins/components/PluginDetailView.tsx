@@ -165,7 +165,7 @@ export function PluginDetailView({
           </div>
         )}
 
-        <AppsSection apps={apps} onExternalLink={handleExternalLink} />
+        <AppsSection apps={apps} />
 
         {mcpServers.length > 0 && (
           <div className="space-y-1">

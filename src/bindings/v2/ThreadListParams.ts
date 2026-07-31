@@ -38,6 +38,10 @@ sourceKinds?: Array<ThreadSourceKind> | null,
  */
 archived?: boolean | null,
 /**
+ * Optional pinned filter; when set, only threads matching this value are returned.
+ */
+isPinned?: boolean | null,
+/**
  * Optional cwd filter or filters; when set, only threads whose session cwd
  * exactly matches one of these paths are returned.
  */
@@ -51,4 +55,13 @@ useStateDbOnly?: boolean,
 /**
  * Optional substring filter for the extracted thread title.
  */
-searchTerm?: string | null, };
+searchTerm?: string | null,
+/**
+ * Optional direct parent thread filter. Mutually exclusive with `ancestorThreadId`.
+ */
+parentThreadId?: string | null,
+/**
+ * Optional ancestor thread filter. Returns spawned descendants at any depth, excluding the
+ * ancestor itself. Mutually exclusive with `parentThreadId`.
+ */
+ancestorThreadId?: string | null, };

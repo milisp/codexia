@@ -36,6 +36,17 @@ export function convertThreadHistoryToEvents(thread: Thread): ServerNotification
         },
       });
     }
+
+    // Mark the turn boundary so the UI flushes per-turn state (e.g. trailing
+    // commandExecution groups in deriveRenderItems) instead of bleeding into
+    // the next turn's items.
+    events.push({
+      method: 'turn/completed',
+      params: {
+        threadId: thread.id,
+        turn,
+      },
+    });
   }
 
   return events;

@@ -1,12 +1,10 @@
-import { Button } from '@/components/ui/button';
 import type { PluginDetail } from '@/bindings/v2';
 
 interface AppsSectionProps {
   apps: PluginDetail['apps'];
-  onExternalLink: (url: string) => void;
 }
 
-export function AppsSection({ apps, onExternalLink }: AppsSectionProps) {
+export function AppsSection({ apps }: AppsSectionProps) {
   if (!apps || apps.length === 0) return null;
   return (
     <div className="space-y-1">
@@ -23,15 +21,6 @@ export function AppsSection({ apps, onExternalLink }: AppsSectionProps) {
                 <p className="text-xs text-muted-foreground">{app.description}</p>
               )}
             </div>
-            {app.needsAuth && app.installUrl && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onExternalLink(app.installUrl!)}
-              >
-                Authenticate
-              </Button>
-            )}
           </div>
         ))}
       </div>

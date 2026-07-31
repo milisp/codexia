@@ -101,9 +101,7 @@ export function usePluginsView() {
           pluginName: summary.name,
         });
 
-        const authTargets = response.appsNeedingAuth.filter(
-          (app) => app.needsAuth && app.installUrl
-        );
+        const authTargets = response.appsNeedingAuth.filter((app) => app.installUrl);
         if (authTargets.length > 0) {
           await openExternalUrl(authTargets[0].installUrl!);
         }
