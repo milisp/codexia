@@ -12,7 +12,7 @@ import {
   unifiedReadMcpConfig,
   unifiedRemoveMcpServer,
 } from '@/services';
-import { usePluginStore, useWorkspaceStore } from '@/stores';
+import { useAgentSettingsStore, usePluginStore, useWorkspaceStore } from '@/stores';
 import type { MCPConfigType } from '@/types/cc/cc-mcp';
 import { DxtManifestSchema } from './schemas';
 
@@ -128,7 +128,8 @@ function sanitizeManifest(raw: any) {
 }
 
 export default function DxtDetail({ user, repo }: { user: string; repo: string }) {
-  const { cwd, selectedAgent } = useWorkspaceStore();
+  const { cwd } = useWorkspaceStore();
+  const { selectedAgent } = useAgentSettingsStore();
   const { mcpScope: selectedScope } = usePluginStore();
   const [manifest, setManifest] = useState<z.infer<typeof DxtManifestSchema> | null>(null);
   const [userConfig, setUserConfig] = useState<Record<string, any>>({});

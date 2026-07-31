@@ -23,7 +23,7 @@ import {
   type SkillScope,
   searchMarketSkills,
 } from '@/services';
-import { useWorkspaceStore } from '@/stores';
+import { useAgentSettingsStore, useWorkspaceStore } from '@/stores';
 import { type BoardType, leaderboardCache, searchCache } from './browseCache';
 
 const BOARD_TABS: { value: BoardType; label: string; icon: React.ReactNode }[] = [
@@ -63,7 +63,8 @@ export function BrowseTab({
   onGroupsChange: (config: SkillGroupsConfig) => Promise<void>;
   selectedGroupId: string | null;
 }) {
-  const { cwd, selectedAgent } = useWorkspaceStore();
+  const { cwd } = useWorkspaceStore();
+  const { selectedAgent } = useAgentSettingsStore();
   const [board, setBoard] = useState<BoardType>('alltime');
   const [skills, setSkills] = useState<MarketSkillItem[]>(() => leaderboardCache['alltime'] ?? []);
   const [loading, setLoading] = useState(!leaderboardCache['alltime']);

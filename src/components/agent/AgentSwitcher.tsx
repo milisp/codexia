@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useLayoutStore } from '@/stores';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { AgentIcon } from '../common/AgentIcon';
 
 const AGENT_TYPES = ['codex', 'cc'] as const;
@@ -12,7 +12,7 @@ interface AgentSwitcherProps {
 }
 
 export function AgentSwitcher({ variant = 'icon', className }: AgentSwitcherProps) {
-  const { selectedAgent, setSelectedAgent } = useWorkspaceStore();
+  const { selectedAgent, setSelectedAgent } = useAgentSettingsStore();
   const { setActiveSidebarTab } = useLayoutStore();
 
   if (variant === 'tab') {

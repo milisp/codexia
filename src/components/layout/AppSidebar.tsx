@@ -22,6 +22,7 @@ import {
 import { useTrafficLightConfig } from '@/hooks';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
 import { useLayoutStore } from '@/stores';
+import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { NewAgentButton } from '../common/NewAgentButton';
 import { SessionManagerDialog } from '../common/SessionManagerDialog';
@@ -40,7 +41,8 @@ const navBtnCls = (active: boolean) => `${navBtnBase} ${active ? navBtnActive : 
 
 export function AppSideBar() {
   const { t } = useTranslation('sidebar');
-  const { cwd, setCwd, setSelectedAgent, selectedAgent } = useWorkspaceStore();
+  const { cwd, setCwd } = useWorkspaceStore();
+  const { setSelectedAgent, selectedAgent } = useAgentSettingsStore();
   const { setView, view, activeSidebarTab, setActiveSidebarTab } = useLayoutStore();
   const { open: isSidebarOpen } = useSidebar();
   const { isMacos } = useTrafficLightConfig(isSidebarOpen);

@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 import { useLayoutStore } from '@/stores';
+import { useEditorStore } from '@/stores/useEditorStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
 interface MarkdownProps {
@@ -40,7 +41,8 @@ function normalizeFileLinkPath(path: string, cwd: string | null | undefined) {
 
 export const Markdown = memo<MarkdownProps>(({ value, className = '', inline = false }) => {
   const { resolvedTheme } = useThemeContext();
-  const { cwd, setSelectedFilePath } = useWorkspaceStore();
+  const { cwd } = useWorkspaceStore();
+  const { setSelectedFilePath } = useEditorStore();
   const { setActiveRightPanelTab, setRightPanelOpen } = useLayoutStore();
 
   const components = useMemo(

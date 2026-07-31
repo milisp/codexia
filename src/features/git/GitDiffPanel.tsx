@@ -16,7 +16,7 @@ import {
   gitUnstageFiles,
 } from '@/services/tauri';
 import { isGitRepo } from '@/services/tauri/git';
-import { useLayoutStore, useWorkspaceStore } from '@/stores';
+import { useEditorStore, useLayoutStore } from '@/stores';
 import { GitDiffDialogs } from './GitDiffDialogs';
 import { GitDiffFileList } from './GitDiffFileList';
 import { GitDiffTopBar } from './GitDiffTopBar';
@@ -25,7 +25,7 @@ import type { DiffSection, DiffSource, GitDiffPanelProps } from './types';
 import { buildFileTree } from './utils';
 
 export default function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
-  const { activeFile, openFile } = useWorkspaceStore();
+  const { activeFile, openFile } = useEditorStore();
   const { diffWordWrap } = useLayoutStore();
   const [gitData, setGitData] = useState<GitStatusResponse | null>(null);
   const [gitLoading, setGitLoading] = useState(false);

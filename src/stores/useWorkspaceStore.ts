@@ -1,7 +1,6 @@
 import { create } from 'zustand';
+import { useEditorStore } from './useEditorStore';
 
-export type AgentType = 'codex' | 'cc';
-export const AGENT_TYPES: AgentType[] = ['cc', 'codex'];
 export type ProjectSortKey = 'added_desc' | 'added_asc' | 'name_asc' | 'name_desc';
 const MAX_HISTORY_PROJECTS = 30;
 
@@ -51,8 +50,6 @@ export function sortProjects(projects: string[], sortKey: ProjectSortKey): strin
 }
 
 interface WorkspaceStore {
-  selectedAgent: AgentType;
-  setSelectedAgent: (agent: AgentType) => void;
   projects: string[];
   setProjects: (projects: string[]) => void;
   addProject: (project: string) => void;
@@ -66,25 +63,9 @@ interface WorkspaceStore {
   setProjectSort: (sortKey: ProjectSortKey) => void;
   cwd: string | null;
   setCwd: (path: string | null) => void;
-  // Multi-file tab state
-  openFiles: string[];
-  activeFile: string | null;
-  openFile: (path: string) => void;
-  closeFile: (path: string) => void;
-  setActiveFile: (path: string | null) => void;
-  /** @deprecated use openFile / activeFile */
-  selectedFilePath: string | null;
-  /** @deprecated use openFile */
-  setSelectedFilePath: (path: string | null) => void;
-  hasConfirmedGitRevert: boolean;
-  setHasConfirmedGitRevert: (value: boolean) => void;
-  instructionType: string;
-  setInstructionType: (type: string) => void;
 }
 
 export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
-  selectedAgent: 'codex',
-  setSelectedAgent: (agent) => set({ selectedAgent: agent }),
   projects: [],
   setProjects: (projects) => set({ projects: dedupeProjects(projects) }),
   addProject: (project) =>
@@ -107,12 +88,13 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       const shouldClearCwd = state.cwd === normalized;
       const nextCwd = shouldClearCwd ? (projects[0] ?? null) : state.cwd;
 
+      if (shouldClearCwd) {
+        useEditorStore.getState().resetFiles();
+      }
+
       return {
         projects,
         cwd: nextCwd,
-        openFiles: shouldClearCwd ? [] : state.openFiles,
-        activeFile: shouldClearCwd ? null : state.activeFile,
-        selectedFilePath: shouldClearCwd ? null : state.selectedFilePath,
       };
     }),
   addProjectAndSelect: (project) => {
@@ -138,46 +120,12 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   cwd: null,
   setCwd: (path) => {
     const normalized = path ? normalizeProjectPath(path) : null;
+    useEditorStore.getState().resetFiles();
     set((state) => ({
       cwd: normalized,
-      openFiles: [],
-      activeFile: null,
-      selectedFilePath: null,
       historyProjects: normalized
         ? pushRecentProject(state.historyProjects, normalized)
         : state.historyProjects,
     }));
   },
-  // Multi-file tab state
-  openFiles: [],
-  activeFile: null,
-  openFile: (path) =>
-    set((state) => ({
-      openFiles: state.openFiles.includes(path) ? state.openFiles : [...state.openFiles, path],
-      activeFile: path,
-      selectedFilePath: path,
-    })),
-  closeFile: (path) =>
-    set((state) => {
-      const next = state.openFiles.filter((f) => f !== path);
-      const activeFile =
-        state.activeFile === path
-          ? (next[next.indexOf(path) - 1] ?? next[0] ?? null)
-          : state.activeFile;
-      return { openFiles: next, activeFile, selectedFilePath: activeFile };
-    }),
-  setActiveFile: (path) => set({ activeFile: path, selectedFilePath: path }),
-  // Deprecated shims — keep for backward compat
-  selectedFilePath: null,
-  setSelectedFilePath: (path) =>
-    set((state) => ({
-      selectedFilePath: path,
-      activeFile: path,
-      openFiles:
-        path && !state.openFiles.includes(path) ? [...state.openFiles, path] : state.openFiles,
-    })),
-  hasConfirmedGitRevert: false,
-  setHasConfirmedGitRevert: (value) => set({ hasConfirmedGitRevert: value }),
-  instructionType: 'system',
-  setInstructionType: (type) => set({ instructionType: type }),
 }));

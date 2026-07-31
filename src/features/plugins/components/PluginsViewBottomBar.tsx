@@ -2,12 +2,12 @@ import { McpConfigScopeSelector } from '@/components/cc/mcp/McpConfigScopeSelect
 import { Button } from '@/components/ui/button';
 import { ProjectSelector } from '@/features/ProjectSelector';
 import { cn } from '@/lib/utils';
-import { useWorkspaceStore } from '@/stores';
+import { useAgentSettingsStore } from '@/stores';
 import { usePluginsViewContext } from '../hooks';
 
 /** Bottom bar: skill scope switcher or MCP config scope selector, depending on tab. */
 export function PluginsViewBottomBar() {
-  const { selectedAgent } = useWorkspaceStore();
+  const { selectedAgent } = useAgentSettingsStore();
   const { mainTab, overlay, manageTab, scope, setScope, setManageRefreshKey } =
     usePluginsViewContext();
 

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { posthog } from '@/lib/posthog';
-import type { AgentType } from './useWorkspaceStore';
+import type { AgentType } from './useAgentSettingsStore';
 
 let terminalCounter = 1;
 

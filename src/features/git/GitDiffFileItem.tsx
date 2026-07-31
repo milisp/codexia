@@ -15,7 +15,7 @@ import {
   gitStageFiles,
   gitUnstageFiles,
 } from '@/services/tauri';
-import { useLayoutStore, useWorkspaceStore } from '@/stores';
+import { useEditorStore, useLayoutStore } from '@/stores';
 import type { DiffSection, DiffSource } from './types';
 import {
   formatBytes,
@@ -50,7 +50,7 @@ export function GitDiffFileItem({
   onRefreshStatus,
 }: GitDiffFileItemProps) {
   const { resolvedTheme } = useThemeContext();
-  const { hasConfirmedGitRevert, setHasConfirmedGitRevert } = useWorkspaceStore();
+  const { hasConfirmedGitRevert, setHasConfirmedGitRevert } = useEditorStore();
   const { diffSplitMode } = useLayoutStore();
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [diffMeta, setDiffMeta] = useState<GitFileDiffMetaResponse | null>(null);

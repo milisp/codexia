@@ -7,6 +7,7 @@ import { gitApplyWorktreeChanges, gitRemoveWorktree } from '@/services/tauri/git
 import { useCCStore } from '@/stores/cc';
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
+import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { getFilename } from '@/utils/getFilename';
 import { CardResizeHandles } from './CardResizeHandles';
@@ -55,7 +56,8 @@ export function CCAgentCard({ card, onRemove: _onRemove, header, isSelected }: C
     setSessionLoading,
     options,
   } = useCCStore();
-  const { cwd, selectedAgent } = useWorkspaceStore();
+  const { cwd } = useWorkspaceStore();
+  const { selectedAgent } = useAgentSettingsStore();
   const { setCurrentAgentCardId, updateCard } = useAgentCenterStore();
   const [isResumingSession, setIsResumingSession] = useState(false);
   const [isApplyingWorktree, setIsApplyingWorktree] = useState(false);

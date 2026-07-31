@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import { useCodexStore, useConfigStore } from '@/components/codex/stores';
 import { useCCStore } from '@/stores/cc';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { AgentCard } from './AgentCard';
 import { AgentComposer } from './AgentComposer';
 import { AgentViewHeader } from './AgentViewHeader';
@@ -14,7 +14,7 @@ const CodexThread = lazy(() =>
 const CCSession = lazy(() => import('@/components/cc/session/CCSession'));
 
 export default function AgentView() {
-  const { selectedAgent } = useWorkspaceStore();
+  const { selectedAgent } = useAgentSettingsStore();
   const { currentThreadId, hasAccount } = useCodexStore();
   const { modelProvider } = useConfigStore()
   const { activeSessionId } = useCCStore();

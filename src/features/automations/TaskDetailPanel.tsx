@@ -25,6 +25,7 @@ import type { AutomationTask } from '@/services/tauri';
 import { ccInterrupt, listModels, runAutomationNow, turnInterrupt } from '@/services/tauri';
 import { useLayoutStore } from '@/stores';
 import { useCCStore } from '@/stores/cc';
+import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { getErrorMessage } from '@/utils/errorUtils';
 import { getFilename } from '@/utils/getFilename';
@@ -246,7 +247,8 @@ export function TaskDetailPanel({ task, now, runs, togglingPauseTaskId }: TaskDe
   const [openAiModels, setOpenAiModels] = useState<Model[]>([]);
   const [ollamaModels, setOllamaModels] = useState<OllamaModel[]>([]);
   const { setView, setActiveSidebarTab } = useLayoutStore();
-  const { setSelectedAgent, setCwd } = useWorkspaceStore();
+  const { setCwd } = useWorkspaceStore();
+  const { setSelectedAgent } = useAgentSettingsStore();
   const { setActiveSessionId, activeSessionIds, switchToSession } = useCCStore();
   const { handleSessionSelect } = useCCSessionManager();
   const resolvedModelProvider = task ? resolveModelProvider(task) : 'openai';

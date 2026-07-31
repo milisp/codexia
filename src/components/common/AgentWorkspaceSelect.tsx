@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useWorkspaceStore } from '@/stores';
+import { useAgentSettingsStore } from '@/stores';
 import { RateLimitContent, RateLimitTrigger, useRateLimits } from '../codex/widget/RateLimitWidget';
 
 interface AgentWorkspaceSelectProps {
@@ -29,7 +29,7 @@ const MODE_LABELS: Record<ThreadCwdMode, string> = {
 };
 
 export function AgentWorkspaceSelect({ value, onValueChange }: AgentWorkspaceSelectProps) {
-  const { selectedAgent } = useWorkspaceStore();
+  const { selectedAgent } = useAgentSettingsStore();
   const [rateLimitOpen, setRateLimitOpen] = useState(false);
   // Fetch eagerly so data is ready when user expands
   const rateLimits = useRateLimits();

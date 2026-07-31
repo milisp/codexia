@@ -2,14 +2,14 @@ import { useEffect } from 'react';
 import { Composer as CCComposer } from '@/components/cc/composer';
 import { Composer as CodexComposer } from '@/components/codex/composer';
 import { useAgentCenterStore } from '@/stores';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { WorkspaceSwitcher } from '../common';
 import { AgentSwitcher } from './AgentSwitcher';
 
 const focusCCInput = () => window.dispatchEvent(new Event('cc-input-focus-request'));
 
 export function AgentComposer() {
-  const { selectedAgent } = useWorkspaceStore();
+  const { selectedAgent } = useAgentSettingsStore();
   const { currentAgentCardId } = useAgentCenterStore();
 
   // Auto-focus the CC composer input when switching to the cc agent

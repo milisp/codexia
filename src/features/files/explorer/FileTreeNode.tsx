@@ -2,7 +2,7 @@ import { ChevronDown, ChevronRight, FileText, FolderPlus, Plus } from 'lucide-re
 import { defaultStyles, FileIcon } from 'react-file-icon';
 import { Button } from '@/components/ui/button';
 import { isTauri } from '@/hooks/runtime';
-import { useInputStore, useLayoutStore, useWorkspaceStore } from '@/stores';
+import { useEditorStore, useInputStore, useLayoutStore, useWorkspaceStore } from '@/stores';
 import type { FileNode } from './types';
 import { getExtension, isLatexFile, isOfficeFile, isPdfFile } from './utils';
 
@@ -27,7 +27,8 @@ export function FileTreeNode({
   onLoadChildren,
   onFileSelect,
 }: FileTreeNodeProps) {
-  const { selectedFilePath, setSelectedFilePath, addProject } = useWorkspaceStore();
+  const { selectedFilePath, setSelectedFilePath } = useEditorStore();
+  const { addProject } = useWorkspaceStore();
   const { setRightPanelOpen, setActiveRightPanelTab } = useLayoutStore();
   const { appendInputValue } = useInputStore();
   const shouldUseSvgFileIcon = isTauri();

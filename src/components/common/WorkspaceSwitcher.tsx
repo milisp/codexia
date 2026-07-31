@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { isDesktopTauri } from '@/hooks/runtime';
 import { useCCStore } from '@/stores';
+import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { BranchSwitcher } from '../../features/branch';
 import { AgentWorkspaceSelect } from './AgentWorkspaceSelect';
@@ -19,7 +20,8 @@ import { AgentWorkspaceSelect } from './AgentWorkspaceSelect';
 export function WorkspaceSwitcher() {
   const [projectOpen, setProjectOpen] = useState(false);
   const [browseMode, setBrowseMode] = useState(false);
-  const { cwd, projects, addProject, setCwd, selectedAgent } = useWorkspaceStore();
+  const { cwd, projects, addProject, setCwd } = useWorkspaceStore();
+  const { selectedAgent } = useAgentSettingsStore();
   const { options, updateOptions } = useCCStore();
   const { threadCwdMode, setThreadCwdMode } = useConfigStore();
 

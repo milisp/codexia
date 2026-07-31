@@ -1,5 +1,5 @@
 import { codexService } from '@/services/codexService';
-import { useAgentCenterStore, useLayoutStore } from '@/stores';
+import { useAgentCenterStore, useAgentSettingsStore, useLayoutStore } from '@/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
 export interface AgentNavParams {
@@ -20,7 +20,8 @@ export function navigateToAgentSession({
 }: AgentNavParams): boolean {
   if (!agent || !cwd || (agent !== 'codex' && agent !== 'cc')) return false;
 
-  const { addProject, setCwd, setSelectedAgent } = useWorkspaceStore.getState();
+  const { addProject, setCwd } = useWorkspaceStore.getState();
+  const { setSelectedAgent } = useAgentSettingsStore.getState();
   const { setView, setActiveSidebarTab } = useLayoutStore.getState();
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore.getState();
 

@@ -2,12 +2,13 @@ import { Folders, X } from 'lucide-react';
 import { Suspense, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useWorkspaceStore } from '@/stores';
+import { useEditorStore, useWorkspaceStore } from '@/stores';
 import { getFilename } from '@/utils/getFilename';
 import { FileTree, FileViewer } from './explorer';
 
 export default function FilesPanel() {
-  const { openFiles, activeFile, openFile, closeFile, setActiveFile, cwd } = useWorkspaceStore();
+  const { openFiles, activeFile, openFile, closeFile, setActiveFile } = useEditorStore();
+  const { cwd } = useWorkspaceStore();
   const isMobile = useIsMobile();
   const [isFileTreeVisible, setIsFileTreeVisible] = useState(!isMobile);
 

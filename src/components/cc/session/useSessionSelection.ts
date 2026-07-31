@@ -4,6 +4,7 @@ import { fromSdkMessages } from '@/components/cc/utils/fromSdkMessages';
 import type { SdkSessionInfo } from '@/lib/sessions';
 import { ccGetSessionMessages } from '@/services/tauri/cc';
 import { useAgentCenterStore, useLayoutStore } from '@/stores';
+import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
@@ -13,7 +14,8 @@ interface UseSessionSelectionArgs {
 }
 
 export function useSessionSelection({ directory, onSelectSession }: UseSessionSelectionArgs) {
-  const { setCwd, setSelectedAgent } = useWorkspaceStore();
+  const { setCwd } = useWorkspaceStore();
+  const { setSelectedAgent } = useAgentSettingsStore();
   const { setView } = useLayoutStore();
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
   const {

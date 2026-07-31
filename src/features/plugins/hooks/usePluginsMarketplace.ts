@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
-import { useWorkspaceStore, useLayoutStore } from '@/stores';
+import { useAgentSettingsStore, useLayoutStore } from '@/stores';
 import { useInputStore } from '@/stores/useInputStore';
 import { pluginInstall, pluginList, pluginRead } from '@/services';
 
@@ -27,7 +27,7 @@ export function usePluginsMarketplace(refreshTrigger = 0) {
   const [isLoading, setIsLoading] = useState(false);
   const [installingPluginId, setInstallingPluginId] = useState<string | null>(null);
 
-  const { setSelectedAgent } = useWorkspaceStore();
+  const { setSelectedAgent } = useAgentSettingsStore();
   const { setView } = useLayoutStore();
   const { appendInputValue } = useInputStore();
   const { handlePluginDetail } = usePluginsViewContext();

@@ -5,6 +5,7 @@ import { useNewThread } from '@/components/codex/hooks';
 import { Button } from '@/components/ui/button';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
 import { useAgentCenterStore, useLayoutStore } from '@/stores';
+import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
 const focusCCInput = () => window.dispatchEvent(new Event('cc-input-focus-request'));
@@ -15,7 +16,8 @@ type Props = {
 
 export function NewAgentButton({ showLabel = false }: Props) {
   const { t } = useTranslation('sidebar');
-  const { selectedAgent, cwd, setCwd } = useWorkspaceStore();
+  const { cwd, setCwd } = useWorkspaceStore();
+  const { selectedAgent } = useAgentSettingsStore();
   const { setCurrentAgentCardId } = useAgentCenterStore();
   const { view, setView, setActiveSidebarTab } = useLayoutStore();
   const { handleNewSession } = useCCSessionManager();

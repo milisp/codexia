@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { readSkillGroups, type SkillGroupsConfig, writeSkillGroups } from '@/services';
 import { pluginInstall, pluginRead, pluginUninstall } from '@/services';
-import { usePluginStore, useWorkspaceStore, useLayoutStore } from '@/stores';
+import { useAgentSettingsStore, usePluginStore, useLayoutStore } from '@/stores';
 import { useInputStore } from '@/stores/useInputStore';
 import { toast } from '@/components/ui/use-toast';
 import type { PluginDetail } from '@/bindings/v2';
@@ -32,7 +32,7 @@ export function usePluginsView() {
   const [installingPluginId, setInstallingPluginId] = useState<string | null>(null);
   const [uninstallingPluginId, setUninstallingPluginId] = useState<string | null>(null);
 
-  const { setSelectedAgent } = useWorkspaceStore();
+  const { setSelectedAgent } = useAgentSettingsStore();
   const { setView } = useLayoutStore();
   const { appendInputValue } = useInputStore();
 

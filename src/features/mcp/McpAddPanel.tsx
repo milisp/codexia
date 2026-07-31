@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { McpServerForm } from '@/features/mcp/McpServerForm';
 import { Button } from '@/components/ui/button';
 import { ccMcpAdd, unifiedAddMcpServer } from '@/services';
-import { useWorkspaceStore } from '@/stores';
+import { useAgentSettingsStore, useWorkspaceStore } from '@/stores';
 import type { McpServerConfig } from '@/types';
 
 interface McpAddPanelProps {
@@ -12,7 +12,8 @@ interface McpAddPanelProps {
 }
 
 export function McpAddPanel({ onAdded }: McpAddPanelProps) {
-  const { selectedAgent, cwd } = useWorkspaceStore();
+  const { selectedAgent } = useAgentSettingsStore();
+  const { cwd } = useWorkspaceStore();
   const [serverName, setServerName] = useState('');
   const [protocol, setProtocol] = useState<'stdio' | 'http' | 'sse'>('stdio');
   const [commandConfig, setCommandConfig] = useState({ command: '', args: '', env: '' });

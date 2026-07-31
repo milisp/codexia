@@ -17,12 +17,13 @@ import { isDesktopTauri } from '@/hooks/runtime';
 import { cn } from '@/lib/utils';
 import { codexService } from '@/services/codexService';
 import { useLayoutStore } from '@/stores/useLayoutStore';
+import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { getFilename } from '@/utils/getFilename';
 
 export function HistoryProjectsDialog() {
-  const { projects, historyProjects, setCwd, addProject, selectedAgent, setSelectedAgent } =
-    useWorkspaceStore();
+  const { projects, historyProjects, setCwd, addProject } = useWorkspaceStore();
+  const { selectedAgent, setSelectedAgent } = useAgentSettingsStore();
   const { setView, setActiveSidebarTab } = useLayoutStore();
   const [open, setOpen] = useState(false);
   const [continueAgent, setContinueAgent] = useState<'codex' | 'cc'>(selectedAgent);

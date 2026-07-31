@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useLayoutStore } from '@/stores';
+import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { getFilename } from '@/utils/getFilename';
 
@@ -28,7 +29,8 @@ type Props = {
 };
 
 export function SideBarProjectList({ onNewAction, newActionTitle, renderList }: Props) {
-  const { projects, removeProject, setCwd, setInstructionType } = useWorkspaceStore();
+  const { projects, removeProject, setCwd } = useWorkspaceStore();
+  const { setInstructionType } = useAgentSettingsStore();
   const { setView, expandedProjects, setProjectExpanded } = useLayoutStore();
   const [hoveredProject, setHoveredProject] = useState<string | null>(null);
 

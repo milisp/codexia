@@ -6,15 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { readFile, writeFile } from '@/services';
-import { useWorkspaceStore } from '@/stores';
+import { useAgentSettingsStore, useWorkspaceStore } from '@/stores';
 import { getErrorMessage } from '@/utils/errorUtils';
 
 const CODEX_INSTRUCTIONS_FILE_NAME = 'AGENTS.md';
 const CC_INSTRUCTIONS_FILE_NAME = 'CLAUDE.md';
 
 export default function AgentsMdView() {
-  const { selectedAgent, setSelectedAgent, cwd, instructionType, setInstructionType } =
-    useWorkspaceStore();
+  const { selectedAgent, setSelectedAgent, instructionType, setInstructionType } =
+    useAgentSettingsStore();
+  const { cwd } = useWorkspaceStore();
 
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);

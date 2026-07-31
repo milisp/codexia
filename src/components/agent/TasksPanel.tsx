@@ -5,6 +5,7 @@ import { gitRemoveWorktree } from '@/services/tauri/git';
 import { useAgentCenterStore } from '@/stores';
 import { useCCStore } from '@/stores/cc';
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
+import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { AgentCard } from './AgentCard';
 
@@ -36,7 +37,7 @@ export default function TasksPanel() {
   const { cards, removeCard, setCurrentAgentCardId, currentAgentCardId } = useAgentCenterStore();
   const { switchToSession, sessionLoadingMap, activeSessionId, setActiveSessionId } = useCCStore();
   const { threadStatusMap, currentThreadId } = useCodexStore();
-  const { setSelectedAgent } = useWorkspaceStore();
+  const { setSelectedAgent } = useAgentSettingsStore();
 
   const isRunning = (card: AgentCenterCard) =>
     card.kind === 'codex'

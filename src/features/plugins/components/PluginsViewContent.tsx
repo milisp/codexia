@@ -8,13 +8,13 @@ import SkillsViewContent from '@/features/skills/SkillsView';
 import { RecommendToolsView } from '@/features/tools/RecommendToolsView';
 import { PluginsMarketplaceView } from './PluginsMarketplaceView';
 import { PluginDetailView } from './PluginDetailView';
-import { useWorkspaceStore } from '@/stores';
+import { useAgentSettingsStore } from '@/stores';
 import { usePluginsViewContext } from '../hooks';
 import { TabSwitcher } from './TabSwitcher';
 
 /** Main content area: switches between Tools / MCP / Skills, or a manage / add overlay. */
 export function PluginsViewContent() {
-  const { selectedAgent } = useWorkspaceStore();
+  const { selectedAgent } = useAgentSettingsStore();
   const {
     mainTab,
     overlay,

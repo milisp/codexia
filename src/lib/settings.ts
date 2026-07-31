@@ -10,6 +10,7 @@
 import { getHomeDirectory, readFile, writeFile } from '@/services/tauri';
 import { fetchRemoteSettings } from '@/services/tauri/settings';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 
 const SETTINGS_FILE = '/.codexia/settings.json';
 const SETTINGS_VERSION = 1;
@@ -59,9 +60,11 @@ function applySettings(data: SettingsFile): void {
     useWorkspaceStore.setState({
       ...(ws.projects !== undefined && { projects: ws.projects }),
       ...(ws.historyProjects !== undefined && { historyProjects: ws.historyProjects }),
-      ...(ws.selectedAgent !== undefined && { selectedAgent: ws.selectedAgent as never }),
       ...(ws.cwd !== undefined && { cwd: ws.cwd }),
       ...(ws.projectSort !== undefined && { projectSort: ws.projectSort as never }),
+    });
+    useAgentSettingsStore.setState({
+      ...(ws.selectedAgent !== undefined && { selectedAgent: ws.selectedAgent as never }),
       ...(ws.instructionType !== undefined && { instructionType: ws.instructionType }),
     });
   }
@@ -87,16 +90,17 @@ export async function loadRemoteSettings(): Promise<void> {
 
 function snapshot(): SettingsFile {
   const ws = useWorkspaceStore.getState();
+  const as = useAgentSettingsStore.getState();
 
   return {
     version: SETTINGS_VERSION,
     workspace: {
       projects: ws.projects,
       historyProjects: ws.historyProjects,
-      selectedAgent: ws.selectedAgent,
+      selectedAgent: as.selectedAgent,
       cwd: ws.cwd ?? undefined,
       projectSort: ws.projectSort,
-      instructionType: ws.instructionType,
+      instructionType: as.instructionType,
     },
   };
 }
@@ -122,6 +126,9 @@ function scheduleWrite(): void {
 
 /** Subscribe all tracked stores. Returns an unsubscribe function. */
 export function initSettingsSync(): () => void {
-  const unsubs = [useWorkspaceStore.subscribe(scheduleWrite)];
+  const unsubs = [
+    useWorkspaceStore.subscribe(scheduleWrite),
+    useAgentSettingsStore.subscribe(scheduleWrite),
+  ];
   return () => unsubs.forEach((fn) => fn());
 }

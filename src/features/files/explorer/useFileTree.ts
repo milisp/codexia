@@ -5,7 +5,7 @@ import {
   searchFilesByName,
   type TauriFileEntry,
 } from '@/services/tauri';
-import { useWorkspaceStore } from '@/stores';
+import { useEditorStore } from '@/stores';
 import { useSettingsStore } from '@/stores/settings';
 import { getFilename } from '@/utils/getFilename';
 import type { FileNode } from './types';
@@ -50,7 +50,7 @@ export function useFileTree(folder: string): UseFileTreeReturn {
   const [searchTrigger, setSearchTrigger] = useState(0);
 
   const { hiddenNames } = useSettingsStore();
-  const { selectedFilePath } = useWorkspaceStore();
+  const { selectedFilePath } = useEditorStore();
 
   const autoExpandedTargetRef = useRef<string | null>(null);
   const prevFolderRef = useRef(folder);

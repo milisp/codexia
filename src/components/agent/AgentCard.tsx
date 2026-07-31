@@ -10,7 +10,7 @@ import { codexService } from '@/services/codexService';
 import { useAgentCenterStore } from '@/stores';
 import { useCCStore } from '@/stores/cc';
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { AgentCardHeader } from './AgentCardHeader';
 import { CCAgentCard } from './CcAgentCard';
 import { CodexAgentCard } from './CodexAgentCard';
@@ -31,7 +31,7 @@ export function AgentCard({ card, onRemove, isSelected, hideBody = false }: Agen
   const { threadStatusMap } = useCodexStore();
   const { pendingApprovals } = useApprovalStore();
   const { pendingRequests } = useRequestUserInputStore();
-  const { setSelectedAgent } = useWorkspaceStore();
+  const { setSelectedAgent } = useAgentSettingsStore();
   const codexStatus = card.kind === 'codex' ? threadStatusMap[card.id] : undefined;
   const running =
     card.kind === 'codex'

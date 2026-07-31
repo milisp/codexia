@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { DiffViewer } from '@/features/DiffViewer';
 import { gitReverseFiles } from '@/services/tauri';
-import { useWorkspaceStore } from '@/stores';
+import { useEditorStore, useWorkspaceStore } from '@/stores';
 import { getDiffViewerProps } from './fileChangeLogic';
 import type { AggregatedFileChange } from './fileChangeLogic';
 import { toRelativePath, useOpenReviewTab } from './SummaryFileChanges';
@@ -20,7 +20,8 @@ type PendingUndo = { kind: 'all' } | { kind: 'file'; path: string };
  * not render per-file diffs — that's the right panel's review tab's job.
  */
 export const ThreadFileChangesSummary = ({ changes }: ThreadFileChangesSummaryProps) => {
-  const { cwd, hasConfirmedGitRevert, setHasConfirmedGitRevert } = useWorkspaceStore();
+  const { cwd } = useWorkspaceStore();
+  const { hasConfirmedGitRevert, setHasConfirmedGitRevert } = useEditorStore();
   const openReviewTab = useOpenReviewTab();
   const [pendingUndo, setPendingUndo] = useState<PendingUndo | null>(null);
   const [undoing, setUndoing] = useState(false);

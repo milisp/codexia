@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { listSessions, type SdkSessionInfo } from '@/lib/sessions';
 import { ccDeleteSession } from '@/services/tauri/cc';
 import { useAgentCenterStore, useLayoutStore } from '@/stores';
+import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { formatThreadAge } from '@/utils/formatThreadAge';
 import { getFilename } from '@/utils/getFilename';
@@ -26,7 +27,8 @@ export function CCSessionManager({ open, onClose }: CCSessionManagerProps) {
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[] | null>(null);
   const [offset, setOffset] = useState(0);
   const { toast } = useToast();
-  const { cwd, setCwd, setSelectedAgent } = useWorkspaceStore();
+  const { cwd, setCwd } = useWorkspaceStore();
+  const { setSelectedAgent } = useAgentSettingsStore();
   const { setView } = useLayoutStore();
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
 

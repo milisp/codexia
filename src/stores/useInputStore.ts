@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useCCInputStore } from './cc/useCCInputStore';
+import { useAgentSettingsStore } from './useAgentSettingsStore';
 import { useWorkspaceStore } from './useWorkspaceStore';
 
 interface InputStore {
@@ -16,7 +17,7 @@ export const useInputStore = create<InputStore>()(
     (set) => ({
       inputValue: '',
       setInputValue: (value) => {
-        const { selectedAgent } = useWorkspaceStore.getState();
+        const { selectedAgent } = useAgentSettingsStore.getState();
         if (selectedAgent === 'cc') {
           useCCInputStore.getState().setInputValue(value);
           return;
@@ -24,7 +25,7 @@ export const useInputStore = create<InputStore>()(
         set({ inputValue: value });
       },
       appendInputValue: (value) => {
-        const { selectedAgent } = useWorkspaceStore.getState();
+        const { selectedAgent } = useAgentSettingsStore.getState();
         if (selectedAgent === 'cc') {
           useCCInputStore.getState().appendInputValue(value);
           return;
@@ -36,7 +37,8 @@ export const useInputStore = create<InputStore>()(
         });
       },
       appendFileLinks: (paths) => {
-        const { selectedAgent, cwd } = useWorkspaceStore.getState();
+        const { selectedAgent } = useAgentSettingsStore.getState();
+        const { cwd } = useWorkspaceStore.getState();
         if (selectedAgent === 'cc') {
           useCCInputStore.getState().appendFileLinks(paths, cwd ?? undefined);
           return;
@@ -66,7 +68,7 @@ export const useInputStore = create<InputStore>()(
         });
       },
       clearInputValue: () => {
-        const { selectedAgent } = useWorkspaceStore.getState();
+        const { selectedAgent } = useAgentSettingsStore.getState();
         if (selectedAgent === 'cc') {
           useCCInputStore.getState().clearInputValue();
           return;
