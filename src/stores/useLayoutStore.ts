@@ -20,6 +20,8 @@ export type viewType =
   | 'usage'
   | 'insights';
 
+export type RightPanelTab = 'diff' | 'tasks' | 'note' | 'terminal' | 'webpreview' | 'files';
+
 interface LayoutStore {
   isSidebarOpen: boolean;
   toggleSidebar: () => void;
@@ -37,19 +39,19 @@ interface LayoutStore {
   toggleRightPanelFocused: () => void;
   activeSidebarTab: AgentType;
   setActiveSidebarTab: (tab: AgentType) => void;
-  activeRightPanelTab: 'diff' | 'tasks' | 'note' | 'files' | 'webpreview';
-  setActiveRightPanelTab: (tab: 'diff' | 'tasks' | 'note' | 'files' | 'webpreview') => void;
+  activeRightPanelTab: RightPanelTab | null;
+  setActiveRightPanelTab: (tab: RightPanelTab) => void;
+  // Right panel tabs currently open in the header bar; closable independently of activeRightPanelTab.
+  openRightPanelTabs: RightPanelTab[];
+  closeRightPanelTab: (tab: RightPanelTab) => void;
   selectedAutomationTaskId: string | null;
   setSelectedAutomationTaskId: (taskId: string | null) => void;
-  // Terminal tabs
+  // Terminal tabs (sessions shown inside the right panel's Terminal tab)
   terminals: TerminalTab[];
   activeTerminalId: string | null;
   addTerminal: () => void;
   removeTerminal: (id: string) => void;
   setActiveTerminalId: (id: string) => void;
-  // Derived: panel is open when at least one tab exists
-  isTerminalOpen: boolean;
-  setIsTerminalOpen: (open: boolean) => void;
   diffWordWrap: boolean;
   setDiffWordWrap: (enabled: boolean) => void;
   diffSplitMode: boolean;
@@ -82,7 +84,25 @@ export const useLayoutStore = create<LayoutStore>()(
       activeSidebarTab: 'codex',
       setActiveSidebarTab: (tab) => set({ activeSidebarTab: tab }),
       activeRightPanelTab: 'diff',
-      setActiveRightPanelTab: (tab) => set({ activeRightPanelTab: tab }),
+      setActiveRightPanelTab: (tab) =>
+        set((state) => ({
+          activeRightPanelTab: tab,
+          openRightPanelTabs: state.openRightPanelTabs.includes(tab)
+            ? state.openRightPanelTabs
+            : [...state.openRightPanelTabs, tab],
+        })),
+      openRightPanelTabs: ['diff'],
+      closeRightPanelTab: (tab) =>
+        set((state) => {
+          const index = state.openRightPanelTabs.indexOf(tab);
+          if (index === -1) return {};
+          const next = state.openRightPanelTabs.filter((t) => t !== tab);
+          if (state.activeRightPanelTab !== tab) {
+            return { openRightPanelTabs: next };
+          }
+          const nextActive = next[index - 1] ?? next[0] ?? null;
+          return { openRightPanelTabs: next, activeRightPanelTab: nextActive };
+        }),
       selectedAutomationTaskId: null,
       setSelectedAutomationTaskId: (taskId) => set({ selectedAutomationTaskId: taskId }),
       // Terminal tabs
@@ -96,7 +116,6 @@ export const useLayoutStore = create<LayoutStore>()(
           return {
             terminals: [...state.terminals, tab],
             activeTerminalId: id,
-            isTerminalOpen: true,
           };
         }),
       removeTerminal: (id) =>
@@ -109,24 +128,9 @@ export const useLayoutStore = create<LayoutStore>()(
           return {
             terminals: next,
             activeTerminalId: activeId,
-            isTerminalOpen: next.length > 0,
           };
         }),
       setActiveTerminalId: (id) => set({ activeTerminalId: id }),
-      isTerminalOpen: false,
-      setIsTerminalOpen: (open) =>
-        set((state) => {
-          if (!open) return { isTerminalOpen: false };
-          // Open: create first tab if none exist
-          if (state.terminals.length > 0) return { isTerminalOpen: true };
-          const id = `term-${terminalCounter++}`;
-          const label = `Terminal ${terminalCounter - 1}`;
-          return {
-            terminals: [{ id, label }],
-            activeTerminalId: id,
-            isTerminalOpen: true,
-          };
-        }),
       diffWordWrap: false,
       setDiffWordWrap: (enabled) => set({ diffWordWrap: enabled }),
       diffSplitMode: false,
@@ -148,6 +152,7 @@ export const useLayoutStore = create<LayoutStore>()(
         isRightPanelFocused: state.isRightPanelFocused,
         activeSidebarTab: state.activeSidebarTab,
         activeRightPanelTab: state.activeRightPanelTab,
+        openRightPanelTabs: state.openRightPanelTabs,
         diffWordWrap: state.diffWordWrap,
         diffSplitMode: state.diffSplitMode,
         expandedProjects: state.expandedProjects,

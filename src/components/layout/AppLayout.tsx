@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect, useRef } from 'react';
 import type { ImperativePanelHandle } from 'react-resizable-panels';
-import { BottomTerminal } from '@/features/terminal/BottomTerminal';
 import { AppSideBar, RightPanel } from '@/components/layout';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { SidebarInset, SidebarProvider, useSidebar } from '@/components/ui/sidebar';
@@ -170,7 +169,6 @@ export function AppLayout() {
           {view === 'insights' && <InsightsView />}
         </Suspense>
       </div>
-      {view === 'agent' && <BottomTerminal />}
     </div>
   );
 

@@ -19,8 +19,14 @@ const CARDS_VIEW_MODES: { mode: AgentCardsViewMode; icon: typeof LayoutGrid; tit
 ];
 
 export function AgentViewHeader() {
-  const { isRightPanelOpen, toggleRightPanel, isTerminalOpen, setIsTerminalOpen } =
-    useLayoutStore();
+  const {
+    isRightPanelOpen,
+    toggleRightPanel,
+    activeRightPanelTab,
+    setActiveRightPanelTab,
+    setRightPanelOpen,
+  } = useLayoutStore();
+  const isTerminalOpen = isRightPanelOpen && activeRightPanelTab === 'terminal';
   const { cardsViewMode, setCardsViewMode } = useAgentCenterStore();
   const { open: isSidebarOpen, openMobile, isMobile } = useSidebar();
   const { needsTrafficLightOffset } = useTrafficLightConfig(isSidebarOpen);
@@ -67,8 +73,11 @@ export function AgentViewHeader() {
             <Button
               variant={isTerminalOpen ? 'secondary' : 'ghost'}
               size="icon"
-              onClick={() => setIsTerminalOpen(!isTerminalOpen)}
-              title={isTerminalOpen ? 'Hide terminal' : 'Show terminal'}
+              onClick={() => {
+                setActiveRightPanelTab('terminal');
+                setRightPanelOpen(true);
+              }}
+              title="Show terminal"
             >
               <SquareTerminal className="size-4" />
             </Button>

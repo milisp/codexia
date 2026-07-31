@@ -13,9 +13,12 @@ const WebPreview = lazy(() =>
   import('../../features/web-preview/WebPreview').then((m) => ({ default: m.WebPreview }))
 );
 const TasksPanel = lazy(() => import('@/components/agent/TasksPanel'));
+const TerminalPanel = lazy(() =>
+  import('@/features/terminal/TerminalPanel').then((m) => ({ default: m.TerminalPanel }))
+);
 
 export function RightPanel() {
-  const { activeRightPanelTab } = useLayoutStore();
+  const { activeRightPanelTab, openRightPanelTabs } = useLayoutStore();
   const { cwd } = useWorkspaceStore();
   const { refreshStats } = useGitStatsStore();
   const isMobile = useIsMobile();
@@ -69,49 +72,63 @@ export function RightPanel() {
       className={`h-full w-full min-h-0 border-l border-white/10 flex flex-col overflow-hidden ${isMobile ? 'bg-sidebar' : 'bg-sidebar/30'}`}
     >
       <RightPanelHeader />
-      <div className="flex-1 min-h-0 flex overflow-hidden">
-        <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
-          <Suspense fallback={null}>
-            <div
-              className={
-                activeRightPanelTab === 'diff' ? 'h-full min-h-0 overflow-hidden' : 'hidden'
-              }
-            >
-              <GitDiffPanel cwd={cwd} isActive={activeRightPanelTab === 'diff'} />
-            </div>
-          </Suspense>
-
-          {activeRightPanelTab === 'tasks' && (
-            <div className="h-full min-h-0 overflow-hidden">
-              <Suspense fallback={null}>
-                <TasksPanel />
-              </Suspense>
-            </div>
-          )}
-
-          {activeRightPanelTab === 'note' && (
-            <div className="h-full min-h-0 overflow-hidden">
-              <Suspense fallback={null}>
-                <NoteView />
-              </Suspense>
-            </div>
-          )}
-
-          {activeRightPanelTab === 'files' && (
+      {openRightPanelTabs.length > 0 && (
+        <div className="flex-1 min-h-0 flex overflow-hidden">
+          <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
             <Suspense fallback={null}>
-              <FilesPanel />
+              <div
+                className={
+                  activeRightPanelTab === 'diff' ? 'h-full min-h-0 overflow-hidden' : 'hidden'
+                }
+              >
+                <GitDiffPanel cwd={cwd} isActive={activeRightPanelTab === 'diff'} />
+              </div>
             </Suspense>
-          )}
 
-          {activeRightPanelTab === 'webpreview' && (
-            <div className="h-full min-h-0 overflow-hidden">
+            {activeRightPanelTab === 'tasks' && (
+              <div className="h-full min-h-0 overflow-hidden">
+                <Suspense fallback={null}>
+                  <TasksPanel />
+                </Suspense>
+              </div>
+            )}
+
+            {activeRightPanelTab === 'note' && (
+              <div className="h-full min-h-0 overflow-hidden">
+                <Suspense fallback={null}>
+                  <NoteView />
+                </Suspense>
+              </div>
+            )}
+
+            {activeRightPanelTab === 'files' && (
               <Suspense fallback={null}>
-                <WebPreview url={webPreviewUrl} onUrlChange={setWebPreviewUrl} />
+                <FilesPanel />
               </Suspense>
-            </div>
-          )}
+            )}
+
+            {openRightPanelTabs.includes('terminal') && (
+              <div
+                className={
+                  activeRightPanelTab === 'terminal' ? 'h-full min-h-0 overflow-hidden' : 'hidden'
+                }
+              >
+                <Suspense fallback={null}>
+                  <TerminalPanel isActive={activeRightPanelTab === 'terminal'} />
+                </Suspense>
+              </div>
+            )}
+
+            {activeRightPanelTab === 'webpreview' && (
+              <div className="h-full min-h-0 overflow-hidden">
+                <Suspense fallback={null}>
+                  <WebPreview url={webPreviewUrl} onUrlChange={setWebPreviewUrl} />
+                </Suspense>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
