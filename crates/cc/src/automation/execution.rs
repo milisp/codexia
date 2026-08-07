@@ -240,7 +240,23 @@ pub(super) async fn execute_task(
     event_sink: Arc<dyn EventSink>,
 ) {
     if let Some(goal_id) = extract_goal_id(&task.prompt) {
-        if should_skip_session(&goal_id) {
+        // `should_skip_session` blocks on a subprocess, so it must not run inline on this
+        // async task's Tokio worker thread — that thread is shared with other scheduled
+        // automations (see `runtime.rs` / `service.rs`), and a hung `loopx` process would
+        // otherwise stall unrelated ticks indefinitely. `spawn_blocking` moves the call to
+        // the blocking pool; the surrounding `timeout` bounds how long we'll wait for it.
+        // A join error or a timeout is treated the same as every other infra failure here:
+        // fail open, proceed with the session.
+        let goal_id_for_check = goal_id.clone();
+        let skip_result = tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            tokio::task::spawn_blocking(move || should_skip_session(&goal_id_for_check)),
+        )
+        .await;
+
+        let should_skip = matches!(skip_result, Ok(Ok(true)));
+
+        if should_skip {
             log::info!(
                 "automation '{}' skipped — LoopX goal '{}' reported not runnable",
                 task.id,
@@ -324,12 +340,27 @@ fn should_skip_from_output(exit_status: i32, stdout: &str) -> bool {
     }
 }
 
-/// Shells out to `loopx --format json quota should-run --goal-id <goal_id>`. Any failure
-/// to even launch the process (binary not on PATH, spawn error) is treated the same as a
-/// nonzero exit by `should_skip_from_output` — fail open, proceed with the session.
+/// Shells out to `loopx --format json quota should-run --goal-id <goal_id> --agent-id
+/// codexia`. This is a *blocking* call (`std::process::Command::output`) — callers on the
+/// async runtime must run it via `tokio::task::spawn_blocking` with a timeout, since a
+/// hung `loopx` process must never tie up a shared Tokio worker thread. `--agent-id` is
+/// sent to match the sibling Python client's `_should_run_args` (`alphalayer/loopx.py`),
+/// which always sends both flags; `"codexia"` identifies this caller the way the Python
+/// client's default `"alphalayer"` identifies its own. Any failure to even launch the
+/// process (binary not on PATH, spawn error) is treated the same as a nonzero exit by
+/// `should_skip_from_output` — fail open, proceed with the session.
 fn should_skip_session(goal_id: &str) -> bool {
     let output = std::process::Command::new("loopx")
-        .args(["--format", "json", "quota", "should-run", "--goal-id", goal_id])
+        .args([
+            "--format",
+            "json",
+            "quota",
+            "should-run",
+            "--goal-id",
+            goal_id,
+            "--agent-id",
+            "codexia",
+        ])
         .output();
 
     match output {
