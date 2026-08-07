@@ -285,10 +285,9 @@ pub(super) async fn execute_task(
 /// malformed/missing its value — both cases are treated identically by the caller: no
 /// pre-flight opinion, proceed as if this feature didn't exist.
 fn extract_goal_id(prompt: &str) -> Option<String> {
-    let flag = "--goal-id";
-    let start = prompt.find(flag)? + flag.len();
-    prompt[start..]
-        .split_whitespace()
+    let mut tokens = prompt.split_whitespace();
+    tokens.find(|token| *token == "--goal-id")?;
+    tokens
         .next()
         .map(|value| value.trim_matches('`').to_string())
         .filter(|value| !value.is_empty() && !value.starts_with("--"))
@@ -341,6 +340,12 @@ mod preflight_tests {
     #[test]
     fn extract_goal_id_returns_none_when_flag_is_followed_by_another_flag() {
         let prompt = "Run `alphalayer loopx-tick myflows.digest:flow --goal-id --other-flag value` in this directory via the shell.";
+        assert_eq!(extract_goal_id(prompt), None);
+    }
+
+    #[test]
+    fn extract_goal_id_does_not_match_a_flag_that_merely_contains_goal_id_as_a_substring() {
+        let prompt = "Run task --goal-id-format short in this directory.";
         assert_eq!(extract_goal_id(prompt), None);
     }
 
