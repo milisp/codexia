@@ -239,6 +239,17 @@ pub(super) async fn execute_task(
     cc_state: CCState,
     event_sink: Arc<dyn EventSink>,
 ) {
+    if let Some(goal_id) = extract_goal_id(&task.prompt) {
+        if should_skip_session(&goal_id) {
+            log::info!(
+                "automation '{}' skipped — LoopX goal '{}' reported not runnable",
+                task.id,
+                goal_id
+            );
+            return;
+        }
+    }
+
     if task.agent == "cc" {
         if let Err(err) = run_task_with_cc(task.clone(), cc_state).await {
             log::error!("automation '{}' execution failed: {}", task.id, err);
@@ -305,6 +316,23 @@ fn should_skip_from_output(exit_status: i32, stdout: &str) -> bool {
     }
     match serde_json::from_str::<Value>(stdout) {
         Ok(json) => json.get("should_run").and_then(Value::as_bool) == Some(false),
+        Err(_) => false,
+    }
+}
+
+/// Shells out to `loopx --format json quota should-run --goal-id <goal_id>`. Any failure
+/// to even launch the process (binary not on PATH, spawn error) is treated the same as a
+/// nonzero exit by `should_skip_from_output` — fail open, proceed with the session.
+fn should_skip_session(goal_id: &str) -> bool {
+    let output = std::process::Command::new("loopx")
+        .args(["--format", "json", "quota", "should-run", "--goal-id", goal_id])
+        .output();
+
+    match output {
+        Ok(output) => should_skip_from_output(
+            output.status.code().unwrap_or(-1),
+            &String::from_utf8_lossy(&output.stdout),
+        ),
         Err(_) => false,
     }
 }
