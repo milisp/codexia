@@ -284,6 +284,12 @@ mod preflight_tests {
 
     #[test]
     fn extract_goal_id_finds_the_flag_value() {
+        let prompt = "Run alphalayer loopx-tick myflows.digest:flow --goal-id nightly-digest in this directory via the shell. Report its one-line output, then stop.";
+        assert_eq!(extract_goal_id(prompt), Some("nightly-digest".to_string()));
+    }
+
+    #[test]
+    fn extract_goal_id_strips_trailing_backtick() {
         let prompt = "Run `alphalayer loopx-tick myflows.digest:flow --goal-id nightly-digest` in this directory via the shell. Report its one-line output, then stop.";
         assert_eq!(extract_goal_id(prompt), Some("nightly-digest".to_string()));
     }
@@ -301,35 +307,55 @@ mod preflight_tests {
     }
 
     #[test]
-    fn should_skip_session_is_false_when_should_run_reports_true() {
+    fn extract_goal_id_returns_none_when_flag_is_followed_by_another_flag() {
+        let prompt = "Run `alphalayer loopx-tick myflows.digest:flow --goal-id --other-flag value` in this directory via the shell.";
+        assert_eq!(extract_goal_id(prompt), None);
+    }
+
+    #[test]
+    fn should_skip_from_output_is_false_when_should_run_reports_true() {
         // "loopx" prints `{"should_run": true}` — proceed with the session.
-        let outcome = interpret_should_run_output(0, r#"{"should_run": true}"#);
+        let outcome = should_skip_from_output(0, r#"{"should_run": true}"#);
         assert!(!outcome);
     }
 
     #[test]
-    fn should_skip_session_is_true_only_on_a_clean_false() {
-        let outcome = interpret_should_run_output(0, r#"{"should_run": false, "reason": "quota exhausted"}"#);
+    fn should_skip_from_output_is_true_only_on_a_clean_false() {
+        let outcome = should_skip_from_output(0, r#"{"should_run": false, "reason": "quota exhausted"}"#);
         assert!(outcome);
     }
 
     #[test]
-    fn should_skip_session_is_false_on_nonzero_exit() {
+    fn should_skip_from_output_is_false_on_nonzero_exit() {
         // Fail open: an infra error must never silently skip a wake.
-        let outcome = interpret_should_run_output(1, "");
+        let outcome = should_skip_from_output(1, "");
         assert!(!outcome);
     }
 
     #[test]
-    fn should_skip_session_is_false_on_unparseable_json() {
-        let outcome = interpret_should_run_output(0, "not json");
+    fn should_skip_from_output_is_false_on_nonzero_exit_even_with_valid_should_run_false_json() {
+        // Exit-code failure must override an otherwise-parseable negative signal.
+        let outcome = should_skip_from_output(1, r#"{"should_run": false, "reason": "quota exhausted"}"#);
         assert!(!outcome);
     }
 
     #[test]
-    fn should_skip_session_is_false_when_should_run_field_missing() {
+    fn should_skip_from_output_is_false_on_unparseable_json() {
+        let outcome = should_skip_from_output(0, "not json");
+        assert!(!outcome);
+    }
+
+    #[test]
+    fn should_skip_from_output_is_false_when_should_run_field_missing() {
         // Missing field defaults to "runnable" (proceed) rather than assuming skip.
-        let outcome = interpret_should_run_output(0, r#"{"reason": "no field here"}"#);
+        let outcome = should_skip_from_output(0, r#"{"reason": "no field here"}"#);
+        assert!(!outcome);
+    }
+
+    #[test]
+    fn should_skip_from_output_is_false_when_should_run_is_wrong_type() {
+        // Fail open on schema mismatch, not just on totally-unparseable JSON.
+        let outcome = should_skip_from_output(0, r#"{"should_run": "true"}"#);
         assert!(!outcome);
     }
 }
