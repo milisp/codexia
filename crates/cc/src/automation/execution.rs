@@ -246,6 +246,10 @@ pub(super) async fn execute_task(
                 task.id,
                 goal_id
             );
+            event_sink.emit(
+                "automation:run/skipped",
+                json!({ "taskId": task.id, "goalId": goal_id, "reason": "not_runnable" }),
+            );
             return;
         }
     }
