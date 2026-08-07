@@ -51,6 +51,7 @@ brew install --cask codexia
 
 ## Recommend tools
 
+- [Plux](https://milisp.dev/plux) - Codexia's prompt notepad, but system-wide: capture from any app, then one click sends a snippet into ChatGPT, Claude, Cursor or Gemini. Local file, no account. *(also by me)*
 - [oh-my-codex](https://github.com/Yeachan-Heo/oh-my-codex) - Your codex is not alone. Add hooks, agent teams, HUDs, and so much more.
 - [rtc](https://github.com/rtk-ai/rtk) - CLI proxy that reduces LLM token consumption by 60-90% on common dev commands. Single Rust binary, zero dependencies
 - [ctx](https://github.com/ctxrs/ctx) - Search the coding agent history already on your machine
