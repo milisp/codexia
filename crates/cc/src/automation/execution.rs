@@ -278,6 +278,38 @@ pub(super) async fn execute_task(
     }
 }
 
+/// Pulls the `--goal-id <value>` flag out of an `AutomationTask.prompt` string. The task
+/// model has no dedicated `goal_id` field — the goal-id lives only inside the prompt text
+/// a human (or Codexia's UI) fills in, per the approved prompt template. Returns `None`
+/// for any prompt that isn't a `loopx-tick`-shaped instruction, or where the flag is
+/// malformed/missing its value — both cases are treated identically by the caller: no
+/// pre-flight opinion, proceed as if this feature didn't exist.
+fn extract_goal_id(prompt: &str) -> Option<String> {
+    let flag = "--goal-id";
+    let start = prompt.find(flag)? + flag.len();
+    prompt[start..]
+        .split_whitespace()
+        .next()
+        .map(|value| value.trim_matches('`').to_string())
+        .filter(|value| !value.is_empty() && !value.starts_with("--"))
+}
+
+/// Interprets the result of shelling out to `loopx --format json quota should-run`.
+/// Returns `true` only when the process exited 0, produced valid JSON, and that JSON has
+/// `"should_run": false` (a real boolean `false`, not a string or other type) — the one
+/// case approved as a real reason to skip launching a session. Every other outcome
+/// returns `false`: an infra error here must never silently skip a wake, since an
+/// unnecessary session is cheap and reversible while a silently-skipped wake is not.
+fn should_skip_from_output(exit_status: i32, stdout: &str) -> bool {
+    if exit_status != 0 {
+        return false;
+    }
+    match serde_json::from_str::<Value>(stdout) {
+        Ok(json) => json.get("should_run").and_then(Value::as_bool) == Some(false),
+        Err(_) => false,
+    }
+}
+
 #[cfg(test)]
 mod preflight_tests {
     use super::*;
