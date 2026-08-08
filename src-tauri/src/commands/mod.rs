@@ -8,6 +8,7 @@ pub mod fs;
 pub mod git;
 pub mod mcp;
 pub mod notes;
+pub mod remote;
 pub mod skills;
 pub mod skillssh;
 pub mod sleep;

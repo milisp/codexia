@@ -13,6 +13,8 @@ use tokio::sync::broadcast;
 use codexia_cc::CCState;
 use codexia_codex::AppState;
 use codexia_shared::sleep::SleepState;
+use crate::auth::DeviceToken;
+use crate::events::EventHub;
 use crate::watcher::WebWatchState;
 use crate::terminal::WebTerminalState;
 
@@ -24,6 +26,13 @@ pub struct WebServerState {
     pub(crate) terminal_state: Arc<WebTerminalState>,
     pub(crate) fs_watch_state: Arc<WebWatchState>,
     pub event_tx: broadcast::Sender<(String, Value)>,
+    /// Sequenced view of `event_tx`, used by the WebSocket/SSE endpoints so
+    /// clients can resume after a dropped connection.
+    pub event_hub: EventHub,
+    /// Secret remote clients must present. Local requests are exempt.
+    pub device_token: DeviceToken,
+    /// Port the server is listening on, surfaced to clients for pairing.
+    pub port: u16,
 }
 
 impl WebServerState {
@@ -34,14 +43,39 @@ impl WebServerState {
         terminal_state: Arc<WebTerminalState>,
         fs_watch_state: Arc<WebWatchState>,
         event_tx: broadcast::Sender<(String, Value)>,
+        device_token: DeviceToken,
+        port: u16,
     ) -> Self {
-        Self { codex_state, cc_state, sleep_state, terminal_state, fs_watch_state, event_tx }
+        let event_hub = EventHub::spawn_from(&event_tx);
+        Self {
+            codex_state,
+            cc_state,
+            sleep_state,
+            terminal_state,
+            fs_watch_state,
+            event_tx,
+            event_hub,
+            device_token,
+            port,
+        }
+    }
+}
+
+impl FromRef<WebServerState> for DeviceToken {
+    fn from_ref(state: &WebServerState) -> Self {
+        state.device_token.clone()
     }
 }
 
 impl FromRef<WebServerState> for broadcast::Sender<(String, Value)> {
     fn from_ref(state: &WebServerState) -> Self {
         state.event_tx.clone()
+    }
+}
+
+impl FromRef<WebServerState> for EventHub {
+    fn from_ref(state: &WebServerState) -> Self {
+        state.event_hub.clone()
     }
 }
 

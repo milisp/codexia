@@ -1,5 +1,8 @@
 pub mod watcher;
+pub mod auth;
 mod event_sink;
+pub mod events;
+pub mod tailscale;
 mod handlers;
 pub mod router;
 mod server;
@@ -10,7 +13,7 @@ mod server_web;
 
 pub use router::create_router;
 pub use types::WebServerState;
-pub use server_web::start_web_server;
+pub use server_web::{serve_api, start_web_server};
 
 // Start the web server and open browser
 pub fn start_server(host: &str, port: u16) {
