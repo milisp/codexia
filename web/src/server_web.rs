@@ -6,6 +6,7 @@ use serde_json::Value;
 use tokio::sync::broadcast;
 
 use super::{router::create_router, types::WebServerState};
+use crate::auth::DeviceToken;
 use codexia_cc::CCState;
 use codexia_codex::{AppState, CodexInitializationState, connect_codex, initialize_codex};
 use codexia_shared::event_sink::EventSink;
@@ -38,28 +39,42 @@ pub async fn start_web_server_with_events(
 
     codexia_cc::scan::start_session_scanner();
 
-    let state = WebServerState {
+    let device_token = DeviceToken::load_or_create()
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+
+    let state = WebServerState::new(
         codex_state,
         cc_state,
-        sleep_state: Arc::new(SleepState::default()),
-        terminal_state: Arc::new(super::terminal::WebTerminalState::default()),
-        fs_watch_state: Arc::new(WebWatchState::default()),
+        Arc::new(SleepState::default()),
+        Arc::new(super::terminal::WebTerminalState::default()),
+        Arc::new(WebWatchState::default()),
         event_tx,
-    };
+        device_token,
+        port,
+    );
 
     let app = create_router(state);
     let listener = tokio::net::TcpListener::bind(format!("{}:{}", host, port)).await?;
 
     log::info!("Web server listening on http://{}:{}", host, port);
+    log_remote_access(host, port);
 
-    axum::serve(listener, app).await?;
+    // ConnectInfo carries the peer address the auth layer needs to decide
+    // whether a request is local and may skip the device token.
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
+    .await?;
 
     Ok(())
 }
 
 pub async fn start_web_server(host: &str, port: u16) -> Result<(), Box<dyn std::error::Error>> {
     let boot_started_at = Instant::now();
-    let (event_tx, _) = broadcast::channel(100);
+    // Sized above the hub's replay buffer so the sequencing task never lags
+    // behind the emitters — anything dropped here is lost before it gets a seq.
+    let (event_tx, _) = broadcast::channel(4096);
     let event_sink: Arc<dyn EventSink> = Arc::new(WebSocketEventSink::new(event_tx.clone()));
     let init_state = CodexInitializationState::new(Arc::clone(&event_sink));
 
@@ -103,4 +118,85 @@ pub async fn start_web_server(host: &str, port: u16) -> Result<(), Box<dyn std::
     let cc_state = Arc::new(CCState::new(Arc::new(WebSocketEventSink::new(event_tx.clone()))));
     log::info!("[web] boot completed in {:?}", boot_started_at.elapsed());
     start_web_server_with_events(codex_state, cc_state, event_tx, host, port).await
+}
+
+/// Logs how to reach this server from another device, so the tailnet hostname
+/// and pairing hint are visible without opening the UI.
+fn log_remote_access(host: &str, port: u16) {
+    match crate::tailscale::detect() {
+        Some(info) if host != "127.0.0.1" => {
+            log::info!(
+                "[remote] reachable on the tailnet at http://{}:{} ({})",
+                info.dns_name,
+                port,
+                info.ipv4
+            );
+            log::info!("[remote] pair a device with the token from GET /api/pairing");
+        }
+        Some(info) => {
+            log::info!(
+                "[remote] Tailscale detected ({}) but bound to loopback; pass --remote to accept tailnet clients",
+                info.dns_name
+            );
+        }
+        None => {
+            log::info!("[remote] Tailscale not detected; remote clients unavailable");
+        }
+    }
+}
+
+/// Serves the HTTP API against state the caller already owns.
+///
+/// Used by the desktop app to expose its live codex/cc session to remote
+/// devices. Unlike `start_web_server_with_events` this starts no runtimes of
+/// its own — the automation runtime and session scanner are already running in
+/// the host process, and starting them twice would double-fire their work.
+///
+/// Returns once `shutdown` resolves, releasing the port.
+pub async fn serve_api<F>(
+    codex_state: Option<Arc<AppState>>,
+    cc_state: Arc<CCState>,
+    event_tx: broadcast::Sender<(String, serde_json::Value)>,
+    host: &str,
+    port: u16,
+    shutdown: F,
+) -> Result<(), String>
+where
+    F: std::future::Future<Output = ()> + Send + 'static,
+{
+    let device_token = DeviceToken::load_or_create()?;
+
+    let state = WebServerState::new(
+        codex_state,
+        cc_state,
+        Arc::new(SleepState::default()),
+        Arc::new(super::terminal::WebTerminalState::default()),
+        Arc::new(WebWatchState::default()),
+        event_tx,
+        device_token,
+        port,
+    );
+
+    let app = create_router(state);
+    let listener = tokio::net::TcpListener::bind(format!("{host}:{port}"))
+        .await
+        .map_err(|e| format!("Failed to bind {host}:{port}: {e}"))?;
+
+    // The bound address is what actually matters: binding to a tailnet IP that
+    // Tailscale later tears down leaves a socket nothing can connect to.
+    match listener.local_addr() {
+        Ok(addr) => log::info!("[remote] serving on http://{addr} (requested {host}:{port})"),
+        Err(e) => log::warn!("[remote] serving on {host}:{port}, local_addr unavailable: {e}"),
+    }
+
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
+    .with_graceful_shutdown(shutdown)
+    .await
+    .map_err(|e| format!("Remote server stopped with an error: {e}"))?;
+
+    log::info!("[remote] stopped");
+    Ok(())
 }

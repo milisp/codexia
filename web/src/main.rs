@@ -1,7 +1,10 @@
 const DEFAULT_WEB_PORT: u16 = 7420;
 
 fn parse_web_options() -> (String, u16) {
-    let host = "127.0.0.1".to_string();
+    // Loopback by default: binding wider exposes shell and filesystem access,
+    // so reaching the tailnet is opt-in via --remote.
+    let mut host = "127.0.0.1".to_string();
+    let mut remote = false;
     let mut port: u16 = std::env::var("VITE_WEB_PORT")
         .ok()
         .and_then(|v| v.parse().ok())
@@ -24,7 +27,25 @@ fn parse_web_options() -> (String, u16) {
                     }
                 }
             }
+            "--remote" => remote = true,
             _ => {}
+        }
+    }
+
+    if remote {
+        match codexia_web::tailscale::detect() {
+            Some(info) => {
+                eprintln!(
+                    "Binding to the tailnet: http://{}:{} ({})",
+                    info.dns_name, port, info.ipv4
+                );
+                host = info.ipv4;
+            }
+            None => {
+                eprintln!(
+                    "--remote requires Tailscale to be installed, running, and logged in; staying on loopback"
+                );
+            }
         }
     }
 

@@ -99,3 +99,18 @@ pub(super) async fn api_set_env(
         .map_err(|e| ErrorResponse { error: e })?;
     Ok(StatusCode::OK)
 }
+
+/// Everything a mobile client needs to pair with this desktop: the device
+/// token plus how to reach the machine over the tailnet.
+///
+/// Sits behind the auth layer, so it is readable from the local settings UI
+/// (loopback is exempt) but not by an unauthenticated remote caller.
+pub(super) async fn api_pairing_info(
+    AxumState(state): AxumState<WebServerState>,
+) -> Json<Value> {
+    Json(json!({
+        "token": state.device_token.value(),
+        "port": state.port,
+        "tailscale": crate::tailscale::detect(),
+    }))
+}
