@@ -66,6 +66,7 @@ codexia-acp = { workspace = true }
 codexia-cc = { workspace = true }
 codexia-db = { workspace = true }
 codexia-shared = { workspace = true }
+codexia-web = { path = "../web" }
 
 # --- non-workspace deps ---
 tauri-plugin-updater = { version = "2" }

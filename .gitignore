@@ -42,3 +42,6 @@ target
 
 docs/design.md
 docs/DELTA_MERGE_FIX.md
+ios/Codexia.xcodeproj/
+ios/Codexia/Info.plist
+ios/build/

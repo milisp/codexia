@@ -217,12 +217,24 @@ pub fn run() {
                 commands::codex::codex_home,
                 commands::env::get_env,
                 commands::env::set_env,
+                commands::remote::remote_status,
+                commands::remote::remote_start,
+                commands::remote::remote_stop,
             ])
             .setup(|app| {
                 let app_handle = app.handle().clone();
-                let event_sink: Arc<dyn codexia_shared::event_sink::EventSink> =
-                    Arc::new(event_sink::TauriEventSink::new(app_handle));
 
+                // Fan out to the webview and to the remote server's channel, so
+                // remote access can be toggled later without rebuilding the
+                // codex client or CCState around a different sink.
+                let (remote_event_tx, _) = tokio::sync::broadcast::channel(4096);
+                let event_sink: Arc<dyn codexia_shared::event_sink::EventSink> =
+                    Arc::new(event_sink::FanOutEventSink::new(vec![
+                        Arc::new(event_sink::TauriEventSink::new(app_handle)),
+                        Arc::new(event_sink::BroadcastEventSink::new(remote_event_tx.clone())),
+                    ]));
+
+                app.manage(commands::remote::RemoteState::new(remote_event_tx));
                 app.manage(CCState::new(Arc::clone(&event_sink)));
                 app.manage(codexia_acp::AcpState::new(Arc::clone(&event_sink)));
 

@@ -63,3 +63,6 @@ codexia-acp = { path = "../crates/acp" }
 codexia-cc = { path = "../crates/cc" }
 codexia-db = { path = "../crates/db" }
 codexia-codex = { path = "../crates/codex" }
+[dev-dependencies]
+# WebSocket client used by the /ws integration tests.
+tokio-tungstenite = "0.24"

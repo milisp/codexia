@@ -1,10 +1,11 @@
 use axum::{
-    Router,
+    Router, middleware,
+    http::{Method, header},
     routing::{get, post},
 };
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
 
 use super::{
@@ -55,11 +56,12 @@ use super::{
         api_unified_add_mcp_server, api_unified_disable_mcp_server,
         api_unified_enable_mcp_server, api_unified_read_mcp_config,
         api_unified_remove_mcp_server, api_update_note, api_write_file,
-        api_get_settings_file, api_save_settings_file, health_check, api_model_list_other, api_load_env_keys, api_set_env,
+        api_get_settings_file, api_save_settings_file, api_pairing_info, health_check, api_model_list_other, api_load_env_keys, api_set_env,
     },
     types::WebServerState,
     websocket::{sse_handler, ws_handler},
 };
+use crate::auth::require_device_token;
 
 fn resolve_dist_dir() -> PathBuf {
     let mut candidates: Vec<PathBuf> = Vec::new();
@@ -96,13 +98,45 @@ fn resolve_dist_dir() -> PathBuf {
     selected
 }
 
+/// Whether a browser origin may call this API cross-origin.
+///
+/// Only the locally served UI and Tailscale hostnames qualify. Anything else —
+/// an arbitrary site the user happens to visit — must not be able to drive the
+/// desktop, which matters especially because the auth layer exempts loopback
+/// requests from presenting a token.
+fn origin_is_allowed(origin: &str) -> bool {
+    let Some(rest) = origin
+        .strip_prefix("http://")
+        .or_else(|| origin.strip_prefix("https://"))
+    else {
+        return false;
+    };
+
+    // Split host from port, keeping bracketed IPv6 literals intact.
+    let host = if let Some(end) = rest.strip_prefix('[').and_then(|r| r.find(']')) {
+        &rest[1..=end]
+    } else {
+        rest.split(':').next().unwrap_or(rest)
+    };
+
+    matches!(host, "localhost" | "127.0.0.1" | "::1") || host.ends_with(".ts.net")
+}
+
+fn cors_layer() -> CorsLayer {
+    CorsLayer::new()
+        .allow_origin(AllowOrigin::predicate(|origin, _| {
+            origin.to_str().map(origin_is_allowed).unwrap_or(false)
+        }))
+        .allow_methods([Method::GET, Method::POST])
+        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION])
+}
+
 pub fn create_router(state: WebServerState) -> Router {
     let dist_dir = resolve_dist_dir();
     let static_site = ServeDir::new(dist_dir.clone())
         .not_found_service(ServeFile::new(dist_dir.join("index.html")));
 
-    Router::new()
-        .route("/health", get(health_check))
+    let protected = Router::new()
         .route("/ws", get(ws_handler))
         .route("/api/events", get(sse_handler))
         .route("/api/codex/thread/start", post(api_start_thread))
@@ -276,12 +310,50 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/sleep/prevent", post(api_prevent_sleep))
         .route("/api/sleep/allow", post(api_allow_sleep))
         .route("/api/settings", get(api_get_settings_file).post(api_save_settings_file))
+        .route("/api/pairing", get(api_pairing_info))
+        .route_layer(middleware::from_fn_with_state(
+            state.device_token.clone(),
+            require_device_token,
+        ));
+
+    Router::new()
+        // Liveness probe stays open so a client can tell "desktop unreachable"
+        // apart from "desktop rejected my token". It exposes no data.
+        .route("/health", get(health_check))
+        .merge(protected)
+        // The SPA bundle carries no user data; the APIs behind it are what
+        // require a token.
         .fallback_service(static_site)
-        .layer(
-            CorsLayer::new()
-                .allow_origin(Any)
-                .allow_methods(Any)
-                .allow_headers(Any),
-        )
+        .layer(cors_layer())
         .with_state(state)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::origin_is_allowed;
+
+    #[test]
+    fn local_ui_origins_are_allowed() {
+        assert!(origin_is_allowed("http://localhost:7420"));
+        assert!(origin_is_allowed("http://127.0.0.1:7420"));
+        assert!(origin_is_allowed("http://localhost"));
+        assert!(origin_is_allowed("http://[::1]:7420"));
+    }
+
+    #[test]
+    fn tailscale_origins_are_allowed() {
+        assert!(origin_is_allowed("https://codexia-mac.tail1234.ts.net"));
+        assert!(origin_is_allowed("http://codexia-mac.tail1234.ts.net:7420"));
+    }
+
+    #[test]
+    fn arbitrary_sites_are_rejected() {
+        assert!(!origin_is_allowed("https://evil.example.com"));
+        assert!(!origin_is_allowed("http://evil.example.com:7420"));
+        // Suffix matching must not be fooled by a lookalike domain.
+        assert!(!origin_is_allowed("https://evil-ts.net"));
+        assert!(!origin_is_allowed("https://notts.net.evil.com"));
+        assert!(!origin_is_allowed("file://"));
+        assert!(!origin_is_allowed("null"));
+    }
 }

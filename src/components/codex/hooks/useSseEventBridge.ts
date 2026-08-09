@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import type { ServerNotification } from '@/bindings/ServerNotification';
 import type { ApprovalRequest, RequestUserInputRequest } from '@/components/codex/stores';
-import { buildUrl } from '@/hooks/runtime';
+import { openEventStream } from '@/lib/eventStream';
 
 interface SseEventHandlers {
   enabled: boolean;
@@ -25,9 +25,11 @@ export function useSseEventBridge({
 
     console.log('[useSseEventBridge] Setting up SSE event bridge...');
 
-    const handleEnvelope = (data: string) => {
-      try {
-        const envelope = JSON.parse(data) as { event?: string; payload?: unknown };
+    // Reconnects carry a `?since=` cursor so events emitted while disconnected
+    // are replayed rather than lost. See openEventStream.
+    return openEventStream({
+      label: '[useSseEventBridge]',
+      onEvent: (envelope) => {
         if (!envelope.event) return;
 
         if (envelope.event === 'fs_change') {
@@ -45,18 +47,7 @@ export function useSseEventBridge({
         if (envelope.event === 'codex:notification') {
           onNotification(envelope.payload as ServerNotification);
         }
-      } catch (error) {
-        console.warn('[useSseEventBridge] Failed to parse SSE message:', error);
-      }
-    };
-
-    // EventSource auto-reconnects on error/close — no manual retry needed.
-    const es = new EventSource(buildUrl('/api/events'));
-    es.onmessage = (e) => handleEnvelope(e.data as string);
-    es.onerror = () => console.warn('[useSseEventBridge] SSE error — will auto-reconnect');
-
-    return () => {
-      es.close();
-    };
+      },
+    });
   }, [enabled, onApproval, onUserInputRequest, onNotification]);
 }
