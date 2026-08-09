@@ -1,0 +1,9 @@
+RELEVANT_FILES=$(git diff --cached --name-only | grep -E '\.(ts|tsx|js|json|rs|html|css|scss|toml|vue)$|^src/')
+
+if [ -z "$RELEVANT_FILES" ]; then
+  echo "✅ No relevant changes – skipping checks"
+  exit 0
+fi
+
+bun run format
+bunx tsc --noEmit

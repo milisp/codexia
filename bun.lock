@@ -26,8 +26,6 @@
         "@radix-ui/react-tabs": "^1.1.13",
         "@radix-ui/react-toast": "^1.2.15",
         "@radix-ui/react-tooltip": "^1.2.8",
-        "@tailwindcss/cli": "^4.1.18",
-        "@tailwindcss/vite": "^4.1.18",
         "@tanstack/react-virtual": "^3.13.18",
         "@tauri-apps/api": "^2.11",
         "@tauri-apps/plugin-deep-link": "~2.4.7",
@@ -67,7 +65,6 @@
         "sonner": "^2.0.7",
         "streamdown": "^2.2.0",
         "tailwind-merge": "^3.4.0",
-        "tailwindcss": "^4.1.18",
         "tauri-plugin-screenshots-api": "^2.2.0",
         "uuid": "^13.0.0",
         "xterm": "^5.3.0",
@@ -77,6 +74,8 @@
       },
       "devDependencies": {
         "@biomejs/biome": "^2.3.14",
+        "@tailwindcss/cli": "^4.1.18",
+        "@tailwindcss/vite": "^4.1.18",
         "@tauri-apps/cli": "^2.10.0",
         "@types/diff": "^8.0.0",
         "@types/markdown-it": "^14.1.2",
@@ -87,7 +86,9 @@
         "@types/uuid": "^11.0.0",
         "@vitejs/plugin-react": "^4.7.0",
         "@vitejs/plugin-react-swc": "^4.3.0",
+        "husky": "^9.1.7",
         "rollup-plugin-visualizer": "^7.0.1",
+        "tailwindcss": "^4.1.18",
         "tw-animate-css": "^1.4.0",
         "typescript": "^7.0.2",
         "vite": "^7.3.1",
@@ -878,6 +879,8 @@
     "html-url-attributes": ["html-url-attributes@3.0.1", "", {}, "sha512-ol6UPyBWqsrO6EJySPz2O7ZSr856WDrEzM5zMqp+FJJLGMW35cLYmmZnl0vztAZxRUoNZJFTCohfjuIJ8I4QBQ=="],
 
     "html-void-elements": ["html-void-elements@3.0.0", "", {}, "sha512-bEqo66MRXsUGxWHV5IP0PUiAWwoEjba4VCzg0LjFJBpchPaTfyfCKTG6bc5F8ucKec3q5y6qOdGyYTSBEvhCrg=="],
+
+    "husky": ["husky@9.1.7", "", { "bin": { "husky": "bin.js" } }, "sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA=="],
 
     "i18next": ["i18next@25.8.4", "", { "dependencies": { "@babel/runtime": "^7.28.4" }, "peerDependencies": { "typescript": "^5" }, "optionalPeers": ["typescript"] }, "sha512-a9A0MnUjKvzjEN/26ZY1okpra9kA8MEwzYEz1BNm+IyxUKPRH6ihf0p7vj8YvULwZHKHl3zkJ6KOt4hewxBecQ=="],
 
