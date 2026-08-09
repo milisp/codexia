@@ -105,6 +105,17 @@ pub fn run() {
                 commands::fs::unwatch_directory,
                 commands::sleep::prevent_sleep,
                 commands::sleep::allow_sleep,
+                commands::acp::acp_list_agents,
+                commands::acp::acp_start,
+                commands::acp::acp_prompt,
+                commands::acp::acp_cancel,
+                commands::acp::acp_authenticate,
+                commands::acp::acp_new_session,
+                commands::acp::acp_set_mode,
+                commands::acp::acp_set_model,
+                commands::acp::acp_set_config_option,
+                commands::acp::acp_respond_permission,
+                commands::acp::acp_stop,
                 commands::cc::cc_connect,
                 commands::cc::cc_new_session,
                 commands::cc::cc_send_message,
@@ -209,6 +220,7 @@ pub fn run() {
                     Arc::new(event_sink::TauriEventSink::new(app_handle));
 
                 app.manage(CCState::new(Arc::clone(&event_sink)));
+                app.manage(codexia_acp::AcpState::new(Arc::clone(&event_sink)));
 
                 let codex_init_started_at = Instant::now();
                 let init_result = tauri::async_runtime::block_on(async {

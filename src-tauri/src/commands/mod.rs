@@ -1,3 +1,4 @@
+pub mod acp;
 pub mod automation;
 pub mod cc;
 pub mod codex;

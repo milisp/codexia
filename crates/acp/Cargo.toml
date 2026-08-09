@@ -1,0 +1,21 @@
+[package]
+name = "codexia-acp"
+version.workspace = true
+edition.workspace = true
+
+workspace = "../../"
+
+[dependencies]
+anyhow = { workspace = true }
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+dashmap = { workspace = true }
+uuid = { workspace = true }
+codexia-shared = { workspace = true }
+which = "6.0"
+dirs = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }

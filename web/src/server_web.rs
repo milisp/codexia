@@ -41,6 +41,9 @@ pub async fn start_web_server_with_events(
     let state = WebServerState {
         codex_state,
         cc_state,
+        acp_state: Arc::new(codexia_acp::AcpState::new(Arc::new(WebSocketEventSink::new(
+            event_tx.clone(),
+        )))),
         sleep_state: Arc::new(SleepState::default()),
         terminal_state: Arc::new(super::terminal::WebTerminalState::default()),
         fs_watch_state: Arc::new(WebWatchState::default()),

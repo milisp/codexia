@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+  "crates/acp",
   "crates/cc",
   "crates/codex",
   "crates/db",
@@ -76,6 +77,7 @@ calamine = "0.25"
 ignore = "0.4.25"
 tokio-cron-scheduler = "0.13"
 agent-insights = { git = "https://github.com/milisp/agent-insights", default-features = false }
+codexia-acp = { path = "crates/acp" }
 codexia-cc = { path = "crates/cc" } 
 codexia-codex = { path = "crates/codex" }
 codexia-db = { path = "crates/db" }

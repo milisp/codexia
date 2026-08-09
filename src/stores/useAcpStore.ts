@@ -1,0 +1,214 @@
+import { create } from 'zustand';
+import type {
+  AcpAuthMethod,
+  AcpConfigOption,
+  AcpModeState,
+  AcpModelState,
+  AcpSessionResult,
+} from '@/services/apiAdapt/acp';
+
+/** A rendered line in the ACP transcript. */
+export type AcpEntry =
+  | { id: string; role: 'user'; text: string }
+  | { id: string; role: 'agent'; text: string }
+  | { id: string; role: 'thought'; text: string }
+  | { id: string; role: 'error'; text: string }
+  | {
+      id: string;
+      role: 'tool';
+      toolCallId: string;
+      title: string;
+      status: string;
+      kind?: string;
+    };
+
+export type AcpPermissionOption = { optionId: string; name: string; kind?: string };
+
+export type AcpPermissionRequest = {
+  requestId: string;
+  title: string;
+  options: AcpPermissionOption[];
+};
+
+interface AcpStore {
+  /**
+   * Whether the chat pane is driven by an ACP agent. ACP is a protocol, not an
+   * agent, so this is a dimension next to `selectedAgent` rather than a value
+   * inside it — everything else (sidebar, MCP config, skills) keeps targeting
+   * the codex/cc agent the user last picked.
+   */
+  active: boolean;
+  /** Currently selected ACP agent preset id. */
+  agentId: string;
+  connectionId: string | null;
+  sessionId: string | null;
+  agentTitle: string | null;
+  authMethods: AcpAuthMethod[];
+  connecting: boolean;
+  running: boolean;
+  entries: AcpEntry[];
+  permission: AcpPermissionRequest | null;
+
+  /** Session controls advertised by the agent. */
+  modes: AcpModeState | null;
+  models: AcpModelState | null;
+  configOptions: AcpConfigOption[];
+  /** Selected reasoning effort for agents that scope it to a model (Grok). */
+  reasoningEffort: string | null;
+  /**
+   * Bumped by `restart` to tell the composer this teardown was deliberate and
+   * it should auto-connect again, instead of treating the agent as already
+   * attempted and leaving the pane disconnected.
+   */
+  restartNonce: number;
+
+  setActive: (v: boolean) => void;
+  setAgentId: (id: string) => void;
+  setConnection: (v: {
+    connectionId: string;
+    sessionId: string | null;
+    agentTitle: string | null;
+    authMethods: AcpAuthMethod[];
+  }) => void;
+  setSessionId: (id: string | null) => void;
+  /** Apply the `session/new` result: session id plus the available controls. */
+  applySession: (session: AcpSessionResult | null) => void;
+  setCurrentMode: (modeId: string) => void;
+  setCurrentModel: (modelId: string) => void;
+  setConfigOptions: (options: AcpConfigOption[]) => void;
+  setReasoningEffort: (effort: string | null) => void;
+  setConfigOptionValue: (configId: string, value: string | boolean) => void;
+  setConnecting: (v: boolean) => void;
+  setRunning: (v: boolean) => void;
+  setPermission: (p: AcpPermissionRequest | null) => void;
+  addEntry: (entry: AcpEntry) => void;
+  /** Append to the last entry when it has the same streaming role, else push. */
+  appendChunk: (role: 'agent' | 'thought', text: string) => void;
+  upsertToolCall: (tool: {
+    toolCallId: string;
+    title?: string;
+    status?: string;
+    kind?: string;
+  }) => void;
+  reset: () => void;
+  /** Clear the session and ask the composer to open a fresh one. */
+  restart: () => void;
+}
+
+const newId = () => Math.random().toString(36).slice(2);
+
+/** Everything tied to a live connection, back to its disconnected state. */
+const cleared = {
+  connectionId: null,
+  sessionId: null,
+  agentTitle: null,
+  authMethods: [],
+  connecting: false,
+  running: false,
+  entries: [],
+  permission: null,
+  modes: null,
+  models: null,
+  configOptions: [],
+  reasoningEffort: null,
+} satisfies Partial<AcpStore>;
+
+export const useAcpStore = create<AcpStore>((set) => ({
+  active: false,
+  agentId: 'gemini',
+  connectionId: null,
+  sessionId: null,
+  agentTitle: null,
+  authMethods: [],
+  connecting: false,
+  running: false,
+  entries: [],
+  permission: null,
+  modes: null,
+  models: null,
+  configOptions: [],
+  reasoningEffort: null,
+  restartNonce: 0,
+
+  setActive: (active) => set({ active }),
+  setAgentId: (agentId) => set({ agentId }),
+  setConnection: ({ connectionId, sessionId, agentTitle, authMethods }) =>
+    set({ connectionId, sessionId, agentTitle, authMethods, connecting: false }),
+  setSessionId: (sessionId) => set({ sessionId }),
+
+  applySession: (session) =>
+    set({
+      sessionId: session?.sessionId ?? null,
+      modes: session?.modes ?? null,
+      models: session?.models ?? null,
+      configOptions: session?.configOptions ?? [],
+      reasoningEffort:
+        session?.models?.availableModels
+          .find((m) => m.modelId === session.models?.currentModelId)
+          ?._meta?.reasoningEfforts?.find((e) => e.default)?.id ?? null,
+    }),
+
+  setCurrentMode: (currentModeId) =>
+    set((s) => (s.modes ? { modes: { ...s.modes, currentModeId } } : {})),
+
+  setCurrentModel: (currentModelId) =>
+    set((s) => (s.models ? { models: { ...s.models, currentModelId } } : {})),
+
+  setConfigOptions: (configOptions) => set({ configOptions }),
+
+  setReasoningEffort: (reasoningEffort) => set({ reasoningEffort }),
+
+  setConfigOptionValue: (configId, value) =>
+    set((s) => ({
+      configOptions: s.configOptions.map((o) =>
+        o.id === configId ? { ...o, currentValue: value } : o
+      ),
+    })),
+  setConnecting: (connecting) => set({ connecting }),
+  setRunning: (running) => set({ running }),
+  setPermission: (permission) => set({ permission }),
+  addEntry: (entry) => set((s) => ({ entries: [...s.entries, entry] })),
+
+  appendChunk: (role, text) =>
+    set((s) => {
+      const last = s.entries[s.entries.length - 1];
+      if (last && last.role === role) {
+        const updated = { ...last, text: last.text + text };
+        return { entries: [...s.entries.slice(0, -1), updated] };
+      }
+      return { entries: [...s.entries, { id: newId(), role, text }] };
+    }),
+
+  upsertToolCall: ({ toolCallId, title, status, kind }) =>
+    set((s) => {
+      const idx = s.entries.findIndex((e) => e.role === 'tool' && e.toolCallId === toolCallId);
+      if (idx === -1) {
+        return {
+          entries: [
+            ...s.entries,
+            {
+              id: newId(),
+              role: 'tool',
+              toolCallId,
+              title: title ?? toolCallId,
+              status: status ?? 'pending',
+              kind,
+            },
+          ],
+        };
+      }
+      const prev = s.entries[idx] as Extract<AcpEntry, { role: 'tool' }>;
+      const next = [...s.entries];
+      next[idx] = {
+        ...prev,
+        title: title ?? prev.title,
+        status: status ?? prev.status,
+        kind: kind ?? prev.kind,
+      };
+      return { entries: next };
+    }),
+
+  reset: () => set(cleared),
+
+  restart: () => set((s) => ({ ...cleared, restartNonce: s.restartNonce + 1 })),
+}));
