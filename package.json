@@ -13,6 +13,9 @@
     "format": "biome format --write",
     "prepare": "husky"
   },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,css}": "biome check --write --no-errors-on-unmatched"
+  },
   "dependencies": {
     "@git-diff-view/react": "^0.0.39",
     "@hookform/resolvers": "^3.10.0",
@@ -96,6 +99,7 @@
     "@vitejs/plugin-react": "^4.7.0",
     "@vitejs/plugin-react-swc": "^4.3.0",
     "husky": "^9.1.7",
+    "lint-staged": "^17.3.0",
     "rollup-plugin-visualizer": "^7.0.1",
     "tailwindcss": "^4.1.18",
     "tw-animate-css": "^1.4.0",
