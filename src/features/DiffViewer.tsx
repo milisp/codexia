@@ -177,7 +177,9 @@ export function DiffViewer({
   const fileName = displayPath ? getFilename(displayPath) : 'diff';
 
   return (
-    <div className={cn('rounded-lg border bg-card overflow-hidden flex flex-col min-w-0', className)}>
+    <div
+      className={cn('rounded-lg border bg-card overflow-hidden flex flex-col min-w-0', className)}
+    >
       <div
         className={cn(
           'flex items-center justify-between px-3 py-2 shrink-0',
@@ -190,11 +192,7 @@ export function DiffViewer({
             onClick={() => setCollapsed((prev) => !prev)}
             className="flex items-center gap-1 shrink-0 text-muted-foreground hover:text-foreground"
           >
-            {collapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </button>
           <h4 className="font-mono text-sm truncate max-w-[200px]">{fileName}</h4>
           <div className="flex items-center gap-1">

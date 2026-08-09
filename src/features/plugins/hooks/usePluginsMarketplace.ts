@@ -75,11 +75,12 @@ export function usePluginsMarketplace(refreshTrigger = 0) {
         await loadPlugins();
         toast({
           title: authTargets.length > 0 ? 'Plugin installed, auth required' : 'Plugin installed',
-          description: authTargets.length > 0
-            ? `${plugin.interface?.displayName ?? plugin.name} needs ${authTargets
-              .map((app) => app.name)
-              .join(', ')} authentication.`
-            : `${plugin.interface?.displayName ?? plugin.name} is ready in the composer.`,
+          description:
+            authTargets.length > 0
+              ? `${plugin.interface?.displayName ?? plugin.name} needs ${authTargets
+                  .map((app) => app.name)
+                  .join(', ')} authentication.`
+              : `${plugin.interface?.displayName ?? plugin.name} is ready in the composer.`,
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -92,7 +93,7 @@ export function usePluginsMarketplace(refreshTrigger = 0) {
         setInstallingPluginId(null);
       }
     },
-    [loadPlugins],
+    [loadPlugins]
   );
 
   const handleUsePlugin = useCallback(
@@ -102,7 +103,7 @@ export function usePluginsMarketplace(refreshTrigger = 0) {
       setView('agent');
       appendInputValue(`@${pluginName}`);
     },
-    [appendInputValue, setSelectedAgent, setView],
+    [appendInputValue, setSelectedAgent, setView]
   );
 
   const handleShowDetail = useCallback(
@@ -123,7 +124,7 @@ export function usePluginsMarketplace(refreshTrigger = 0) {
         });
       }
     },
-    [handlePluginDetail],
+    [handlePluginDetail]
   );
 
   // Reload when component mounts or refreshTrigger changes

@@ -65,7 +65,14 @@ export function PluginsViewHeader() {
           showLabel={!isMobile}
         />
       ) : overlay === 'detail' ? (
-        <PluginDetailHeader displayName={selectedPluginDetail?.summary?.interface?.displayName ?? selectedPluginDetail?.summary?.name ?? ''} onBack={() => handlePluginDetail(null)} />
+        <PluginDetailHeader
+          displayName={
+            selectedPluginDetail?.summary?.interface?.displayName ??
+            selectedPluginDetail?.summary?.name ??
+            ''
+          }
+          onBack={() => handlePluginDetail(null)}
+        />
       ) : (
         !overlay &&
         !selectedDxt && (
@@ -140,10 +147,7 @@ export interface PluginDetailHeaderProps {
 export function PluginDetailHeader({ displayName, onBack }: PluginDetailHeaderProps) {
   return (
     <header className="flex items-center gap-1">
-      <Button
-        variant="ghost"
-        onClick={onBack}
-      >
+      <Button variant="ghost" onClick={onBack}>
         Plugin
       </Button>
       <ChevronRight className="h-3.5 w-3.5" />
@@ -151,4 +155,3 @@ export function PluginDetailHeader({ displayName, onBack }: PluginDetailHeaderPr
     </header>
   );
 }
-

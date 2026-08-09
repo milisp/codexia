@@ -29,7 +29,7 @@ export default function SkillsView() {
   useEffect(() => {
     listCentralSkills(scope, cwd ?? undefined)
       .then((skills) => setInstalledNames(new Set(skills.map((s) => s.name))))
-      .catch(() => { });
+      .catch(() => {});
   }, [scope, cwd, installedRefreshKey]);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export default function SkillsView() {
         setGroupsConfig(cfg);
         setSelectedGroupId((prev) => (prev && cfg.groups.some((g) => g.id === prev) ? prev : null));
       })
-      .catch(() => { });
+      .catch(() => {});
   }, []);
 
   const saveGroups = useCallback(async (config: SkillGroupsConfig) => {

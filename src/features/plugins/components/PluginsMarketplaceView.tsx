@@ -18,7 +18,6 @@ export function PluginsMarketplaceView({ refreshTrigger = 0 }: PluginsMarketplac
     browseGroups,
   } = usePluginsMarketplace(refreshTrigger);
 
-
   if (isLoading) {
     return <div className="p-4 text-sm text-muted-foreground">Loading plugins...</div>;
   }

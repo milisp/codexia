@@ -12,12 +12,7 @@ export function ExternalLinkRow({ label, url, onClick }: ExternalLinkRowProps) {
     <>
       <span className="text-muted-foreground">{label}</span>
       <div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6"
-          onClick={() => onClick(url)}
-        >
+        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onClick(url)}>
           <ExternalLink />
         </Button>
       </div>

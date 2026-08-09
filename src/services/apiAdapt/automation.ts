@@ -42,7 +42,12 @@ export async function listAutomations() {
 
 export async function listAutomationRuns(payload?: { task_id?: string; limit?: number }) {
   const params = { task_id: payload?.task_id ?? null, limit: payload?.limit ?? 100 };
-  return await dual<AutomationRun[]>('list_automation_runs', params, '/api/automation/runs/list', params);
+  return await dual<AutomationRun[]>(
+    'list_automation_runs',
+    params,
+    '/api/automation/runs/list',
+    params
+  );
 }
 
 export async function createAutomation(payload: {

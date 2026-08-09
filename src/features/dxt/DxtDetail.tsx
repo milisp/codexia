@@ -312,7 +312,7 @@ export default function DxtDetail({ user, repo }: { user: string; repo: string }
       };
       try {
         await unifiedEnableMcpServer(_serverItem);
-      } catch (error) { }
+      } catch (error) {}
     }
   }
 

@@ -62,7 +62,12 @@ export async function listModels() {
 }
 
 export async function threadStart(params: ThreadStartParams) {
-  return await dual<ThreadStartResponse>('start_thread', { params }, '/api/codex/thread/start', params);
+  return await dual<ThreadStartResponse>(
+    'start_thread',
+    { params },
+    '/api/codex/thread/start',
+    params
+  );
 }
 
 export async function threadResume(params: ThreadResumeParams) {
@@ -75,7 +80,12 @@ export async function threadResume(params: ThreadResumeParams) {
 }
 
 export async function threadFork(params: ThreadForkParams) {
-  return await dual<ThreadForkResponse>('fork_thread', { params }, '/api/codex/thread/fork', params);
+  return await dual<ThreadForkResponse>(
+    'fork_thread',
+    { params },
+    '/api/codex/thread/fork',
+    params
+  );
 }
 
 export async function threadRollback(params: ThreadRollbackParams) {
@@ -138,7 +148,12 @@ export async function getAccount() {
 }
 
 export async function getAccountWithParams(params: GetAccountParams) {
-  return await dual<GetAccountResponse>('get_account', { params }, '/api/codex/account/get', params);
+  return await dual<GetAccountResponse>(
+    'get_account',
+    { params },
+    '/api/codex/account/get',
+    params
+  );
 }
 
 export async function loginAccount(params: LoginAccountParams) {
@@ -265,11 +280,21 @@ export async function threadGoalClear(params: ThreadGoalClearParams) {
 }
 
 export async function pluginList(params: PluginListParams) {
-  return await dual<PluginListResponse>('plugin_list', { params }, '/api/codex/plugin/list', params);
+  return await dual<PluginListResponse>(
+    'plugin_list',
+    { params },
+    '/api/codex/plugin/list',
+    params
+  );
 }
 
 export async function pluginRead(params: PluginReadParams) {
-  return await dual<PluginReadResponse>('plugin_read', { params }, '/api/codex/plugin/read', params);
+  return await dual<PluginReadResponse>(
+    'plugin_read',
+    { params },
+    '/api/codex/plugin/read',
+    params
+  );
 }
 
 export async function pluginInstall(params: PluginInstallParams) {

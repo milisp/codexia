@@ -1,1 +1,1 @@
-export { usePluginsViewContext } from './usePluginsViewContext'
+export { usePluginsViewContext } from './usePluginsViewContext';

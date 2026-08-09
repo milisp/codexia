@@ -33,13 +33,7 @@ export function AgentComposer() {
 
       {/* Input area */}
       <div className={`shrink-0 ${currentAgentCardId && 'pb-2'}`}>
-        {acpActive ? (
-          <AcpComposer />
-        ) : selectedAgent === 'cc' ? (
-          <CCComposer />
-        ) : (
-          <CodexComposer />
-        )}
+        {acpActive ? <AcpComposer /> : selectedAgent === 'cc' ? <CCComposer /> : <CodexComposer />}
       </div>
       {!currentAgentCardId && <WorkspaceSwitcher />}
     </div>

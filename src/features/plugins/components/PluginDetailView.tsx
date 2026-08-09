@@ -5,7 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { toast } from '@/components/ui/use-toast';
 import type { PluginDetail } from '@/bindings/v2';
-import { AppsSection, SkillsSection, AppTemplatesSection, InfoRow, ExternalLinkRow } from './plugin-detail';
+import {
+  AppsSection,
+  SkillsSection,
+  AppTemplatesSection,
+  InfoRow,
+  ExternalLinkRow,
+} from './plugin-detail';
 import { useExternalUrl } from '../hooks/useExternalUrl';
 
 interface PluginDetailViewProps {
@@ -91,7 +97,6 @@ export function PluginDetailView({
     }
   };
 
-
   return (
     <div className="py-8">
       <div className="flex items-start justify-between gap-3 w-full">
@@ -172,7 +177,7 @@ export function PluginDetailView({
             <h4 className="text-sm font-medium">MCP Servers ({mcpServers.length})</h4>
             <div className="flex flex-wrap gap-1">
               {mcpServers.map((server) => (
-                <div className='flex'>
+                <div className="flex">
                   {iconSrc && (
                     <img
                       src={iconSrc}

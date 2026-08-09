@@ -3,7 +3,11 @@ import { open } from '@tauri-apps/plugin-shell';
 import { useCallback, useEffect, useState } from 'react';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import type { ServerNotification } from '@/bindings/ServerNotification';
-import type { AccountLoginCompletedNotification, GetAccountResponse, LoginAccountParams } from '@/bindings/v2';
+import type {
+  AccountLoginCompletedNotification,
+  GetAccountResponse,
+  LoginAccountParams,
+} from '@/bindings/v2';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,44 +37,49 @@ export function CodexAuth() {
     }
   }, []);
 
-  const handleLogin = useCallback(async (params: LoginAccountParams) => {
-    setIsLoggingIn(true);
-    setLastStatus(`Starting ${params.type === 'chatgpt' ? 'ChatGPT' : 'API Key'} login...`);
-    setLastError(null);
-    try {
-      const response = await loginAccount(params);
+  const handleLogin = useCallback(
+    async (params: LoginAccountParams) => {
+      setIsLoggingIn(true);
+      setLastStatus(`Starting ${params.type === 'chatgpt' ? 'ChatGPT' : 'API Key'} login...`);
+      setLastError(null);
+      try {
+        const response = await loginAccount(params);
 
-      if (response.type === 'chatgpt') {
-        await open(response.authUrl);
-        setLastStatus('ChatGPT login started - please complete in browser');
-      } else if (response.type === 'apiKey') {
-        setLastStatus('Login successful');
-        setApiKey('');
-        void refreshAccount(true);
+        if (response.type === 'chatgpt') {
+          await open(response.authUrl);
+          setLastStatus('ChatGPT login started - please complete in browser');
+        } else if (response.type === 'apiKey') {
+          setLastStatus('Login successful');
+          setApiKey('');
+          void refreshAccount(true);
+        }
+      } catch (error) {
+        console.error(error);
+        const message = error instanceof Error ? error.message : String(error ?? 'Unknown');
+        setLastStatus(null);
+        setLastError(message);
+      } finally {
+        setIsLoggingIn(false);
       }
-
-    } catch (error) {
-      console.error(error);
-      const message = error instanceof Error ? error.message : String(error ?? 'Unknown');
-      setLastStatus(null);
-      setLastError(message);
-    } finally {
-      setIsLoggingIn(false);
-    }
-  }, [refreshAccount]);
+    },
+    [refreshAccount]
+  );
 
   const startChatGptLogin = useCallback(() => {
     handleLogin({ type: 'chatgpt' });
   }, [handleLogin]);
 
-  const startApiKeyLogin = useCallback((e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!apiKey.trim()) {
-      setLastError('Please enter an API key');
-      return;
-    }
-    handleLogin({ type: 'apiKey', apiKey: apiKey.trim() });
-  }, [handleLogin, apiKey]);
+  const startApiKeyLogin = useCallback(
+    (e?: React.FormEvent) => {
+      if (e) e.preventDefault();
+      if (!apiKey.trim()) {
+        setLastError('Please enter an API key');
+        return;
+      }
+      handleLogin({ type: 'apiKey', apiKey: apiKey.trim() });
+    },
+    [handleLogin, apiKey]
+  );
 
   useEffect(() => {
     void refreshAccount(false);
@@ -113,12 +122,7 @@ export function CodexAuth() {
           </div>
         )}
         <div className="space-y-4">
-          <Button
-            onClick={startChatGptLogin}
-            disabled={isLoggingIn}
-            className="w-full"
-            size="lg"
-          >
+          <Button onClick={startChatGptLogin} disabled={isLoggingIn} className="w-full" size="lg">
             {isLoggingIn && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isLoggingIn ? 'Starting ChatGPT login…' : 'Start ChatGPT Login'}
           </Button>
@@ -143,11 +147,7 @@ export function CodexAuth() {
                 autoComplete="off"
               />
             </div>
-            <Button
-              type="submit"
-              disabled={isLoggingIn || !apiKey.trim()}
-              className="w-full"
-            >
+            <Button type="submit" disabled={isLoggingIn || !apiKey.trim()} className="w-full">
               {isLoggingIn && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLoggingIn ? 'Verifying…' : 'Verify API Key'}
             </Button>

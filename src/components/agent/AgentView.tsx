@@ -27,7 +27,7 @@ function AgentSession() {
 export default function AgentView() {
   const { selectedAgent } = useAgentSettingsStore();
   const { currentThreadId, hasAccount } = useCodexStore();
-  const { modelProvider } = useConfigStore()
+  const { modelProvider } = useConfigStore();
   const { activeSessionId } = useCCStore();
   const { active: acpActive, connectionId: acpConnectionId } = useAcpStore();
   const { cards, currentAgentCardId, removeCard, cardsViewMode } = useAgentCenterStore();
