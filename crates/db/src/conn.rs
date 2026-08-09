@@ -23,6 +23,51 @@ pub(crate) fn get_connection() -> Result<Connection, String> {
 fn init_tables(conn: &Connection) -> Result<(), String> {
     init_notes_table(conn)?;
     init_automation_runs_tables(conn)?;
+    init_acp_sessions_tables(conn)?;
+    Ok(())
+}
+
+/// Create the ACP session list and its transcript table
+fn init_acp_sessions_tables(conn: &Connection) -> Result<(), String> {
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS acp_sessions (
+            session_id TEXT PRIMARY KEY,
+            agent_id TEXT NOT NULL,
+            agent_title TEXT,
+            cwd TEXT NOT NULL,
+            title TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )",
+        [],
+    )
+    .map_err(|e| format!("Failed to create acp_sessions table: {}", e))?;
+
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS acp_session_updates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT NOT NULL,
+            payload TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )",
+        [],
+    )
+    .map_err(|e| format!("Failed to create acp_session_updates table: {}", e))?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_acp_sessions_cwd_updated
+         ON acp_sessions(cwd, updated_at DESC)",
+        [],
+    )
+    .map_err(|e| format!("Failed to create acp_sessions cwd index: {}", e))?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_acp_session_updates_session
+         ON acp_session_updates(session_id, id ASC)",
+        [],
+    )
+    .map_err(|e| format!("Failed to create acp_session_updates index: {}", e))?;
+
     Ok(())
 }
 

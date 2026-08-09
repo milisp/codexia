@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { acpAuthenticate, acpNewSession, acpRespondPermission } from '@/services/apiAdapt/acp';
 import { useWorkspaceStore } from '@/stores';
 import { useAcpStore } from '@/stores/useAcpStore';
+import { AcpToolCall } from './AcpToolCall';
 import { useAcpEvents } from './useAcpEvents';
 
 export default function AcpSession() {
@@ -64,14 +64,7 @@ export default function AcpSession() {
 
         {entries.map((entry) => {
           if (entry.role === 'tool') {
-            return (
-              <div key={entry.id} className="rounded-md border px-2 py-1 text-xs">
-                <span className="font-mono">{entry.title}</span>
-                <Badge variant="secondary" className="ml-2">
-                  {entry.status}
-                </Badge>
-              </div>
-            );
+            return <AcpToolCall key={entry.id} entry={entry} />;
           }
           const tone =
             entry.role === 'user'

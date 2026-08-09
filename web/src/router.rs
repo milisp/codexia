@@ -13,6 +13,7 @@ use super::{
         api_acp_list_agents, api_acp_start, api_acp_prompt, api_acp_cancel,
         api_acp_authenticate, api_acp_new_session, api_acp_respond_permission, api_acp_stop,
         api_acp_set_mode, api_acp_set_model, api_acp_set_config_option,
+        api_acp_load_session, api_acp_list_sessions, api_acp_get_session, api_acp_delete_session,
         api_cc_list_projects, api_cc_mcp_add, api_cc_mcp_disable, api_cc_mcp_enable,
         api_cc_mcp_get, api_cc_mcp_list, api_cc_mcp_remove,
         api_cc_connect, api_cc_disconnect, api_cc_get_installed_skills,
@@ -239,6 +240,10 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/acp/cancel", post(api_acp_cancel))
         .route("/api/acp/authenticate", post(api_acp_authenticate))
         .route("/api/acp/new-session", post(api_acp_new_session))
+        .route("/api/acp/load-session", post(api_acp_load_session))
+        .route("/api/acp/sessions", post(api_acp_list_sessions))
+        .route("/api/acp/session", post(api_acp_get_session))
+        .route("/api/acp/delete-session", post(api_acp_delete_session))
         .route("/api/acp/set-mode", post(api_acp_set_mode))
         .route("/api/acp/set-model", post(api_acp_set_model))
         .route("/api/acp/set-config-option", post(api_acp_set_config_option))

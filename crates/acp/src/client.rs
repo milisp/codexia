@@ -1,6 +1,6 @@
 use std::process::Stdio;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicI64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 
 use codexia_shared::event_sink::EventSink;
 use dashmap::DashMap;
@@ -23,8 +23,13 @@ type Pending = Arc<DashMap<i64, oneshot::Sender<Result<Value, String>>>>;
 pub struct AcpClient {
     pub connection_id: String,
     pub agent_id: String,
+    /// Display name of the agent, stored alongside persisted sessions.
+    pub agent_name: String,
     /// Set after `session/new` succeeds.
     pub session_id: Mutex<Option<String>>,
+    /// True while `session/load` replays a stored transcript, so the replayed
+    /// updates are not persisted again.
+    replaying: AtomicBool,
     stdin: Mutex<ChildStdin>,
     child: Mutex<Child>,
     next_id: AtomicI64,
@@ -65,7 +70,9 @@ impl AcpClient {
         let client = Arc::new(Self {
             connection_id: connection_id.clone(),
             agent_id: agent.id.clone(),
+            agent_name: agent.name.clone(),
             session_id: Mutex::new(None),
+            replaying: AtomicBool::new(false),
             stdin: Mutex::new(stdin),
             child: Mutex::new(child),
             next_id: AtomicI64::new(1),
@@ -142,7 +149,42 @@ impl AcpClient {
             .and_then(Value::as_str)
             .ok_or("session/new returned no sessionId")?
             .to_string();
-        *self.session_id.lock().await = Some(session_id);
+        *self.session_id.lock().await = Some(session_id.clone());
+        if let Err(e) = codexia_db::acp_sessions::upsert_session(
+            &session_id,
+            &self.agent_id,
+            Some(&self.agent_name),
+            cwd,
+        ) {
+            log::warn!("acp: failed to record session: {e}");
+        }
+        Ok(res)
+    }
+
+    /// Resume a previous session. Only agents whose `initialize` result sets
+    /// `agentCapabilities.loadSession` support this; the others must be given
+    /// the stored transcript as read-only history instead.
+    pub async fn load_session(&self, session_id: &str, cwd: &str) -> Result<Value, String> {
+        // The replay arrives as ordinary `session/update` notifications, which
+        // are already stored — don't write them a second time.
+        self.replaying.store(true, Ordering::Relaxed);
+        let res = self
+            .request(
+                "session/load",
+                json!({ "sessionId": session_id, "cwd": cwd, "mcpServers": [] }),
+            )
+            .await;
+        self.replaying.store(false, Ordering::Relaxed);
+        let res = res?;
+        *self.session_id.lock().await = Some(session_id.to_string());
+        if let Err(e) = codexia_db::acp_sessions::upsert_session(
+            session_id,
+            &self.agent_id,
+            Some(&self.agent_name),
+            cwd,
+        ) {
+            log::warn!("acp: failed to record session: {e}");
+        }
         Ok(res)
     }
 
@@ -213,6 +255,20 @@ impl AcpClient {
     /// Send a user turn. Resolves when the agent finishes the turn; streamed
     /// output arrives meanwhile as `session/update` events.
     pub async fn prompt(&self, text: &str) -> Result<Value, String> {
+        // The agent never echoes the user's turn back, so record it here to
+        // keep the persisted transcript complete.
+        if let Some(session_id) = self.session_id.lock().await.clone() {
+            self.persist(
+                &session_id,
+                &json!({
+                    "sessionUpdate": "user_message_chunk",
+                    "content": { "type": "text", "text": text }
+                }),
+            );
+            if let Err(e) = codexia_db::acp_sessions::set_title_if_empty(&session_id, text) {
+                log::warn!("acp: failed to set session title: {e}");
+            }
+        }
         self.session_request(
             "session/prompt",
             json!({ "prompt": [{ "type": "text", "text": text }] }),
@@ -279,6 +335,17 @@ impl AcpClient {
         stdin.flush().await.map_err(|e| e.to_string())
     }
 
+    /// Append a `session/update` payload to the stored transcript. Storage is
+    /// best effort: a failure here must not break the live session.
+    fn persist(&self, session_id: &str, update: &Value) {
+        if self.replaying.load(Ordering::Relaxed) {
+            return;
+        }
+        if let Err(e) = codexia_db::acp_sessions::append_update(session_id, &update.to_string()) {
+            log::warn!("acp: failed to persist session update: {e}");
+        }
+    }
+
     fn emit(&self, mut payload: Value) {
         if let Some(obj) = payload.as_object_mut() {
             obj.insert("connectionId".into(), json!(self.connection_id));
@@ -322,6 +389,12 @@ impl AcpClient {
             (Some(method), None) => {
                 let params = msg.get("params").cloned().unwrap_or(Value::Null);
                 if method == "session/update" {
+                    if let (Some(session_id), Some(update)) = (
+                        params.get("sessionId").and_then(Value::as_str),
+                        params.get("update"),
+                    ) {
+                        self.persist(session_id, update);
+                    }
                     self.emit(json!({
                         "kind": "update",
                         "sessionId": params.get("sessionId"),

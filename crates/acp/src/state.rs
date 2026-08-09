@@ -97,6 +97,17 @@ impl AcpState {
         self.get(connection_id)?.new_session(cwd).await
     }
 
+    /// Resume a stored session on a live connection. Fails for agents that do
+    /// not advertise `agentCapabilities.loadSession`.
+    pub async fn load_session(
+        &self,
+        connection_id: &str,
+        session_id: &str,
+        cwd: &str,
+    ) -> Result<Value, String> {
+        self.get(connection_id)?.load_session(session_id, cwd).await
+    }
+
     pub async fn set_mode(&self, connection_id: &str, mode_id: &str) -> Result<Value, String> {
         self.get(connection_id)?.set_mode(mode_id).await
     }

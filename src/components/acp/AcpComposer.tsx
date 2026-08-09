@@ -48,6 +48,7 @@ export function AcpComposer() {
         sessionId: res.sessionId,
         agentTitle: res.initialize.agentInfo?.title ?? res.initialize.agentInfo?.name ?? agentId,
         authMethods: res.initialize.authMethods ?? [],
+        canLoadSession: res.initialize.agentCapabilities?.loadSession === true,
       });
       applySession(res.session);
       if (res.sessionError) {

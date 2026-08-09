@@ -2,6 +2,7 @@ import { listen } from '@tauri-apps/api/event';
 import { useEffect } from 'react';
 import { buildUrl, isDesktopTauri } from '@/hooks/runtime';
 import { useAcpStore } from '@/stores/useAcpStore';
+import { applyAcpUpdate } from './applyUpdate';
 
 type AcpEventPayload = {
   connectionId: string;
@@ -44,32 +45,7 @@ export function useAcpEvents(connectionId: string | null) {
 
       if (payload.kind !== 'update' || !payload.update) return;
 
-      const update = payload.update as Record<string, any>;
-      switch (update.sessionUpdate) {
-        case 'agent_message_chunk':
-          if (update.content?.type === 'text') store.appendChunk('agent', update.content.text);
-          break;
-        case 'agent_thought_chunk':
-          if (update.content?.type === 'text') store.appendChunk('thought', update.content.text);
-          break;
-        case 'current_mode_update':
-          store.setCurrentMode(update.currentModeId);
-          break;
-        case 'config_option_update':
-          store.setConfigOptions(update.configOptions ?? []);
-          break;
-        case 'tool_call':
-        case 'tool_call_update':
-          store.upsertToolCall({
-            toolCallId: update.toolCallId,
-            title: update.title,
-            status: update.status,
-            kind: update.kind,
-          });
-          break;
-        default:
-          break;
-      }
+      applyAcpUpdate(payload.update as Record<string, any>);
     };
 
     if (isDesktopTauri()) {

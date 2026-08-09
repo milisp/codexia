@@ -1,4 +1,4 @@
-use codexia_acp::{AcpAgentDef, AcpStartResult, AcpState};
+use codexia_acp::{AcpAgentDef, AcpSessionRecord, AcpStartResult, AcpState};
 use serde_json::Value;
 use tauri::State;
 
@@ -47,6 +47,35 @@ pub async fn acp_new_session(
     state: State<'_, AcpState>,
 ) -> Result<Value, String> {
     state.new_session(&connection_id, &cwd).await
+}
+
+#[tauri::command]
+pub async fn acp_load_session(
+    connection_id: String,
+    session_id: String,
+    cwd: String,
+    state: State<'_, AcpState>,
+) -> Result<Value, String> {
+    state.load_session(&connection_id, &session_id, &cwd).await
+}
+
+#[tauri::command]
+pub async fn acp_list_sessions(
+    cwd: Option<String>,
+    limit: Option<usize>,
+) -> Result<Vec<AcpSessionRecord>, String> {
+    codexia_acp::list_sessions(cwd.as_deref(), limit.unwrap_or(100))
+}
+
+/// The stored transcript: raw `session/update` payloads in arrival order.
+#[tauri::command]
+pub async fn acp_get_session(session_id: String) -> Result<Vec<Value>, String> {
+    codexia_acp::get_updates(&session_id)
+}
+
+#[tauri::command]
+pub async fn acp_delete_session(session_id: String) -> Result<(), String> {
+    codexia_acp::delete_session(&session_id)
 }
 
 #[tauri::command]

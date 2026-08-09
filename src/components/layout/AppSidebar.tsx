@@ -22,13 +22,14 @@ import {
 import { useTrafficLightConfig } from '@/hooks';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
 import { useLayoutStore } from '@/stores';
+import { useAcpStore } from '@/stores/useAcpStore';
 import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { NewAgentButton } from '../common/NewAgentButton';
 import { SessionManagerDialog } from '../common/SessionManagerDialog';
 import { UpdateButton } from '../../features/UpdateButton';
 import { SideBarAddProjectButton } from './SideBarAddProjectButton';
-import { SideBarClaudeTab, SideBarCodexTab } from './SideBarTab';
+import { SideBarAcpTab, SideBarClaudeTab, SideBarCodexTab } from './SideBarTab';
 import { UserInfo } from './UserInfo';
 
 const focusCCInput = () => window.dispatchEvent(new Event('cc-input-focus-request'));
@@ -43,6 +44,7 @@ export function AppSideBar() {
   const { t } = useTranslation('sidebar');
   const { cwd, setCwd } = useWorkspaceStore();
   const { setSelectedAgent, selectedAgent } = useAgentSettingsStore();
+  const acpActive = useAcpStore((s) => s.active);
   const { setView, view, activeSidebarTab, setActiveSidebarTab } = useLayoutStore();
   const { open: isSidebarOpen } = useSidebar();
   const { isMacos } = useTrafficLightConfig(isSidebarOpen);
@@ -61,6 +63,17 @@ export function AppSideBar() {
       void handleNewThread();
     },
     [cwd, handleNewThread, setCwd]
+  );
+
+  const handleStartNewAcpSessionForProject = useCallback(
+    (directory: string) => {
+      setView('agent');
+      setCwd(directory);
+      // `restart` tears down the connection and asks the composer to reconnect
+      // in the new workspace.
+      useAcpStore.getState().restart();
+    },
+    [setCwd, setView]
   );
 
   const handleStartNewCcSessionForProject = useCallback(
@@ -168,7 +181,9 @@ export function AppSideBar() {
 
         {/* Thread list — selectedAgent is single source of truth */}
         <SidebarContent className="min-w-0 max-w-full overflow-x-hidden gap-0 px-0">
-          {selectedAgent === 'codex' ? (
+          {acpActive ? (
+            <SideBarAcpTab onStartNewSession={handleStartNewAcpSessionForProject} />
+          ) : selectedAgent === 'codex' ? (
             <SideBarCodexTab onCreateNewThread={handleCreateNewThreadForProject} />
           ) : (
             <SideBarClaudeTab onStartNewSession={handleStartNewCcSessionForProject} />

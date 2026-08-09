@@ -149,7 +149,10 @@ export function AcpSessionControls({ slot }: { slot: 'mode' | 'model' }) {
         onChange={(modeId) => {
           const previous = modes.currentModeId;
           setCurrentMode(modeId);
-          return apply(() => setCurrentMode(previous), () => acpSetMode(connectionId, modeId));
+          return apply(
+            () => setCurrentMode(previous),
+            () => acpSetMode(connectionId, modeId)
+          );
         }}
       />
     );

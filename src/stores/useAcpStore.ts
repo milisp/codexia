@@ -7,6 +7,15 @@ import type {
   AcpSessionResult,
 } from '@/services/apiAdapt/acp';
 
+/** A `toolCall.content` item, as sent by `tool_call` / `tool_call_update`. */
+export type AcpToolContent =
+  | { type: 'content'; content: { type: string; text?: string; uri?: string } }
+  | { type: 'diff'; path: string; oldText: string | null; newText: string }
+  | { type: 'terminal'; terminalId: string };
+
+/** A file location a tool call touched, used to render `file:line` links. */
+export type AcpToolLocation = { path: string; line?: number };
+
 /** A rendered line in the ACP transcript. */
 export type AcpEntry =
   | { id: string; role: 'user'; text: string }
@@ -20,6 +29,10 @@ export type AcpEntry =
       title: string;
       status: string;
       kind?: string;
+      content?: AcpToolContent[];
+      locations?: AcpToolLocation[];
+      rawInput?: unknown;
+      rawOutput?: unknown;
     };
 
 export type AcpPermissionOption = { optionId: string; name: string; kind?: string };
@@ -44,6 +57,8 @@ interface AcpStore {
   sessionId: string | null;
   agentTitle: string | null;
   authMethods: AcpAuthMethod[];
+  /** `agentCapabilities.loadSession`: whether stored sessions can be resumed. */
+  canLoadSession: boolean;
   connecting: boolean;
   running: boolean;
   entries: AcpEntry[];
@@ -69,6 +84,7 @@ interface AcpStore {
     sessionId: string | null;
     agentTitle: string | null;
     authMethods: AcpAuthMethod[];
+    canLoadSession?: boolean;
   }) => void;
   setSessionId: (id: string | null) => void;
   /** Apply the `session/new` result: session id plus the available controls. */
@@ -82,13 +98,19 @@ interface AcpStore {
   setRunning: (v: boolean) => void;
   setPermission: (p: AcpPermissionRequest | null) => void;
   addEntry: (entry: AcpEntry) => void;
+  setEntries: (entries: AcpEntry[]) => void;
   /** Append to the last entry when it has the same streaming role, else push. */
   appendChunk: (role: 'agent' | 'thought', text: string) => void;
+  /** Merge a `tool_call` / `tool_call_update`: absent fields keep their value. */
   upsertToolCall: (tool: {
     toolCallId: string;
     title?: string;
     status?: string;
     kind?: string;
+    content?: AcpToolContent[];
+    locations?: AcpToolLocation[];
+    rawInput?: unknown;
+    rawOutput?: unknown;
   }) => void;
   reset: () => void;
   /** Clear the session and ask the composer to open a fresh one. */
@@ -103,6 +125,7 @@ const cleared = {
   sessionId: null,
   agentTitle: null,
   authMethods: [],
+  canLoadSession: false,
   connecting: false,
   running: false,
   entries: [],
@@ -120,6 +143,7 @@ export const useAcpStore = create<AcpStore>((set) => ({
   sessionId: null,
   agentTitle: null,
   authMethods: [],
+  canLoadSession: false,
   connecting: false,
   running: false,
   entries: [],
@@ -132,8 +156,15 @@ export const useAcpStore = create<AcpStore>((set) => ({
 
   setActive: (active) => set({ active }),
   setAgentId: (agentId) => set({ agentId }),
-  setConnection: ({ connectionId, sessionId, agentTitle, authMethods }) =>
-    set({ connectionId, sessionId, agentTitle, authMethods, connecting: false }),
+  setConnection: ({ connectionId, sessionId, agentTitle, authMethods, canLoadSession }) =>
+    set({
+      connectionId,
+      sessionId,
+      agentTitle,
+      authMethods,
+      canLoadSession: canLoadSession ?? false,
+      connecting: false,
+    }),
   setSessionId: (sessionId) => set({ sessionId }),
 
   applySession: (session) =>
@@ -168,6 +199,7 @@ export const useAcpStore = create<AcpStore>((set) => ({
   setRunning: (running) => set({ running }),
   setPermission: (permission) => set({ permission }),
   addEntry: (entry) => set((s) => ({ entries: [...s.entries, entry] })),
+  setEntries: (entries) => set({ entries }),
 
   appendChunk: (role, text) =>
     set((s) => {
@@ -179,7 +211,7 @@ export const useAcpStore = create<AcpStore>((set) => ({
       return { entries: [...s.entries, { id: newId(), role, text }] };
     }),
 
-  upsertToolCall: ({ toolCallId, title, status, kind }) =>
+  upsertToolCall: ({ toolCallId, title, status, kind, content, locations, rawInput, rawOutput }) =>
     set((s) => {
       const idx = s.entries.findIndex((e) => e.role === 'tool' && e.toolCallId === toolCallId);
       if (idx === -1) {
@@ -193,6 +225,10 @@ export const useAcpStore = create<AcpStore>((set) => ({
               title: title ?? toolCallId,
               status: status ?? 'pending',
               kind,
+              content,
+              locations,
+              rawInput,
+              rawOutput,
             },
           ],
         };
@@ -204,6 +240,10 @@ export const useAcpStore = create<AcpStore>((set) => ({
         title: title ?? prev.title,
         status: status ?? prev.status,
         kind: kind ?? prev.kind,
+        content: content ?? prev.content,
+        locations: locations ?? prev.locations,
+        rawInput: rawInput ?? prev.rawInput,
+        rawOutput: rawOutput ?? prev.rawOutput,
       };
       return { entries: next };
     }),

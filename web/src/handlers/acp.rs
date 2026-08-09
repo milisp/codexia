@@ -1,5 +1,5 @@
 use axum::{Json, extract::State as AxumState, http::StatusCode};
-use codexia_acp::{AcpAgentDef, AcpStartResult};
+use codexia_acp::{AcpAgentDef, AcpSessionRecord, AcpStartResult};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -34,6 +34,26 @@ pub(crate) struct AcpAuthParams {
 pub(crate) struct AcpNewSessionParams {
     pub connection_id: String,
     pub cwd: String,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct AcpLoadSessionParams {
+    pub connection_id: String,
+    pub session_id: String,
+    pub cwd: String,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct AcpListSessionsParams {
+    #[serde(default)]
+    pub cwd: Option<String>,
+    #[serde(default)]
+    pub limit: Option<usize>,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct AcpSessionParams {
+    pub session_id: String,
 }
 
 #[derive(Deserialize)]
@@ -131,6 +151,41 @@ pub(crate) async fn api_acp_new_session(
         .await
         .map(Json)
         .map_err(err)
+}
+
+pub(crate) async fn api_acp_load_session(
+    AxumState(state): AxumState<WebServerState>,
+    Json(params): Json<AcpLoadSessionParams>,
+) -> Result<Json<Value>, ErrorResponse> {
+    state
+        .acp_state
+        .load_session(&params.connection_id, &params.session_id, &params.cwd)
+        .await
+        .map(Json)
+        .map_err(err)
+}
+
+pub(crate) async fn api_acp_list_sessions(
+    Json(params): Json<AcpListSessionsParams>,
+) -> Result<Json<Vec<AcpSessionRecord>>, ErrorResponse> {
+    codexia_acp::list_sessions(params.cwd.as_deref(), params.limit.unwrap_or(100))
+        .map(Json)
+        .map_err(err)
+}
+
+pub(crate) async fn api_acp_get_session(
+    Json(params): Json<AcpSessionParams>,
+) -> Result<Json<Vec<Value>>, ErrorResponse> {
+    codexia_acp::get_updates(&params.session_id)
+        .map(Json)
+        .map_err(err)
+}
+
+pub(crate) async fn api_acp_delete_session(
+    Json(params): Json<AcpSessionParams>,
+) -> Result<StatusCode, ErrorResponse> {
+    codexia_acp::delete_session(&params.session_id).map_err(err)?;
+    Ok(StatusCode::OK)
 }
 
 pub(crate) async fn api_acp_set_mode(

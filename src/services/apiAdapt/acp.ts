@@ -122,6 +122,52 @@ export async function acpNewSession(connectionId: string, cwd: string) {
   );
 }
 
+/** A persisted session, as listed in the sidebar. */
+export type AcpSessionRecord = {
+  sessionId: string;
+  agentId: string;
+  agentTitle: string | null;
+  cwd: string;
+  title: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** Resume a stored session. Only works when `agentCapabilities.loadSession`. */
+export async function acpLoadSession(connectionId: string, sessionId: string, cwd: string) {
+  return await dual<AcpSessionResult>(
+    'acp_load_session',
+    { connectionId, sessionId, cwd },
+    '/api/acp/load-session',
+    { connection_id: connectionId, session_id: sessionId, cwd }
+  );
+}
+
+export async function acpListSessions(cwd?: string, limit?: number) {
+  return await dual<AcpSessionRecord[]>(
+    'acp_list_sessions',
+    { cwd: cwd ?? null, limit: limit ?? null },
+    '/api/acp/sessions',
+    { cwd: cwd ?? null, limit: limit ?? null }
+  );
+}
+
+/** The stored transcript: raw `session/update` payloads in arrival order. */
+export async function acpGetSession(sessionId: string) {
+  return await dual<Array<Record<string, unknown>>>(
+    'acp_get_session',
+    { sessionId },
+    '/api/acp/session',
+    { session_id: sessionId }
+  );
+}
+
+export async function acpDeleteSession(sessionId: string) {
+  await dualVoid('acp_delete_session', { sessionId }, '/api/acp/delete-session', {
+    session_id: sessionId,
+  });
+}
+
 export async function acpSetMode(connectionId: string, modeId: string) {
   await dual('acp_set_mode', { connectionId, modeId }, '/api/acp/set-mode', {
     connection_id: connectionId,

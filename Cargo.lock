@@ -1584,6 +1584,7 @@ name = "codexia-acp"
 version = "0.42.2"
 dependencies = [
  "anyhow",
+ "codexia-db",
  "codexia-shared",
  "dashmap",
  "dirs",
