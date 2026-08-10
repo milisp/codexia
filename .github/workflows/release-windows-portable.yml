@@ -5,6 +5,11 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to build and upload to (e.g. v0.43.0)"
+        required: false
+        type: string
 
 env:
   VITE_REDIRECT_URL: ${{ secrets.VITE_REDIRECT_URL }}
@@ -21,8 +26,15 @@ jobs:
       contents: write
 
     steps:
+      - name: Resolve target tag
+        id: target
+        shell: bash
+        run: echo "tag=${{ inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.target.outputs.tag }}
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -49,7 +61,7 @@ jobs:
         id: package
         shell: pwsh
         run: |
-          $version = "${{ github.ref_name }}" -replace '^v', ''
+          $version = "${{ steps.target.outputs.tag }}" -replace '^v', ''
           $name = "Codexia_${version}_windows_x64_portable"
           New-Item -ItemType Directory -Force -Path dist-portable | Out-Null
           Copy-Item target/release/codexia.exe dist-portable/
@@ -60,12 +72,12 @@ jobs:
           "sha256=$hash" >> $env:GITHUB_OUTPUT
 
       - name: Upload to release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || inputs.tag != ''
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ github.ref_name }}" `
+          gh release upload "${{ steps.target.outputs.tag }}" `
             "${{ steps.package.outputs.name }}.zip" `
             "${{ steps.package.outputs.name }}.zip.sha256" `
             --clobber
