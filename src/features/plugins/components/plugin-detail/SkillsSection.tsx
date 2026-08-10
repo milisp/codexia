@@ -26,18 +26,13 @@ export function SkillsSection({ skills }: SkillsSectionProps) {
                 />
               )}
               <div>
-                <p className="text-sm font-medium">
-                  {skill.interface?.displayName ?? skill.name}
-                </p>
+                <p className="text-sm font-medium">{skill.interface?.displayName ?? skill.name}</p>
                 <p className="text-xs text-muted-foreground">
                   {skill.shortDescription ?? skill.description}
                 </p>
               </div>
             </div>
-            <Badge
-              variant={skill.enabled ? 'default' : 'secondary'}
-              className="text-xs"
-            >
+            <Badge variant={skill.enabled ? 'default' : 'secondary'} className="text-xs">
               {skill.enabled ? 'Enabled' : 'Disabled'}
             </Badge>
           </div>

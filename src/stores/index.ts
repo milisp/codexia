@@ -4,6 +4,7 @@ export {
   useLocaleStore,
   useThemeStore,
 } from './settings';
+export * from './useAcpStore';
 export * from './useAgentCenterStore';
 export * from './useAgentSettingsStore';
 export * from './useEditorStore';

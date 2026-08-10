@@ -1,5 +1,6 @@
 import { invokeTauri, isDesktopTauri } from './shared';
 
+export * from './acp';
 export * from './automation';
 
 export * from './cc';

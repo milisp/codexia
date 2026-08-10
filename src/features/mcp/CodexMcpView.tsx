@@ -1,12 +1,7 @@
 import { Save, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import {
-  DefaultMcpServers,
-  getServerProtocol,
-  McpServerCard,
-  McpServerForm,
-} from '@/features/mcp';
+import { DefaultMcpServers, getServerProtocol, McpServerCard, McpServerForm } from '@/features/mcp';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { unifiedAddMcpServer, unifiedReadMcpConfig, unifiedRemoveMcpServer } from '@/services';

@@ -1,7 +1,7 @@
 import { DiffModeEnum, DiffView } from '@git-diff-view/react';
 import { createTwoFilesPatch } from 'diff';
 import { ChevronDown, ChevronRight, Minus, Plus, Undo2 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useThemeContext } from '@/contexts/ThemeContext';
@@ -30,9 +30,10 @@ interface GitDiffFileItemProps {
   section: DiffSection;
   diffSource: DiffSource;
   wordWrapEnabled: boolean;
-  defaultExpanded: boolean;
+  expanded: boolean;
   isSelected: boolean;
   refreshKey: number;
+  onExpandedChange: (expanded: boolean) => void;
   onSelect: () => void;
   onRefreshStatus: () => void;
 }
@@ -43,16 +44,16 @@ export function GitDiffFileItem({
   section,
   diffSource,
   wordWrapEnabled,
-  defaultExpanded,
+  expanded,
   isSelected,
   refreshKey,
+  onExpandedChange,
   onSelect,
   onRefreshStatus,
 }: GitDiffFileItemProps) {
   const { resolvedTheme } = useThemeContext();
   const { hasConfirmedGitRevert, setHasConfirmedGitRevert } = useEditorStore();
   const { diffSplitMode } = useLayoutStore();
-  const [expanded, setExpanded] = useState(defaultExpanded);
   const [diffMeta, setDiffMeta] = useState<GitFileDiffMetaResponse | null>(null);
   const [diffData, setDiffData] = useState<GitFileDiffResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -60,31 +61,12 @@ export function GitDiffFileItem({
   const [stageLoading, setStageLoading] = useState(false);
   const [revertLoading, setRevertLoading] = useState(false);
   const [revertConfirm, setRevertConfirm] = useState(false);
-  const [diffTrigger, setDiffTrigger] = useState(0);
 
-  const prevExpandedRef = useRef(expanded);
-  const prevPathRef = useRef(entry.path);
-  const prevSectionRef = useRef(section);
-  const prevRefreshKeyRef = useRef(refreshKey);
-
-  if (
-    expanded !== prevExpandedRef.current ||
-    entry.path !== prevPathRef.current ||
-    section !== prevSectionRef.current ||
-    refreshKey !== prevRefreshKeyRef.current
-  ) {
-    prevExpandedRef.current = expanded;
-    prevPathRef.current = entry.path;
-    prevSectionRef.current = section;
-    prevRefreshKeyRef.current = refreshKey;
-    if (expanded) {
-      setDiffTrigger((prev) => prev + 1);
-    }
-  }
-
-  // Load diff meta + data when expanded or when path/section changes
+  // Load diff meta + data whenever the item is expanded, including on mount,
+  // and reload when the file, section or refresh key changes.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey is a reload signal
   useEffect(() => {
-    if (diffTrigger === 0) return;
+    if (!expanded) return;
 
     let cancelled = false;
     setLoading(true);
@@ -114,7 +96,7 @@ export function GitDiffFileItem({
     return () => {
       cancelled = true;
     };
-  }, [diffTrigger]);
+  }, [expanded, cwd, entry.path, section, refreshKey]);
 
   // Load full data once user confirms large diff
   useEffect(() => {
@@ -137,7 +119,7 @@ export function GitDiffFileItem({
     return () => {
       cancelled = true;
     };
-  }, [largeDiffConfirmed]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [largeDiffConfirmed, cwd, entry.path, section]);
 
   const diffHunks = useMemo(() => {
     if (!diffData || !diffData.has_changes) return [];
@@ -210,7 +192,7 @@ export function GitDiffFileItem({
         <button
           type="button"
           className="shrink-0 text-muted-foreground"
-          onClick={() => setExpanded((v) => !v)}
+          onClick={() => onExpandedChange(!expanded)}
           aria-label={expanded ? 'Collapse diff' : 'Expand diff'}
         >
           {expanded ? (
@@ -225,7 +207,7 @@ export function GitDiffFileItem({
           className="flex-1 flex items-center gap-2 min-w-0 text-left"
           onClick={() => {
             onSelect();
-            setExpanded(true);
+            onExpandedChange(true);
           }}
         >
           <span className="font-mono truncate text-foreground">{name}</span>

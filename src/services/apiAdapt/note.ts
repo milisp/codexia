@@ -7,17 +7,24 @@ export async function createNote(
   tags?: string[],
   userId?: string | null
 ) {
-  return await dual<DbNote>('create_note', { id, userId, title, content, tags }, '/api/notes/create', {
-    id,
-    user_id: userId ?? null,
-    title,
-    content,
-    tags: tags ?? null,
-  });
+  return await dual<DbNote>(
+    'create_note',
+    { id, userId, title, content, tags },
+    '/api/notes/create',
+    {
+      id,
+      user_id: userId ?? null,
+      title,
+      content,
+      tags: tags ?? null,
+    }
+  );
 }
 
 export async function getNotes(userId?: string | null) {
-  return await dual<DbNote[]>('get_notes', { userId }, '/api/notes/list', { user_id: userId ?? null });
+  return await dual<DbNote[]>('get_notes', { userId }, '/api/notes/list', {
+    user_id: userId ?? null,
+  });
 }
 
 export async function getNoteById(id: string) {

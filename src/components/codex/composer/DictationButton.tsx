@@ -39,13 +39,13 @@ function sleep(ms: number) {
  * to the composer via onTranscript.
  */
 export function DictationButton({ onTranscript }: DictationButtonProps) {
-   const [sessionState, setSessionState] = useState<DictationSessionState>('idle');
-   const sessionStateRef = useRef(sessionState);
-   sessionStateRef.current = sessionState;
-   const [modelStatus, setModelStatus] = useState<DictationModelStatus | null>(null);
-   const [isPreparingModel, setIsPreparingModel] = useState(false);
-   const [isPickerOpen, setIsPickerOpen] = useState(false);
-   const {
+  const [sessionState, setSessionState] = useState<DictationSessionState>('idle');
+  const sessionStateRef = useRef(sessionState);
+  sessionStateRef.current = sessionState;
+  const [modelStatus, setModelStatus] = useState<DictationModelStatus | null>(null);
+  const [isPreparingModel, setIsPreparingModel] = useState(false);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const {
     selectedModelId,
     setSelectedModelId,
     showModelSelectionDialog,

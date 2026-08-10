@@ -1,0 +1,30 @@
+# Changelogs
+
+One file per release, newest first. Read the file for the version you care about
+rather than scanning everything.
+
+| Version | Date | Notes |
+| --- | --- | --- |
+| [0.43.0](./0.43.0.md) | 2026-08-09 | ACP agent connections, iOS remote control, Grok approval toggle |
+| [0.42.2](./0.42.2.md) | 2026-07-31 | Multi-tabbed right panel, git revert in file change summaries |
+| [0.42.0](./0.42.0.md) | 2026-07-27 | Plugins marketplace, on-device dictation, OpenAI API key auth |
+
+## Older releases
+
+Releases up to and including 0.36.0 live in the root [CHANGELOG.md](../CHANGELOG.md),
+which is kept as a frozen archive and is no longer updated. Versions 0.37.0
+through 0.41.1 were released without written changelogs; use
+`git log v0.36.0..v0.42.0` for that range.
+
+## Conventions
+
+- File name is the version: `<major>.<minor>.<patch>.md`.
+- Heading is `# <version> - <YYYY-MM-DD>`, followed by a compare link to the previous release.
+- Sections, in this order, omitting any that are empty: `Added`, `Changed`,
+  `Deprecated`, `Removed`, `Fixed`, `Security`, `Internal`.
+- Entries describe what changed for the user, not how it was implemented.
+  Commit hashes go in trailing parentheses.
+- Changes with no user-visible effect (formatting, tooling, dependency bumps)
+  are summarized in a single `Internal` paragraph, not itemized.
+- `docs/RELEASE_NOTE.md` holds the prose release note for the *current* release
+  only; the release workflow publishes it as the GitHub release body.

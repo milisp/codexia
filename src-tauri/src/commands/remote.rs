@@ -98,6 +98,11 @@ pub async fn remote_start(
         .try_state::<AppState>()
         .map(|s| Arc::new(AppState { codex: s.codex.clone() }));
     let cc = Arc::new(cc_state.inner().clone());
+    // Share the desktop's ACP state so remote clients see the same sessions.
+    let acp = app
+        .try_state::<codexia_acp::AcpState>()
+        .map(|s| Arc::new(s.inner().clone()))
+        .ok_or_else(|| "ACP state is not initialized".to_string())?;
     let event_tx = remote.event_tx.clone();
     let host = info.ipv4.clone();
 
@@ -106,6 +111,7 @@ pub async fn remote_start(
         let result = codexia_web::serve_api(
             codex,
             cc,
+            acp,
             event_tx,
             &serve_host,
             REMOTE_PORT,

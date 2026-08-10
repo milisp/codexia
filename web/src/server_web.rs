@@ -45,6 +45,9 @@ pub async fn start_web_server_with_events(
     let state = WebServerState::new(
         codex_state,
         cc_state,
+        Arc::new(codexia_acp::AcpState::new(Arc::new(WebSocketEventSink::new(
+            event_tx.clone(),
+        )))),
         Arc::new(SleepState::default()),
         Arc::new(super::terminal::WebTerminalState::default()),
         Arc::new(WebWatchState::default()),
@@ -156,6 +159,7 @@ fn log_remote_access(host: &str, port: u16) {
 pub async fn serve_api<F>(
     codex_state: Option<Arc<AppState>>,
     cc_state: Arc<CCState>,
+    acp_state: Arc<codexia_acp::AcpState>,
     event_tx: broadcast::Sender<(String, serde_json::Value)>,
     host: &str,
     port: u16,
@@ -169,6 +173,7 @@ where
     let state = WebServerState::new(
         codex_state,
         cc_state,
+        acp_state,
         Arc::new(SleepState::default()),
         Arc::new(super::terminal::WebTerminalState::default()),
         Arc::new(WebWatchState::default()),

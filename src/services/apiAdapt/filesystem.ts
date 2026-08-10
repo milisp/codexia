@@ -1,7 +1,13 @@
 import { dual, dualGet, dualVoid, type TauriFileEntry } from './shared';
 
 export async function readFile(filePath: string, options?: { suppressToast?: boolean }) {
-  return await dual<string>('read_file', { filePath }, '/api/filesystem/read-file', { filePath }, options);
+  return await dual<string>(
+    'read_file',
+    { filePath },
+    '/api/filesystem/read-file',
+    { filePath },
+    options
+  );
 }
 
 export async function readTextFileLines(filePath: string) {

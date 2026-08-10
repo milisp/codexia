@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { useNewThread } from '@/components/codex/hooks';
 import { Button } from '@/components/ui/button';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
+import { acpStop } from '@/services/apiAdapt/acp';
 import { useAgentCenterStore, useLayoutStore } from '@/stores';
+import { useAcpStore } from '@/stores/useAcpStore';
 import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
@@ -22,10 +24,19 @@ export function NewAgentButton({ showLabel = false }: Props) {
   const { view, setView, setActiveSidebarTab } = useLayoutStore();
   const { handleNewSession } = useCCSessionManager();
   const { handleNewThread } = useNewThread();
+  const { active: acpActive, connectionId: acpConnectionId, restart: acpRestart } = useAcpStore();
 
   const handleCreateNew = useCallback(
     async (project?: string) => {
       if (project && project !== cwd) setCwd(project);
+
+      if (acpActive) {
+        setView('agent');
+        // The old process may already be gone; a fresh session works regardless.
+        if (acpConnectionId) await acpStop(acpConnectionId).catch(() => {});
+        acpRestart();
+        return;
+      }
 
       if (selectedAgent === 'cc') {
         setActiveSidebarTab('cc');
@@ -38,6 +49,9 @@ export function NewAgentButton({ showLabel = false }: Props) {
       await handleNewThread();
     },
     [
+      acpActive,
+      acpConnectionId,
+      acpRestart,
       cwd,
       handleNewSession,
       handleNewThread,

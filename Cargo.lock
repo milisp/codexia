@@ -1508,7 +1508,7 @@ dependencies = [
 
 [[package]]
 name = "codexia"
-version = "0.42.2"
+version = "0.43.0"
 dependencies = [
  "agent-insights",
  "anyhow",
@@ -1521,6 +1521,7 @@ dependencies = [
  "codex-app-server-protocol",
  "codex-finder",
  "codex-protocol",
+ "codexia-acp",
  "codexia-cc",
  "codexia-codex",
  "codexia-db",
@@ -1580,8 +1581,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "codexia-acp"
+version = "0.43.0"
+dependencies = [
+ "anyhow",
+ "codexia-db",
+ "codexia-shared",
+ "dashmap",
+ "dirs",
+ "log",
+ "serde",
+ "serde_json",
+ "tokio",
+ "uuid",
+ "which 6.0.3",
+]
+
+[[package]]
 name = "codexia-cc"
-version = "0.42.2"
+version = "0.43.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1607,7 +1625,7 @@ dependencies = [
 
 [[package]]
 name = "codexia-codex"
-version = "0.42.2"
+version = "0.43.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1632,7 +1650,7 @@ dependencies = [
 
 [[package]]
 name = "codexia-db"
-version = "0.42.2"
+version = "0.43.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1646,7 +1664,7 @@ dependencies = [
 
 [[package]]
 name = "codexia-git"
-version = "0.42.2"
+version = "0.43.0"
 dependencies = [
  "anyhow",
  "gix",
@@ -1657,7 +1675,7 @@ dependencies = [
 
 [[package]]
 name = "codexia-shared"
-version = "0.42.2"
+version = "0.43.0"
 dependencies = [
  "agent-insights",
  "anyhow",
@@ -1699,7 +1717,7 @@ dependencies = [
 
 [[package]]
 name = "codexia-web"
-version = "0.42.2"
+version = "0.43.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1710,6 +1728,7 @@ dependencies = [
  "codex-app-server-protocol",
  "codex-finder",
  "codex-protocol",
+ "codexia-acp",
  "codexia-cc",
  "codexia-codex",
  "codexia-db",

@@ -1,7 +1,7 @@
 {
   "name": "codexia",
   "private": true,
-  "version": "0.42.2",
+  "version": "0.43.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,11 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev:web": "cargo run --bin codexia-web",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,css}": "biome check --write --no-errors-on-unmatched"
   },
   "dependencies": {
     "@git-diff-view/react": "^0.0.39",
@@ -34,8 +38,6 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-toast": "^1.2.15",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@tailwindcss/cli": "^4.1.18",
-    "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-virtual": "^3.13.18",
     "@tauri-apps/api": "^2.11",
     "@tauri-apps/plugin-deep-link": "~2.4.7",
@@ -75,7 +77,6 @@
     "sonner": "^2.0.7",
     "streamdown": "^2.2.0",
     "tailwind-merge": "^3.4.0",
-    "tailwindcss": "^4.1.18",
     "tauri-plugin-screenshots-api": "^2.2.0",
     "uuid": "^13.0.0",
     "xterm": "^5.3.0",
@@ -85,6 +86,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.14",
+    "@tailwindcss/cli": "^4.1.18",
+    "@tailwindcss/vite": "^4.1.18",
     "@tauri-apps/cli": "^2.10.0",
     "@types/diff": "^8.0.0",
     "@types/markdown-it": "^14.1.2",
@@ -95,7 +98,10 @@
     "@types/uuid": "^11.0.0",
     "@vitejs/plugin-react": "^4.7.0",
     "@vitejs/plugin-react-swc": "^4.3.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.3.0",
     "rollup-plugin-visualizer": "^7.0.1",
+    "tailwindcss": "^4.1.18",
     "tw-animate-css": "^1.4.0",
     "typescript": "^7.0.2",
     "vite": "^7.3.1"

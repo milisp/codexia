@@ -295,10 +295,7 @@ export const codexService = {
       throw error;
     }
   },
-  async threadResume(
-    threadId: string,
-    overrides?: Omit<ThreadResumeParams, 'threadId'>,
-  ) {
+  async threadResume(threadId: string, overrides?: Omit<ThreadResumeParams, 'threadId'>) {
     const set = useCodexStore.setState;
     try {
       const response = await threadResume({ threadId, ...overrides });

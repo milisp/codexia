@@ -1,3 +1,4 @@
+import { AcpSessionList } from '@/components/acp/AcpSessionList';
 import { ThreadList } from '@/components/codex/thread/ThreadList';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
 import { SessionList } from '@/components/cc/session';
@@ -31,6 +32,20 @@ export function SideBarCodexTab({ onCreateNewThread }: SideBarCodexTabProps) {
       onNewAction={onCreateNewThread}
       newActionTitle={(name) => `Start new thread in ${name}`}
       renderList={(project) => <ThreadList cwd={project} />}
+    />
+  );
+}
+
+type SideBarAcpTabProps = {
+  onStartNewSession: (directory: string) => void;
+};
+
+export function SideBarAcpTab({ onStartNewSession }: SideBarAcpTabProps) {
+  return (
+    <SideBarProjectList
+      onNewAction={onStartNewSession}
+      newActionTitle={(name) => `Start new ACP session in ${name}`}
+      renderList={(project) => <AcpSessionList directory={project} />}
     />
   );
 }

@@ -74,9 +74,15 @@ export async function gitBranchInfo(cwd: string) {
 export async function isGitRepo(cwd: string): Promise<boolean> {
   if (!cwd) return false;
   try {
-    await dual<GitBranchInfoResponse>('git_branch_info', { cwd }, '/api/git/branch-info', { cwd }, {
-      suppressToast: true,
-    });
+    await dual<GitBranchInfoResponse>(
+      'git_branch_info',
+      { cwd },
+      '/api/git/branch-info',
+      { cwd },
+      {
+        suppressToast: true,
+      }
+    );
     return true;
   } catch {
     return false;

@@ -76,7 +76,5 @@ function AppShell() {
 export default function App() {
   useAppDeepLink();
 
-  return (
-    <AppShell />
-  );
+  return <AppShell />;
 }

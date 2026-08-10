@@ -123,11 +123,7 @@ export const ThreadFileChangesSummary = ({ changes }: ThreadFileChangesSummaryPr
           >
             <HoverCard openDelay={200}>
               <HoverCardTrigger asChild>
-                <button
-                  type="button"
-                  onClick={openReviewTab}
-                  className="flex-1 min-w-0 text-left"
-                >
+                <button type="button" onClick={openReviewTab} className="flex-1 min-w-0 text-left">
                   <span className="font-mono truncate block">
                     {toRelativePath(change.path, cwd)}
                   </span>

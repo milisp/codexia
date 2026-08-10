@@ -1,6 +1,11 @@
 import type { SkillsListResponse } from '@/bindings/v2';
 
-import { dual, type InstalledSkillItem, type MarketplaceSkillItem, type SkillScope } from './shared';
+import {
+  dual,
+  type InstalledSkillItem,
+  type MarketplaceSkillItem,
+  type SkillScope,
+} from './shared';
 
 export type MarketSkillItem = {
   id: string;

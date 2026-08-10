@@ -1,11 +1,16 @@
 import { dual, dualVoid, type TerminalStartResponse } from './shared';
 
 export async function terminalStart(cwd?: string | null, cols?: number, rows?: number) {
-  return await dual<TerminalStartResponse>('terminal_start', { cwd, cols, rows }, '/api/terminal/start', {
-    cwd,
-    cols,
-    rows,
-  });
+  return await dual<TerminalStartResponse>(
+    'terminal_start',
+    { cwd, cols, rows },
+    '/api/terminal/start',
+    {
+      cwd,
+      cols,
+      rows,
+    }
+  );
 }
 
 export async function terminalWrite(sessionId: string, data: string) {

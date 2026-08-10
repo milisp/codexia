@@ -1,4 +1,5 @@
 mod conn;
+pub mod acp_sessions;
 pub mod automation_runs;
 pub mod notes;
 

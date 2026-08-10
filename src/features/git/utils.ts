@@ -37,6 +37,16 @@ export function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+/** Folder paths enclosing a file, e.g. `a/b/c.ts` -> `['a', 'a/b']`. */
+export function ancestorFolderPaths(filePath: string): string[] {
+  const parts = filePath.split('/').filter(Boolean);
+  const result: string[] = [];
+  for (let index = 0; index < parts.length - 1; index += 1) {
+    result.push(parts.slice(0, index + 1).join('/'));
+  }
+  return result;
+}
+
 export function buildFileTree(entries: GitStatusEntry[]): TreeNode[] {
   const root: MutableFolderNode = {
     name: '',
