@@ -177,6 +177,7 @@ async fn run_one_target(
         let task_id = task.id.clone();
         let task_name = task.name.clone();
         let cwd = target_cwd.map(str::to_string);
+        let agent = runner.agent();
         let event_sink = Arc::clone(&ctx.event_sink);
         let recorder = Arc::clone(&ctx.recorder);
         Arc::new(move |key: &str| {
@@ -189,6 +190,7 @@ async fn run_one_target(
                 json!({
                     "taskId": task_id,
                     "taskName": task_name,
+                    "agent": agent,
                     "threadId": key,
                     "cwd": cwd,
                     "startedAt": started_at,

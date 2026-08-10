@@ -1,6 +1,16 @@
 // Handles fetching and paginating the session list for a directory.
+import { listen } from '@tauri-apps/api/event';
 import { useCallback, useEffect, useState } from 'react';
+import { isDesktopTauri } from '@/hooks/runtime';
 import { listSessions, type SdkSessionInfo } from '@/lib/sessions';
+
+type AutomationRunStartedPayload = {
+  agent?: string;
+  taskName: string;
+  threadId: string;
+  startedAt: string;
+  cwd?: string | null;
+};
 
 export const DEFAULT_VISIBLE = 3;
 export const LOAD_MORE_SIZE = 20;
@@ -54,6 +64,35 @@ export function useSessionPagination({ directory, sessions }: UseSessionPaginati
     })();
     return () => {
       cancelled = true;
+    };
+  }, [directory, sessions]);
+
+  // An automation cc run creates a real CLI session in the backend. Show it right away
+  // instead of waiting for the next full reload of this directory's list.
+  useEffect(() => {
+    if (sessions !== undefined || !directory || !isDesktopTauri()) return;
+    const unlistenPromise = listen<AutomationRunStartedPayload>(
+      'automation:run/started',
+      (event) => {
+        const { agent, threadId, taskName, cwd } = event.payload;
+        if (agent !== 'cc' || cwd !== directory) return;
+        setLoadedSessions((prev) => {
+          if (prev.some((s) => s.session_id === threadId)) return prev;
+          return [
+            {
+              session_id: threadId,
+              summary: taskName,
+              last_modified: Date.now(),
+              cwd,
+            },
+            ...prev,
+          ];
+        });
+        setTotalCount((prev) => prev + 1);
+      }
+    );
+    return () => {
+      unlistenPromise.then((fn) => fn());
     };
   }, [directory, sessions]);
 

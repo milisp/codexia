@@ -60,6 +60,19 @@ pub fn mark_run_status_by_thread(thread_id: &str, status: &str) -> Result<(), St
     Ok(())
 }
 
+/// Marks runs still stored as 'running' from a previous app process as failed.
+/// Their agent died with that process, so nothing will ever complete them.
+pub fn fail_orphaned_runs() -> Result<(), String> {
+    let conn = get_connection()?;
+    let now = Utc::now().to_rfc3339();
+    conn.execute(
+        "UPDATE automation_runs SET status = 'failed', updated_at = ?1 WHERE status = 'running'",
+        params![now],
+    )
+    .map_err(|e| format!("Failed to fail orphaned automation runs: {}", e))?;
+    Ok(())
+}
+
 pub fn mark_run_status_by_session(session_id: &str, status: &str) -> Result<(), String> {
     // For automation_runs, codex thread_id and cc session_id share the same storage column.
     mark_run_status_by_thread(session_id, status)

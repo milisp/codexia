@@ -297,6 +297,11 @@ pub fn run() {
                 };
                 app.manage::<commands::automation::AutomationState>(automation);
 
+                // Runs left as 'running' belong to a previous process and can never finish.
+                if let Err(err) = codexia_db::automation_runs::fail_orphaned_runs() {
+                    log::warn!("failed to clean up orphaned automation runs: {}", err);
+                }
+
                 cc::scan::start_session_scanner();
 
                 tauri::async_runtime::spawn(async {

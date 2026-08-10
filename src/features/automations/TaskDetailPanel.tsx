@@ -137,12 +137,10 @@ function StatusIcon({ status }: { status: RunStatus }) {
 function RunRow({
   run,
   agent,
-  isCcSessionActive,
   onOpenRun,
 }: {
   run: RunMeta;
   agent: AutomationTask['agent'];
-  isCcSessionActive: boolean;
   onOpenRun: (run: RunMeta) => Promise<void>;
 }) {
   const events = useRunEvents(run.threadId);
@@ -157,10 +155,11 @@ function RunRow({
       : storedStatus;
   const [isCancelling, setIsCancelling] = useState(false);
   const statusLabel = status === 'idle' ? 'queued' : status;
+  // A cc automation run is driven entirely in the backend, so it never shows up in the
+  // UI's active session list; the runner aliases its client under the real session id,
+  // which is enough for cc_interrupt to reach it.
   const canInterrupt =
-    agent === 'codex'
-      ? status === 'running' && Boolean(activeTurnId)
-      : status === 'running' && isCcSessionActive;
+    agent === 'codex' ? status === 'running' && Boolean(activeTurnId) : status === 'running';
   const idLabel = agent === 'cc' ? 'Session ID' : 'Thread ID';
 
   return (
@@ -519,7 +518,6 @@ export function TaskDetailPanel({ task, now, runs, togglingPauseTaskId }: TaskDe
                     key={run.threadId}
                     run={run}
                     agent={task.agent}
-                    isCcSessionActive={activeSessionIds.includes(run.threadId)}
                     onOpenRun={handleOpenRun}
                   />
                 ))}

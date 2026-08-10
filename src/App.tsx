@@ -1,3 +1,4 @@
+import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useEffect, useState } from 'react';
 import './App.css';
@@ -5,11 +6,12 @@ import './App.css';
 import { useCodexEvents } from '@/components/codex/hooks';
 import { QuitDialog } from '@/components/dialogs';
 import { AppLayout } from '@/components/layout';
-import { HistoryProjectsDialog } from '@/features/ProjectSelector';
 import { AnalyticsConsentDialog } from '@/components/settings/AnalyticsConsentDialog';
+import { HistoryProjectsDialog } from '@/features/ProjectSelector';
 import { isTauri } from '@/hooks/runtime';
 import { useAppDeepLink } from '@/hooks/useAppDeepLink';
 import { useUrlParamThread } from '@/hooks/useUrlParamThread';
+import { hasActiveWork } from '@/lib/hasActiveWork';
 import { initSettingsSync, loadSettings } from '@/lib/settings';
 import { initializeCodexAsync } from '@/services/apiAdapt';
 import type { InitializeResponse } from './bindings';
@@ -42,9 +44,15 @@ function AppShell() {
       setCodexReady(true);
     });
 
-    // Show quit confirmation when Cmd+Q is pressed
+    // Cmd+Q quits immediately when nothing is running, otherwise confirms first
     const unlistenQuit = listen('quit-requested', () => {
-      setQuitDialogOpen(true);
+      void hasActiveWork().then((active) => {
+        if (active) {
+          setQuitDialogOpen(true);
+        } else {
+          void invoke('quit_app');
+        }
+      });
     });
 
     return () => {
