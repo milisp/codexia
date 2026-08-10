@@ -1,5 +1,5 @@
 use crate::state::CCState;
-use crate::types::{AgentOptions, CCConnectParams, parse_permission_mode};
+use crate::types::{AgentOptions, CCConnectParams, parse_effort_level, parse_permission_mode};
 use claude_agent_sdk_rs::{
     ClaudeAgentOptions, HookInput, HookJsonOutput, HookSpecificOutput, Hooks,
     PreToolUseHookSpecificOutput, SyncHookJsonOutput,
@@ -82,6 +82,7 @@ fn permission_hook_output(decision: &str, reason: &str) -> HookJsonOutput {
             permission_decision: Some(decision.to_string()),
             permission_decision_reason: Some(reason.to_string()),
             updated_input: None,
+            additional_context: None,
         })),
         ..Default::default()
     })
@@ -134,6 +135,13 @@ fn build_permission_hooks(
                 return permission_hook_output("allow", "bypassPermissions mode");
             }
 
+            // auto: the CLI owns the decision via its auto-mode classifier
+            // (`claude auto-mode defaults`). Return no decision so we don't
+            // interpose our own prompt and defeat it.
+            if permission_mode.as_deref() == Some("auto") {
+                return HookJsonOutput::Sync(Default::default());
+            }
+
             // Read is auto-approved unless it targets a sensitive file.
             if tool_name == "Read" {
                 let file_path = tool_input
@@ -161,6 +169,13 @@ fn build_permission_hooks(
             // Check session-scoped always-allow (set when user clicks "Always Allow").
             if session_allowed.lock().unwrap().contains(&tool_name) {
                 return permission_hook_output("allow", "Always allow for this session");
+            }
+
+            // dontAsk: "Don't prompt for permissions; deny if not pre-approved."
+            // Everything pre-approved has already returned above, so anything
+            // reaching here is denied rather than prompted.
+            if permission_mode.as_deref() == Some("dontAsk") {
+                return permission_hook_output("deny", "Not pre-approved, and dontAsk mode is on");
             }
 
             // Show UI prompt for everything else.
@@ -218,6 +233,7 @@ pub async fn connect(params: CCConnectParams, state: &CCState) -> Result<(), Str
     let mut options = ClaudeAgentOptions {
         cwd: Some(PathBuf::from(&params.cwd)),
         model: params.model,
+        effort: params.effort.as_deref().and_then(parse_effort_level),
         resume: params.resume_id,
         permission_mode,
         stderr_callback: Some(Arc::new(|msg| log::error!("[CC STDERR] {}", msg))),

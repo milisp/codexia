@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
-use claude_agent_sdk_rs::{ClaudeAgentOptions, PermissionMode};
+use claude_agent_sdk_rs::{ClaudeAgentOptions, EffortLevel, PermissionMode};
 use claude_agent_sdk_rs::types::mcp::{
     McpHttpServerConfig, McpServerConfig, McpServers, McpSseServerConfig, McpStdioServerConfig,
 };
@@ -13,6 +13,7 @@ pub struct CCConnectParams {
     pub session_id: String,
     pub cwd: String,
     pub model: Option<String>,
+    pub effort: Option<String>,
     pub permission_mode: Option<String>,
     pub resume_id: Option<String>,
 }
@@ -47,6 +48,7 @@ pub enum McpServerConfigSerde {
 pub struct AgentOptions {
     pub cwd: String,
     pub model: Option<String>,
+    pub effort: Option<String>,
     pub permission_mode: Option<String>,
     pub fallback_model: Option<String>,
     pub max_turns: Option<u32>,
@@ -60,13 +62,33 @@ pub struct AgentOptions {
     pub continue_conversation: Option<bool>,
 }
 
+pub(crate) fn parse_effort_level(effort: &str) -> Option<EffortLevel> {
+    match effort {
+        "low" => Some(EffortLevel::Low),
+        "medium" => Some(EffortLevel::Medium),
+        "high" => Some(EffortLevel::High),
+        "xhigh" => Some(EffortLevel::XHigh),
+        "max" => Some(EffortLevel::Max),
+        other => {
+            log::warn!("[CC] unknown effort level {:?}, falling back to CLI default", other);
+            None
+        }
+    }
+}
+
 pub(crate) fn parse_permission_mode(mode: &str) -> Option<PermissionMode> {
     match mode {
         "default" => Some(PermissionMode::Default),
         "acceptEdits" => Some(PermissionMode::AcceptEdits),
         "plan" => Some(PermissionMode::Plan),
         "bypassPermissions" => Some(PermissionMode::BypassPermissions),
-        _ => None,
+        "auto" => Some(PermissionMode::Auto),
+        "dontAsk" => Some(PermissionMode::DontAsk),
+        "manual" => Some(PermissionMode::Manual),
+        other => {
+            log::warn!("[CC] unknown permission mode {:?}, falling back to CLI default", other);
+            None
+        }
     }
 }
 
@@ -103,6 +125,7 @@ impl AgentOptions {
         ClaudeAgentOptions {
             cwd: Some(PathBuf::from(&self.cwd)),
             model: self.model.clone(),
+            effort: self.effort.as_deref().and_then(parse_effort_level),
             fallback_model: self.fallback_model.clone(),
             max_turns: self.max_turns,
             max_budget_usd: self.max_budget_usd,

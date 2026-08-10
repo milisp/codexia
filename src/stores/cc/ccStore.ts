@@ -5,8 +5,18 @@ import type { ThreadCwdMode } from '@/components/codex/stores/useConfigStore';
 import type { SdkSessionInfo } from '@/lib/sessions';
 import type { CCMcpServers } from '@/types/cc/cc-mcp';
 
-export type PermissionMode = 'default' | 'acceptEdits' | 'plan' | 'bypassPermissions';
-export type ModelType = 'sonnet' | 'haiku' | 'opus';
+export type PermissionMode =
+  | 'default'
+  | 'acceptEdits'
+  | 'plan'
+  | 'bypassPermissions'
+  | 'auto'
+  | 'dontAsk'
+  | 'manual';
+export type ModelType = 'sonnet' | 'haiku' | 'opus' | 'fable';
+export type EffortLevel = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+
+export const CC_EFFORT_LEVELS: EffortLevel[] = ['low', 'medium', 'high', 'xhigh', 'max'];
 
 export interface CCPluginConfig {
   path: string;
@@ -15,6 +25,7 @@ export interface CCPluginConfig {
 
 export interface CCOptions {
   model?: ModelType;
+  effort?: EffortLevel;
   permissionMode: PermissionMode;
   maxTurns?: number;
   allowedTools?: string[];

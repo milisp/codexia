@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { CCScrollControls } from './CCScrollControls';
 import { CCMessage } from '@/components/cc/session/messages';
 import { PermissionRequestCard } from '@/components/cc/session/messages/PermissionRequestCard';
 import { ccGetSessionMessages, ccResumeSession } from '@/services/apiAdapt/cc';
 import { useCCStore } from '@/stores/cc';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useCCPermissionListener, useCCSessionListener } from '../hooks';
-import { buildMessageGroups, CCExploredMessageGroup } from './messages/group';
-import { buildInlineErrorsMap } from './messages/inlineErrors';
 import type { PermissionRequestMessage } from '../types/messages';
 import type { PermissionDecision } from '../types/permission';
 import { fromSdkMessages } from '../utils/fromSdkMessages';
+import { CCScrollControls } from './CCScrollControls';
+import { buildMessageGroups, CCExploredMessageGroup } from './messages/group';
+import { buildInlineErrorsMap } from './messages/inlineErrors';
 
 interface CCSessionProps {
   /** When provided, renders in embedded (grid-card) mode for this specific session. */
@@ -45,8 +45,8 @@ export default function CCSession({ sessionId, disableListener = false }: CCSess
   const { cwd } = useWorkspaceStore();
 
   // In embedded mode use per-session data; otherwise use the global active-session data.
-  const messages = isEmbedded ? (sessionMessagesMap[sessionId!] ?? []) : globalMessages;
-  const isLoading = isEmbedded ? (sessionLoadingMap[sessionId!] ?? false) : globalIsLoading;
+  const messages = sessionId ? (sessionMessagesMap[sessionId] ?? []) : globalMessages;
+  const isLoading = sessionId ? (sessionLoadingMap[sessionId] ?? false) : globalIsLoading;
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
@@ -63,26 +63,34 @@ export default function CCSession({ sessionId, disableListener = false }: CCSess
   // Load JSONL history for the active session (always, independent of resume).
   // Review-first: spawning the agent is gated behind an explicit Resume button
   // (rendered below) so peeking at history doesn't pay the agent-spawn cost.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: this effect runs once per activeSessionId to load history and resume; it must not re-run on other value changes
   useEffect(() => {
     if (isEmbedded) return;
     if (!activeSessionId || activeSessionIds.includes(activeSessionId)) return;
     const sid = activeSessionId;
+    const sessionCwd = cwd;
+    if (!sessionCwd?.trim()) return;
     void (async () => {
-      const sdkMessages = await ccGetSessionMessages(sid);
-      for (const msg of fromSdkMessages(sdkMessages, sid)) {
-        addMessageToSession(sid, msg);
+      try {
+        const sdkMessages = await ccGetSessionMessages(sid);
+        for (const msg of fromSdkMessages(sdkMessages, sid)) {
+          addMessageToSession(sid, msg);
+        }
+        setSessionLoading(sid, false);
+        await ccResumeSession(sid, {
+          cwd: sessionCwd,
+          permissionMode: options.permissionMode,
+          resume: sid,
+          continueConversation: true,
+          ...(options.model ? { model: options.model } : {}),
+          ...(options.effort ? { effort: options.effort } : {}),
+        });
+        addActiveSessionId(sid);
+      } catch (err) {
+        console.error('[CCSession] Failed to load/resume session', { sessionId: sid, err });
+        setSessionLoading(sid, false);
       }
-      setSessionLoading(sid, false);
-      await ccResumeSession(sid, {
-        cwd,
-        permissionMode: options.permissionMode,
-        resume: sid,
-        continueConversation: true,
-        ...(options.model ? { model: options.model } : {}),
-      });
-      addActiveSessionId(sid);
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSessionId, isEmbedded]);
 
   // Track user scroll intent.
@@ -98,6 +106,7 @@ export default function CCSession({ sessionId, disableListener = false }: CCSess
   }, []);
 
   // Smooth-scroll to bottom when messages update.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-run on messages/isLoading updates to trigger auto-scroll, body only reads refs
   useEffect(() => {
     if (!shouldAutoScrollRef.current) return;
     const el = scrollContainerRef.current;
@@ -129,10 +138,11 @@ export default function CCSession({ sessionId, disableListener = false }: CCSess
     const { ccResolvePermission } = await import('@/services');
     try {
       await ccResolvePermission(requestId, decision);
+      const patch: Partial<PermissionRequestMessage> = { resolved: decision };
       if (isEmbedded && sessionId) {
-        updateSessionMessage(sessionId, pendingPermissionIdx, { resolved: decision } as any);
+        updateSessionMessage(sessionId, pendingPermissionIdx, patch);
       } else {
-        updateMessage(pendingPermissionIdx, { resolved: decision } as any);
+        updateMessage(pendingPermissionIdx, patch);
       }
     } catch (err) {
       console.error('Failed to resolve permission:', err);

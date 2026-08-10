@@ -64,7 +64,7 @@ notify-debouncer-full = "0.6"
 portable-pty = "0.9"
 
 # codex / claude deps
-claude-agent-sdk-rs = { git = "https://github.com/milisp/claude-agent-sdk-rs", tag = "v0.6.6" }
+claude-agent-sdk-rs = { git = "https://github.com/milisp/claude-agent-sdk-rs", tag = "v0.8.0" }
 codex-finder = { git = "https://github.com/milisp/codex-finder.git" }
 codexia-git = { path = "crates/git" }
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls-native-roots"] }

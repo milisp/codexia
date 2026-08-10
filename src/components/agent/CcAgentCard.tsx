@@ -110,6 +110,10 @@ export function CCAgentCard({ card, onRemove: _onRemove, header, isSelected }: C
   };
 
   const handleResume = async () => {
+    if (!cwd?.trim()) {
+      toast.error('Cannot resume session', { description: 'No working directory selected' });
+      return;
+    }
     setIsResumingSession(true);
     try {
       const sdkMessages = await ccGetSessionMessages(card.id);
@@ -122,10 +126,13 @@ export function CCAgentCard({ card, onRemove: _onRemove, header, isSelected }: C
         resume: card.id,
         continueConversation: true,
         ...(options.model ? { model: options.model } : {}),
+        ...(options.effort ? { effort: options.effort } : {}),
       });
       addActiveSessionId(card.id);
       setCurrentAgentCardId(card.id);
       setSessionLoading(card.id, false);
+    } catch (error) {
+      toast.error('Failed to resume session', { description: String(error) });
     } finally {
       setIsResumingSession(false);
     }
@@ -207,21 +214,19 @@ export function CCAgentCard({ card, onRemove: _onRemove, header, isSelected }: C
             </Button>
           )}
           {canApplyWorktree && (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-6 px-2 text-[10px] gap-1"
-                disabled={isApplyingWorktree || isResumingSession}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  void handleApplyWorktree();
-                }}
-              >
-                <Check className={`h-3 w-3 ${isApplyingWorktree ? 'animate-pulse' : ''}`} />
-                {isApplyingWorktree ? 'Applying…' : 'Apply'}
-              </Button>
-            </>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 px-2 text-[10px] gap-1"
+              disabled={isApplyingWorktree || isResumingSession}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleApplyWorktree();
+              }}
+            >
+              <Check className={`h-3 w-3 ${isApplyingWorktree ? 'animate-pulse' : ''}`} />
+              {isApplyingWorktree ? 'Applying…' : 'Apply'}
+            </Button>
           )}
           {needsResume && (
             <Button
@@ -231,7 +236,7 @@ export function CCAgentCard({ card, onRemove: _onRemove, header, isSelected }: C
               disabled={isResumingSession || isApplyingWorktree}
               onClick={(e) => {
                 e.stopPropagation();
-                void handleResume();
+                handleResume();
               }}
             >
               <RotateCcw className={`h-3 w-3 ${isResumingSession ? 'animate-spin' : ''}`} />

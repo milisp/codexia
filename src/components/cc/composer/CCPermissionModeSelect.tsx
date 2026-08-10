@@ -42,6 +42,15 @@ export function CCPermissionModeSelect() {
         <SelectItem value="bypassPermissions" className="text-xs">
           Bypass All
         </SelectItem>
+        <SelectItem value="auto" className="text-xs">
+          Auto
+        </SelectItem>
+        <SelectItem value="dontAsk" className="text-xs">
+          Never Ask
+        </SelectItem>
+        <SelectItem value="manual" className="text-xs">
+          Manual
+        </SelectItem>
       </SelectContent>
     </Select>
   );

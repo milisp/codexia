@@ -4,6 +4,7 @@ import { gitCreateWorktree } from '@/services/apiAdapt/git';
 import { useCCStore } from '@/stores/cc';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import type { CcAgentOptionsPayload } from '@/types/cc/agentOptions';
 
 const CC_LISTENER_READY_EVENT = 'cc-session-listener-ready';
 const CC_PERMISSION_LISTENER_READY_EVENT = 'cc-permission-listener-ready';
@@ -121,8 +122,15 @@ export function useCCSessionManager() {
         }
       }
 
+      if (!sessionCwd?.trim()) {
+        console.error('[useCCSessionManager] Cannot create session without a working directory');
+        setLoading(false);
+        setIsLoading(false);
+        return;
+      }
+
       // Create session with current options when sending first message
-      const ClaudeAgentOptions: any = {
+      const ClaudeAgentOptions: CcAgentOptionsPayload = {
         cwd: sessionCwd,
         permissionMode: options.permissionMode,
       };
@@ -130,6 +138,9 @@ export function useCCSessionManager() {
       // Only include model if specified (otherwise use CLI default)
       if (options.model) {
         ClaudeAgentOptions.model = `${options.model}`;
+      }
+      if (options.effort) {
+        ClaudeAgentOptions.effort = options.effort;
       }
 
       // Only include optional fields if they are defined
@@ -206,7 +217,14 @@ export function useCCSessionManager() {
       await waitForPermissionListenerReady(sessionId);
       console.info('[useCCSessionManager] Listeners ready (resume)', { sessionId });
 
-      const ClaudeAgentOptions: any = {
+      if (!effectiveCwd?.trim()) {
+        console.error('[useCCSessionManager] Cannot resume session without a working directory', {
+          sessionId,
+        });
+        return;
+      }
+
+      const ClaudeAgentOptions: CcAgentOptionsPayload = {
         cwd: effectiveCwd,
         permissionMode: options.permissionMode,
         resume: sessionId,
@@ -216,6 +234,9 @@ export function useCCSessionManager() {
       // Only include model if specified (otherwise use CLI default)
       if (options.model) {
         ClaudeAgentOptions.model = `${options.model}`;
+      }
+      if (options.effort) {
+        ClaudeAgentOptions.effort = options.effort;
       }
 
       // Only include optional fields if they are defined

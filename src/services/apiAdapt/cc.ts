@@ -1,6 +1,7 @@
+import type { CcAgentOptionsPayload } from '@/types/cc/agentOptions';
 import { dual, dualGet, dualVoid } from './shared';
 
-export async function ccNewSession(options: Record<string, unknown>) {
+export async function ccNewSession(options: CcAgentOptionsPayload) {
   return await dual<string>('cc_new_session', { options }, '/api/cc/new-session', { options });
 }
 
@@ -18,7 +19,7 @@ export async function ccInterrupt(sessionId: string) {
   await dualVoid('cc_interrupt', { sessionId }, '/api/cc/interrupt', { session_id: sessionId });
 }
 
-export async function ccResumeSession(sessionId: string, options: Record<string, unknown>) {
+export async function ccResumeSession(sessionId: string, options: CcAgentOptionsPayload) {
   await dualVoid('cc_resume_session', { sessionId, options }, '/api/cc/resume-session', {
     session_id: sessionId,
     options,

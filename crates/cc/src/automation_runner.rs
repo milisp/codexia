@@ -45,6 +45,7 @@ impl AgentRunner for CcAgentRunner {
                 } else {
                     Some(spec.model.clone())
                 },
+                effort: None,
                 permission_mode: Some("bypassPermissions".to_string()),
                 resume_id: None,
             },
