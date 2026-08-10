@@ -45,4 +45,3 @@ tokio-cron-scheduler = { workspace = true }
 agent-insights = { workspace = true }
 nosleep = { version = "0.2.1" }
 codexia-git = { workspace = true }
-codex-app-server-protocol = { workspace = true }

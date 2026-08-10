@@ -20,8 +20,6 @@ chrono = { workspace = true }
 notify = { workspace = true }
 reqwest = { workspace = true }
 walkdir = { workspace = true }
-codex-protocol = { workspace = true }
-codex-app-server-protocol = { workspace = true }
 
 codexia-shared = { path = "../shared" }
 codexia-db = { path = "../db" }

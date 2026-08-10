@@ -1,49 +1,41 @@
-use codex_app_server_protocol::{
-    PluginInstallParams, PluginInstallResponse, PluginListParams, PluginListResponse,
-    PluginReadParams, PluginReadResponse, PluginUninstallParams, PluginUninstallResponse,
-};
+use serde_json::Value;
 use tauri::State;
 
 use codexia_codex::AppState;
 
-use crate::commands::codex::common::{from_value, to_value};
 
 #[tauri::command]
 pub async fn plugin_list(
-    params: PluginListParams,
+    params: Value,
     state: State<'_, AppState>,
-) -> Result<PluginListResponse, String> {
-    let params_value = to_value(params)?;
-    let result = state.codex.send_request("plugin/list", params_value).await?;
-    Ok(from_value(result)?)
+) -> Result<Value, String> {
+    let result = state.codex.send_request("plugin/list", params).await?;
+    Ok(result)
 }
 
 #[tauri::command]
 pub async fn plugin_read(
-    params: PluginReadParams,
+    params: Value,
     state: State<'_, AppState>,
-) -> Result<PluginReadResponse, String> {
-    let params_value = to_value(params)?;
-    let result = state.codex.send_request("plugin/read", params_value).await?;
-    Ok(from_value(result)?)
+) -> Result<Value, String> {
+    let result = state.codex.send_request("plugin/read", params).await?;
+    Ok(result)
 }
 
 #[tauri::command]
 pub async fn plugin_install(
-    params: PluginInstallParams,
+    params: Value,
     state: State<'_, AppState>,
-) -> Result<PluginInstallResponse, String> {
-    let params_value = to_value(params)?;
-    let result = state.codex.send_request("plugin/install", params_value).await?;
-    Ok(from_value(result)?)
+) -> Result<Value, String> {
+    let result = state.codex.send_request("plugin/install", params).await?;
+    Ok(result)
 }
 
 #[tauri::command]
 pub async fn plugin_uninstall(
-    params: PluginUninstallParams,
+    params: Value,
     state: State<'_, AppState>,
-) -> Result<PluginUninstallResponse, String> {
-    let params_value = to_value(params)?;
-    let result = state.codex.send_request("plugin/uninstall", params_value).await?;
-    Ok(from_value(result)?)
+) -> Result<Value, String> {
+    let result = state.codex.send_request("plugin/uninstall", params).await?;
+    Ok(result)
 }

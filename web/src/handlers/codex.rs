@@ -1,16 +1,9 @@
 use super::to_error_response;
 use super::types::{
-    CommandExecutionApprovalParams, FileChangeApprovalParams,
-    UnifiedMcpAddParams, UnifiedMcpReadParams, UnifiedMcpRemoveParams, UnifiedMcpToggleParams,
-    UserInputResponseParams,
+    ApprovalDecisionParams, UnifiedMcpAddParams, UnifiedMcpReadParams, UnifiedMcpRemoveParams,
+    UnifiedMcpToggleParams, UserInputResponseParams,
 };
 use axum::{Json, extract::State as AxumState, http::StatusCode};
-use codex_app_server_protocol::{
-    GetAccountParams, LoginAccountParams, ModelListParams, ThreadUnarchiveParams,
-    ReviewStartParams, SkillsConfigWriteParams, SkillsListParams, ThreadArchiveParams,
-    ThreadForkParams, ThreadListParams, ThreadResumeParams, ThreadRollbackParams,
-    ThreadStartParams, TurnInterruptParams, TurnStartParams,
-};
 use serde_json::{Value, json};
 use crate::types::{ErrorResponse, WebServerState};
 
@@ -25,12 +18,11 @@ fn require_codex(state: &WebServerState) -> Result<&AppState, ErrorResponse> {
 
 pub(crate) async fn api_start_thread(
     AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<ThreadStartParams>,
+    Json(params): Json<Value>,
 ) -> Result<Json<Value>, ErrorResponse> {
-    let params_value = serde_json::to_value(params).map_err(to_error_response)?;
     let result = require_codex(&state)?
         .codex
-        .send_request("thread/start", params_value)
+        .send_request("thread/start", params)
         .await
         .map_err(to_error_response)?;
     Ok(Json(result))
@@ -38,12 +30,11 @@ pub(crate) async fn api_start_thread(
 
 pub(crate) async fn api_resume_thread(
     AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<ThreadResumeParams>,
+    Json(params): Json<Value>,
 ) -> Result<Json<Value>, ErrorResponse> {
-    let params_value = serde_json::to_value(params).map_err(to_error_response)?;
     let result = require_codex(&state)?
         .codex
-        .send_request("thread/resume", params_value)
+        .send_request("thread/resume", params)
         .await
         .map_err(to_error_response)?;
     Ok(Json(result))
@@ -51,12 +42,11 @@ pub(crate) async fn api_resume_thread(
 
 pub(crate) async fn api_fork_thread(
     AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<ThreadForkParams>,
+    Json(params): Json<Value>,
 ) -> Result<Json<Value>, ErrorResponse> {
-    let params_value = serde_json::to_value(params).map_err(to_error_response)?;
     let result = require_codex(&state)?
         .codex
-        .send_request("thread/fork", params_value)
+        .send_request("thread/fork", params)
         .await
         .map_err(to_error_response)?;
     Ok(Json(result))
@@ -64,12 +54,11 @@ pub(crate) async fn api_fork_thread(
 
 pub(crate) async fn api_rollback_thread(
     AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<ThreadRollbackParams>,
+    Json(params): Json<Value>,
 ) -> Result<Json<Value>, ErrorResponse> {
-    let params_value = serde_json::to_value(params).map_err(to_error_response)?;
     let result = require_codex(&state)?
         .codex
-        .send_request("thread/rollback", params_value)
+        .send_request("thread/rollback", params)
         .await
         .map_err(to_error_response)?;
     Ok(Json(result))
@@ -77,12 +66,11 @@ pub(crate) async fn api_rollback_thread(
 
 pub(crate) async fn api_list_threads(
     AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<ThreadListParams>,
+    Json(params): Json<Value>,
 ) -> Result<Json<Value>, ErrorResponse> {
-    let params_value = serde_json::to_value(params).map_err(to_error_response)?;
     let result = require_codex(&state)?
         .codex
-        .send_request("thread/list", params_value)
+        .send_request("thread/list", params)
         .await
         .map_err(to_error_response)?;
     Ok(Json(result))
@@ -90,12 +78,11 @@ pub(crate) async fn api_list_threads(
 
 pub(crate) async fn api_archive_thread(
     AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<ThreadArchiveParams>,
+    Json(params): Json<Value>,
 ) -> Result<Json<Value>, ErrorResponse> {
-    let params_value = serde_json::to_value(params).map_err(to_error_response)?;
     let result = require_codex(&state)?
         .codex
-        .send_request("thread/archive", params_value)
+        .send_request("thread/archive", params)
         .await
         .map_err(to_error_response)?;
     Ok(Json(result))
@@ -103,12 +90,11 @@ pub(crate) async fn api_archive_thread(
 
 pub(crate) async fn api_unarchive_thread(
     AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<ThreadUnarchiveParams>,
+    Json(params): Json<Value>,
 ) -> Result<Json<Value>, ErrorResponse> {
-    let params_value = serde_json::to_value(params).map_err(to_error_response)?;
     let result = require_codex(&state)?
         .codex
-        .send_request("thread/unarchive", params_value)
+        .send_request("thread/unarchive", params)
         .await
         .map_err(to_error_response)?;
     Ok(Json(result))
@@ -116,12 +102,11 @@ pub(crate) async fn api_unarchive_thread(
 
 pub(crate) async fn api_turn_start(
     AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<TurnStartParams>,
+    Json(params): Json<Value>,
 ) -> Result<Json<Value>, ErrorResponse> {
-    let params_value = serde_json::to_value(params).map_err(to_error_response)?;
     let result = require_codex(&state)?
         .codex
-        .send_request("turn/start", params_value)
+        .send_request("turn/start", params)
         .await
         .map_err(to_error_response)?;
     Ok(Json(result))
@@ -129,12 +114,11 @@ pub(crate) async fn api_turn_start(
 
 pub(crate) async fn api_turn_interrupt(
     AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<TurnInterruptParams>,
+    Json(params): Json<Value>,
 ) -> Result<Json<Value>, ErrorResponse> {
-    let params_value = serde_json::to_value(params).map_err(to_error_response)?;
     let result = require_codex(&state)?
         .codex
-        .send_request("turn/interrupt", params_value)
+        .send_request("turn/interrupt", params)
         .await
         .map_err(to_error_response)?;
     Ok(Json(result))
@@ -153,12 +137,11 @@ pub(crate) async fn api_model_list(
 
 pub(crate) async fn api_model_list_post(
     AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<ModelListParams>,
+    Json(params): Json<Value>,
 ) -> Result<Json<Value>, ErrorResponse> {
-    let params_value = serde_json::to_value(params).map_err(to_error_response)?;
     let result = require_codex(&state)?
         .codex
-        .send_request("model/list", params_value)
+        .send_request("model/list", params)
         .await
         .map_err(to_error_response)?;
     Ok(Json(result))
@@ -177,12 +160,11 @@ pub(crate) async fn api_account_rate_limits(
 
 pub(crate) async fn api_get_account(
     AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<GetAccountParams>,
+    Json(params): Json<Value>,
 ) -> Result<Json<Value>, ErrorResponse> {
-    let params_value = serde_json::to_value(params).map_err(to_error_response)?;
     let result = require_codex(&state)?
         .codex
-        .send_request("account/read", params_value)
+        .send_request("account/read", params)
         .await
         .map_err(to_error_response)?;
     Ok(Json(result))
@@ -190,12 +172,11 @@ pub(crate) async fn api_get_account(
 
 pub(crate) async fn api_login_account(
     AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<LoginAccountParams>,
+    Json(params): Json<Value>,
 ) -> Result<Json<Value>, ErrorResponse> {
-    let params_value = serde_json::to_value(params).map_err(to_error_response)?;
     let result = require_codex(&state)?
         .codex
-        .send_request("account/login/start", params_value)
+        .send_request("account/login/start", params)
         .await
         .map_err(to_error_response)?;
     Ok(Json(result))
@@ -203,12 +184,11 @@ pub(crate) async fn api_login_account(
 
 pub(crate) async fn api_skills_list(
     AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<SkillsListParams>,
+    Json(params): Json<Value>,
 ) -> Result<Json<Value>, ErrorResponse> {
-    let params_value = serde_json::to_value(params).map_err(to_error_response)?;
     let result = require_codex(&state)?
         .codex
-        .send_request("skills/list", params_value)
+        .send_request("skills/list", params)
         .await
         .map_err(to_error_response)?;
     Ok(Json(result))
@@ -216,12 +196,11 @@ pub(crate) async fn api_skills_list(
 
 pub(crate) async fn api_skills_config_write(
     AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<SkillsConfigWriteParams>,
+    Json(params): Json<Value>,
 ) -> Result<Json<Value>, ErrorResponse> {
-    let payload = serde_json::to_value(params).map_err(to_error_response)?;
     let result = require_codex(&state)?
         .codex
-        .send_request("skills/config/write", payload)
+        .send_request("skills/config/write", params)
         .await
         .map_err(to_error_response)?;
     Ok(Json(result))
@@ -229,18 +208,11 @@ pub(crate) async fn api_skills_config_write(
 
 pub(crate) async fn api_respond_command_execution_approval(
     AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<CommandExecutionApprovalParams>,
+    Json(params): Json<ApprovalDecisionParams>,
 ) -> Result<StatusCode, ErrorResponse> {
-    let result_value = serde_json::to_value(
-        codex_app_server_protocol::CommandExecutionRequestApprovalResponse {
-            decision: params.decision,
-        },
-    )
-    .map_err(to_error_response)?;
-
     require_codex(&state)?
         .codex
-        .send_response(params.request_id, result_value)
+        .send_response(params.request_id, json!({ "decision": params.decision }))
         .await
         .map_err(to_error_response)?;
 
@@ -249,18 +221,11 @@ pub(crate) async fn api_respond_command_execution_approval(
 
 pub(crate) async fn api_respond_file_change_approval(
     AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<FileChangeApprovalParams>,
+    Json(params): Json<ApprovalDecisionParams>,
 ) -> Result<StatusCode, ErrorResponse> {
-    let result_value = serde_json::to_value(
-        codex_app_server_protocol::FileChangeRequestApprovalResponse {
-            decision: params.decision,
-        },
-    )
-    .map_err(to_error_response)?;
-
     require_codex(&state)?
         .codex
-        .send_response(params.request_id, result_value)
+        .send_response(params.request_id, json!({ "decision": params.decision }))
         .await
         .map_err(to_error_response)?;
 
@@ -271,11 +236,9 @@ pub(crate) async fn api_respond_user_input(
     AxumState(state): AxumState<WebServerState>,
     Json(params): Json<UserInputResponseParams>,
 ) -> Result<StatusCode, ErrorResponse> {
-    let result_value = serde_json::to_value(params.response).map_err(to_error_response)?;
-
     require_codex(&state)?
         .codex
-        .send_response(params.request_id, result_value)
+        .send_response(params.request_id, params.response)
         .await
         .map_err(to_error_response)?;
 
@@ -284,12 +247,11 @@ pub(crate) async fn api_respond_user_input(
 
 pub(crate) async fn api_start_review(
     AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<ReviewStartParams>,
+    Json(params): Json<Value>,
 ) -> Result<Json<Value>, ErrorResponse> {
-    let params_value = serde_json::to_value(params).map_err(to_error_response)?;
     let result = require_codex(&state)?
         .codex
-        .send_request("review/start", params_value)
+        .send_request("review/start", params)
         .await
         .map_err(to_error_response)?;
     Ok(Json(result))

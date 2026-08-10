@@ -1,23 +1,19 @@
-use codex_app_server_protocol::{
-    SkillsListResponse,
-};
 use serde_json::Value;
 use tauri::State;
 
 use codexia_codex::AppState;
 
-use crate::commands::codex::common::{from_value};
 
 #[tauri::command]
 pub async fn skills_list(
     cwd: String,
     state: State<'_, AppState>,
-) -> Result<SkillsListResponse, String> {
+) -> Result<Value, String> {
     let params = serde_json::json!({
         "cwds": [cwd]
     });
     let result = state.codex.send_request("skills/list", params).await?;
-    Ok(from_value(result)?)
+    Ok(result)
 }
 
 #[tauri::command]

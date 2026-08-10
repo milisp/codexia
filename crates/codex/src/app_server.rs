@@ -1,11 +1,7 @@
 use super::server_request::handle_server_request;
 use codexia_shared::event_sink::EventSink;
 use codexia_db::automation_runs::sync_automation_run_status;
-use codex_app_server_protocol::{
-    ClientInfo, InitializeCapabilities, InitializeParams, InitializeResponse,
-    JSONRPCMessage, JSONRPCResponse, RequestId, ServerNotification, ServerRequest,
-    ItemStartedNotification, ItemCompletedNotification, ThreadItem
-};
+use crate::protocol::{RequestId, ServerMessage, classify};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -18,6 +14,19 @@ use codex_finder::discover_codex_command;
 
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
+/// Reasoning traffic is dropped before it reaches the frontend.
+fn is_reasoning_notification(method: &str, raw: &Value) -> bool {
+    match method {
+        "item/reasoning/textDelta"
+        | "item/reasoning/summaryTextDelta"
+        | "item/reasoning/summaryPartAdded" => true,
+        "item/started" | "item/completed" => {
+            raw.pointer("/params/item/type").and_then(Value::as_str) == Some("reasoning")
+        }
+        _ => false,
+    }
+}
 
 pub struct CodexAppServer {
     stdin: Mutex<ChildStdin>,
@@ -52,9 +61,8 @@ impl CodexAppServer {
     }
 
     pub async fn send_response(&self, id: RequestId, result: Value) -> Result<(), String> {
-        let message = JSONRPCResponse { id, result };
-        let value = serde_json::to_value(message).map_err(|e| e.to_string())?;
-        self.write_message(value).await
+        self.write_message(serde_json::json!({ "id": id, "result": result }))
+            .await
     }
 
     pub async fn send_notification(
@@ -144,80 +152,30 @@ pub async fn connect_codex(event_sink: Arc<dyn EventSink>) -> Result<Arc<CodexAp
             };
 
             // Classify message type
-            if let Ok(message) = serde_json::from_value::<JSONRPCMessage>(value.clone()) {
-                match message {
-                    JSONRPCMessage::Response(response) => {
-                        let id = match response.id {
-                            RequestId::Integer(i) => i as u64,
-                            RequestId::String(ref s) => {
-                                // Try to parse string as number, skip if fails
-                                match s.parse::<u64>() {
-                                    Ok(n) => n,
-                                    Err(_) => continue,
-                                }
-                            }
-                        };
-                        if let Some(tx) = client_clone.pending.lock().await.remove(&id) {
-                            let _ = tx.send(Ok(response.result));
-                        }
-                    }
-                    JSONRPCMessage::Error(err) => {
-                        let id = match err.id {
-                            RequestId::Integer(i) => i as u64,
-                            RequestId::String(ref s) => match s.parse::<u64>() {
-                                Ok(n) => n,
-                                Err(_) => continue,
-                            },
-                        };
-                        if let Some(tx) = client_clone.pending.lock().await.remove(&id) {
-                            let _ = tx.send(Err(format!("Request failed: {:?}", err)));
-                        }
-                    }
-                    JSONRPCMessage::Request(request) => {
-                        // Handle server requests
-                        if let Ok(server_request) = ServerRequest::try_from(request) {
-                            handle_server_request(&event_sink_clone, server_request).await;
-                        }
-                    }
-                    JSONRPCMessage::Notification(notification) => {
-                        let method = notification.method.clone();
-                        if let Ok(server_notification) = ServerNotification::try_from(notification) {
-                            
-                            match &server_notification {
-                                ServerNotification::ReasoningTextDelta(_) | 
-                                ServerNotification::ReasoningSummaryPartAdded(_) | 
-                                ServerNotification::ReasoningSummaryTextDelta(_) => continue,
-                                
-                                ServerNotification::ItemStarted(ItemStartedNotification { item: ThreadItem::Reasoning { .. }, .. }) |
-                                ServerNotification::ItemCompleted(ItemCompletedNotification { item: ThreadItem::Reasoning { .. }, .. }) => continue,
-                                
-                                _ => {}
-                            }
-
-                            match &server_notification {
-                                ServerNotification::RawResponseItemCompleted(_) |
-                                ServerNotification::AgentMessageDelta(_) |
-                                ServerNotification::ThreadTokenUsageUpdated(_) |
-                                ServerNotification::AccountRateLimitsUpdated(_) |
-                                ServerNotification::PlanDelta(_) => {}
-                                
-                                _ => {
-                                    log::info!("codex:notification: {:?}", method);
-                                }
-                            }
-
-                            match serde_json::to_value(&server_notification) {
-                                Ok(payload) => {
-                                    sync_automation_run_status(&payload);
-                                    event_sink_clone.emit("codex:notification", payload);
-                                }
-                                Err(err) => {
-                                    log::warn!("codex:notification (serializeError): {:?}", err);
-                                }
-                            }
-                        }
+            match classify(&value) {
+                Some(ServerMessage::Response { id, result }) => {
+                    let Some(id) = id.as_pending_key() else { continue };
+                    if let Some(tx) = client_clone.pending.lock().await.remove(&id) {
+                        let _ = tx.send(Ok(result));
                     }
                 }
+                Some(ServerMessage::Error { id, error }) => {
+                    let Some(id) = id.as_pending_key() else { continue };
+                    if let Some(tx) = client_clone.pending.lock().await.remove(&id) {
+                        let _ = tx.send(Err(format!("Request failed: {}", error)));
+                    }
+                }
+                Some(ServerMessage::Request { id, method, params }) => {
+                    handle_server_request(&event_sink_clone, id, &method, params).await;
+                }
+                Some(ServerMessage::Notification { method, raw }) => {
+                    if is_reasoning_notification(&method, &raw) {
+                        continue;
+                    }
+                    sync_automation_run_status(&raw);
+                    event_sink_clone.emit("codex:notification", raw);
+                }
+                None => {}
             }
         }
     });
@@ -246,32 +204,34 @@ pub async fn initialize_codex(
     event_sink: Arc<dyn EventSink>,
 ) -> Result<(), String> {
     log::info!("Initializing codex app-server session");
-    let params = InitializeParams {
-        client_info: ClientInfo {
-            name: "codexia".to_string(),
-            title: Some("Codexia".to_string()),
-            version: env!("CARGO_PKG_VERSION").to_string(),
+    let params_value = serde_json::json!({
+        "clientInfo": {
+            "name": "codexia",
+            "title": "Codexia",
+            "version": env!("CARGO_PKG_VERSION"),
         },
-        capabilities: Some(InitializeCapabilities {
-            experimental_api: true,
-            request_attestation: false,
-            mcp_server_openai_form_elicitation: false,
-            opt_out_notification_methods: None,
-        }),
-    };
-    let params_value = serde_json::to_value(&params).map_err(|e| e.to_string())?;
+        "capabilities": {
+            "experimentalApi": true,
+            "requestAttestation": false,
+            "mcpServerOpenaiFormElicitation": false,
+            "optOutNotificationMethods": null,
+        },
+    });
 
-    let result = codex.send_request("initialize", params_value).await?;
-    let response: InitializeResponse =
-        serde_json::from_value(result).map_err(|e| e.to_string())?;
-    log::info!("Codex initialized successfully, userAgent: {}", response.user_agent);
+    let response = codex.send_request("initialize", params_value).await?;
+    log::info!(
+        "Codex initialized successfully, userAgent: {}",
+        response
+            .get("userAgent")
+            .and_then(Value::as_str)
+            .unwrap_or("unknown")
+    );
 
     if let Err(err) = codex.send_notification("initialized", None).await {
         log::error!("Failed to send initialized notification: {}", err);
     }
 
-    let response_value = serde_json::to_value(&response).map_err(|e| e.to_string())?;
-    event_sink.emit("codex:initialized", response_value);
+    event_sink.emit("codex:initialized", response);
 
     Ok(())
 }

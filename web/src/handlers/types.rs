@@ -1,7 +1,4 @@
-use codex_app_server_protocol::{
-    CommandExecutionApprovalDecision, FileChangeApprovalDecision, RequestId,
-    ToolRequestUserInputResponse,
-};
+use codexia_codex::protocol::RequestId;
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -10,21 +7,15 @@ use codexia_cc::types::AgentOptions;
 use codexia_cc::automation::AutomationSchedule;
 
 #[derive(Deserialize)]
-pub(crate) struct CommandExecutionApprovalParams {
+pub(crate) struct ApprovalDecisionParams {
     pub(crate) request_id: RequestId,
-    pub(crate) decision: CommandExecutionApprovalDecision,
-}
-
-#[derive(Deserialize)]
-pub(crate) struct FileChangeApprovalParams {
-    pub(crate) request_id: RequestId,
-    pub(crate) decision: FileChangeApprovalDecision,
+    pub(crate) decision: Value,
 }
 
 #[derive(Deserialize)]
 pub(crate) struct UserInputResponseParams {
     pub(crate) request_id: RequestId,
-    pub(crate) response: ToolRequestUserInputResponse,
+    pub(crate) response: Value,
 }
 
 #[derive(Deserialize)]

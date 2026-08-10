@@ -1,71 +1,61 @@
-use codex_app_server_protocol::{
-    ThreadForkParams, ThreadListParams,
-    ThreadRollbackParams, ThreadResumeParams, ThreadSetNameParams, ThreadStartParams,
-};
 use serde_json::{Value, json};
 use tauri::State;
 
 use codexia_codex::AppState;
 
-use crate::commands::codex::common::{to_value, from_value};
 
 #[tauri::command]
 pub async fn start_thread(
-    params: ThreadStartParams,
+    params: Value,
     state: State<'_, AppState>,
 ) -> Result<Value, String> {
-    let params_value = to_value(params)?;
     let result = state
         .codex
-        .send_request("thread/start", params_value)
+        .send_request("thread/start", params)
         .await?;
-    Ok(from_value(result)?)
+    Ok(result)
 }
 
 #[tauri::command]
 pub async fn resume_thread(
-    params: ThreadResumeParams,
+    params: Value,
     state: State<'_, AppState>,
 ) -> Result<Value, String> {
-    let params_value = to_value(params)?;
     let result = state
         .codex
-        .send_request("thread/resume", params_value)
+        .send_request("thread/resume", params)
         .await?;
-    Ok(from_value(result)?)
+    Ok(result)
 }
 
 #[tauri::command]
 pub async fn fork_thread(
-    params: ThreadForkParams,
+    params: Value,
     state: State<'_, AppState>,
 ) -> Result<Value, String> {
-    let params_value = to_value(params)?;
-    let result = state.codex.send_request("thread/fork", params_value).await?;
-    Ok(from_value(result)?)
+    let result = state.codex.send_request("thread/fork", params).await?;
+    Ok(result)
 }
 
 #[tauri::command]
 pub async fn rollback_thread(
-    params: ThreadRollbackParams,
+    params: Value,
     state: State<'_, AppState>,
 ) -> Result<Value, String> {
-    let params_value = to_value(params)?;
     let result = state
         .codex
-        .send_request("thread/rollback", params_value)
+        .send_request("thread/rollback", params)
         .await?;
-    Ok(from_value(result)?)
+    Ok(result)
 }
 
 #[tauri::command]
 pub async fn list_threads(
-    params: ThreadListParams,
+    params: Value,
     state: State<'_, AppState>,
 ) -> Result<Value, String> {
-    let params_value = to_value(params)?;
-    let result = state.codex.send_request("thread/list", params_value).await?;
-    Ok(from_value(result)?)
+    let result = state.codex.send_request("thread/list", params).await?;
+    Ok(result)
 }
 
 #[tauri::command]
@@ -77,7 +67,7 @@ pub async fn archive_thread(
         "threadId": thread_id
     });
     let result = state.codex.send_request("thread/archive", params).await?;
-    Ok(from_value(result)?)
+    Ok(result)
 }
 
 #[tauri::command]
@@ -89,7 +79,7 @@ pub async fn unarchive_thread(
         "threadId": thread_id
     });
     let result = state.codex.send_request("thread/unarchive", params).await?;
-    Ok(from_value(result)?)
+    Ok(result)
 }
 
 #[tauri::command]
@@ -101,15 +91,14 @@ pub async fn delete_thread(
         "threadId": thread_id
     });
     let result = state.codex.send_request("thread/delete", params).await?;
-    Ok(from_value(result)?)
+    Ok(result)
 }
 
 #[tauri::command]
 pub async fn rename_thread(
-    params: ThreadSetNameParams,
+    params: Value,
     state: State<'_, AppState>,
 ) -> Result<Value, String> {
-    let params_value = to_value(params)?;
-    let result = state.codex.send_request("thread/name/set", params_value).await?;
-    Ok(from_value(result)?)
+    let result = state.codex.send_request("thread/name/set", params).await?;
+    Ok(result)
 }

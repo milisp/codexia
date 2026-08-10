@@ -1,6 +1,5 @@
 pub mod account;
 pub mod approval;
-pub mod common;
 pub mod goal;
 pub mod init;
 pub mod models;

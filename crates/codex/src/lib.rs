@@ -1,6 +1,7 @@
 pub mod app_server;
 pub mod config;
 pub mod env;
+pub mod protocol;
 pub mod providers;
 mod server_request;
 pub mod utils;
