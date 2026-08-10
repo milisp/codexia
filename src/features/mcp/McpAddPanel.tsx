@@ -1,11 +1,11 @@
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { McpServerForm } from '@/features/mcp/McpServerForm';
+import type { McpServerConfig } from '@/components/codex/types';
 import { Button } from '@/components/ui/button';
+import { McpServerForm } from '@/features/mcp/McpServerForm';
 import { ccMcpAdd, unifiedAddMcpServer } from '@/services';
 import { useAgentSettingsStore, useWorkspaceStore } from '@/stores';
-import type { McpServerConfig } from '@/types';
 
 interface McpAddPanelProps {
   onAdded: () => void;

@@ -21,6 +21,12 @@ import type {
   ReviewStartResponse,
   ThreadForkParams,
   ThreadForkResponse,
+  ThreadGoalClearParams,
+  ThreadGoalClearResponse,
+  ThreadGoalGetParams,
+  ThreadGoalGetResponse,
+  ThreadGoalSetParams,
+  ThreadGoalSetResponse,
   ThreadListParams,
   ThreadListResponse,
   ThreadResumeParams,
@@ -29,19 +35,13 @@ import type {
   ThreadRollbackResponse,
   ThreadStartParams,
   ThreadStartResponse,
-  ThreadGoalSetParams,
-  ThreadGoalGetParams,
-  ThreadGoalClearParams,
-  ThreadGoalSetResponse,
-  ThreadGoalGetResponse,
-  ThreadGoalClearResponse,
   TurnInterruptParams,
   TurnStartParams,
   TurnStartResponse,
   TurnSteerParams,
   TurnSteerResponse,
 } from '@/bindings/v2';
-import type { EnvStatusItem, FrontendProviderModels } from '@/components/codex/composer/ModelList';
+import type { EnvStatusItem, FrontendProviderModels } from '@/components/codex/types';
 import { dual, dualGet, dualVoid, invokeTauri, isDesktopTauri, toast } from './shared';
 
 export * from './mcp';

@@ -31,6 +31,48 @@ pub fn get_env(key: String) -> Result<String, String> {
     std::env::var(&key).map_err(|_| format!("Environment variable '{}' not found", key))
 }
 
+/// Batch lookup: on macOS a single shell sources ~/.zshrc once for every key,
+/// instead of spawning one `zsh` per key.
+pub fn get_envs(keys: &[String]) -> std::collections::HashMap<String, String> {
+    let mut result = std::collections::HashMap::new();
+
+    #[cfg(target_os = "macos")]
+    {
+        let echos = keys
+            .iter()
+            .map(|k| format!("echo ${}", k))
+            .collect::<Vec<_>>()
+            .join("; ");
+        let cmd = format!("source ~/.zshrc >/dev/null 2>&1; {}", echos);
+        if let Ok(output) = Command::new("zsh").args(["-c", &cmd]).output() {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            for (key, line) in keys.iter().zip(stdout.lines()) {
+                let value = line.trim();
+                if !value.is_empty() {
+                    result.insert(key.clone(), value.to_string());
+                }
+            }
+        }
+    }
+
+    for key in keys {
+        if result.contains_key(key) {
+            continue;
+        }
+        // macOS already ran the shell above; only the process env is left to check.
+        #[cfg(target_os = "macos")]
+        let found = std::env::var(key).ok();
+        #[cfg(not(target_os = "macos"))]
+        let found = get_env(key.clone()).ok();
+
+        if let Some(value) = found {
+            result.insert(key.clone(), value);
+        }
+    }
+
+    result
+}
+
 pub fn set_env(key: String, value: String) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {

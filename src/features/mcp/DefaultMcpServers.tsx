@@ -1,9 +1,9 @@
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import type { McpServerConfig } from '@/components/codex/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { unifiedAddMcpServer } from '@/services';
-import type { McpServerConfig } from '@/types';
 
 interface DefaultMcpServersProps {
   servers: Record<string, McpServerConfig>;

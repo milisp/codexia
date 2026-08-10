@@ -1,11 +1,13 @@
 import { ExternalLink, Key, Save } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import type { EnvStatusItem } from '@/components/codex/types';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { loadEnvKeys, setEnv } from '@/services/apiAdapt';
-import type { EnvStatusItem } from './ModelList';
+import { useModelSettingsStore } from '@/stores/settings';
 
 type EnvKeysDialogProps = {
   open: boolean;
@@ -17,6 +19,8 @@ export function EnvKeysDialog({ open, onOpenChange }: EnvKeysDialogProps) {
   const [loading, setLoading] = useState(false);
   const [inputValues, setInputValues] = useState<Record<string, string>>({});
   const [loadTrigger, setLoadTrigger] = useState(0);
+  const hiddenProviders = useModelSettingsStore((s) => s.hiddenProviders);
+  const setProviderVisible = useModelSettingsStore((s) => s.setProviderVisible);
 
   const prevOpenRef = useRef(open);
   if (open && !prevOpenRef.current) {
@@ -80,7 +84,14 @@ export function EnvKeysDialog({ open, onOpenChange }: EnvKeysDialogProps) {
                 className="flex flex-col border rounded-md p-2 text-xs gap-2"
               >
                 <div className="flex items-center justify-between gap-2 min-w-0">
-                  <Label>{item.provider}</Label>
+                  <span className="flex items-center gap-2 min-w-0">
+                    <Switch
+                      checked={!hiddenProviders.includes(item.provider)}
+                      onCheckedChange={(checked) => setProviderVisible(item.provider, checked)}
+                      title="Show in model selector"
+                    />
+                    <Label className="truncate">{item.provider}</Label>
+                  </span>
 
                   <span className="flex">
                     {item.signup_url && (

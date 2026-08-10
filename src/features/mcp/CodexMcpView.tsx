@@ -1,11 +1,11 @@
 import { Save, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { DefaultMcpServers, getServerProtocol, McpServerCard, McpServerForm } from '@/features/mcp';
+import type { McpServerConfig } from '@/components/codex/types';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DefaultMcpServers, getServerProtocol, McpServerCard, McpServerForm } from '@/features/mcp';
 import { unifiedAddMcpServer, unifiedReadMcpConfig, unifiedRemoveMcpServer } from '@/services';
-import type { McpServerConfig } from '@/types';
 
 interface CodexMcpViewProps {
   refreshKey?: number;
@@ -22,18 +22,19 @@ export function CodexMcpView({ refreshKey }: CodexMcpViewProps) {
     http: { url: string };
   } | null>(null);
 
-  const loadServers = async () => {
+  const loadServers = useCallback(async () => {
     try {
       const config = await unifiedReadMcpConfig('codex');
       setServers((config.mcpServers as Record<string, McpServerConfig> | undefined) ?? {});
     } catch (error) {
       console.error('Failed to load MCP servers:', error);
     }
-  };
+  }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey is the reload trigger
   useEffect(() => {
     loadServers();
-  }, [refreshKey]);
+  }, [refreshKey, loadServers]);
 
   const handleEditServer = (name: string, config: McpServerConfig) => {
     const protocol = getServerProtocol(config);
@@ -72,7 +73,7 @@ export function CodexMcpView({ refreshKey }: CodexMcpViewProps) {
         if (editConfig.command.env && editConfig.command.env.trim()) {
           try {
             config.env = JSON.parse(editConfig.command.env);
-          } catch (e) {
+          } catch {
             toast.error('Invalid JSON format for environment variables');
             return;
           }

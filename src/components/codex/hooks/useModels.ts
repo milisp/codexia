@@ -1,60 +1,89 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
+import { create } from 'zustand';
 import type { Model } from '@/bindings/v2';
+import type { FrontendProviderModels, ModelListItem } from '@/components/codex/types';
 import { listModels, listOtherModels } from '@/services/apiAdapt';
 import { useModelSettingsStore } from '@/stores/settings';
-import type { FrontendProviderModels, ModelListItem } from '../composer/ModelList';
 
-export function useModels() {
-  const [openAiModels, setOpenAiModels] = useState<Model[]>([]);
-  const [otherModels, setOtherModels] = useState<Record<string, ModelListItem[]>>({});
-  const { models: storedModels } = useModelSettingsStore();
+type ModelCacheStore = {
+  openAiModels: Model[];
+  otherModels: Record<string, ModelListItem[]>;
+  loaded: boolean;
+  load: () => void;
+};
 
-  useEffect(() => {
+// Shared across every selector instance so the model lists are fetched once.
+const useModelCacheStore = create<ModelCacheStore>()((set, get) => ({
+  openAiModels: [],
+  otherModels: {},
+  loaded: false,
+
+  load: () => {
+    if (get().loaded) return;
+    set({ loaded: true });
+
     void listModels()
-      .then((res) => setOpenAiModels(res.data))
+      .then((res) => set({ openAiModels: res.data }))
       .catch(() => {});
-  }, []);
 
-  useEffect(() => {
-    listOtherModels()
+    void listOtherModels()
       .then((items: FrontendProviderModels[]) => {
         const grouped: Record<string, ModelListItem[]> = {};
         for (const item of items) {
-          grouped[item.provider] = item.models.map((m) => ({
-            id: m.id,
-            label: m.id,
-          }));
+          grouped[item.provider] = item.models.map((m) => ({ id: m.id, label: m.id }));
         }
-        setOtherModels(grouped);
+        set({ otherModels: grouped });
       })
       .catch(() => {});
-  }, []);
+  },
+}));
 
-  const allProviders = useMemo(() => {
-    const providers = new Set<string>(['openai']);
-    Object.keys(otherModels).forEach((p) => providers.add(p));
-    Object.keys(storedModels).forEach((p) => providers.add(p));
-    return Array.from(providers);
-  }, [otherModels, storedModels]);
+export function useModels() {
+  const openAiModels = useModelCacheStore((s) => s.openAiModels);
+  const otherModels = useModelCacheStore((s) => s.otherModels);
+  const load = useModelCacheStore((s) => s.load);
+  const storedModels = useModelSettingsStore((s) => s.models);
+  const hiddenProviders = useModelSettingsStore((s) => s.hiddenProviders);
 
-  const providerItems = useCallback(
-    (provider: string): ModelListItem[] => {
-      if (provider === 'openai') {
-        return openAiModels.map((m) => ({
-          id: m.id,
-          label: m.displayName || m.model,
-          description: m.description,
-        }));
-      }
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  // Precomputed once per data change instead of per render/filter pass.
+  const itemsByProvider = useMemo(() => {
+    const map: Record<string, ModelListItem[]> = {
+      openai: openAiModels.map((m) => ({
+        id: m.id,
+        label: m.displayName || m.model,
+        description: m.description,
+      })),
+    };
+
+    for (const provider of new Set([...Object.keys(otherModels), ...Object.keys(storedModels)])) {
+      if (provider === 'openai') continue;
       const stored = (storedModels[provider] ?? []).map((m) => ({ id: m.id, label: m.name }));
-      const others = otherModels[provider] ?? [];
-      return [...stored, ...others];
-    },
-    [openAiModels, otherModels, storedModels]
+      map[provider] = [...stored, ...(otherModels[provider] ?? [])];
+    }
+
+    return map;
+  }, [openAiModels, otherModels, storedModels]);
+
+  // Hidden providers stay in itemsByProvider so an already-selected model keeps its label.
+  const allProviders = useMemo(
+    () => Object.keys(itemsByProvider).filter((p) => !hiddenProviders.includes(p)),
+    [itemsByProvider, hiddenProviders]
+  );
+
+  const providerItems = useMemo(
+    () =>
+      (provider: string): ModelListItem[] =>
+        itemsByProvider[provider] ?? [],
+    [itemsByProvider]
   );
 
   return {
     openAiModels,
+    itemsByProvider,
     providerItems,
     allProviders,
   };

@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::env::get_env;
+use crate::env::get_envs;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LocalModel {
@@ -63,10 +63,13 @@ pub async fn load_env_keys() -> Result<Vec<EnvStatusItem>, String> {
     let json_str = include_str!("./llms.json");
     let config: RootConfig = serde_json::from_str(json_str).map_err(|e| e.to_string())?;
 
+    let env_keys: Vec<String> = config.data.iter().map(|p| p.env_key.clone()).collect();
+    let env_values = get_envs(&env_keys);
+
     let mut result = Vec::new();
 
     for provider in config.data {
-        let is_env_set = get_env(provider.env_key.clone()).is_ok();
+        let is_env_set = env_values.contains_key(&provider.env_key);
 
         result.push(EnvStatusItem {
             provider: provider.model_provider,
