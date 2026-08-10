@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { useCCSettingsStore } from '@/stores/settings/useCCSettingsStore';
+import { ClaudeEnvSettings } from './ClaudeEnvSettings';
 
 export function ClaudeSettings() {
   const { showPermissionCards, toggleShowPermissionCards } = useCCSettingsStore();
@@ -23,6 +24,7 @@ export function ClaudeSettings() {
           </CardContent>
         </Card>
       </section>
+      <ClaudeEnvSettings />
     </div>
   );
 }
