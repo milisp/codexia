@@ -62,7 +62,7 @@ jobs:
         shell: pwsh
         run: |
           $version = "${{ steps.target.outputs.tag }}" -replace '^v', ''
-          $name = "Codexia_${version}_windows_x64_portable"
+          $name = "codexia_${version}_x64_portable"
           New-Item -ItemType Directory -Force -Path dist-portable | Out-Null
           Copy-Item target/release/codexia.exe dist-portable/
           Compress-Archive -Path dist-portable/* -DestinationPath "$name.zip"
