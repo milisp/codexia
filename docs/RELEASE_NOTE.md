@@ -1,12 +1,19 @@
 ## 🎉 What's New
 
-### 🗂 Multi-Tabbed Right Panel
-We’ve revamped the right panel! You can now open, select, and close multiple tabs dynamically, making multitasking within your workspace much smoother.
-### 🔄 Enhanced File Changes & Git Revert Controls
-- Compact Change Summaries: Inline diffs have been replaced with a cleaner ThreadFileChangesSummary.
-- Hover Previews & Bulk Actions: Hover over file changes for a quick preview, and toggle expand/collapse across all files with new bulk controls.
-- Undo & Revert: Revert file changes directly from the summary view—either per-file or in bulk.
+### 🔌 Agent Client Protocol Support
+Codexia now speaks ACP! Connect external agents over the Agent Client Protocol, with sessions persisted across restarts and live tool call updates rendered right in the thread.
 
-### ⚡ Architecture & State Cleanups
-- Decoupled Stores: useWorkspaceStore has been refactored and split into three modular stores (workspace, editor, and agent-settings) for improved maintainability and state performance.
-- Protocol Update: Upgraded codex-app-server-protocol to 0.146.0 to bring in support for experimental bindings.
+### 📱 iOS Remote Control
+Drive Codexia from your phone. A new iOS app connects to the desktop through an authenticated web server, and remote clients now share the same ACP state as the desktop.
+
+### ⚙️ Model & Settings Improvements
+- Grok approval toggle added.
+- Model and reasoning effort settings consolidated into one place.
+
+### 🔄 Git Diff Panel Cleanup
+Git diff panel state moved into a dedicated `useGitDiffStore` for smoother, more predictable diff interactions.
+
+### 🐛 Fixes & Polish
+- Keyboard focus styles restored on Select components.
+- React types pinned to a single copy, fixing type mismatches.
+- Codebase formatted with biome, with husky + lint-staged keeping commits clean.
