@@ -4,24 +4,28 @@
   <h1>Codexia</h1>
 
   <p>
-    <strong>Lightweight Agent command center for Codex + Claude Code </strong>
+    <strong>Lightweight Agent command center for Codex + Claude Code + ACP agents</strong>
+  </p>
+
+  <p>
+    <a href="https://github.com/milisp/codexia/releases"><img src="https://img.shields.io/github/downloads/milisp/codexia/total.svg?style=for-the-badge&label=Downloads&color=2ea44f" alt="Downloads"></a>
+    <a href="https://github.com/milisp/codexia/stargazers"><img src="https://img.shields.io/github/stars/milisp/codexia?style=for-the-badge&label=Stars&color=f1c40f" alt="Stars"></a>
+    <a href="https://discord.gg/zAjtD4kf5K"><img src="https://img.shields.io/badge/Discord-Join-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
+    <a href="http://x.com/intent/follow?screen_name=lisp_mi"><img src="https://img.shields.io/badge/Follow-@lisp__mi-000000?style=for-the-badge&logo=x&logoColor=white" alt="Follow on X"></a>
   </p>
 
 </div>
 
-[![Downloads](https://img.shields.io/github/downloads/milisp/codexia/total.svg)](https://github.com/milisp/codexia/releases)
-[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=flat&logo=discord&logoColor=white)](https://discord.gg/zAjtD4kf5K)
-[![Follow on 𝕏](https://img.shields.io/badge/𝕏-@lisp__mi-1c9bf0)](http://x.com/intent/follow?screen_name=lisp_mi)
+Lightweight Agent Workstation for Codex CLI + Claude Code + any Agent Client Protocol (ACP) agent — with task scheduler, git worktree & remote control, skills management, and a prompt notepad in one workspace
 
-Lightweight Agent Workstation for Codex CLI + Claude Code — with task scheduler, git worktree & remote control, skills management, and a prompt notepad in one workspace
-
-> [Want to become a sponsor?](mailto:milisp@proton.me) · [Need custom dev / consulting?](mailto:milisp@proton.me) — AI agent integrations, MCP servers, multi-agent orchestration, Codex/Claude Agent SDK
+> Sponsorship or custom work: [milisp@proton.me](mailto:milisp@proton.me)
 
 ![Codexia Home](docs/images/codexia-agent-command-center.png)
 
 ## Features
 
-- **Agent workflows**: Task Scheduler for recurring jobs, remote control via headless web server
+- **Agent Client Protocol (ACP)**: Connect any external ACP agent — sessions persist across restarts, tool calls render live in the thread
+- **Agent workflows**: Task Scheduler for recurring jobs, remote control via headless web server (including iOS)
 - **Workspace**: Git worktree management, project file tree, IDE-like editor, prompt notepad, local web preview
 - **Data tools**: One-click PDF / XLSX / CSV preview
 - **Ecosystem**: MCP server marketplace, agent skills marketplace
@@ -31,6 +35,7 @@ Lightweight Agent Workstation for Codex CLI + Claude Code — with task schedule
 
 - [Codex CLI](https://github.com/openai/codex)
 - [Claude Code CLI](https://claude.ai/code)
+- Optional: any agent that speaks the [Agent Client Protocol](https://agentclientprotocol.com)
 
 ## Installation
 
@@ -68,6 +73,7 @@ runs without installing.
 ## Architecture at a Glance
 - Codex app-server integration
 - Claude agent rust sdk integration
+- Agent Client Protocol (ACP) client for external agents, with persisted sessions
 - Frontend: React + TypeScript + Zustand + shadcn/ui in `src/`
 - Desktop backend: Tauri v2 + Rust in `src-tauri/src/`
 - Headless backend: Axum web server for remote control in `web/`
