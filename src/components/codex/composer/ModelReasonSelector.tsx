@@ -26,7 +26,7 @@ import { nextReasoningEffort, ReasoningEffortSelector } from './ReasoningEffortS
 // Models shown per provider before "Show all".
 const COLLAPSED_MODEL_COUNT = 3;
 
-export function defaultOpenAiModel(models: Model[]): Model | undefined {
+function defaultOpenAiModel(models: Model[]): Model | undefined {
   return models.find((m) => m.isDefault) ?? models[0];
 }
 

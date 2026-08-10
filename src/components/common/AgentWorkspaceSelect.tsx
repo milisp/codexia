@@ -11,7 +11,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAgentSettingsStore } from '@/stores';
-import { RateLimitContent, RateLimitTrigger, useRateLimits } from '../codex/widget/RateLimitWidget';
+import { useRateLimits } from '../codex/hooks/useRateLimits';
+import { RateLimitContent, RateLimitTrigger } from '../codex/widget/RateLimitWidget';
 
 interface AgentWorkspaceSelectProps {
   value: ThreadCwdMode;

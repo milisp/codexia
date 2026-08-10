@@ -5,9 +5,9 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { DiffViewer } from '@/features/DiffViewer';
 import { gitReverseFiles } from '@/services/apiAdapt';
 import { useEditorStore, useWorkspaceStore } from '@/stores';
-import { getDiffViewerProps } from './fileChangeLogic';
 import type { AggregatedFileChange } from './fileChangeLogic';
-import { toRelativePath, useOpenReviewTab } from './SummaryFileChanges';
+import { getDiffViewerProps } from './fileChangeLogic';
+import { toRelativePath, useOpenReviewTab } from './fileChangeUtils';
 
 type ThreadFileChangesSummaryProps = {
   changes: AggregatedFileChange[];

@@ -3,8 +3,9 @@ import { useState } from 'react';
 import type { FileUpdateChange } from '@/bindings/v2';
 import { Button } from '@/components/ui/button';
 import { DiffViewer } from '@/features/DiffViewer';
-import { useLayoutStore, useWorkspaceStore } from '@/stores';
+import { useWorkspaceStore } from '@/stores';
 import type { AggregatedFileChange, DiffViewerInput } from './fileChangeLogic';
+import { toRelativePath } from './fileChangeUtils';
 
 type SummaryFileChangesProps = {
   changes: AggregatedFileChange[];
@@ -13,20 +14,6 @@ type SummaryFileChangesProps = {
     kind: FileUpdateChange['kind'];
     diff: string;
   }) => DiffViewerInput;
-};
-
-export const toRelativePath = (path: string, cwd: string | null) => {
-  if (!cwd) return path;
-  const prefix = cwd.endsWith('/') ? cwd : `${cwd}/`;
-  return path.startsWith(prefix) ? path.slice(prefix.length) : path;
-};
-
-export const useOpenReviewTab = () => {
-  const { setActiveRightPanelTab, setRightPanelOpen } = useLayoutStore();
-  return () => {
-    setActiveRightPanelTab('diff');
-    setRightPanelOpen(true);
-  };
 };
 
 /**

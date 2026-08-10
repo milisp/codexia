@@ -1,8 +1,7 @@
 import { ChevronDown, ChevronRight, CircleGauge } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { RateLimitWindow } from '@/bindings/v2';
-import type { GetAccountRateLimitsResponse } from '@/bindings/v2/GetAccountRateLimitsResponse';
-import { getAccountRateLimits } from '@/services';
+import { useRateLimits } from '../hooks/useRateLimits';
 
 function formatTimestamp(timestamp: number | null | undefined, locale: string = 'en'): string {
   if (!timestamp) return '0';
@@ -18,23 +17,6 @@ function formatTimestamp(timestamp: number | null | undefined, locale: string = 
 function getRemainingPercent(window: RateLimitWindow | null) {
   const usedPercent = window ? Number(window.usedPercent ?? 0) : 0;
   return Math.max(0, 100 - usedPercent);
-}
-
-export function useRateLimits() {
-  const [rateLimits, setRateLimits] = useState<GetAccountRateLimitsResponse | null>(null);
-
-  const fetchRateLimits = useCallback(async () => {
-    try {
-      const response = await getAccountRateLimits();
-      setRateLimits(response);
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    fetchRateLimits();
-  }, [fetchRateLimits]);
-
-  return rateLimits;
 }
 
 /** Trigger row — must be used inside a DropdownMenuItem */

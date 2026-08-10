@@ -20,7 +20,7 @@ import type { ResultMessage } from '@/components/cc/types/messages';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
-export function fmtCost(usd: number): string {
+function fmtCost(usd: number): string {
   if (usd < 0.001) return '<$0.001';
   return `$${usd.toFixed(3)}`;
 }
