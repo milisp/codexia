@@ -1,4 +1,4 @@
-name: CI Windows portable
+name: Release Windows Portable
 
 on:
   push:
@@ -12,12 +12,13 @@ env:
   VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
   TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-  TAURI_BUNDLE: all
 
 jobs:
-  build-windows:
+  build-windows-portable:
     runs-on: windows-latest
-    name: Build Windows x86_64
+    name: Build Windows x86_64 portable
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
@@ -25,6 +26,11 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -35,11 +41,31 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      # No --bundles: the portable build only needs the raw executable.
       - name: Build Tauri App
-        run: bun tauri build --bundles nsis
+        run: bun tauri build --no-bundle
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: Codexia_windows_x64_portable
-          path: target/release/codexia.exe
+      - name: Package portable archive
+        id: package
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          $name = "Codexia_${version}_windows_x64_portable"
+          New-Item -ItemType Directory -Force -Path dist-portable | Out-Null
+          Copy-Item target/release/codexia.exe dist-portable/
+          Compress-Archive -Path dist-portable/* -DestinationPath "$name.zip"
+          $hash = (Get-FileHash "$name.zip" -Algorithm SHA256).Hash.ToLower()
+          "$hash" | Out-File -Encoding ascii -NoNewline "$name.zip.sha256"
+          "name=$name" >> $env:GITHUB_OUTPUT
+          "sha256=$hash" >> $env:GITHUB_OUTPUT
+
+      - name: Upload to release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.ref_name }}" `
+            "${{ steps.package.outputs.name }}.zip" `
+            "${{ steps.package.outputs.name }}.zip.sha256" `
+            --clobber
