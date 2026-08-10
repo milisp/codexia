@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react';
+import { CodexAuth } from '@/components/codex/CodexAuth';
 import { useCodexStore, useConfigStore } from '@/components/codex/stores';
 import { useCCStore } from '@/stores/cc';
 import { useAcpStore } from '@/stores/useAcpStore';
@@ -7,7 +8,7 @@ import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { AgentCard } from './AgentCard';
 import { AgentComposer } from './AgentComposer';
 import { AgentViewHeader } from './AgentViewHeader';
-import { CodexAuth } from '@/components/codex/CodexAuth';
+import { PluxPromo } from './PluxPromo';
 
 const CodexThread = lazy(() =>
   import('@/components/codex/thread/CodexThread').then((m) => ({ default: m.CodexThread }))
@@ -90,6 +91,7 @@ export default function AgentView() {
             <div className="flex flex-col gap-4 w-full px-4 md:max-w-3xl md:px-0">
               {showCodexAuth && modelProvider === 'openai' && <CodexAuth />}
               <AgentComposer />
+              <PluxPromo />
             </div>
           </div>
         </div>
