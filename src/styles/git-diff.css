@@ -1,0 +1,123 @@
+/* Git diff viewer */
+.git-diff-compact-num .unified-diff-table-wrapper {
+  --diff-aside-width--: 9px !important;
+}
+
+.git-diff-table {
+  --diff-gutter-insert-background-color: rgba(46, 160, 67, 0.18);
+  --diff-gutter-delete-background-color: rgba(248, 81, 73, 0.18);
+  --diff-code-insert-background-color: rgba(46, 160, 67, 0.15);
+  --diff-code-delete-background-color: rgba(248, 81, 73, 0.15);
+  --diff-code-insert-edit-background-color: rgba(46, 160, 67, 0.28);
+  --diff-code-delete-edit-background-color: rgba(248, 81, 73, 0.28);
+  --diff-omit-gutter-line-color: rgba(59, 130, 246, 0.8);
+}
+
+.dark .git-diff-table {
+  --diff-gutter-insert-background-color: rgba(46, 160, 67, 0.28);
+  --diff-gutter-delete-background-color: rgba(248, 81, 73, 0.28);
+  --diff-code-insert-background-color: rgba(46, 160, 67, 0.24);
+  --diff-code-delete-background-color: rgba(248, 81, 73, 0.24);
+  --diff-code-insert-edit-background-color: rgba(46, 160, 67, 0.36);
+  --diff-code-delete-edit-background-color: rgba(248, 81, 73, 0.36);
+}
+
+.git-diff-table .diff-gutter {
+  font-size: 11px;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Unified mode line numbers: show only one number per line. */
+.git-diff-table .unified-diff-table .diff-line-num {
+  padding-left: 1px !important;
+  padding-right: 2px !important;
+  font-size: 10px;
+}
+
+.git-diff-table .unified-diff-table .diff-line-num > .flex {
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0 !important;
+}
+
+.git-diff-table .unified-diff-table .diff-line-num > .flex > span {
+  width: auto !important;
+}
+
+.git-diff-table .unified-diff-table .diff-line-num > .flex > .w-\[10px\] {
+  display: none;
+}
+
+.git-diff-table .unified-diff-table .diff-line-num [data-line-old-num] {
+  display: none;
+}
+
+.git-diff-table .unified-diff-table .diff-line-num [data-line-new-num] {
+  display: inline-block;
+}
+
+/* Deleted lines have empty new number, fallback to old number. */
+.git-diff-table .unified-diff-table .diff-line-num > .flex:has([data-line-new-num]:empty) [data-line-old-num] {
+  display: inline-block;
+}
+
+.git-diff-table .unified-diff-table .diff-line-num > .flex:has([data-line-new-num]:empty) [data-line-new-num] {
+  display: none;
+}
+
+.git-diff-decoration .diff-decoration-content,
+.git-diff-decoration .diff-decoration-gutter {
+  background: hsl(var(--muted) / 0.5);
+}
+
+.git-diff-decoration .diff-decoration-content {
+  padding: 0;
+}
+
+.git-diff-fold-row {
+  display: grid;
+  grid-template-columns: 7ch minmax(0, 1fr);
+  align-items: center;
+}
+
+.git-diff-fold-gutter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 2px 1ch 2px 0;
+  justify-self: end;
+}
+
+.git-diff-fold-icon-button {
+  height: 14px;
+  width: 14px;
+  border-radius: 4px;
+  border: 0;
+  color: hsl(var(--muted-foreground));
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.git-diff-fold-icon-button:hover {
+  background: hsl(var(--accent) / 0.8);
+  color: hsl(var(--accent-foreground));
+}
+
+.git-diff-fold-content {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: rgb(37 99 235);
+  font-size: 12px;
+  line-height: 1.8;
+  padding: 0 10px;
+}
+
+.git-diff-fold-content:hover {
+  text-decoration: underline;
+}

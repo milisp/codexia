@@ -42,6 +42,13 @@ export const ja = {
     system: 'システム',
     auto: '自動',
     accentColorDescription: 'アクティブなコントロールやアクセントのハイライトカラーを選択します。',
+    starfield: '星空エフェクト',
+    starfieldDescription: 'ダークモードでアニメーションする星空の背景を表示します。',
+    backgroundImage: '背景画像',
+    backgroundImageDescription:
+      'カスタム画像をアプリの背景として使用します(URL またはアップロード)。',
+    uploadImage: 'アップロード',
+    clearBackgroundImage: '背景画像をクリア',
     keepInTouch: 'コミュニケーションとコミュニティ',
     dictationModel: 'ディクテーション モデル',
     dictationModelDescription:

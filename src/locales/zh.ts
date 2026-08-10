@@ -42,6 +42,12 @@ export const zh = {
     system: '系统',
     auto: '自动',
     accentColorDescription: '为活动的控件和口音选择高光颜色。',
+    starfield: '星空效果',
+    starfieldDescription: '在深色模式下显示动态星空背景。',
+    backgroundImage: '背景图片',
+    backgroundImageDescription: '使用自定义图片作为应用背景(URL 或上传)。',
+    uploadImage: '上传',
+    clearBackgroundImage: '清除背景图片',
     keepInTouch: '保持联系和社区',
     dictationModel: '语音输入模型',
     dictationModelDescription:

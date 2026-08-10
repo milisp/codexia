@@ -42,6 +42,12 @@ export const en = {
     system: 'System',
     auto: 'Auto',
     accentColorDescription: 'Pick a highlight color for active controls and accents.',
+    starfield: 'Starfield Effect',
+    starfieldDescription: 'Show an animated night-sky background in dark mode.',
+    backgroundImage: 'Background Image',
+    backgroundImageDescription: 'Use a custom image as the app background (URL or upload).',
+    uploadImage: 'Upload',
+    clearBackgroundImage: 'Clear background image',
     keepInTouch: 'Keep in touch and community',
     dictationModel: 'Dictation Model',
     dictationModelDescription:

@@ -1,5 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./styles/prism.css";
+@import "./styles/streaming.css";
+@import "./styles/git-diff.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -227,26 +230,77 @@
 }
 
 .accent-black {
-  --primary: oklch(0.15 0 0);
+  --primary: oklch(0.15 0.01 265);
   --primary-foreground: oklch(0.985 0 0);
-  --accent: oklch(0.08 0 0);
+  --accent: oklch(0.08 0.015 265);
   --accent-foreground: oklch(0.985 0 0);
-  --ring: oklch(0.2 0 0);
-  --sidebar-primary: oklch(0.15 0 0);
+  --ring: oklch(0.2 0.015 265);
+  --sidebar-primary: oklch(0.15 0.01 265);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.08 0 0);
+  --sidebar-accent: oklch(0.08 0.015 265);
   --sidebar-accent-foreground: oklch(0.985 0 0);
 }
 .dark.accent-black {
-  --primary: oklch(0.35 0 0);
+  --primary: oklch(0.35 0.015 265);
   --primary-foreground: oklch(0.985 0 0);
-  --accent: oklch(0.2 0 0);
+  --accent: oklch(0.2 0.02 265);
   --accent-foreground: oklch(0.985 0 0);
-  --ring: oklch(0.45 0 0);
-  --sidebar-primary: oklch(0.35 0 0);
+  --ring: oklch(0.45 0.02 265);
+  --sidebar-primary: oklch(0.35 0.015 265);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.2 0 0);
+  --sidebar-accent: oklch(0.2 0.02 265);
   --sidebar-accent-foreground: oklch(0.985 0 0);
+}
+
+/* Grok-style dark starfield background, opt-in via the "starfield" toggle */
+.dark.starfield body {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1px 1px at 25% 60%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 40% 30%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 55% 80%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 70% 20%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1.5px 1.5px at 85% 65%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 5% 85%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 95% 40%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1.5px 1.5px at 60% 50%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 33% 92%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 78% 8%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 15% 45%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.16 0.03 265 / 60%), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 100% 100%, oklch(0.14 0.03 280 / 40%), transparent 70%),
+    linear-gradient(180deg, oklch(0.07 0.01 260) 0%, oklch(0.09 0.012 260) 50%, oklch(0.06 0.01 255) 100%);
+  background-repeat: repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, no-repeat, no-repeat, no-repeat;
+  background-size: 200px 200px, 250px 250px, 180px 180px, 220px 220px, 210px 210px, 240px 240px, 190px 190px, 230px 230px, 260px 260px, 200px 200px, 220px 220px, 250px 250px, 100% 100%, 100% 100%, 100% 100%;
+  background-attachment: fixed;
+}
+
+.dark.starfield .bg-background {
+  background-color: transparent;
+}
+
+.dark.starfield [data-sidebar="sidebar"],
+.dark.starfield .bg-sidebar {
+  backdrop-filter: blur(12px);
+}
+
+/* User-supplied custom background image, overrides starfield/theme backgrounds */
+.has-custom-background body {
+  background-image: var(--custom-background-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+.has-custom-background .bg-background {
+  background-color: transparent;
+}
+
+.has-custom-background [data-sidebar="sidebar"],
+.has-custom-background .bg-sidebar {
+  backdrop-filter: blur(12px);
 }
 
 @layer base {
@@ -316,251 +370,4 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
-
-/* Prism.js theme switching */
-.light pre[class*="language-"],
-.light code[class*="language-"] {
-  color: #657b83 !important;
-  background: #fdf6e3 !important;
-}
-
-.dark pre[class*="language-"],
-.dark code[class*="language-"] {
-  color: #f8f8f2 !important;
-  background: #272822 !important;
-}
-
-.light .token.comment,
-.light .token.prolog,
-.light .token.doctype,
-.light .token.cdata {
-  color: #93a1a1 !important;
-}
-
-.dark .token.comment,
-.dark .token.prolog,
-.dark .token.doctype,
-.dark .token.cdata {
-  color: #75715e !important;
-}
-
-.light .token.property,
-.light .token.tag,
-.light .token.constant,
-.light .token.symbol,
-.light .token.deleted {
-  color: #dc322f !important;
-}
-
-.dark .token.property,
-.dark .token.tag,
-.dark .token.constant,
-.dark .token.symbol,
-.dark .token.deleted {
-  color: #f92672 !important;
-}
-
-.light .token.boolean,
-.light .token.number {
-  color: #d33682 !important;
-}
-
-.dark .token.boolean,
-.dark .token.number {
-  color: #ae81ff !important;
-}
-
-.light .token.selector,
-.light .token.attr-name,
-.light .token.string,
-.light .token.char,
-.light .token.builtin,
-.light .token.inserted {
-  color: #859900 !important;
-}
-
-.dark .token.selector,
-.dark .token.attr-name,
-.dark .token.string,
-.dark .token.char,
-.dark .token.builtin,
-.dark .token.inserted {
-  color: #a6e22e !important;
-}
-
-.light .token.atrule,
-.light .token.attr-value,
-.light .token.keyword {
-  color: #268bd2 !important;
-}
-
-.dark .token.atrule,
-.dark .token.attr-value,
-.dark .token.keyword {
-  color: #66d9ef !important;
-}
-
-.light .token.function,
-.light .token.class-name {
-  color: #b58900 !important;
-}
-
-.dark .token.function,
-.dark .token.class-name {
-  color: #e6db74 !important;
-}
-
-/* Streaming message styles */
-.streaming-message {
-  position: relative;
-}
-
-.streaming-cursor {
-  animation: blink 1s infinite;
-}
-
-@keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
-}
-
-/* Line-by-line animation */
-.streaming-line-enter {
-  animation: slideIn 0.2s ease-out;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Git diff viewer */
-.git-diff-compact-num .unified-diff-table-wrapper {
-  --diff-aside-width--: 9px !important;
-}
-
-.git-diff-table {
-  --diff-gutter-insert-background-color: rgba(46, 160, 67, 0.18);
-  --diff-gutter-delete-background-color: rgba(248, 81, 73, 0.18);
-  --diff-code-insert-background-color: rgba(46, 160, 67, 0.15);
-  --diff-code-delete-background-color: rgba(248, 81, 73, 0.15);
-  --diff-code-insert-edit-background-color: rgba(46, 160, 67, 0.28);
-  --diff-code-delete-edit-background-color: rgba(248, 81, 73, 0.28);
-  --diff-omit-gutter-line-color: rgba(59, 130, 246, 0.8);
-}
-
-.dark .git-diff-table {
-  --diff-gutter-insert-background-color: rgba(46, 160, 67, 0.28);
-  --diff-gutter-delete-background-color: rgba(248, 81, 73, 0.28);
-  --diff-code-insert-background-color: rgba(46, 160, 67, 0.24);
-  --diff-code-delete-background-color: rgba(248, 81, 73, 0.24);
-  --diff-code-insert-edit-background-color: rgba(46, 160, 67, 0.36);
-  --diff-code-delete-edit-background-color: rgba(248, 81, 73, 0.36);
-}
-
-.git-diff-table .diff-gutter {
-  font-size: 11px;
-  color: hsl(var(--muted-foreground));
-}
-
-/* Unified mode line numbers: show only one number per line. */
-.git-diff-table .unified-diff-table .diff-line-num {
-  padding-left: 1px !important;
-  padding-right: 2px !important;
-  font-size: 10px;
-}
-
-.git-diff-table .unified-diff-table .diff-line-num > .flex {
-  justify-content: flex-end;
-  align-items: center;
-  gap: 0 !important;
-}
-
-.git-diff-table .unified-diff-table .diff-line-num > .flex > span {
-  width: auto !important;
-}
-
-.git-diff-table .unified-diff-table .diff-line-num > .flex > .w-\[10px\] {
-  display: none;
-}
-
-.git-diff-table .unified-diff-table .diff-line-num [data-line-old-num] {
-  display: none;
-}
-
-.git-diff-table .unified-diff-table .diff-line-num [data-line-new-num] {
-  display: inline-block;
-}
-
-/* Deleted lines have empty new number, fallback to old number. */
-.git-diff-table .unified-diff-table .diff-line-num > .flex:has([data-line-new-num]:empty) [data-line-old-num] {
-  display: inline-block;
-}
-
-.git-diff-table .unified-diff-table .diff-line-num > .flex:has([data-line-new-num]:empty) [data-line-new-num] {
-  display: none;
-}
-
-.git-diff-decoration .diff-decoration-content,
-.git-diff-decoration .diff-decoration-gutter {
-  background: hsl(var(--muted) / 0.5);
-}
-
-.git-diff-decoration .diff-decoration-content {
-  padding: 0;
-}
-
-.git-diff-fold-row {
-  display: grid;
-  grid-template-columns: 7ch minmax(0, 1fr);
-  align-items: center;
-}
-
-.git-diff-fold-gutter {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 2px 1ch 2px 0;
-  justify-self: end;
-}
-
-.git-diff-fold-icon-button {
-  height: 14px;
-  width: 14px;
-  border-radius: 4px;
-  border: 0;
-  color: hsl(var(--muted-foreground));
-  background: transparent;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.git-diff-fold-icon-button:hover {
-  background: hsl(var(--accent) / 0.8);
-  color: hsl(var(--accent-foreground));
-}
-
-.git-diff-fold-content {
-  width: 100%;
-  text-align: left;
-  border: 0;
-  background: transparent;
-  color: rgb(37 99 235);
-  font-size: 12px;
-  line-height: 1.8;
-  padding: 0 10px;
-}
-
-.git-diff-fold-content:hover {
-  text-decoration: underline;
 }

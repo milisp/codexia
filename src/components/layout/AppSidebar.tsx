@@ -25,9 +25,9 @@ import { useLayoutStore } from '@/stores';
 import { useAcpStore } from '@/stores/useAcpStore';
 import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { UpdateButton } from '../../features/UpdateButton';
 import { NewAgentButton } from '../common/NewAgentButton';
 import { SessionManagerDialog } from '../common/SessionManagerDialog';
-import { UpdateButton } from '../../features/UpdateButton';
 import { SideBarAddProjectButton } from './SideBarAddProjectButton';
 import { SideBarAcpTab, SideBarClaudeTab, SideBarCodexTab } from './SideBarTab';
 import { UserInfo } from './UserInfo';
@@ -36,7 +36,7 @@ const focusCCInput = () => window.dispatchEvent(new Event('cc-input-focus-reques
 
 // Shared class for nav buttons (Automations / Marketplace)
 const navBtnBase = 'justify-start gap-2 rounded-md border px-2.5';
-const navBtnActive = 'border-border bg-accent/70 text-foreground';
+const navBtnActive = 'border-border bg-accent/70 text-accent-foreground';
 const navBtnInactive = 'border-transparent hover:border-border/60';
 const navBtnCls = (active: boolean) => `${navBtnBase} ${active ? navBtnActive : navBtnInactive}`;
 

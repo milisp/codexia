@@ -5,9 +5,13 @@ interface ThemeContextType {
   theme: Theme;
   resolvedTheme: 'light' | 'dark';
   accent: Accent;
+  starfield: boolean;
+  backgroundImage: string | null;
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
   setAccent: (accent: Accent) => void;
+  setStarfield: (starfield: boolean) => void;
+  setBackgroundImage: (backgroundImage: string | null) => void;
 }
 
 export type { Accent, Theme };
@@ -15,7 +19,17 @@ export type { Accent, Theme };
 const ThemeContext = React.createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const { theme, accent, toggleTheme, setTheme, setAccent } = useThemeStore();
+  const {
+    theme,
+    accent,
+    starfield,
+    backgroundImage,
+    toggleTheme,
+    setTheme,
+    setAccent,
+    setStarfield,
+    setBackgroundImage,
+  } = useThemeStore();
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
 
   useEffect(() => {
@@ -60,15 +74,33 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     // Apply color-scheme for browser UI elements (affects scrollbars, etc)
     root.style.setProperty('color-scheme', resolvedTheme);
-  }, [resolvedTheme, accent]);
+
+    // Starfield effect toggle
+    root.classList.toggle('starfield', starfield);
+  }, [resolvedTheme, accent, starfield]);
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (backgroundImage) {
+      root.style.setProperty('--custom-background-image', `url("${backgroundImage}")`);
+      root.classList.add('has-custom-background');
+    } else {
+      root.style.removeProperty('--custom-background-image');
+      root.classList.remove('has-custom-background');
+    }
+  }, [backgroundImage]);
 
   const value: ThemeContextType = {
     theme,
     resolvedTheme,
     accent,
+    starfield,
+    backgroundImage,
     toggleTheme,
     setTheme,
     setAccent,
+    setStarfield,
+    setBackgroundImage,
   };
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

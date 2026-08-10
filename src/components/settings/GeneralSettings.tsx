@@ -1,6 +1,10 @@
-import { Github, Monitor, Moon, Sun, Twitter } from 'lucide-react';
+import { Github, Monitor, Moon, Sun, Twitter, X } from 'lucide-react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { type Accent, type Theme, useThemeStore } from '@/stores/settings';
@@ -22,9 +26,36 @@ const LINKS = {
 } as const;
 
 export function GeneralSettings() {
-  const { theme, setTheme, accent, setAccent } = useThemeStore();
+  const {
+    theme,
+    setTheme,
+    accent,
+    setAccent,
+    starfield,
+    setStarfield,
+    backgroundImage,
+    setBackgroundImage,
+  } = useThemeStore();
   const handleThemeChange = (value: string) => setTheme(value as Theme);
   const { t } = useTranslation('settings');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAccentSelect = (value: Accent) => {
+    setAccent(value);
+    // Noir looks flat without it, so switch the starfield on by default.
+    if (value === 'black' && !starfield) setStarfield(true);
+  };
+
+  const handleBackgroundFile = (file: File | null | undefined) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setBackgroundImage(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Shared Tailwind classes from shadcn/ui Button (variant: default, size: sm)
   const buttonClassName =
@@ -71,7 +102,7 @@ export function GeneralSettings() {
                     <button
                       key={value}
                       type="button"
-                      onClick={() => setAccent(value)}
+                      onClick={() => handleAccentSelect(value)}
                       className={cn(
                         'inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs transition-colors',
                         'hover:bg-accent/60 hover:text-accent-foreground',
@@ -87,6 +118,59 @@ export function GeneralSettings() {
                     </button>
                   );
                 })}
+              </div>
+            </div>
+            <div className="h-px bg-border" />
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <div className="text-sm font-medium">{t('starfield')}</div>
+                <div className="text-xs text-muted-foreground">{t('starfieldDescription')}</div>
+              </div>
+              <Switch checked={starfield} onCheckedChange={setStarfield} />
+            </div>
+            <div className="space-y-2">
+              <div className="space-y-0.5">
+                <div className="text-sm font-medium">{t('backgroundImage')}</div>
+                <div className="text-xs text-muted-foreground">
+                  {t('backgroundImageDescription')}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  type="url"
+                  placeholder="https://..."
+                  value={backgroundImage?.startsWith('data:') ? '' : (backgroundImage ?? '')}
+                  onChange={(e) => setBackgroundImage(e.target.value || null)}
+                  className="h-8 text-xs"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {t('uploadImage')}
+                </Button>
+                {backgroundImage && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setBackgroundImage(null)}
+                    aria-label={t('clearBackgroundImage')}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleBackgroundFile(e.target.files?.[0])}
+                />
               </div>
             </div>
             <div className="h-px bg-border" />

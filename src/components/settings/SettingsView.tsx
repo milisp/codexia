@@ -30,12 +30,12 @@ import {
   SettingsAgentsSection,
   TaskSettings,
 } from './codex';
+import { DictationSettings } from './DictationSettings';
 import { ExplorerSettings } from './ExplorerSettings';
 import { GeneralSettings } from './GeneralSettings';
-import { DictationSettings } from './DictationSettings';
 import { PrivacySettings } from './PrivacySettings';
-import { RemoteAccessSettings } from './RemoteAccessSettings';
 import { ProjectsSettings } from './ProjectsSettings';
+import { RemoteAccessSettings } from './RemoteAccessSettings';
 
 type SettingsSection =
   | 'general'
@@ -174,8 +174,8 @@ export default function SettingsView() {
                     onClick={() => setActiveSection(section)}
                     className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${
                       activeSection === section
-                        ? 'bg-accent text-foreground'
-                        : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                        ? 'bg-accent text-accent-foreground'
+                        : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
                     }`}
                   >
                     {t(section)}
@@ -203,8 +203,8 @@ export default function SettingsView() {
                         onClick={() => setActiveSection(section)}
                         className={`w-full rounded-lg px-6 py-2 text-left transition-colors ${
                           activeSection === section
-                            ? 'bg-accent text-foreground'
-                            : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                            ? 'bg-accent text-accent-foreground'
+                            : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
                         }`}
                       >
                         {t(section)}
