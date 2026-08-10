@@ -58,6 +58,7 @@ codex-finder = { workspace = true }
 codexia-git = { workspace = true }
 codexia-shared = { path = "../crates/shared" }
 codexia-acp = { path = "../crates/acp" }
+codexia-automation = { path = "../crates/automation" }
 codexia-cc = { path = "../crates/cc" }
 codexia-db = { path = "../crates/db" }
 codexia-codex = { path = "../crates/codex" }

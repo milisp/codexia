@@ -3,6 +3,8 @@ import { dual, dualVoid } from './shared';
 
 export type AutomationScheduleMode = 'daily' | 'interval';
 export type AutomationWeekday = 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat';
+/** Where a run works: the project itself, or a per-task linked git worktree. */
+export type AutomationCwdMode = 'cwd' | 'worktree';
 
 export type AutomationSchedule = {
   mode: AutomationScheduleMode;
@@ -24,6 +26,7 @@ export type AutomationTask = {
   cron_expression: string;
   created_at: string;
   paused: boolean;
+  cwd_mode: AutomationCwdMode;
 };
 
 export type AutomationRun = {
@@ -34,6 +37,8 @@ export type AutomationRun = {
   status: string;
   started_at: string;
   updated_at: string;
+  /** Null for runs recorded before the working directory was tracked. */
+  cwd: string | null;
 };
 
 export async function listAutomations() {
@@ -58,10 +63,11 @@ export async function createAutomation(payload: {
   agent?: 'codex' | 'cc';
   model_provider?: string;
   model?: string;
+  cwd_mode?: AutomationCwdMode;
 }) {
   return await dual<AutomationTask>(
     'create_automation',
-    { ...payload, modelProvider: payload.model_provider },
+    { ...payload, modelProvider: payload.model_provider, cwdMode: payload.cwd_mode },
     '/api/automation/create',
     payload
   );
@@ -76,10 +82,11 @@ export async function updateAutomation(payload: {
   agent?: 'codex' | 'cc';
   model_provider?: string;
   model?: string;
+  cwd_mode?: AutomationCwdMode;
 }) {
   return await dual<AutomationTask>(
     'update_automation',
-    { ...payload, modelProvider: payload.model_provider },
+    { ...payload, modelProvider: payload.model_provider, cwdMode: payload.cwd_mode },
     '/api/automation/update',
     payload
   );

@@ -14,6 +14,7 @@ codex-finder = { workspace = true }
 dirs = { workspace = true }
 gix = { workspace = true }
 tokio = { workspace = true }
+async-trait = { workspace = true }
 toml = { workspace = true }
 toml_edit = { workspace = true }
 chrono = { workspace = true }

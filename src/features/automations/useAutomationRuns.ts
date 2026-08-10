@@ -11,6 +11,8 @@ type RunMeta = {
   taskName: string;
   startedAt: string;
   status?: string;
+  /** Directory the run worked in — a worktree path when the task isolates its work. */
+  cwd?: string | null;
 };
 
 type AutomationRunStartedPayload = {
@@ -18,6 +20,7 @@ type AutomationRunStartedPayload = {
   taskName: string;
   threadId: string;
   startedAt: string;
+  cwd?: string | null;
 };
 
 /** Map from taskId → ordered list of run metadata (most recent first) */
@@ -59,6 +62,7 @@ export function useAutomationRuns() {
           threadId: run.thread_id,
           startedAt: run.started_at,
           status: run.status,
+          cwd: run.cwd,
         };
         const existing = next[taskId] ?? [];
         if (!existing.some((item) => item.threadId === entry.threadId)) {
@@ -88,7 +92,7 @@ export function useAutomationRuns() {
   }, [loadRunsFromBackend]);
 
   const handleRunStarted = useCallback((payload: AutomationRunStartedPayload) => {
-    const { taskId, taskName, threadId, startedAt } = payload;
+    const { taskId, taskName, threadId, startedAt, cwd } = payload;
     threadToTask.current[threadId] = taskId;
 
     setRunMetaByTask((prev) => {
@@ -96,7 +100,7 @@ export function useAutomationRuns() {
       // Avoid duplicate (e.g. hot-reload)
       if (existing.some((r) => r.threadId === threadId)) return prev;
       const updated = [
-        { threadId, taskId, taskName, startedAt, status: 'running' },
+        { threadId, taskId, taskName, startedAt, status: 'running', cwd },
         ...existing,
       ].slice(0, MAX_RUNS_PER_TASK);
       return { ...prev, [taskId]: updated };

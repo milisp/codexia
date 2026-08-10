@@ -14,24 +14,33 @@ pub struct AutomationRunRecord {
     pub status: String,
     pub started_at: String,
     pub updated_at: String,
+    /// Directory the run worked in; absent for runs recorded before this was tracked.
+    pub cwd: Option<String>,
 }
 
-pub fn insert_run_started(task_id: &str, task_name: &str, thread_id: &str, started_at: &str) -> Result<(), String> {
+pub fn insert_run_started(
+    task_id: &str,
+    task_name: &str,
+    thread_id: &str,
+    cwd: Option<&str>,
+    started_at: &str,
+) -> Result<(), String> {
     let conn = get_connection()?;
     let now = Utc::now().to_rfc3339();
     let run_id = format!("run-{}", Uuid::new_v4());
 
     conn.execute(
         "INSERT INTO automation_runs (
-            run_id, task_id, task_name, thread_id, status, started_at, updated_at
-        ) VALUES (?1, ?2, ?3, ?4, 'running', ?5, ?6)
+            run_id, task_id, task_name, thread_id, status, started_at, updated_at, cwd
+        ) VALUES (?1, ?2, ?3, ?4, 'running', ?5, ?6, ?7)
         ON CONFLICT(thread_id) DO UPDATE SET
             task_id = excluded.task_id,
             task_name = excluded.task_name,
             status = 'running',
             started_at = excluded.started_at,
-            updated_at = excluded.updated_at",
-        params![run_id, task_id, task_name, thread_id, started_at, now],
+            updated_at = excluded.updated_at,
+            cwd = excluded.cwd",
+        params![run_id, task_id, task_name, thread_id, started_at, now, cwd],
     )
     .map_err(|e| format!("Failed to insert automation run: {}", e))?;
 
@@ -64,7 +73,7 @@ pub fn list_runs(task_id: Option<&str>, limit: usize) -> Result<Vec<AutomationRu
     if let Some(task_id) = task_id {
         let mut stmt = conn
             .prepare(
-                "SELECT run_id, task_id, task_name, thread_id, status, started_at, updated_at
+                "SELECT run_id, task_id, task_name, thread_id, status, started_at, updated_at, cwd
                  FROM automation_runs
                  WHERE task_id = ?1
                  ORDER BY started_at DESC
@@ -81,6 +90,7 @@ pub fn list_runs(task_id: Option<&str>, limit: usize) -> Result<Vec<AutomationRu
                     status: row.get(4)?,
                     started_at: row.get(5)?,
                     updated_at: row.get(6)?,
+                    cwd: row.get(7)?,
                 })
             })
             .map_err(|e| format!("Failed to query automation runs: {}", e))?;
@@ -92,7 +102,7 @@ pub fn list_runs(task_id: Option<&str>, limit: usize) -> Result<Vec<AutomationRu
 
     let mut stmt = conn
         .prepare(
-            "SELECT run_id, task_id, task_name, thread_id, status, started_at, updated_at
+            "SELECT run_id, task_id, task_name, thread_id, status, started_at, updated_at, cwd
              FROM automation_runs
              ORDER BY started_at DESC
              LIMIT ?1",
@@ -108,6 +118,7 @@ pub fn list_runs(task_id: Option<&str>, limit: usize) -> Result<Vec<AutomationRu
                 status: row.get(4)?,
                 started_at: row.get(5)?,
                 updated_at: row.get(6)?,
+                cwd: row.get(7)?,
             })
         })
         .map_err(|e| format!("Failed to query automation runs: {}", e))?;

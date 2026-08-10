@@ -103,6 +103,10 @@ pub async fn remote_start(
         .try_state::<codexia_acp::AcpState>()
         .map(|s| Arc::new(s.inner().clone()))
         .ok_or_else(|| "ACP state is not initialized".to_string())?;
+    // Reuse the desktop's scheduler rather than starting a second one.
+    let automation = app
+        .try_state::<codexia_automation::AutomationHandle>()
+        .map(|s| s.inner().clone());
     let event_tx = remote.event_tx.clone();
     let host = info.ipv4.clone();
 
@@ -110,6 +114,7 @@ pub async fn remote_start(
     tauri::async_runtime::spawn(async move {
         let result = codexia_web::serve_api(
             codex,
+            automation,
             cc,
             acp,
             event_tx,

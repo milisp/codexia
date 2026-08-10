@@ -1,5 +1,5 @@
 import { Check, ChevronDown, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { CodexModelSelector } from '@/components/codex/composer/index';
 import { useConfigStore } from '@/components/codex/stores';
 import { Button } from '@/components/ui/button';
@@ -29,9 +29,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
-import type { AutomationSchedule, AutomationTask } from '@/services/apiAdapt';
+import type { AutomationCwdMode, AutomationSchedule, AutomationTask } from '@/services/apiAdapt';
 import {
   createAutomation,
   deleteAutomation,
@@ -73,7 +74,6 @@ export function ManageDialog({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [projectSelectOpen, setProjectSelectOpen] = useState(false);
   const [form, setForm] = useState<FormState>({ ...DEFAULT_FORM });
-  const [resetTrigger, setResetTrigger] = useState(0);
 
   const getDefaultModel = useCallback((agent: 'codex' | 'cc', provider: string): string => {
     if (agent === 'cc') {
@@ -82,47 +82,38 @@ export function ManageDialog({
     return useConfigStore.getState().providerModels[provider] ?? '';
   }, []);
 
-  const prevOpenRef = useRef(open);
-  const prevModeTypeRef = useRef(mode?.type ?? null);
-  const prevTaskIdRef = useRef(existingTask?.id ?? null);
+  // A single string, so the comparison below cannot drift the way separate
+  // `open` / `mode.type` / `task.id` refs did: `existingTask?.id` is `undefined`
+  // while the ref held `null`, which never matched and re-reset the form on every
+  // render.
+  const target =
+    mode === null ? 'closed' : mode.type === 'edit' ? `edit:${mode.task.id}` : 'create';
+  const prevTargetRef = useRef('closed');
 
-  if (
-    open !== prevOpenRef.current ||
-    mode?.type !== prevModeTypeRef.current ||
-    existingTask?.id !== prevTaskIdRef.current
-  ) {
-    prevOpenRef.current = open;
-    prevModeTypeRef.current = mode?.type ?? null;
-    prevTaskIdRef.current = existingTask?.id ?? null;
+  if (target !== prevTargetRef.current) {
+    prevTargetRef.current = target;
+
+    // Reset during render so the dialog never paints the previous task's form. The
+    // ref above is already updated, so this branch cannot run twice for the same
+    // target and the render-phase update settles immediately.
     if (open) {
-      setResetTrigger((prev) => prev + 1);
+      setLastError(null);
+      setConfirmDelete(false);
+      setProjectSelectOpen(false);
+
+      if (isCreate) {
+        const initial = { ...DEFAULT_FORM, ...(mode.initialForm ?? {}) };
+        const modelProvider = initial.modelProvider ?? 'openai';
+        setForm({
+          ...initial,
+          modelProvider,
+          model: initial.model || getDefaultModel(initial.agent, modelProvider),
+        });
+      } else if (existingTask) {
+        setForm(formFromTask(existingTask));
+      }
     }
   }
-
-  // Reset state inline during render when dialog opens or mode changes
-  if (resetTrigger > 0) {
-    setLastError(null);
-    setConfirmDelete(false);
-    setProjectSelectOpen(false);
-
-    if (isCreate) {
-      const initial = { ...DEFAULT_FORM, ...(mode.initialForm ?? {}) };
-      const modelProvider = initial.modelProvider ?? 'openai';
-      setForm({
-        ...initial,
-        modelProvider,
-        model: initial.model || getDefaultModel(initial.agent, modelProvider),
-      });
-    } else if (existingTask) {
-      setForm(formFromTask(existingTask));
-    }
-  }
-
-  // Reset trigger after handling
-  useEffect(() => {
-    if (resetTrigger === 0) return;
-    // Trigger handled inline, this effect just ensures trigger resets if needed
-  }, [resetTrigger]);
 
   const setField = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -182,6 +173,7 @@ export function ManageDialog({
         agent: form.agent,
         model_provider: form.modelProvider,
         model: form.model,
+        cwd_mode: form.cwdMode,
       });
       onCreated?.(created);
       onClose();
@@ -208,6 +200,7 @@ export function ManageDialog({
         agent: form.agent,
         model_provider: form.modelProvider,
         model: form.model,
+        cwd_mode: form.cwdMode,
       });
       onUpdated(updated);
       toast({ title: 'Automation updated' });
@@ -234,6 +227,7 @@ export function ManageDialog({
         agent: form.agent,
         model_provider: form.modelProvider,
         model: form.model,
+        cwd_mode: form.cwdMode,
       });
       const resumed = updated.paused ? await setAutomationPaused(updated.id, false) : updated;
       onUpdated(resumed);
@@ -432,6 +426,28 @@ export function ManageDialog({
                 </Command>
               </PopoverContent>
             </Popover>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Run in</Label>
+            <Tabs
+              value={form.cwdMode}
+              onValueChange={(value) => setField('cwdMode', value as AutomationCwdMode)}
+            >
+              <TabsList className="h-8 w-full">
+                <TabsTrigger value="worktree" className="flex-1 text-xs">
+                  Git worktree
+                </TabsTrigger>
+                <TabsTrigger value="cwd" className="flex-1 text-xs">
+                  Project directory
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <p className="text-muted-foreground text-xs">
+              {form.cwdMode === 'worktree'
+                ? 'Each project gets a reusable linked worktree, so runs never touch your checkout. Reset to the latest commit before every run unless it still holds changes you have not reviewed.'
+                : 'Runs edit the project directory directly.'}
+            </p>
           </div>
 
           <div className="space-y-2">

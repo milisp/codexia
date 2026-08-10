@@ -20,9 +20,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/components/ui/use-toast';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
 import { listSessions } from '@/lib/sessions';
-import { codexService } from '@/services/codexService';
 import type { AutomationTask } from '@/services/apiAdapt';
 import { ccInterrupt, listModels, runAutomationNow, turnInterrupt } from '@/services/apiAdapt';
+import { codexService } from '@/services/codexService';
 import { useLayoutStore } from '@/stores';
 import { useCCStore } from '@/stores/cc';
 import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
@@ -186,6 +186,11 @@ function RunRow({
           <StatusIcon status={status} />
           <span className="text-xs font-medium capitalize">{statusLabel}</span>
         </div>
+        {run.cwd && (
+          <span className="truncate text-[10px] text-muted-foreground" title={run.cwd}>
+            {run.cwd}
+          </span>
+        )}
       </div>
       <div className="flex items-center gap-1.5">
         <Button

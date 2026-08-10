@@ -249,6 +249,8 @@ pub fn run() {
                     Ok::<_, String>(codex_client)
                 });
 
+                let codex_runner_client = init_result.as_ref().ok().cloned();
+
                 match init_result {
                     Ok(codex_client) => {
                         log::info!(
@@ -274,6 +276,26 @@ pub fn run() {
                         );
                     }
                 }
+
+                // Start the scheduler here rather than on the first frontend call, so
+                // cron tasks fire even if the UI is never opened.
+                let cc_runner = Arc::new(cc::CcAgentRunner::new(
+                    app.state::<CCState>().inner().clone(),
+                ));
+                let codex_runner = Arc::new(codex::CodexAgentRunner::new(codex_runner_client));
+                let automation = match tauri::async_runtime::block_on(
+                    codexia_automation::AutomationHandle::start(
+                        vec![codex_runner, cc_runner],
+                        Arc::clone(&event_sink),
+                    ),
+                ) {
+                    Ok(handle) => Some(handle),
+                    Err(err) => {
+                        log::error!("failed to start automation runtime: {}", err);
+                        None
+                    }
+                };
+                app.manage::<commands::automation::AutomationState>(automation);
 
                 cc::scan::start_session_scanner();
 

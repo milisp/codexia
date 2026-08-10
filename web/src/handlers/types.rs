@@ -4,7 +4,7 @@ use serde_json::Value;
 
 use codexia_cc::mcp::ClaudeCodeMcpServer;
 use codexia_cc::types::AgentOptions;
-use codexia_cc::automation::AutomationSchedule;
+use codexia_automation::{AutomationSchedule, CwdMode};
 
 #[derive(Deserialize)]
 pub(crate) struct ApprovalDecisionParams {
@@ -291,6 +291,9 @@ pub(crate) struct CreateAutomationParams {
   pub(crate) model_provider: Option<String>,
   #[serde(default)]
   pub(crate) model: Option<String>,
+  #[serde(default)]
+  #[serde(rename = "cwd_mode", alias = "cwdMode")]
+  pub(crate) cwd_mode: Option<CwdMode>,
 }
 
 #[derive(Deserialize)]
@@ -316,6 +319,9 @@ pub(crate) struct UpdateAutomationParams {
     pub(crate) model_provider: Option<String>,
     #[serde(default)]
     pub(crate) model: Option<String>,
+    #[serde(default)]
+    #[serde(rename = "cwd_mode", alias = "cwdMode")]
+    pub(crate) cwd_mode: Option<CwdMode>,
 }
 
 #[derive(Deserialize)]

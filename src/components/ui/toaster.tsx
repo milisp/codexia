@@ -60,12 +60,16 @@ export function Toaster({ viewportClassName }: ToasterProps) {
           <ToastProvider key={position}>
             {positionToasts.map(({ id, title, description, action, timeoutRef: _timeoutRef, ...props }) => (
               <Toast {...props} key={id}>
-                <div className="grid gap-1">
-                  {title ? <ToastTitle>{title}</ToastTitle> : null}
-                  {description ? <ToastDescription>{description}</ToastDescription> : null}
-                </div>
-                {action}
-                <ToastClose />
+                {/* Radix renders Toast children through a single `jsx` call, so an
+                    array of children here would be treated as a keyless list. */}
+                <>
+                  <div className="grid gap-1">
+                    {title ? <ToastTitle>{title}</ToastTitle> : null}
+                    {description ? <ToastDescription>{description}</ToastDescription> : null}
+                  </div>
+                  {action}
+                  <ToastClose />
+                </>
               </Toast>
             ))}
             <ToastViewport className={cn(viewportByPosition[position], viewportClassName)} />

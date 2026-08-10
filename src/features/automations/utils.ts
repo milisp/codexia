@@ -16,8 +16,16 @@ export function clampMinute(value: number): number {
   return Math.min(59, Math.max(0, value));
 }
 
+// Only hour steps that divide 24 keep a uniform gap between cron runs.
+export const INTERVAL_HOURS_OPTIONS = [1, 2, 3, 4, 6, 8, 12, 24] as const;
+
 export function clampIntervalHours(value: number): number {
-  return Math.min(24, Math.max(1, value));
+  if (!Number.isFinite(value)) {
+    return 6;
+  }
+  return INTERVAL_HOURS_OPTIONS.reduce((closest, option) =>
+    Math.abs(option - value) < Math.abs(closest - value) ? option : closest
+  );
 }
 
 function toDailyTime(hour?: number | null, minute?: number | null): string {
@@ -38,6 +46,7 @@ export function formFromTask(task: AutomationTask): FormState {
     dailyTime: toDailyTime(task.schedule.hour, task.schedule.minute),
     intervalHours: task.schedule.interval_hours ?? 6,
     weekdays: normalizeWeekdays(task.schedule.weekdays),
+    cwdMode: task.cwd_mode ?? 'cwd',
   };
 }
 
@@ -53,6 +62,7 @@ export function formFromTemplate(template: TemplateTask): FormState {
     dailyTime: toDailyTime(template.schedule.hour, template.schedule.minute),
     intervalHours: template.schedule.interval_hours ?? 6,
     weekdays: normalizeWeekdays(template.schedule.weekdays),
+    cwdMode: 'worktree',
   };
 }
 

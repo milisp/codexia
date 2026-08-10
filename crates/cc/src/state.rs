@@ -78,6 +78,22 @@ impl CCState {
         Ok(())
     }
 
+    /// Registers an extra key for an existing client, so callers that only know the
+    /// real CLI session id (e.g. automation runs) can reach the same client.
+    pub async fn alias_client(&self, client_id: &str, alias: String) {
+        if alias == client_id {
+            return;
+        }
+        let mut clients = self.clients.lock().await;
+        let Some(client) = clients.get(client_id).cloned() else {
+            return;
+        };
+        clients.insert(alias.clone(), client);
+        let permission_mode = self.get_permission_mode(client_id);
+        self.session_metadata
+            .insert(alias, SessionMetadata { permission_mode });
+    }
+
     pub async fn remove_client(&self, client_id: &str) -> Result<(), String> {
         let mut clients = self.clients.lock().await;
         if let Some(client) = clients.remove(client_id) {

@@ -11,6 +11,7 @@ use serde_json::Value;
 use tokio::sync::broadcast;
 
 use codexia_acp::AcpState;
+use codexia_automation::AutomationHandle;
 use codexia_cc::CCState;
 use codexia_codex::AppState;
 use codexia_shared::sleep::SleepState;
@@ -22,6 +23,8 @@ use crate::terminal::WebTerminalState;
 #[derive(Clone)]
 pub struct WebServerState {
     pub codex_state: Option<Arc<AppState>>,
+    /// Absent when the automation scheduler failed to start.
+    pub automation: Option<AutomationHandle>,
     pub cc_state: Arc<CCState>,
     pub acp_state: Arc<AcpState>,
     pub(crate) sleep_state: Arc<SleepState>,
@@ -40,6 +43,7 @@ pub struct WebServerState {
 impl WebServerState {
     pub fn new(
         codex_state: Option<Arc<AppState>>,
+        automation: Option<AutomationHandle>,
         cc_state: Arc<CCState>,
         acp_state: Arc<AcpState>,
         sleep_state: Arc<SleepState>,
@@ -52,6 +56,7 @@ impl WebServerState {
         let event_hub = EventHub::spawn_from(&event_tx);
         Self {
             codex_state,
+            automation,
             cc_state,
             acp_state,
             sleep_state,

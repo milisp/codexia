@@ -29,9 +29,13 @@ pub async fn start_web_server_with_events(
     log::info!("[web] requested port: {}", port);
 
     let automation_sink: Arc<dyn EventSink> = Arc::new(WebSocketEventSink::new(event_tx.clone()));
-    codexia_cc::automation::initialize_automation_runtime(
-        codex_state.as_ref().map(|s| s.codex.clone()),
-        cc_state.as_ref().clone(),
+    let automation = codexia_automation::AutomationHandle::start(
+        vec![
+            Arc::new(codexia_codex::CodexAgentRunner::new(
+                codex_state.as_ref().map(|s| s.codex.clone()),
+            )),
+            Arc::new(codexia_cc::CcAgentRunner::new(cc_state.as_ref().clone())),
+        ],
         automation_sink,
     )
     .await
@@ -44,6 +48,7 @@ pub async fn start_web_server_with_events(
 
     let state = WebServerState::new(
         codex_state,
+        Some(automation),
         cc_state,
         Arc::new(codexia_acp::AcpState::new(Arc::new(WebSocketEventSink::new(
             event_tx.clone(),
@@ -152,12 +157,14 @@ fn log_remote_access(host: &str, port: u16) {
 ///
 /// Used by the desktop app to expose its live codex/cc session to remote
 /// devices. Unlike `start_web_server_with_events` this starts no runtimes of
-/// its own — the automation runtime and session scanner are already running in
-/// the host process, and starting them twice would double-fire their work.
+/// its own — the caller passes in the automation runtime it already owns, and the
+/// session scanner is already running in the host process; starting either twice
+/// would double-fire their work.
 ///
 /// Returns once `shutdown` resolves, releasing the port.
 pub async fn serve_api<F>(
     codex_state: Option<Arc<AppState>>,
+    automation: Option<codexia_automation::AutomationHandle>,
     cc_state: Arc<CCState>,
     acp_state: Arc<codexia_acp::AcpState>,
     event_tx: broadcast::Sender<(String, serde_json::Value)>,
@@ -172,6 +179,7 @@ where
 
     let state = WebServerState::new(
         codex_state,
+        automation,
         cc_state,
         acp_state,
         Arc::new(SleepState::default()),

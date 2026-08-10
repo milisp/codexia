@@ -1,5 +1,8 @@
 use super::model::{AutomationSchedule, AutomationScheduleMode};
 
+/// Hour steps that divide 24 evenly, so every run is the same distance apart.
+pub(super) const INTERVAL_HOURS_ALLOWED: [u8; 8] = [1, 2, 3, 4, 6, 8, 12, 24];
+
 fn normalize_weekdays(weekdays: &[String]) -> Result<Vec<String>, String> {
     if weekdays.is_empty() {
         return Ok(vec![
@@ -49,10 +52,26 @@ pub(super) fn schedule_to_cron(schedule: &AutomationSchedule) -> Result<String, 
         }
         AutomationScheduleMode::Interval => {
             let interval_hours = schedule.interval_hours.unwrap_or(6);
-            if interval_hours == 0 || interval_hours > 24 {
-                return Err("interval hours must be between 1 and 24".to_string());
+            // Cron restarts the hour step at midnight, so only divisors of 24 keep a
+            // uniform gap between runs.
+            if !INTERVAL_HOURS_ALLOWED.contains(&interval_hours) {
+                return Err(format!(
+                    "interval hours must be one of {}",
+                    INTERVAL_HOURS_ALLOWED
+                        .iter()
+                        .map(u8::to_string)
+                        .collect::<Vec<String>>()
+                        .join(", ")
+                ));
             }
-            Ok(format!("0 0 0/{interval_hours} * * {weekdays}"))
+            let minute = schedule.minute.unwrap_or(0);
+            if minute > 59 {
+                return Err("interval minute must be between 0 and 59".to_string());
+            }
+            if interval_hours == 24 {
+                return Ok(format!("0 {minute} 0 * * {weekdays}"));
+            }
+            Ok(format!("0 {minute} 0/{interval_hours} * * {weekdays}"))
         }
     }
 }
@@ -104,7 +123,49 @@ mod tests {
         };
 
         let err = schedule_to_cron(&schedule).expect_err("interval 0 must be rejected");
-        assert!(err.contains("interval hours must be between 1 and 24"));
+        assert!(err.contains("interval hours must be one of"));
+    }
+
+    #[test]
+    fn schedule_to_cron_rejects_interval_not_dividing_24() {
+        let schedule = AutomationSchedule {
+            mode: AutomationScheduleMode::Interval,
+            hour: None,
+            minute: None,
+            interval_hours: Some(7),
+            weekdays: weekdays(&["mon"]),
+        };
+
+        let err = schedule_to_cron(&schedule).expect_err("interval 7 must be rejected");
+        assert!(err.contains("interval hours must be one of"));
+    }
+
+    #[test]
+    fn schedule_to_cron_interval_uses_minute_offset() {
+        let schedule = AutomationSchedule {
+            mode: AutomationScheduleMode::Interval,
+            hour: None,
+            minute: Some(30),
+            interval_hours: Some(6),
+            weekdays: weekdays(&["mon"]),
+        };
+
+        let cron = schedule_to_cron(&schedule).expect("interval schedule should be valid");
+        assert_eq!(cron, "0 30 0/6 * * MON");
+    }
+
+    #[test]
+    fn schedule_to_cron_interval_24_runs_once_per_day() {
+        let schedule = AutomationSchedule {
+            mode: AutomationScheduleMode::Interval,
+            hour: None,
+            minute: None,
+            interval_hours: Some(24),
+            weekdays: weekdays(&["mon"]),
+        };
+
+        let cron = schedule_to_cron(&schedule).expect("interval 24 should be valid");
+        assert_eq!(cron, "0 0 0 * * MON");
     }
 
     #[test]

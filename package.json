@@ -11,7 +11,9 @@
     "tauri": "tauri",
     "tauri:dev:web": "cargo run --bin codexia-web",
     "format": "biome format --write",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,css}": "biome check --write --no-errors-on-unmatched"
@@ -89,6 +91,8 @@
     "@tailwindcss/cli": "^4.1.18",
     "@tailwindcss/vite": "^4.1.18",
     "@tauri-apps/cli": "^2.10.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
     "@types/diff": "^8.0.0",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^24.10.13",
@@ -98,12 +102,15 @@
     "@types/uuid": "^11.0.0",
     "@vitejs/plugin-react": "^4.7.0",
     "@vitejs/plugin-react-swc": "^4.3.0",
+    "@vitest/ui": "^4.1.10",
     "husky": "^9.1.7",
+    "jsdom": "^30.0.1",
     "lint-staged": "^17.3.0",
     "rollup-plugin-visualizer": "^7.0.1",
     "tailwindcss": "^4.1.18",
     "tw-animate-css": "^1.4.0",
     "typescript": "^7.0.2",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitest": "^4.1.10"
   }
 }

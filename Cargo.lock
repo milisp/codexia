@@ -1005,6 +1005,7 @@ dependencies = [
  "claude-agent-sdk-rs",
  "codex-finder",
  "codexia-acp",
+ "codexia-automation",
  "codexia-cc",
  "codexia-codex",
  "codexia-db",
@@ -1081,16 +1082,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "codexia-automation"
+version = "0.43.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "codexia-db",
+ "codexia-git",
+ "codexia-shared",
+ "dashmap",
+ "dirs",
+ "log",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-cron-scheduler",
+ "uuid",
+]
+
+[[package]]
 name = "codexia-cc"
 version = "0.43.0"
 dependencies = [
  "anyhow",
  "async-trait",
  "base64 0.22.1",
- "chrono",
  "claude-agent-sdk-rs",
  "codexia-codex",
- "codexia-db",
  "codexia-shared",
  "dashmap",
  "dirs",
@@ -1102,7 +1120,6 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.18",
  "tokio",
- "tokio-cron-scheduler",
  "uuid",
 ]
 
@@ -1111,6 +1128,7 @@ name = "codexia-codex"
 version = "0.43.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "chrono",
  "codex-finder",
  "codexia-db",
@@ -1207,6 +1225,7 @@ dependencies = [
  "claude-agent-sdk-rs",
  "codex-finder",
  "codexia-acp",
+ "codexia-automation",
  "codexia-cc",
  "codexia-codex",
  "codexia-db",

@@ -1,14 +1,24 @@
-use codexia_cc::automation::{self, AutomationRunRecord, AutomationSchedule, AutomationTask};
-use codexia_cc::CCState;
-use codexia_codex::AppState;
+use codexia_automation::{
+    AutomationHandle, AutomationInput, AutomationRunRecord, AutomationSchedule, AutomationTask,
+    CwdMode, self as automation,
+};
 use tauri::State;
 
+/// `None` when the scheduler failed to start, so commands report that instead of
+/// failing to resolve their state.
+pub type AutomationState = Option<AutomationHandle>;
+type HandleState<'a> = State<'a, AutomationState>;
+
+fn resolve<'a>(state: &'a HandleState<'a>) -> Result<&'a AutomationHandle, String> {
+    state
+        .inner()
+        .as_ref()
+        .ok_or_else(|| "automation runtime is not available".to_string())
+}
+
 #[tauri::command]
-pub async fn list_automations(
-    state: State<'_, AppState>,
-    cc_state: State<'_, CCState>,
-) -> Result<Vec<AutomationTask>, String> {
-    automation::list_automations(Some(state.codex.clone()), Some(cc_state.inner().clone())).await
+pub async fn list_automations(handle: HandleState<'_>) -> Result<Vec<AutomationTask>, String> {
+    automation::list_automations(resolve(&handle)?).await
 }
 
 #[tauri::command]
@@ -28,21 +38,23 @@ pub async fn create_automation(
     agent: Option<String>,
     model_provider: Option<String>,
     model: Option<String>,
-    state: State<'_, AppState>,
-    cc_state: State<'_, CCState>,
+    cwd_mode: Option<CwdMode>,
+    handle: HandleState<'_>,
 ) -> Result<AutomationTask, String> {
     automation::create_automation(
-        name,
-        projects,
-        prompt,
-        schedule,
-        agent,
-        model_provider,
-        model,
-        Some(state.codex.clone()),
-        Some(cc_state.inner().clone()),
+        resolve(&handle)?,
+        AutomationInput {
+            name,
+            projects,
+            prompt,
+            schedule,
+            agent,
+            model_provider,
+            model,
+            cwd_mode,
+        },
     )
-        .await
+    .await
 }
 
 #[tauri::command]
@@ -55,20 +67,22 @@ pub async fn update_automation(
     agent: Option<String>,
     model_provider: Option<String>,
     model: Option<String>,
-    state: State<'_, AppState>,
-    cc_state: State<'_, CCState>,
+    cwd_mode: Option<CwdMode>,
+    handle: HandleState<'_>,
 ) -> Result<AutomationTask, String> {
     automation::update_automation(
+        resolve(&handle)?,
         id,
-        name,
-        projects,
-        prompt,
-        schedule,
-        agent,
-        model_provider,
-        model,
-        Some(state.codex.clone()),
-        Some(cc_state.inner().clone()),
+        AutomationInput {
+            name,
+            projects,
+            prompt,
+            schedule,
+            agent,
+            model_provider,
+            model,
+            cwd_mode,
+        },
     )
     .await
 }
@@ -77,34 +91,17 @@ pub async fn update_automation(
 pub async fn set_automation_paused(
     id: String,
     paused: bool,
-    state: State<'_, AppState>,
-    cc_state: State<'_, CCState>,
+    handle: HandleState<'_>,
 ) -> Result<AutomationTask, String> {
-    automation::set_automation_paused(
-        id,
-        paused,
-        Some(state.codex.clone()),
-        Some(cc_state.inner().clone()),
-    )
-    .await
+    automation::set_automation_paused(resolve(&handle)?, id, paused).await
 }
 
 #[tauri::command]
-pub async fn delete_automation(
-    id: String,
-    state: State<'_, AppState>,
-    cc_state: State<'_, CCState>,
-) -> Result<(), String> {
-    automation::delete_automation(id, Some(state.codex.clone()), Some(cc_state.inner().clone()))
-        .await
+pub async fn delete_automation(id: String, handle: HandleState<'_>) -> Result<(), String> {
+    automation::delete_automation(resolve(&handle)?, id).await
 }
 
 #[tauri::command]
-pub async fn run_automation_now(
-    id: String,
-    state: State<'_, AppState>,
-    cc_state: State<'_, CCState>,
-) -> Result<(), String> {
-    automation::run_automation_now(id, Some(state.codex.clone()), Some(cc_state.inner().clone()))
-        .await
+pub async fn run_automation_now(id: String, handle: HandleState<'_>) -> Result<(), String> {
+    automation::run_automation_now(resolve(&handle)?, id).await
 }

@@ -26,6 +26,8 @@ export const DEFAULT_FORM: FormState = {
   dailyTime: '09:00',
   intervalHours: 6,
   weekdays: DEFAULT_WEEKDAYS,
+  // New tasks isolate their work; existing tasks keep whatever they were created with.
+  cwdMode: 'worktree',
 };
 
 export const BUILTIN_TEMPLATES: TemplateTask[] = [

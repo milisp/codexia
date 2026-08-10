@@ -1,4 +1,9 @@
-import type { AutomationSchedule, AutomationTask, AutomationWeekday } from '@/services/apiAdapt';
+import type {
+  AutomationCwdMode,
+  AutomationSchedule,
+  AutomationTask,
+  AutomationWeekday,
+} from '@/services/apiAdapt';
 import type { Provider } from '@/stores/settings';
 
 export type FormState = {
@@ -12,6 +17,7 @@ export type FormState = {
   dailyTime: string;
   intervalHours: number;
   weekdays: AutomationWeekday[];
+  cwdMode: AutomationCwdMode;
 };
 
 export type TemplateTask = {

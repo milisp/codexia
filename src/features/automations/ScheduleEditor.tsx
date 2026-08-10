@@ -1,9 +1,16 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { AutomationWeekday } from '@/services/apiAdapt';
 import type { FormState } from './types';
-import { clampHour, clampIntervalHours, clampMinute } from './utils';
+import { clampHour, clampIntervalHours, clampMinute, INTERVAL_HOURS_OPTIONS } from './utils';
 import { WeekdayPicker } from './WeekdayPicker';
 
 type ScheduleEditorProps = {
@@ -63,17 +70,23 @@ export function ScheduleEditor({ form, onChange }: ScheduleEditorProps) {
         <TabsContent value="interval">
           <div className="flex items-center gap-2 text-center">
             <span>Run every</span>
-            <Input
-              id="interval-hours"
-              type="number"
-              className="w-16"
-              min={1}
-              max={24}
-              value={form.intervalHours}
-              onChange={(e) =>
-                onChange('intervalHours', clampIntervalHours(Number(e.target.value)))
+            <Select
+              value={String(form.intervalHours)}
+              onValueChange={(value) =>
+                onChange('intervalHours', clampIntervalHours(Number(value)))
               }
-            />
+            >
+              <SelectTrigger id="interval-hours" className="w-16">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {INTERVAL_HOURS_OPTIONS.map((option) => (
+                  <SelectItem key={option} value={String(option)}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <span>hours on</span>
             <WeekdayPicker value={form.weekdays} onChange={toggleWeekday} />
           </div>

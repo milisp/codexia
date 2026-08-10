@@ -7,4 +7,5 @@ pub mod sleep;
 pub mod terminal;
 pub mod state;
 
+pub mod agent_runner;
 pub mod event_sink;

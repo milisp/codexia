@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
   "crates/acp",
+  "crates/automation",
   "crates/cc",
   "crates/codex",
   "crates/db",
@@ -76,7 +77,8 @@ ignore = "0.4.25"
 tokio-cron-scheduler = "0.13"
 agent-insights = { git = "https://github.com/milisp/agent-insights", default-features = false }
 codexia-acp = { path = "crates/acp" }
-codexia-cc = { path = "crates/cc" } 
+codexia-automation = { path = "crates/automation" }
+codexia-cc = { path = "crates/cc" }
 codexia-codex = { path = "crates/codex" }
 codexia-db = { path = "crates/db" }
 codexia-shared = { path = "crates/shared" } 

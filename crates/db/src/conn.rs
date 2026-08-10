@@ -119,11 +119,22 @@ fn init_automation_runs_tables(conn: &Connection) -> Result<(), String> {
             thread_id TEXT NOT NULL UNIQUE,
             status TEXT NOT NULL,
             started_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL
+            updated_at TEXT NOT NULL,
+            cwd TEXT
         )",
         [],
     )
     .map_err(|e| format!("Failed to create automation_runs table: {}", e))?;
+
+    // Databases created before runs recorded their working directory. SQLite has no
+    // "ADD COLUMN IF NOT EXISTS", so a duplicate-column error here means it is
+    // already present.
+    if let Err(err) = conn.execute("ALTER TABLE automation_runs ADD COLUMN cwd TEXT", []) {
+        let message = err.to_string();
+        if !message.contains("duplicate column name") {
+            return Err(format!("Failed to add automation_runs.cwd column: {message}"));
+        }
+    }
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS automation_run_steps (
