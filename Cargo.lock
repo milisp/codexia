@@ -993,7 +993,7 @@ dependencies = [
 
 [[package]]
 name = "codexia"
-version = "0.43.0"
+version = "0.44.0"
 dependencies = [
  "agent-insights",
  "anyhow",
@@ -1066,7 +1066,7 @@ dependencies = [
 
 [[package]]
 name = "codexia-acp"
-version = "0.43.0"
+version = "0.44.0"
 dependencies = [
  "anyhow",
  "codexia-db",
@@ -1083,7 +1083,7 @@ dependencies = [
 
 [[package]]
 name = "codexia-automation"
-version = "0.43.0"
+version = "0.44.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1102,7 +1102,7 @@ dependencies = [
 
 [[package]]
 name = "codexia-cc"
-version = "0.43.0"
+version = "0.44.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1125,7 +1125,7 @@ dependencies = [
 
 [[package]]
 name = "codexia-codex"
-version = "0.43.0"
+version = "0.44.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1149,7 +1149,7 @@ dependencies = [
 
 [[package]]
 name = "codexia-db"
-version = "0.43.0"
+version = "0.44.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1163,7 +1163,7 @@ dependencies = [
 
 [[package]]
 name = "codexia-git"
-version = "0.43.0"
+version = "0.44.0"
 dependencies = [
  "anyhow",
  "gix",
@@ -1174,7 +1174,7 @@ dependencies = [
 
 [[package]]
 name = "codexia-shared"
-version = "0.43.0"
+version = "0.44.0"
 dependencies = [
  "agent-insights",
  "anyhow",
@@ -1215,7 +1215,7 @@ dependencies = [
 
 [[package]]
 name = "codexia-web"
-version = "0.43.0"
+version = "0.44.0"
 dependencies = [
  "anyhow",
  "async-trait",
