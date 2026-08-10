@@ -39,8 +39,17 @@ Lightweight Agent Workstation for Codex CLI + Claude Code — with task schedule
 brew install --cask codexia
 ```
 
+### Scoop (Windows)
+```powershell
+scoop bucket add milisp https://github.com/milisp/scoop-bucket
+scoop install codexia
+```
+
 ### Prebuilt releases (macOS / Linux / Windows)
 - [GitHub Releases](https://github.com/milisp/codexia/releases)
+
+Windows also ships a portable archive (`codexia_<version>_x64_portable.zip`) that
+runs without installing.
 
 ## Quick Start
 
