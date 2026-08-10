@@ -1,4 +1,12 @@
-import { Columns2, Folder, FolderOpen, Menu, RefreshCw } from 'lucide-react';
+import {
+  ChevronsDownUp,
+  ChevronsUpDown,
+  Columns2,
+  Folder,
+  FolderOpen,
+  Menu,
+  RefreshCw,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -30,6 +38,10 @@ interface GitDiffTopBarProps {
   showFileTree: boolean;
   onToggleFileTree: () => void;
   onRefresh: () => void;
+  /** Omitted by views that don't render the diff list (e.g. latest-turn summary). */
+  allDiffsCollapsed?: boolean;
+  canToggleAllDiffs?: boolean;
+  onToggleAllDiffs?: () => void;
 }
 
 export function GitDiffTopBar({
@@ -44,6 +56,9 @@ export function GitDiffTopBar({
   showFileTree,
   onToggleFileTree,
   onRefresh,
+  allDiffsCollapsed = false,
+  canToggleAllDiffs = false,
+  onToggleAllDiffs,
 }: GitDiffTopBarProps) {
   const { diffWordWrap, setDiffWordWrap, diffSplitMode, setDiffSplitMode } = useLayoutStore();
 
@@ -77,6 +92,22 @@ export function GitDiffTopBar({
 
       <div className="flex items-center">
         <GitActions />
+        {onToggleAllDiffs && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onToggleAllDiffs}
+            disabled={!canToggleAllDiffs}
+            aria-label={allDiffsCollapsed ? 'Expand all diffs' : 'Collapse all diffs'}
+            title={allDiffsCollapsed ? 'Expand all diffs' : 'Collapse all diffs'}
+          >
+            {allDiffsCollapsed ? (
+              <ChevronsUpDown className="h-4 w-4" />
+            ) : (
+              <ChevronsDownUp className="h-4 w-4" />
+            )}
+          </Button>
+        )}
         <Button
           variant={diffSplitMode ? 'secondary' : 'ghost'}
           size="icon-sm"

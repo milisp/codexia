@@ -10,8 +10,15 @@ interface GitDiffFileListProps {
   wordWrapEnabled: boolean;
   selectedDiffPath: string | null;
   refreshKey: number;
+  expandedDiffs: Record<string, boolean>;
+  onExpandedChange: (path: string, expanded: boolean) => void;
   onSelect: (path: string) => void;
   onRefreshStatus: () => void;
+}
+
+/** Auto-expand all files when the list is short, otherwise only the first few. */
+export function isDiffAutoExpanded(index: number, total: number): boolean {
+  return index < (total <= 10 ? total : 5);
 }
 
 export function GitDiffFileList({
@@ -22,6 +29,8 @@ export function GitDiffFileList({
   wordWrapEnabled,
   selectedDiffPath,
   refreshKey,
+  expandedDiffs,
+  onExpandedChange,
   onSelect,
   onRefreshStatus,
 }: GitDiffFileListProps) {
@@ -41,9 +50,6 @@ export function GitDiffFileList({
     );
   }
 
-  // Auto-expand all files if there are 10 or fewer; otherwise only the first 5
-  const autoExpandThreshold = entries.length <= 10 ? entries.length : 5;
-
   return (
     <div className="flex-1 min-h-0 min-w-0 overflow-y-auto">
       {entries.map((entry, index) => (
@@ -54,9 +60,10 @@ export function GitDiffFileList({
           section={section}
           diffSource={diffSource}
           wordWrapEnabled={wordWrapEnabled}
-          defaultExpanded={index < autoExpandThreshold}
+          expanded={expandedDiffs[entry.path] ?? isDiffAutoExpanded(index, entries.length)}
           isSelected={selectedDiffPath === entry.path}
           refreshKey={refreshKey}
+          onExpandedChange={(value) => onExpandedChange(entry.path, value)}
           onSelect={() => onSelect(entry.path)}
           onRefreshStatus={onRefreshStatus}
         />

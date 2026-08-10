@@ -9,45 +9,54 @@ import {
 import { SummaryFileChanges } from '@/components/codex/items/SummaryFileChanges';
 import { useCodexStore } from '@/components/codex/stores/useCodexStore';
 import { useGitWatch } from '@/hooks/useGitWatch';
-import {
-  type GitStatusResponse,
-  gitStageFiles,
-  gitStatus,
-  gitUnstageFiles,
-} from '@/services/apiAdapt';
+import { gitStageFiles, gitStatus, gitUnstageFiles } from '@/services/apiAdapt';
 import { isGitRepo } from '@/services/apiAdapt/git';
 import { useEditorStore, useLayoutStore } from '@/stores';
+import { useGitDiffStore } from '@/stores/useGitDiffStore';
 import { GitDiffDialogs } from './GitDiffDialogs';
-import { GitDiffFileList } from './GitDiffFileList';
+import { GitDiffFileList, isDiffAutoExpanded } from './GitDiffFileList';
 import { GitDiffTopBar } from './GitDiffTopBar';
 import { GitFileTreePanel } from './GitFileTreePanel';
-import type { DiffSection, DiffSource, GitDiffPanelProps } from './types';
+import type { DiffSection, GitDiffPanelProps } from './types';
 import { buildFileTree } from './utils';
 
 export default function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
   const { activeFile, openFile } = useEditorStore();
   const { diffWordWrap } = useLayoutStore();
-  const [gitData, setGitData] = useState<GitStatusResponse | null>(null);
+  // Panel state lives in a store so it survives unmounts (right panel close,
+  // focus-mode toggle, mobile drawer) instead of resetting on every remount.
+  const {
+    gitData,
+    gitError,
+    showFileTree,
+    filterText,
+    collapsedFolders,
+    expandedDiffs,
+    diffSource,
+    selectedPath: userSelectedDiffPath,
+    selectedSection: userSelectedDiffSection,
+    sectionExplicitlySelected,
+    lastInternallyOpenedFile,
+    syncCwd,
+    toggleFileTree,
+    setDiffSource,
+    setFilterText,
+    toggleFolder,
+    revealPath,
+    setDiffExpanded,
+    setAllDiffsExpanded,
+    selectSection,
+    selectPath: selectDiffPath,
+    setLastInternallyOpenedFile,
+    setGitData,
+    setGitError,
+  } = useGitDiffStore();
+
   const [gitLoading, setGitLoading] = useState(false);
-  const [gitError, setGitError] = useState<string | null>(null);
   const [diffRefreshKey, setDiffRefreshKey] = useState(0);
-  const [showFileTree, setShowFileTree] = useState(true);
-  const [filterText, setFilterText] = useState('');
-  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
-  const [diffSource, setDiffSource] = useState<DiffSource>('unstaged');
   const [bulkStageDialogOpen, setBulkStageDialogOpen] = useState(false);
   const [bulkStageLoading, setBulkStageLoading] = useState(false);
 
-  // Track user explicit panel selection to decouple from global tab switches
-  const [userSelectedDiffPath, setUserSelectedDiffPath] = useState<string | null>(null);
-  const [userSelectedDiffSection, setUserSelectedDiffSection] = useState<DiffSection>('unstaged');
-
-  // Track if user explicitly selected a section (via dropdown or file list click)
-  // to prevent auto-detection from overriding explicit user choice
-  const userExplicitlySelectedSectionRef = useRef(false);
-
-  // Track internal programmatic opens to prevent feedback loops
-  const lastInternallyOpenedFileRef = useRef<string | null>(null);
   const [cwdTrigger, setCwdTrigger] = useState(0);
 
   const toPosix = useCallback((value: string) => value.replace(/\\/g, '/'), []);
@@ -57,12 +66,16 @@ export default function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
   );
 
   const prevCwdRef = useRef(cwd);
-  const hasResetGitStateRef = useRef(false);
   if (cwd !== prevCwdRef.current) {
     prevCwdRef.current = cwd;
     setCwdTrigger((prev) => prev + 1);
-    hasResetGitStateRef.current = false;
   }
+
+  // Drops cached status and selection whenever the workspace changes.
+  useEffect(() => {
+    syncCwd(cwd);
+    if (!cwd) setGitLoading(false);
+  }, [cwd, syncCwd]);
 
   // Get codex events for the current thread
   const { events } = useCodexStore();
@@ -90,33 +103,6 @@ export default function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
     return { events: currentThreadEvents, eventIndex };
   }, [currentThreadEvents, latestTurnId]);
 
-  if (
-    !cwd &&
-    !hasResetGitStateRef.current &&
-    (gitData !== null || gitError !== null || gitLoading)
-  ) {
-    setGitData(null);
-    setGitError(null);
-    setGitLoading(false);
-    setUserSelectedDiffPath(null);
-    hasResetGitStateRef.current = true;
-  }
-
-  const handleDiffSourceChange = useCallback((source: DiffSource) => {
-    setDiffSource(source);
-    if (source === 'staged' || source === 'unstaged') {
-      setUserSelectedDiffSection(source);
-      setUserSelectedDiffPath(null);
-      userExplicitlySelectedSectionRef.current = true;
-    }
-  }, []);
-
-  const handleDiffSectionChange = useCallback((section: DiffSection) => {
-    setUserSelectedDiffSection(section);
-    setUserSelectedDiffPath(null);
-    userExplicitlySelectedSectionRef.current = true;
-  }, []);
-
   const refreshGitStatus = useCallback(async () => {
     if (!cwd) return;
     if (!(await isGitRepo(cwd))) {
@@ -128,10 +114,7 @@ export default function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
     setGitError(null);
     try {
       const status = await gitStatus(cwd);
-      setGitData((prev) => {
-        if (JSON.stringify(prev) === JSON.stringify(status)) return prev;
-        return status;
-      });
+      setGitData(status);
       setDiffRefreshKey((k) => k + 1);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -140,13 +123,14 @@ export default function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
     } finally {
       setGitLoading(false);
     }
-  }, [cwd]);
+  }, [cwd, setGitData, setGitError]);
 
   const silentRefresh = useCallback(() => {
     void refreshGitStatus();
   }, [refreshGitStatus]);
   useGitWatch(cwd, silentRefresh);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: cwdTrigger is a reload signal
   useEffect(() => {
     if (cwdTrigger === 0) return;
     if (!cwd) return;
@@ -181,12 +165,12 @@ export default function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
     }
 
     // If user explicitly selected a section (via dropdown or file list click), honor that
-    if (userExplicitlySelectedSectionRef.current) {
+    if (sectionExplicitlySelected) {
       return userSelectedDiffSection;
     }
 
     // Honor the section if the tab change originated from this panel's list click
-    if (lastInternallyOpenedFileRef.current === activeFile) {
+    if (lastInternallyOpenedFile === activeFile) {
       return userSelectedDiffSection;
     }
 
@@ -218,6 +202,8 @@ export default function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
     unstagedEntries,
     stagedEntries,
     userSelectedDiffSection,
+    sectionExplicitlySelected,
+    lastInternallyOpenedFile,
   ]);
 
   const activeEntries = useMemo(
@@ -232,6 +218,38 @@ export default function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
   }, [activeEntries, filterText]);
 
   const fileTree = useMemo(() => buildFileTree(filteredEntries), [filteredEntries]);
+
+  // Fold/expand state is tracked per section so switching staged/unstaged
+  // restores what that side looked like instead of inheriting the other's.
+  const sectionCollapsedFolders = collapsedFolders[selectedDiffSection];
+  const sectionExpandedDiffs = expandedDiffs[selectedDiffSection];
+
+  const allDiffsCollapsed = useMemo(
+    () =>
+      filteredEntries.length > 0 &&
+      filteredEntries.every(
+        (entry, index) =>
+          !(sectionExpandedDiffs[entry.path] ?? isDiffAutoExpanded(index, filteredEntries.length))
+      ),
+    [filteredEntries, sectionExpandedDiffs]
+  );
+  const toggleAllDiffs = useCallback(() => {
+    setAllDiffsExpanded(
+      selectedDiffSection,
+      filteredEntries.map((entry) => entry.path),
+      allDiffsCollapsed
+    );
+  }, [selectedDiffSection, filteredEntries, allDiffsCollapsed, setAllDiffsExpanded]);
+
+  const handleFolderToggle = useCallback(
+    (path: string) => toggleFolder(selectedDiffSection, path),
+    [selectedDiffSection, toggleFolder]
+  );
+
+  const handleDiffExpandedChange = useCallback(
+    (path: string, expanded: boolean) => setDiffExpanded(selectedDiffSection, path, expanded),
+    [selectedDiffSection, setDiffExpanded]
+  );
 
   const bulkStagePaths = useMemo(() => {
     if (selectedDiffSection !== 'unstaged') return [];
@@ -271,25 +289,37 @@ export default function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
     [cwd]
   );
 
+  // Keep the selected file visible in the tree when the selection moves into a collapsed folder
+  useEffect(() => {
+    if (!effectiveSelectedDiffPath) return;
+    revealPath(selectedDiffSection, effectiveSelectedDiffPath);
+  }, [effectiveSelectedDiffPath, selectedDiffSection, revealPath]);
+
   // Sync selection to workspace via modern openFile API without locking up the view state
   useEffect(() => {
     if (!isActive || !effectiveSelectedDiffPath) return;
     const resolved = resolveDiffPath(effectiveSelectedDiffPath);
     if (activeFile !== resolved) {
-      lastInternallyOpenedFileRef.current = resolved;
+      setLastInternallyOpenedFile(resolved);
       openFile(resolved);
     }
-  }, [isActive, resolveDiffPath, effectiveSelectedDiffPath, activeFile, openFile]);
+  }, [
+    isActive,
+    resolveDiffPath,
+    effectiveSelectedDiffPath,
+    activeFile,
+    openFile,
+    setLastInternallyOpenedFile,
+  ]);
 
   const handleFileSelect = useCallback(
     (path: string) => {
-      setUserSelectedDiffPath(path);
+      selectDiffPath(path);
       const resolved = resolveDiffPath(path);
-      lastInternallyOpenedFileRef.current = resolved;
+      setLastInternallyOpenedFile(resolved);
       openFile(resolved);
-      userExplicitlySelectedSectionRef.current = true;
     },
-    [resolveDiffPath, openFile]
+    [resolveDiffPath, openFile, selectDiffPath, setLastInternallyOpenedFile]
   );
 
   const runStage = async (paths: string[]) => {
@@ -318,21 +348,11 @@ export default function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
     }
   };
 
-  const toggleFolder = (path: string) => {
-    setCollapsedFolders((prev) => {
-      const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
-      return next;
-    });
-  };
-
   const selectPath = (section: DiffSection, path: string) => {
-    setUserSelectedDiffSection(section);
-    setUserSelectedDiffPath(path);
-    userExplicitlySelectedSectionRef.current = true;
+    selectSection(section);
+    selectDiffPath(path);
     const resolved = resolveDiffPath(path);
-    lastInternallyOpenedFileRef.current = resolved;
+    setLastInternallyOpenedFile(resolved);
     openFile(resolved);
   };
 
@@ -350,13 +370,13 @@ export default function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
           cwd={cwd}
           gitLoading={gitLoading}
           diffSource={diffSource}
-          onDiffSourceChange={handleDiffSourceChange}
+          onDiffSourceChange={setDiffSource}
           selectedDiffSection={selectedDiffSection}
-          onDiffSectionChange={handleDiffSectionChange}
+          onDiffSectionChange={selectSection}
           unstagedCount={unstagedEntries.length}
           stagedCount={stagedEntries.length}
           showFileTree={showFileTree}
-          onToggleFileTree={() => setShowFileTree((v) => !v)}
+          onToggleFileTree={toggleFileTree}
           onRefresh={refreshGitStatus}
         />
 
@@ -384,14 +404,17 @@ export default function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
         cwd={cwd}
         gitLoading={gitLoading}
         diffSource={diffSource}
-        onDiffSourceChange={handleDiffSourceChange}
+        onDiffSourceChange={setDiffSource}
         selectedDiffSection={selectedDiffSection}
-        onDiffSectionChange={handleDiffSectionChange}
+        onDiffSectionChange={selectSection}
         unstagedCount={unstagedEntries.length}
         stagedCount={stagedEntries.length}
         showFileTree={showFileTree}
-        onToggleFileTree={() => setShowFileTree((v) => !v)}
+        onToggleFileTree={toggleFileTree}
         onRefresh={refreshGitStatus}
+        allDiffsCollapsed={allDiffsCollapsed}
+        canToggleAllDiffs={filteredEntries.length > 0}
+        onToggleAllDiffs={toggleAllDiffs}
       />
 
       <div className="flex-1 min-h-0 flex overflow-hidden">
@@ -403,6 +426,8 @@ export default function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
           wordWrapEnabled={diffWordWrap}
           selectedDiffPath={effectiveSelectedDiffPath}
           refreshKey={diffRefreshKey}
+          expandedDiffs={sectionExpandedDiffs}
+          onExpandedChange={handleDiffExpandedChange}
           onSelect={handleFileSelect}
           onRefreshStatus={refreshGitStatus}
         />
@@ -419,10 +444,10 @@ export default function GitDiffPanel({ cwd, isActive }: GitDiffPanelProps) {
               filteredEntriesCount={filteredEntries.length}
               fileTree={fileTree}
               selectedDiffPath={effectiveSelectedDiffPath}
-              collapsedFolders={collapsedFolders}
+              collapsedFolders={sectionCollapsedFolders}
               onOpenBulkStageDialog={() => setBulkStageDialogOpen(true)}
               onFilterTextChange={setFilterText}
-              onToggleFolder={toggleFolder}
+              onToggleFolder={handleFolderToggle}
               onSelectPath={selectPath}
               onStage={runStage}
               onUnstage={runUnstage}
