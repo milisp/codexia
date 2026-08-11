@@ -63,9 +63,12 @@ runs without installing.
 3. Enter a prompt and start your agent session.
 4. Create an Agent Task Scheduler job for recurring workflows.
 
+## Also by me
+
+- [Plux](https://milisp.dev/plux) - Codexia's prompt notepad, but system-wide. Double-tap <kbd>Shift</kbd> to keep whatever text you have selected, or grab a screenshot, without leaving the window you're in. One click later it's *inside* Codexia, Codex, Claude, Cursor or your terminal — app focused, input filled, ready to send. Not copied for you to paste. macOS and Windows.
+
 ## Recommend tools
 
-- [Plux](https://milisp.dev/plux) - Codexia's prompt notepad, but system-wide: capture from any app, then one click sends a snippet into ChatGPT, Claude, Cursor or Gemini. Local file, no account. *(also by me)*
 - [oh-my-codex](https://github.com/Yeachan-Heo/oh-my-codex) - Your codex is not alone. Add hooks, agent teams, HUDs, and so much more.
 - [rtc](https://github.com/rtk-ai/rtk) - CLI proxy that reduces LLM token consumption by 60-90% on common dev commands. Single Rust binary, zero dependencies
 - [ctx](https://github.com/ctxrs/ctx) - Search the coding agent history already on your machine
