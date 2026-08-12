@@ -18,6 +18,7 @@
 
 Lightweight Agent Workstation for Codex CLI + Claude Code + any Agent Client Protocol (ACP) agent — with task scheduler, git worktree & remote control, skills management, and a prompt notepad in one workspace
 
+> 💡 **Maintained by [@milisp](https://github.com/milisp)** · **[Follow me on 𝕏](https://x.com/lisp_mi)** for agentic workflows, building in public, and project updates
 > Sponsorship or custom work: [milisp@proton.me](mailto:milisp@proton.me)
 
 ![Codexia Home](docs/images/codexia-agent-command-center.png)
