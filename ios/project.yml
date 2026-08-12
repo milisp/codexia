@@ -49,3 +49,4 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.milisp.codexia
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
