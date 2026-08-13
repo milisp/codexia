@@ -35,9 +35,20 @@ async function verify(desktop: PairedDesktop): Promise<string | null> {
   }
 }
 
-/** First-run screen on mobile: point this device at a desktop and authenticate. */
-export function PairingView() {
-  const setDesktop = usePairingStore((s) => s.setDesktop);
+/**
+ * Point this device at a desktop and authenticate.
+ *
+ * Serves both entry points: the first-run screen, where there is nothing to go
+ * back to, and "Pair a desktop" from the drawer, which passes `onCancel`.
+ */
+export function PairingView({
+  onPaired,
+  onCancel,
+}: {
+  onPaired?: () => void;
+  onCancel?: () => void;
+} = {}) {
+  const addDesktop = usePairingStore((s) => s.addDesktop);
   const [name, setName] = useState('');
   const [host, setHost] = useState('');
   const [port, setPort] = useState(String(DEFAULT_PORT));
@@ -74,11 +85,12 @@ export function PairingView() {
       setError(failure);
       return;
     }
-    setDesktop(desktop);
+    addDesktop(desktop);
+    onPaired?.();
   };
 
   return (
-    <div className="flex min-h-dvh items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Pair desktop</CardTitle>
@@ -147,9 +159,16 @@ export function PairingView() {
             </p>
           )}
 
-          <Button className="w-full" disabled={!canSave} onClick={save}>
-            {verifying ? 'Checking…' : 'Save'}
-          </Button>
+          <div className="flex gap-2">
+            {onCancel && (
+              <Button variant="outline" className="flex-1" onClick={onCancel}>
+                Cancel
+              </Button>
+            )}
+            <Button className="flex-1" disabled={!canSave} onClick={save}>
+              {verifying ? 'Checking…' : 'Save'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

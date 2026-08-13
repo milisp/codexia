@@ -1,8 +1,9 @@
-import { BarChart2, Bug, ListFilter, Package2, Search, Timer } from 'lucide-react';
+import { BarChart2, Bug, ListFilter, Monitor, Package2, Search, Timer } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AgentSwitcher } from '@/components/agent';
 import { useNewThread, useThreadList } from '@/components/codex/hooks';
+import { DesktopDrawer } from '@/components/pairing/DesktopDrawer';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -20,6 +21,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useTrafficLightConfig } from '@/hooks';
+import { isPhone } from '@/hooks/runtime';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
 import { useLayoutStore } from '@/stores';
 import { useAcpStore } from '@/stores/useAcpStore';
@@ -54,6 +56,9 @@ export function AppSideBar() {
   const { handleNewThread } = useNewThread();
   const { handleNewSession } = useCCSessionManager();
   const [sessionManagerOpen, setSessionManagerOpen] = useState(false);
+  // Only a phone drives a remote machine; a desktop is its own backend and has
+  // nothing to switch between.
+  const [desktopDrawerOpen, setDesktopDrawerOpen] = useState(false);
 
   const currentThreadSortLabel = sortKey === 'created_at' ? 'Created' : 'Updated';
 
@@ -108,6 +113,17 @@ export function AppSideBar() {
             >
               <Search className="h-4 w-4" />
             </Button>
+            {isPhone() && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                title="Desktops"
+                onClick={() => setDesktopDrawerOpen(true)}
+              >
+                <Monitor className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
           {/* Nav actions */}
@@ -211,6 +227,8 @@ export function AppSideBar() {
         onOpenChange={setSessionManagerOpen}
         defaultTab={activeSidebarTab === 'cc' ? 'cc' : 'codex'}
       />
+
+      {isPhone() && <DesktopDrawer open={desktopDrawerOpen} onOpenChange={setDesktopDrawerOpen} />}
     </>
   );
 }

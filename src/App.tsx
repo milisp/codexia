@@ -87,7 +87,7 @@ function AppShell() {
 export default function App() {
   useAppDeepLink();
 
-  const isPaired = usePairingStore((s) => s.desktop !== null);
+  const isPaired = usePairingStore((s) => s.desktops.length > 0);
 
   // A phone has no local backend, so it cannot do anything until it is paired.
   if (isPhone() && !isPaired) return <PairingView />;
