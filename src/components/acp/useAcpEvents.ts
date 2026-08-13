@@ -8,6 +8,8 @@ type AcpEventPayload = {
   connectionId: string;
   agentId: string;
   kind: 'update' | 'permission' | 'stderr' | 'exited' | 'notification';
+  /** Set on `update` and `permission`: which session on the connection it came from. */
+  sessionId?: string;
   update?: Record<string, unknown>;
   requestId?: string;
   toolCall?: Record<string, unknown>;
@@ -26,6 +28,12 @@ export function useAcpEvents(connectionId: string | null) {
     const handle = (payload: AcpEventPayload) => {
       if (payload.connectionId !== connectionId) return;
       const store = useAcpStore.getState();
+      // One process can host several sessions — drop the ones this pane is not
+      // showing. Read the open session from the store rather than closing over
+      // it: `session/load` replays its transcript the moment the pane switches,
+      // before a re-render could resubscribe with the new id. Connection-wide
+      // events (`exited`, `stderr`) carry no session and always pass.
+      if (payload.sessionId && store.sessionId && payload.sessionId !== store.sessionId) return;
 
       if (payload.kind === 'exited') {
         store.addEntry({ id: `exit-${Date.now()}`, role: 'error', text: 'Agent process exited.' });

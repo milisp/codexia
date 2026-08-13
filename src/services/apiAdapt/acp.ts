@@ -91,18 +91,23 @@ export async function acpStart(agentId: string, cwd: string, custom?: AcpAgentDe
   );
 }
 
-export async function acpPrompt(connectionId: string, text: string) {
+/**
+ * One connection can host several sessions, so every session-scoped call names
+ * the session it targets. `null` falls back to the connection's newest session.
+ */
+export async function acpPrompt(connectionId: string, sessionId: string | null, text: string) {
   return await dual<{ stopReason?: string }>(
     'acp_prompt',
-    { connectionId, text },
+    { connectionId, sessionId, text },
     '/api/acp/prompt',
-    { connection_id: connectionId, text }
+    { connection_id: connectionId, session_id: sessionId, text }
   );
 }
 
-export async function acpCancel(connectionId: string) {
-  await dualVoid('acp_cancel', { connectionId }, '/api/acp/cancel', {
+export async function acpCancel(connectionId: string, sessionId: string | null) {
+  await dualVoid('acp_cancel', { connectionId, sessionId }, '/api/acp/cancel', {
     connection_id: connectionId,
+    session_id: sessionId,
   });
 }
 
@@ -168,36 +173,44 @@ export async function acpDeleteSession(sessionId: string) {
   });
 }
 
-export async function acpSetMode(connectionId: string, modeId: string) {
-  await dual('acp_set_mode', { connectionId, modeId }, '/api/acp/set-mode', {
+export async function acpSetMode(connectionId: string, sessionId: string | null, modeId: string) {
+  await dual('acp_set_mode', { connectionId, sessionId, modeId }, '/api/acp/set-mode', {
     connection_id: connectionId,
+    session_id: sessionId,
     mode_id: modeId,
   });
 }
 
 export async function acpSetModel(
   connectionId: string,
+  sessionId: string | null,
   modelId: string,
   reasoningEffort?: string | null
 ) {
   await dual(
     'acp_set_model',
-    { connectionId, modelId, reasoningEffort: reasoningEffort ?? null },
+    { connectionId, sessionId, modelId, reasoningEffort: reasoningEffort ?? null },
     '/api/acp/set-model',
-    { connection_id: connectionId, model_id: modelId, reasoning_effort: reasoningEffort ?? null }
+    {
+      connection_id: connectionId,
+      session_id: sessionId,
+      model_id: modelId,
+      reasoning_effort: reasoningEffort ?? null,
+    }
   );
 }
 
 export async function acpSetConfigOption(
   connectionId: string,
+  sessionId: string | null,
   configId: string,
   value: string | boolean
 ) {
   await dual(
     'acp_set_config_option',
-    { connectionId, configId, value },
+    { connectionId, sessionId, configId, value },
     '/api/acp/set-config-option',
-    { connection_id: connectionId, config_id: configId, value }
+    { connection_id: connectionId, session_id: sessionId, config_id: configId, value }
   );
 }
 

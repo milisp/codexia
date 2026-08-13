@@ -79,12 +79,21 @@ impl AcpState {
             .ok_or_else(|| format!("unknown ACP connection: {connection_id}"))
     }
 
-    pub async fn prompt(&self, connection_id: &str, text: &str) -> Result<Value, String> {
-        self.get(connection_id)?.prompt(text).await
+    pub async fn prompt(
+        &self,
+        connection_id: &str,
+        session_id: Option<&str>,
+        text: &str,
+    ) -> Result<Value, String> {
+        self.get(connection_id)?.prompt(session_id, text).await
     }
 
-    pub async fn cancel(&self, connection_id: &str) -> Result<(), String> {
-        self.get(connection_id)?.cancel().await
+    pub async fn cancel(
+        &self,
+        connection_id: &str,
+        session_id: Option<&str>,
+    ) -> Result<(), String> {
+        self.get(connection_id)?.cancel(session_id).await
     }
 
     pub async fn authenticate(&self, connection_id: &str, method_id: &str) -> Result<(), String> {
@@ -108,29 +117,36 @@ impl AcpState {
         self.get(connection_id)?.load_session(session_id, cwd).await
     }
 
-    pub async fn set_mode(&self, connection_id: &str, mode_id: &str) -> Result<Value, String> {
-        self.get(connection_id)?.set_mode(mode_id).await
+    pub async fn set_mode(
+        &self,
+        connection_id: &str,
+        session_id: Option<&str>,
+        mode_id: &str,
+    ) -> Result<Value, String> {
+        self.get(connection_id)?.set_mode(session_id, mode_id).await
     }
 
     pub async fn set_model(
         &self,
         connection_id: &str,
+        session_id: Option<&str>,
         model_id: &str,
         reasoning_effort: Option<&str>,
     ) -> Result<Value, String> {
         self.get(connection_id)?
-            .set_model(model_id, reasoning_effort)
+            .set_model(session_id, model_id, reasoning_effort)
             .await
     }
 
     pub async fn set_config_option(
         &self,
         connection_id: &str,
+        session_id: Option<&str>,
         config_id: &str,
         value: &Value,
     ) -> Result<Value, String> {
         self.get(connection_id)?
-            .set_config_option(config_id, value)
+            .set_config_option(session_id, config_id, value)
             .await
     }
 

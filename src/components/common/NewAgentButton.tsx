@@ -1,6 +1,7 @@
 import { SquarePen } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { acpFreshSession } from '@/components/acp/newSession';
 import { useNewThread } from '@/components/codex/hooks';
 import { Button } from '@/components/ui/button';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
@@ -32,6 +33,13 @@ export function NewAgentButton({ showLabel = false }: Props) {
 
       if (acpActive) {
         setView('agent');
+        // One agent process hosts many sessions, and `session/new` carries its
+        // own cwd, so a new chat — in this project or another — is a single
+        // JSON-RPC round trip. Respawning the CLI costs seconds.
+        const target = project ?? cwd;
+        if (acpConnectionId && target && (await acpFreshSession(acpConnectionId, target))) {
+          return;
+        }
         // The old process may already be gone; a fresh session works regardless.
         if (acpConnectionId) await acpStop(acpConnectionId).catch(() => {});
         acpRestart();

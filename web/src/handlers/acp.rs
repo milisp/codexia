@@ -16,12 +16,16 @@ pub(crate) struct AcpStartParams {
 #[derive(Deserialize)]
 pub(crate) struct AcpPromptParams {
     pub connection_id: String,
+    #[serde(default)]
+    pub session_id: Option<String>,
     pub text: String,
 }
 
 #[derive(Deserialize)]
 pub(crate) struct AcpConnectionParams {
     pub connection_id: String,
+    #[serde(default)]
+    pub session_id: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -59,12 +63,16 @@ pub(crate) struct AcpSessionParams {
 #[derive(Deserialize)]
 pub(crate) struct AcpSetModeParams {
     pub connection_id: String,
+    #[serde(default)]
+    pub session_id: Option<String>,
     pub mode_id: String,
 }
 
 #[derive(Deserialize)]
 pub(crate) struct AcpSetModelParams {
     pub connection_id: String,
+    #[serde(default)]
+    pub session_id: Option<String>,
     pub model_id: String,
     #[serde(default)]
     pub reasoning_effort: Option<String>,
@@ -73,6 +81,8 @@ pub(crate) struct AcpSetModelParams {
 #[derive(Deserialize)]
 pub(crate) struct AcpSetConfigOptionParams {
     pub connection_id: String,
+    #[serde(default)]
+    pub session_id: Option<String>,
     pub config_id: String,
     pub value: Value,
 }
@@ -111,7 +121,11 @@ pub(crate) async fn api_acp_prompt(
 ) -> Result<Json<Value>, ErrorResponse> {
     state
         .acp_state
-        .prompt(&params.connection_id, &params.text)
+        .prompt(
+            &params.connection_id,
+            params.session_id.as_deref(),
+            &params.text,
+        )
         .await
         .map(Json)
         .map_err(err)
@@ -123,7 +137,7 @@ pub(crate) async fn api_acp_cancel(
 ) -> Result<StatusCode, ErrorResponse> {
     state
         .acp_state
-        .cancel(&params.connection_id)
+        .cancel(&params.connection_id, params.session_id.as_deref())
         .await
         .map_err(err)?;
     Ok(StatusCode::OK)
@@ -194,7 +208,11 @@ pub(crate) async fn api_acp_set_mode(
 ) -> Result<Json<Value>, ErrorResponse> {
     state
         .acp_state
-        .set_mode(&params.connection_id, &params.mode_id)
+        .set_mode(
+            &params.connection_id,
+            params.session_id.as_deref(),
+            &params.mode_id,
+        )
         .await
         .map(Json)
         .map_err(err)
@@ -208,6 +226,7 @@ pub(crate) async fn api_acp_set_model(
         .acp_state
         .set_model(
             &params.connection_id,
+            params.session_id.as_deref(),
             &params.model_id,
             params.reasoning_effort.as_deref(),
         )
@@ -222,7 +241,12 @@ pub(crate) async fn api_acp_set_config_option(
 ) -> Result<Json<Value>, ErrorResponse> {
     state
         .acp_state
-        .set_config_option(&params.connection_id, &params.config_id, &params.value)
+        .set_config_option(
+            &params.connection_id,
+            params.session_id.as_deref(),
+            &params.config_id,
+            &params.value,
+        )
         .await
         .map(Json)
         .map_err(err)

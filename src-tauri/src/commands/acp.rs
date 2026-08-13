@@ -20,15 +20,20 @@ pub async fn acp_start(
 #[tauri::command]
 pub async fn acp_prompt(
     connection_id: String,
+    session_id: Option<String>,
     text: String,
     state: State<'_, AcpState>,
 ) -> Result<Value, String> {
-    state.prompt(&connection_id, &text).await
+    state.prompt(&connection_id, session_id.as_deref(), &text).await
 }
 
 #[tauri::command]
-pub async fn acp_cancel(connection_id: String, state: State<'_, AcpState>) -> Result<(), String> {
-    state.cancel(&connection_id).await
+pub async fn acp_cancel(
+    connection_id: String,
+    session_id: Option<String>,
+    state: State<'_, AcpState>,
+) -> Result<(), String> {
+    state.cancel(&connection_id, session_id.as_deref()).await
 }
 
 #[tauri::command]
@@ -81,32 +86,42 @@ pub async fn acp_delete_session(session_id: String) -> Result<(), String> {
 #[tauri::command]
 pub async fn acp_set_mode(
     connection_id: String,
+    session_id: Option<String>,
     mode_id: String,
     state: State<'_, AcpState>,
 ) -> Result<Value, String> {
-    state.set_mode(&connection_id, &mode_id).await
+    state.set_mode(&connection_id, session_id.as_deref(), &mode_id)
+        .await
 }
 
 #[tauri::command]
 pub async fn acp_set_model(
     connection_id: String,
+    session_id: Option<String>,
     model_id: String,
     reasoning_effort: Option<String>,
     state: State<'_, AcpState>,
 ) -> Result<Value, String> {
     state
-        .set_model(&connection_id, &model_id, reasoning_effort.as_deref())
+        .set_model(
+            &connection_id,
+            session_id.as_deref(),
+            &model_id,
+            reasoning_effort.as_deref(),
+        )
         .await
 }
 
 #[tauri::command]
 pub async fn acp_set_config_option(
     connection_id: String,
+    session_id: Option<String>,
     config_id: String,
     value: Value,
     state: State<'_, AcpState>,
 ) -> Result<Value, String> {
-    state.set_config_option(&connection_id, &config_id, &value).await
+    state.set_config_option(&connection_id, session_id.as_deref(), &config_id, &value)
+        .await
 }
 
 #[tauri::command]

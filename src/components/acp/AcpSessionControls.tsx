@@ -70,7 +70,13 @@ function ControlSelect({
  * the current value back, so the selection is tracked locally — keyed on the
  * session so a new one starts back on ask.
  */
-function GrokApprovalSelect({ connectionId }: { connectionId: string }) {
+function GrokApprovalSelect({
+  connectionId,
+  sessionId,
+}: {
+  connectionId: string;
+  sessionId: string;
+}) {
   const running = useAcpStore((s) => s.running);
   const [value, setValue] = useState('ask');
 
@@ -87,7 +93,11 @@ function GrokApprovalSelect({ connectionId }: { connectionId: string }) {
         const previous = value;
         setValue(next);
         try {
-          await acpPrompt(connectionId, `/always-approve ${next === 'yolo' ? 'on' : 'off'}`);
+          await acpPrompt(
+            connectionId,
+            sessionId,
+            `/always-approve ${next === 'yolo' ? 'on' : 'off'}`
+          );
         } catch (e) {
           setValue(previous);
           toast({
@@ -148,7 +158,7 @@ export function AcpSessionControls({ slot }: { slot: 'mode' | 'model' }) {
     setConfigOptionValue(option.id, value);
     return apply(
       () => setConfigOptionValue(option.id, previous),
-      () => acpSetConfigOption(connectionId, option.id, value)
+      () => acpSetConfigOption(connectionId, sessionId, option.id, value)
     );
   };
 
@@ -190,7 +200,7 @@ export function AcpSessionControls({ slot }: { slot: 'mode' | 'model' }) {
   if (slot === 'mode') {
     if (!modes?.availableModes.length) {
       return agentId === 'grok' ? (
-        <GrokApprovalSelect key={sessionId} connectionId={connectionId} />
+        <GrokApprovalSelect key={sessionId} connectionId={connectionId} sessionId={sessionId} />
       ) : null;
     }
     return (
@@ -207,7 +217,7 @@ export function AcpSessionControls({ slot }: { slot: 'mode' | 'model' }) {
           setCurrentMode(modeId);
           return apply(
             () => setCurrentMode(previous),
-            () => acpSetMode(connectionId, modeId)
+            () => acpSetMode(connectionId, sessionId, modeId)
           );
         }}
       />
@@ -224,7 +234,7 @@ export function AcpSessionControls({ slot }: { slot: 'mode' | 'model' }) {
         if (previousModel) setCurrentModel(previousModel);
         setReasoningEffort(previousEffort);
       },
-      () => acpSetModel(connectionId, modelId, effort)
+      () => acpSetModel(connectionId, sessionId, modelId, effort)
     );
   };
 

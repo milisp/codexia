@@ -34,21 +34,25 @@ async fn gemini_prompt_roundtrip() {
 
     // Switching mode goes through the standard `session/set_mode`.
     state
-        .set_mode(&started.connection_id, "plan")
+        .set_mode(&started.connection_id, started.session_id.as_deref(), "plan")
         .await
         .expect("set_mode");
 
     // Gemini refuses privileged modes in an untrusted folder; the reason lives
     // in the JSON-RPC `error.data.details` and must survive to the caller.
     let refused = state
-        .set_mode(&started.connection_id, "yolo")
+        .set_mode(&started.connection_id, started.session_id.as_deref(), "yolo")
         .await
         .expect_err("yolo should be refused in /tmp");
     println!("refused: {refused}");
     assert!(refused.contains("untrusted folder"), "lost error details: {refused}");
 
     let stop = state
-        .prompt(&started.connection_id, "Reply with exactly: pong")
+        .prompt(
+            &started.connection_id,
+            started.session_id.as_deref(),
+            "Reply with exactly: pong",
+        )
         .await
         .expect("prompt");
     println!("stopReason: {stop}");
@@ -71,7 +75,12 @@ async fn grok_reports_session_config() {
     // Grok advertises reasoning efforts per model under `models[]._meta` and
     // reads the chosen one from `_meta.reasoningEffort` on `session/set_model`.
     state
-        .set_model(&started.connection_id, "grok-4.5", Some("low"))
+        .set_model(
+            &started.connection_id,
+            started.session_id.as_deref(),
+            "grok-4.5",
+            Some("low"),
+        )
         .await
         .expect("set_model with effort");
     state.stop(&started.connection_id).await.unwrap();

@@ -1,5 +1,5 @@
 import { ArrowUp, Download, Loader2, Square } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { acpCancel, acpPrompt, acpStart } from '@/services/apiAdapt/acp';
@@ -34,7 +34,7 @@ export function AcpComposer() {
   const commandLine = agent ? [agent.command, ...agent.args].join(' ') : '';
 
   /** Start the agent and open a session. Returns the live ids, or null on failure. */
-  const connect = async () => {
+  const connect = useCallback(async () => {
     if (!cwd) {
       toast({ title: 'Pick a workspace folder first', variant: 'destructive' });
       return null;
@@ -61,7 +61,7 @@ export function AcpComposer() {
       toast({ title: 'Failed to start agent', description: String(e), variant: 'destructive' });
       return null;
     }
-  };
+  }, [agentId, cwd, setConnecting, setConnection, applySession, addEntry]);
 
   // Connect as soon as an installed agent is picked, so its model / mode
   // controls are available before the first prompt.
@@ -73,7 +73,7 @@ export function AcpComposer() {
     if (connectionId || connecting || !cwd || !agent?.available) return;
     if (attempted.current === agentId) return;
     void connect();
-  }, [agentId, cwd, connectionId, connecting, agent?.available, restartNonce]);
+  }, [agentId, cwd, connectionId, connecting, agent?.available, restartNonce, connect]);
 
   const send = async () => {
     const trimmed = text.trim();
@@ -93,7 +93,7 @@ export function AcpComposer() {
     addEntry({ id: `u-${Date.now()}`, role: 'user', text: trimmed });
     setRunning(true);
     try {
-      await acpPrompt(live.connectionId, trimmed);
+      await acpPrompt(live.connectionId, live.sessionId, trimmed);
     } catch (e) {
       addEntry({ id: `e-${Date.now()}`, role: 'error', text: String(e) });
     } finally {
@@ -148,7 +148,7 @@ export function AcpComposer() {
           <AcpSessionControls slot="model" />
           {running ? (
             <Button
-              onClick={() => connectionId && acpCancel(connectionId)}
+              onClick={() => connectionId && acpCancel(connectionId, sessionId)}
               variant="destructive"
               size="icon"
               className="h-8 w-8 rounded-full"

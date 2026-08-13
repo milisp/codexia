@@ -19,7 +19,9 @@ pub struct AcpSessionRecord {
 }
 
 /// Record a session as soon as `session/new` succeeds, so it shows up in the
-/// list even before the first prompt.
+/// list even before the first prompt. Re-recording an existing session (on
+/// resume) leaves `updated_at` alone, so merely opening a session does not
+/// move it to the top of the list.
 pub fn upsert_session(
     session_id: &str,
     agent_id: &str,
@@ -35,8 +37,7 @@ pub fn upsert_session(
         ON CONFLICT(session_id) DO UPDATE SET
             agent_id = excluded.agent_id,
             agent_title = excluded.agent_title,
-            cwd = excluded.cwd,
-            updated_at = excluded.updated_at",
+            cwd = excluded.cwd",
         params![session_id, agent_id, agent_title, cwd, now],
     )
     .map_err(|e| format!("Failed to upsert ACP session: {}", e))?;
