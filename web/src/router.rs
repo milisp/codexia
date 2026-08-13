@@ -105,6 +105,12 @@ fn resolve_dist_dir() -> PathBuf {
 /// desktop, which matters especially because the auth layer exempts loopback
 /// requests from presenting a token.
 fn origin_is_allowed(origin: &str) -> bool {
+    // Tauri mobile webviews use their own scheme for the bundled app itself:
+    // `tauri://localhost` on iOS, `http://tauri.localhost` on Android.
+    if origin == "tauri://localhost" {
+        return true;
+    }
+
     let Some(rest) = origin
         .strip_prefix("http://")
         .or_else(|| origin.strip_prefix("https://"))
@@ -119,7 +125,8 @@ fn origin_is_allowed(origin: &str) -> bool {
         rest.split(':').next().unwrap_or(rest)
     };
 
-    matches!(host, "localhost" | "127.0.0.1" | "::1") || host.ends_with(".ts.net")
+    matches!(host, "localhost" | "127.0.0.1" | "::1" | "tauri.localhost")
+        || host.ends_with(".ts.net")
 }
 
 fn cors_layer() -> CorsLayer {

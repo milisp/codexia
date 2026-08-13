@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from '@/components/ui/use-toast';
-import { buildUrl, isDesktopTauri, isTauri } from '@/hooks/runtime';
+import { authHeaders, buildUrl, isDesktopTauri, isTauri } from '@/hooks/runtime';
 
 export type MarketplaceSkillItem = {
   name: string;
@@ -78,7 +78,7 @@ export async function getJsonWithOptions<T>(
 ): Promise<T> {
   const response = await fetch(buildUrl(path), {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
   });
 
   if (!response.ok) {
@@ -107,7 +107,7 @@ export async function postJsonWithOptions<T>(
 ): Promise<T> {
   const response = await fetch(buildUrl(path), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: body ? JSON.stringify(body) : undefined,
   });
 
@@ -137,7 +137,7 @@ export async function postNoContentWithOptions(
 ): Promise<void> {
   const response = await fetch(buildUrl(path), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: body ? JSON.stringify(body) : undefined,
   });
 

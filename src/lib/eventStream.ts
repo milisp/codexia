@@ -1,4 +1,4 @@
-import { buildUrl } from '@/hooks/runtime';
+import { buildEventUrl } from '@/hooks/runtime';
 
 /** One frame from `/api/events`. `seq` is global and monotonic per server run. */
 export interface EventEnvelope {
@@ -45,7 +45,7 @@ export function openEventStream({ agents, onEvent, label = '[events]' }: OpenEve
       params.set('since', String(lastSeq));
     }
     const qs = params.toString();
-    return buildUrl(`/api/events${qs ? `?${qs}` : ''}`);
+    return buildEventUrl(`/api/events${qs ? `?${qs}` : ''}`);
   };
 
   const connect = () => {

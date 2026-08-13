@@ -8,8 +8,8 @@ import type {
   ThreadListResponse,
   ThreadNameUpdatedNotification,
 } from '@/bindings/v2';
-import { RenameThreadDialog } from '@/components/codex/thread/RenameThreadDialog';
 import { useCodexStore, useThreadListStore } from '@/components/codex/stores';
+import { RenameThreadDialog } from '@/components/codex/thread/RenameThreadDialog';
 import { Button } from '@/components/ui/button';
 import {
   ContextMenu,
@@ -19,9 +19,10 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { toast } from '@/components/ui/use-toast';
-import { codexService } from '@/services/codexService';
+import { isDesktopTauri } from '@/hooks/runtime';
 import { archiveThread, deleteThread, listThreads, renameThread } from '@/services/apiAdapt';
 import { gitRemoveWorktree } from '@/services/apiAdapt/git';
+import { codexService } from '@/services/codexService';
 import { useAgentCenterStore, useLayoutStore } from '@/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { formatThreadAge } from '@/utils/formatThreadAge';
@@ -62,6 +63,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
 
   // --- Thread loading (search + sort delegated to backend) ---
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshCounter is the manual reload trigger
   useEffect(() => {
     let cancelled = false;
     const params: ThreadListParams = {
@@ -97,6 +99,8 @@ export function ThreadList({ cwd }: ThreadListProps) {
   }, [refreshTrigger, refresh]);
 
   useEffect(() => {
+    if (!isDesktopTauri()) return;
+
     const unlisten = listen<ServerNotification>('codex:notification', (event) => {
       const { method, params } = event.payload;
       if (method !== 'thread/name/updated') return;

@@ -1,6 +1,6 @@
 import { listen } from '@tauri-apps/api/event';
 import { useEffect } from 'react';
-import { buildUrl, isDesktopTauri } from '@/hooks/runtime';
+import { buildEventUrl, isDesktopTauri } from '@/hooks/runtime';
 import { useAcpStore } from '@/stores/useAcpStore';
 import { applyAcpUpdate } from './applyUpdate';
 
@@ -63,7 +63,7 @@ export function useAcpEvents(connectionId: string | null) {
       };
     }
 
-    const es = new EventSource(buildUrl('/api/events'));
+    const es = new EventSource(buildEventUrl('/api/events'));
     es.onmessage = (e) => {
       try {
         const envelope = JSON.parse(e.data as string) as { event?: string; payload?: unknown };

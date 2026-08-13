@@ -57,7 +57,7 @@ codexia/
 - new tauri command add a api to `web/src/handlers/` 
 - invoke add to `src/services/tauri/`
 
-## p2p stun for remote control
+## tailscale for remote control
 
 - ios connect to desktop
 

@@ -1,6 +1,10 @@
-// Core modules
+// Core modules — the command surface exists only on desktop, where the agent
+// backend actually runs. Mobile talks to a paired desktop over HTTP instead.
+#[cfg(desktop)]
 mod commands;
+#[cfg(desktop)]
 pub mod dictation;
+#[cfg(desktop)]
 mod event_sink;
 #[cfg(all(any(windows, target_os = "linux")))]
 mod window;
@@ -9,7 +13,21 @@ mod menu;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Mobile: a webview shell. Every backend call is HTTP to the paired
+    // desktop, so there are no commands and no managed agent state here.
+    #[cfg(mobile)]
+    let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_deep_link::init())
+        .plugin(tauri_plugin_opener::init())
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .level(log::LevelFilter::Info)
+                .build(),
+        );
+
     // Desktop: full app with all plugins, commands, and setup.
+    #[cfg(desktop)]
     let builder = {
         use cc::CCState;
         use dictation::DictationState;
@@ -352,6 +370,7 @@ pub fn run() {
         });
 }
 
+#[cfg(desktop)]
 #[tauri::command]
 fn quit_app(app: tauri::AppHandle) {
     app.exit(0);

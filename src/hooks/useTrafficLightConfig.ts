@@ -3,12 +3,13 @@ import { useMemo } from 'react';
 import { isMacos } from '@/hooks/runtime';
 
 export const useTrafficLightConfig = (isSidebarOpen: boolean) => {
+  const macos = isMacos();
   const needsTrafficLightOffset = useMemo(() => {
-    return isMacos && !isSidebarOpen;
-  }, [isSidebarOpen]);
+    return macos && !isSidebarOpen;
+  }, [macos, isSidebarOpen]);
 
   return {
-    isMacos,
+    isMacos: macos,
     needsTrafficLightOffset,
   };
 };

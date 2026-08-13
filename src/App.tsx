@@ -6,21 +6,24 @@ import './App.css';
 import { useCodexEvents } from '@/components/codex/hooks';
 import { QuitDialog } from '@/components/dialogs';
 import { AppLayout } from '@/components/layout';
+import { PairingView } from '@/components/pairing/PairingView';
 import { AnalyticsConsentDialog } from '@/components/settings/AnalyticsConsentDialog';
 import { HistoryProjectsDialog } from '@/features/ProjectSelector';
-import { isTauri } from '@/hooks/runtime';
+import { isDesktopTauri, isPhone } from '@/hooks/runtime';
 import { useAppDeepLink } from '@/hooks/useAppDeepLink';
 import { useUrlParamThread } from '@/hooks/useUrlParamThread';
 import { hasActiveWork } from '@/lib/hasActiveWork';
 import { initSettingsSync, loadSettings } from '@/lib/settings';
 import { initializeCodexAsync } from '@/services/apiAdapt';
+import { usePairingStore } from '@/stores/usePairingStore';
 import type { InitializeResponse } from './bindings';
 
 function AppShell() {
   const [quitDialogOpen, setQuitDialogOpen] = useState(false);
   const [settingsReady, setSettingsReady] = useState(false);
-  // True once codex backend signals it is ready; non-Tauri skips init entirely.
-  const [codexReady, setCodexReady] = useState(!isTauri());
+  // True once codex backend signals it is ready; only desktop Tauri has a
+  // local backend to initialize — mobile and web talk to a remote one.
+  const [codexReady, setCodexReady] = useState(!isDesktopTauri());
 
   useEffect(() => {
     loadSettings().finally(() => setSettingsReady(true));
@@ -30,7 +33,7 @@ function AppShell() {
   }, []);
 
   useEffect(() => {
-    if (!isTauri()) {
+    if (!isDesktopTauri()) {
       return;
     }
 
@@ -83,6 +86,11 @@ function AppShell() {
 
 export default function App() {
   useAppDeepLink();
+
+  const isPaired = usePairingStore((s) => s.desktop !== null);
+
+  // A phone has no local backend, so it cannot do anything until it is paired.
+  if (isPhone() && !isPaired) return <PairingView />;
 
   return <AppShell />;
 }

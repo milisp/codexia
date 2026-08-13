@@ -1,6 +1,7 @@
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { getCurrent, onOpenUrl } from '@tauri-apps/plugin-deep-link';
 import { useEffect, useRef } from 'react';
+import { isTauri } from '@/hooks/runtime';
 
 // Single global tracking instance to prevent double-processing identical links
 const processedUrls = new Set<string>();
@@ -10,6 +11,9 @@ export const useDeepLink = (onUrlReceived: (url: string) => void) => {
   callbackRef.current = onUrlReceived;
 
   useEffect(() => {
+    // The web build has no IPC bridge — calling the plugin there always throws.
+    if (!isTauri()) return;
+
     const unlisteners: (UnlistenFn | (() => void))[] = [];
 
     const initDeepLink = async () => {
@@ -37,7 +41,7 @@ export const useDeepLink = (onUrlReceived: (url: string) => void) => {
     void initDeepLink();
 
     return () => {
-      unlisteners.forEach((unlisten) => unlisten());
+      for (const unlisten of unlisteners) unlisten();
       processedUrls.clear();
     };
   }, []);

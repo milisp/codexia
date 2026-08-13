@@ -3,11 +3,14 @@ import { useCallback, useEffect, useRef } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
-import { buildWsUrl, isTauri } from '@/hooks/runtime';
+import { buildWsUrl, isDesktopTauri } from '@/hooks/runtime';
 import { terminalResize, terminalStart, terminalStop, terminalWrite } from '@/services/apiAdapt';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
-const IS_TAURI = isTauri();
+// Only the desktop app has a local pty backend on the Tauri event bus; mobile
+// is a webview shell and must reach the paired desktop over the WebSocket,
+// matching how terminalStart/Write/Resize route in the service layer.
+const USE_TAURI_EVENTS = isDesktopTauri();
 
 const TERMINAL_THEME = {
   fontFamily: 'Menlo, Monaco, Consolas, monospace',
@@ -153,7 +156,7 @@ export function TerminalPane({ active, panelOpen }: TerminalPaneProps) {
   // Transport listener — Tauri event bus on desktop, WebSocket on web.
   // Both paths funnel into the same two handlers, so they share one effect.
   useEffect(() => {
-    if (IS_TAURI) {
+    if (USE_TAURI_EVENTS) {
       let cancelled = false;
       let unlistenData: (() => void) | null = null;
       let unlistenExit: (() => void) | null = null;
@@ -259,6 +262,8 @@ export function TerminalPane({ active, panelOpen }: TerminalPaneProps) {
     <div className="absolute inset-0" style={{ visibility: active ? 'visible' : 'hidden' }}>
       <div
         ref={containerRef}
+        role="application"
+        aria-label="Terminal"
         className="h-full w-full px-2 py-2"
         onMouseDown={() => terminalRef.current?.focus()}
       />

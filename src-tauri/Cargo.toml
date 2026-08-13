@@ -16,31 +16,40 @@ name = "codexia_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(mobile)'] }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(mobile)', 'cfg(desktop)'] }
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+# Mobile is a remote control for a paired desktop: the frontend routes every
+# call over HTTP (see src/services/apiAdapt), so the app there is a webview
+# shell and needs only the plugins granted by capabilities/default.json.
 tauri = { version = "2", features = ["macos-private-api", "protocol-asset", "devtools"] }
 fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs" }
 tauri-plugin-os = "2"
 tauri-plugin-opener = { version = "2" }
+tauri-plugin-log = { version = "2" }
+tauri-plugin-deep-link = "2"
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# --- desktop-only: the agent backend and everything it drags in ---
+[target.'cfg(not(any(target_os = "ios", target_os = "android")))'.dependencies]
 tauri-plugin-shell = { version = "2" }
 tauri-plugin-dialog = { version = "2" }
-tauri-plugin-log = { version = "2" }
 tauri-plugin-process = { version = "2" }
-tauri-plugin-deep-link = "2"
 tauri-plugin-fs = { version = "2", features = ["watch"] }
+tauri-plugin-updater = { version = "2" }
+tauri-plugin-screenshots = { version = "2.2.0" }
 
-# --- workspace deps ---
 reqwest = { workspace = true }
 futures = { workspace = true }
 indexmap = { workspace = true }
 thiserror = { workspace = true }
 moka = { workspace = true }
 tokio = { workspace = true }
-log = { workspace = true }
 env_logger = { workspace = true }
 dirs = { workspace = true }
 base64 = { workspace = true }
@@ -54,8 +63,6 @@ tempfile = { workspace = true }
 serde_yaml = { workspace = true }
 glob = { workspace = true }
 tokio-cron-scheduler = { workspace = true }
-serde = { workspace = true }
-serde_json = { workspace = true }
 anyhow = { workspace = true }
 claude-agent-sdk-rs = { workspace = true }
 codex-finder = { workspace = true }
@@ -64,20 +71,12 @@ codexia-codex = { workspace = true }
 codexia-acp = { workspace = true }
 codexia-cc = { workspace = true }
 codexia-db = { workspace = true }
+codexia-git = { workspace = true }
 codexia-shared = { workspace = true }
 codexia-web = { path = "../web" }
-
-# --- non-workspace deps ---
-tauri-plugin-updater = { version = "2" }
 which = { version = "6.0" }
 
-[target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
-tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
-
-[target.'cfg(not(any(target_os = "ios", target_os = "android")))'.dependencies]
-tauri-plugin-screenshots = { version = "2.2.0" }
 gix = { workspace = true }
-codexia-git = { workspace = true }
 walkdir = { workspace = true }
 agent-insights = { workspace = true }
 pdf-extract = { workspace = true }
@@ -91,7 +90,9 @@ cpal = "0.15"
 whisper-rs = "0.12"
 sha2 = "0.10"
 
-# Platform-specific dependencies
+[target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
+tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
+
 [target.'cfg(windows)'.dependencies]
 encoding_rs = "0.8"
 winreg = "0.52"

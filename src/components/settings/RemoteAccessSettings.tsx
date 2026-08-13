@@ -5,11 +5,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { isDesktopTauri } from '@/hooks/runtime';
 import {
+  type RemoteStatus,
   remoteGetStatus,
   remoteStart,
   remoteStop,
-  type RemoteStatus,
 } from '@/services/apiAdapt/remote';
+import { usePairingStore } from '@/stores/usePairingStore';
 
 function CopyField({ label, value, mask }: { label: string; value: string; mask?: boolean }) {
   const [copied, setCopied] = useState(false);
@@ -76,6 +77,8 @@ export function RemoteAccessSettings() {
 
   const tailscale = status?.tailscale;
   const canToggle = isDesktopTauri();
+  const paired = usePairingStore((s) => s.desktop);
+  const clearDesktop = usePairingStore((s) => s.clearDesktop);
 
   return (
     <section className="space-y-3">
@@ -120,11 +123,25 @@ export function RemoteAccessSettings() {
           {status && <CopyField label="Port" value={String(status.port)} />}
           {status?.token && <CopyField label="Device token" value={status.token} mask />}
 
-          <p className="text-xs text-muted-foreground">
-            Enter the hostname, port and token in the Codexia iOS app to pair this machine. The
-            token grants full access to this computer — treat it like an SSH key. Requests from this
-            machine itself never need it.
-          </p>
+          {paired ? (
+            <div className="flex items-center justify-between border-t pt-4">
+              <div className="space-y-0.5">
+                <div className="text-sm font-medium">Paired with {paired.name}</div>
+                <div className="text-xs text-muted-foreground">
+                  {paired.host}:{paired.port}
+                </div>
+              </div>
+              <Button variant="outline" size="sm" onClick={clearDesktop}>
+                Unpair
+              </Button>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Enter the hostname, port and token in the Codexia mobile app to pair this machine. The
+              token grants full access to this computer — treat it like an SSH key. Requests from
+              this machine itself never need it.
+            </p>
+          )}
         </CardContent>
       </Card>
     </section>
