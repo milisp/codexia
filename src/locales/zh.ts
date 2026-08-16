@@ -27,7 +27,6 @@ export const zh = {
     privacy: '隐私',
     claude: 'Claude',
     explorer: '探索',
-    codexauth: 'Codex 认证',
     task: '任务',
     agents: '多代理',
     config: '配置',

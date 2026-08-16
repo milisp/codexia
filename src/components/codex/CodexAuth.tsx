@@ -1,7 +1,7 @@
 import { listen } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-shell';
+import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import type { ServerNotification } from '@/bindings/ServerNotification';
 import type {
   AccountLoginCompletedNotification,
@@ -9,14 +9,18 @@ import type {
   LoginAccountParams,
 } from '@/bindings/v2';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { isTauri } from '@/hooks/runtime';
 import { getAccountWithParams, loginAccount } from '@/services';
 
-export function CodexAuth() {
+interface CodexAuthProps {
+  onAuthenticated?: () => void;
+}
+
+export function CodexAuth({ onAuthenticated }: CodexAuthProps = {}) {
   const isTauriRuntime = isTauri();
   const [accountResponse, setAccountResponse] = useState<GetAccountResponse | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -51,7 +55,8 @@ export function CodexAuth() {
         } else if (response.type === 'apiKey') {
           setLastStatus('Login successful');
           setApiKey('');
-          void refreshAccount(true);
+          refreshAccount(true);
+          onAuthenticated?.();
         }
       } catch (error) {
         console.error(error);
@@ -62,7 +67,7 @@ export function CodexAuth() {
         setIsLoggingIn(false);
       }
     },
-    [refreshAccount]
+    [refreshAccount, onAuthenticated]
   );
 
   const startChatGptLogin = useCallback(() => {
@@ -82,7 +87,7 @@ export function CodexAuth() {
   );
 
   useEffect(() => {
-    void refreshAccount(false);
+    refreshAccount(false);
   }, [refreshAccount]);
 
   useEffect(() => {
@@ -93,13 +98,14 @@ export function CodexAuth() {
     const unlistenPromise = listen<ServerNotification>('codex:notification', (event) => {
       const { method, params } = event.payload;
       if (method === 'account/updated') {
-        void refreshAccount(true);
+        refreshAccount(true);
         return;
       }
       if (method === 'account/login/completed') {
         const payload = params as AccountLoginCompletedNotification;
         if (payload.success) {
-          void refreshAccount(true);
+          refreshAccount(true);
+          onAuthenticated?.();
         }
       }
     });
@@ -107,7 +113,7 @@ export function CodexAuth() {
     return () => {
       unlistenPromise.then((unlisten) => unlisten());
     };
-  }, [isTauriRuntime, refreshAccount]);
+  }, [isTauriRuntime, refreshAccount, onAuthenticated]);
 
   return (
     <Card className="w-full max-w-md mx-auto border border-border/50 shadow-sm">

@@ -1,12 +1,31 @@
-import { User } from 'lucide-react';
+import { KeyRound, User } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { CodexAuthDialog } from '@/components/codex/CodexAuthDialog';
+import { useCodexStore } from '@/components/codex/stores';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useLayoutStore } from '@/stores';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
 export function UserInfo() {
   const { setView } = useLayoutStore();
   const { t } = useTranslation('sidebar');
+  const hasAccount = useCodexStore((s) => s.hasAccount);
+  const hasProject = useWorkspaceStore((s) => s.projects.length > 0);
+  const [codexAuthOpen, setCodexAuthOpen] = useState(false);
+  const hasAutoPrompted = useRef(false);
+
+  // First-time-use prompt: once account status resolves to "no account",
+  // surface the login dialog automatically instead of leaving it hidden in a menu.
+  // Wait for a project to be selected first so this doesn't get buried behind
+  // the first-run project-selector dialog (same overlay z-index).
+  useEffect(() => {
+    if (hasAccount === false && hasProject && !hasAutoPrompted.current) {
+      hasAutoPrompted.current = true;
+      setCodexAuthOpen(true);
+    }
+  }, [hasAccount, hasProject]);
 
   const handleOpenSettings = () => {
     setView('settings');
@@ -25,9 +44,19 @@ export function UserInfo() {
             <Button variant="ghost" className="w-full justify-start" onClick={handleOpenSettings}>
               {t('settings')}
             </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-2"
+              onClick={() => setCodexAuthOpen(true)}
+            >
+              <KeyRound className="h-4 w-4" />
+              ChatGPT Login
+            </Button>
           </div>
         </PopoverContent>
       </Popover>
+
+      <CodexAuthDialog open={codexAuthOpen} onOpenChange={setCodexAuthOpen} />
     </div>
   );
 }

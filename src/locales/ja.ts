@@ -27,7 +27,6 @@ export const ja = {
     privacy: 'プライバシー',
     claude: 'Claude',
     explorer: 'エクスプローラー',
-    codexauth: 'Codex 認証',
     task: 'タスク',
     agents: 'マルチエージェント',
     config: '設定',

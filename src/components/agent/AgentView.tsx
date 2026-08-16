@@ -1,6 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { CodexAuth } from '@/components/codex/CodexAuth';
-import { useCodexStore, useConfigStore } from '@/components/codex/stores';
+import { useCodexStore } from '@/components/codex/stores';
 import { useCCStore } from '@/stores/cc';
 import { useAcpStore } from '@/stores/useAcpStore';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
@@ -27,8 +26,7 @@ function AgentSession() {
 
 export default function AgentView() {
   const { selectedAgent } = useAgentSettingsStore();
-  const { currentThreadId, hasAccount } = useCodexStore();
-  const { modelProvider } = useConfigStore();
+  const { currentThreadId } = useCodexStore();
   const { activeSessionId } = useCCStore();
   const { active: acpActive, connectionId: acpConnectionId } = useAcpStore();
   const { cards, currentAgentCardId, removeCard, cardsViewMode } = useAgentCenterStore();
@@ -39,7 +37,6 @@ export default function AgentView() {
     : selectedAgent === 'codex'
       ? !currentThreadId
       : !activeSessionId;
-  const showCodexAuth = !acpActive && selectedAgent === 'codex' && hasAccount === false;
 
   return (
     <div className="flex flex-col min-h-0 h-full">
@@ -89,7 +86,6 @@ export default function AgentView() {
         <div className="flex flex-row flex-1 min-h-0 overflow-hidden">
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden items-center justify-center">
             <div className="flex flex-col gap-4 w-full px-4 md:max-w-3xl md:px-0">
-              {showCodexAuth && modelProvider === 'openai' && <CodexAuth />}
               <AgentComposer />
               <PluxPromo />
             </div>

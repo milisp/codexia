@@ -27,7 +27,6 @@ export const en = {
     privacy: 'Privacy',
     claude: 'Claude',
     explorer: 'Explorer',
-    codexauth: 'Codex Auth',
     task: 'Task',
     agents: 'Multi-Agent',
     config: 'Config',

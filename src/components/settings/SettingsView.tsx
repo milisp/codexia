@@ -21,7 +21,6 @@ import {
 import { isTauri } from '@/hooks/runtime';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLayoutStore } from '@/stores';
-import { CodexAuth } from '../codex/CodexAuth';
 import { ClaudeSettings } from './ClaudeSettings';
 import {
   ArchivedThreadSettings,
@@ -40,7 +39,6 @@ type SettingsSection =
   | 'general'
   | 'dictation'
   | 'projects'
-  | 'codexauth'
   | 'config'
   | 'personalization'
   | 'archived'
@@ -50,14 +48,7 @@ type SettingsSection =
   | 'claude'
   | 'remote';
 
-const codexSections = [
-  'codexauth',
-  'task',
-  'agents',
-  'config',
-  'personalization',
-  'archived',
-] as const;
+const codexSections = ['task', 'agents', 'config', 'personalization', 'archived'] as const;
 const topLevelSections = [
   'general',
   'remote',
@@ -79,7 +70,6 @@ export default function SettingsView() {
       {activeSection === 'general' && <GeneralSettings />}
       {activeSection === 'dictation' && <DictationSettings />}
       {activeSection === 'projects' && <ProjectsSettings />}
-      {activeSection === 'codexauth' && <CodexAuth />}
       {activeSection === 'config' && <ConfigSettings />}
       {activeSection === 'personalization' && <PersonalizationSettings />}
       {activeSection === 'archived' && <ArchivedThreadSettings />}
