@@ -2,7 +2,6 @@ import { type ReactNode, useMemo } from 'react';
 import { useCodexStore } from '@/components/codex/stores';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useScrollToBottom } from '../hooks';
-import { CodexAuth } from '../CodexAuth';
 import { renderEvent } from '../items';
 import { ApprovalItem } from '../items/ApprovalItem';
 import { CommandActionSummaryItem } from '../items/CommandActionSummaryItem';
@@ -28,7 +27,7 @@ interface CodexThreadProps {
 }
 
 export function CodexThread({ threadId, fillHeight = true }: CodexThreadProps = {}) {
-  const { currentThreadId, events, hasAccount, turnTimingMap } = useCodexStore();
+  const { currentThreadId, events, turnTimingMap } = useCodexStore();
 
   // Use the explicitly provided threadId when embedded, otherwise fall back
   // to the globally active thread.
@@ -93,7 +92,6 @@ export function CodexThread({ threadId, fillHeight = true }: CodexThreadProps = 
               <div key={entry.key}>{entry.content}</div>
             ))}
             <ApprovalItem />
-            {currentThreadEvents.length === 0 && hasAccount === false && <CodexAuth />}
             <WorkingIndicator turnTiming={turnTiming} />
             <RequestUserInputItem currentThreadId={activeThreadId} />
             <div ref={bottomAnchorRef} aria-hidden="true" />
