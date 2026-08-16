@@ -13,7 +13,6 @@ const SECTIONS = [
   { id: 'gitWorktree', label: 'Git Worktree' },
   { id: 'appearance', label: 'Appearance' },
   { id: 'quote', label: 'Quote Filters' },
-  { id: 'analytics', label: 'Analytics' },
 ];
 
 export default function SettingsSidebar({ activeSection, onSectionChange }: SettingsSidebarProps) {

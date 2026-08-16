@@ -34,10 +34,6 @@ export interface SettingState extends AgentsSettings {
   setShowReasoning: (enabled: boolean) => void;
   enabledQuoteCategories: string[];
   setEnabledQuoteCategories: (categories: string[]) => void;
-  analyticsEnabled: boolean;
-  setAnalyticsEnabled: (enabled: boolean) => void;
-  analyticsConsentShown: boolean;
-  setAnalyticsConsentShown: (shown: boolean) => void;
   customStunServers: string[];
   setCustomStunServers: (servers: string[]) => void;
   p2pAutoStart: boolean;
@@ -85,10 +81,6 @@ export const useSettingsStore = create<SettingState>()(
       setShowReasoning: (enabled: boolean) => set({ showReasoning: enabled }),
       setEnabledQuoteCategories: (categories: string[]) =>
         set({ enabledQuoteCategories: categories }),
-      analyticsEnabled: false,
-      setAnalyticsEnabled: (enabled: boolean) => set({ analyticsEnabled: enabled }),
-      analyticsConsentShown: false,
-      setAnalyticsConsentShown: (shown: boolean) => set({ analyticsConsentShown: shown }),
       customStunServers: [],
       setCustomStunServers: (servers: string[]) => set({ customStunServers: servers }),
       p2pAutoStart: false,
@@ -103,7 +95,14 @@ export const useSettingsStore = create<SettingState>()(
     }),
     {
       name: 'settings-storage',
-      version: 10,
+      version: 11,
+      migrate: (persistedState: any) => {
+        if (persistedState) {
+          delete persistedState.analyticsEnabled;
+          delete persistedState.analyticsConsentShown;
+        }
+        return persistedState;
+      },
     }
   )
 );

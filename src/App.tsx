@@ -8,7 +8,6 @@ import { QuitDialog } from '@/components/dialogs';
 import { AppLayout } from '@/components/layout';
 import { MobileShell } from '@/components/mobile/MobileShell';
 import { PairingView } from '@/components/pairing/PairingView';
-import { AnalyticsConsentDialog } from '@/components/settings/AnalyticsConsentDialog';
 import { HistoryProjectsDialog } from '@/features/ProjectSelector';
 import { isDesktopTauri, isPhone } from '@/hooks/runtime';
 import { useAppDeepLink } from '@/hooks/useAppDeepLink';
@@ -93,7 +92,6 @@ function AppShell() {
     <>
       <AppLayout />
       <HistoryProjectsDialog />
-      <AnalyticsConsentDialog />
       <QuitDialog open={quitDialogOpen} onOpenChange={setQuitDialogOpen} />
     </>
   );

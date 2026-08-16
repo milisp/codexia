@@ -97,7 +97,7 @@ function LayoutContent({ mainContent }: { mainContent: React.ReactNode }) {
   }, [isFocusModeActive]);
 
   return (
-    <SidebarInset className="min-w-0 overflow-hidden h-full">
+    <SidebarInset className="app-main-bg min-w-0 overflow-hidden h-full">
       <div className="relative flex flex-1 flex-col min-h-0 h-full">
         <ResizablePanelGroup direction="horizontal" className="flex min-h-0 min-w-0 w-full flex-1">
           <ResizablePanel

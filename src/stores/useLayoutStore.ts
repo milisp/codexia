@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { posthog } from '@/lib/posthog';
 import type { AgentType } from './useAgentSettingsStore';
 
 let terminalCounter = 1;
@@ -73,10 +72,7 @@ export const useLayoutStore = create<LayoutStore>()(
       rightPanelSize: 45,
       setRightPanelSize: (size) => set({ rightPanelSize: size }),
       view: 'agent',
-      setView: (view) => {
-        set({ view });
-        posthog.capture('view_type', { view });
-      },
+      setView: (view) => set({ view }),
       isRightPanelFocused: false,
       setIsRightPanelFocused: (focused: boolean) => set({ isRightPanelFocused: focused }),
       toggleRightPanelFocused: () =>

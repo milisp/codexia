@@ -33,7 +33,6 @@ import {
 import { DictationSettings } from './DictationSettings';
 import { ExplorerSettings } from './ExplorerSettings';
 import { GeneralSettings } from './GeneralSettings';
-import { PrivacySettings } from './PrivacySettings';
 import { ProjectsSettings } from './ProjectsSettings';
 import { RemoteAccessSettings } from './RemoteAccessSettings';
 
@@ -44,7 +43,6 @@ type SettingsSection =
   | 'codexauth'
   | 'config'
   | 'personalization'
-  | 'privacy'
   | 'archived'
   | 'explorer'
   | 'task'
@@ -65,7 +63,6 @@ const topLevelSections = [
   'remote',
   'dictation',
   'projects',
-  'privacy',
   'claude',
   'explorer',
 ] as const;
@@ -82,7 +79,6 @@ export default function SettingsView() {
       {activeSection === 'general' && <GeneralSettings />}
       {activeSection === 'dictation' && <DictationSettings />}
       {activeSection === 'projects' && <ProjectsSettings />}
-      {activeSection === 'privacy' && <PrivacySettings />}
       {activeSection === 'codexauth' && <CodexAuth />}
       {activeSection === 'config' && <ConfigSettings />}
       {activeSection === 'personalization' && <PersonalizationSettings />}

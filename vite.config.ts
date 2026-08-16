@@ -62,8 +62,6 @@ export default defineConfig(({ mode }) => {
               '@radix-ui/react-tooltip',
               'radix-ui',
             ],
-            // Analytics (lazy init, not on critical path)
-            'vendor-analytics': ['posthog-js'],
             // i18n
             'vendor-i18n': ['i18next', 'react-i18next'],
             // Git diff
