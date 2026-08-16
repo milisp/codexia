@@ -45,21 +45,9 @@ export function ThreadList({ cwd }: ThreadListProps) {
   const [renameThreadId, setRenameThreadId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [refreshCounter, setRefreshCounter] = useState(0);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const threads = response.data;
   const nextCursor = response.nextCursor;
-
-  // Track previous storeThreads to detect new threads inline during render
-  const prevStoreThreadsRef = useRef<Thread[]>([]);
-  if (storeThreads.length > 0) {
-    const localIds = new Set(response.data.map((t) => t.id));
-    const hasNew = storeThreads.some((t) => t.cwd === cwd && !localIds.has(t.id));
-    if (hasNew && storeThreads.length !== prevStoreThreadsRef.current.length) {
-      prevStoreThreadsRef.current = storeThreads;
-      setRefreshTrigger((prev) => prev + 1);
-    }
-  }
 
   // --- Thread loading (search + sort delegated to backend) ---
 
@@ -76,7 +64,6 @@ export function ThreadList({ cwd }: ThreadListProps) {
     const load = async () => {
       try {
         const res = await listThreads(params);
-        console.log('res', res);
         if (cancelled) return;
         setResponse(res);
       } catch (err) {
@@ -93,10 +80,16 @@ export function ThreadList({ cwd }: ThreadListProps) {
 
   // When a new thread is created in the store (e.g. after threadStart),
   // refresh the list so the sidebar reflects it immediately.
+  const seenStoreIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    if (refreshTrigger === 0) return;
+    const localIds = new Set(response.data.map((t) => t.id));
+    const newIds = storeThreads
+      .filter((t) => t.cwd === cwd && !localIds.has(t.id) && !seenStoreIdsRef.current.has(t.id))
+      .map((t) => t.id);
+    if (newIds.length === 0) return;
+    for (const id of newIds) seenStoreIdsRef.current.add(id);
     refresh();
-  }, [refreshTrigger, refresh]);
+  }, [storeThreads, response.data, cwd, refresh]);
 
   useEffect(() => {
     if (!isDesktopTauri()) return;
