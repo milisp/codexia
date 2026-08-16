@@ -6,6 +6,7 @@ import './App.css';
 import { useCodexEvents } from '@/components/codex/hooks';
 import { QuitDialog } from '@/components/dialogs';
 import { AppLayout } from '@/components/layout';
+import { MobileShell } from '@/components/mobile/MobileShell';
 import { PairingView } from '@/components/pairing/PairingView';
 import { AnalyticsConsentDialog } from '@/components/settings/AnalyticsConsentDialog';
 import { HistoryProjectsDialog } from '@/features/ProjectSelector';
@@ -13,7 +14,7 @@ import { isDesktopTauri, isPhone } from '@/hooks/runtime';
 import { useAppDeepLink } from '@/hooks/useAppDeepLink';
 import { useUrlParamThread } from '@/hooks/useUrlParamThread';
 import { hasActiveWork } from '@/lib/hasActiveWork';
-import { initSettingsSync, loadSettings } from '@/lib/settings';
+import { initSettingsSync, loadRemoteSettings, loadSettings } from '@/lib/settings';
 import { initializeCodexAsync } from '@/services/apiAdapt';
 import { usePairingStore } from '@/stores/usePairingStore';
 import type { InitializeResponse } from './bindings';
@@ -26,9 +27,18 @@ function AppShell() {
   const [codexReady, setCodexReady] = useState(!isDesktopTauri());
 
   useEffect(() => {
-    loadSettings().finally(() => setSettingsReady(true));
+    // A phone has no settings file of its own: the projects it shows are the
+    // paired desktop's. `/api/settings` is the direct route; reading the file
+    // over the remote filesystem API is the fallback if that answers nothing.
+    const load = isPhone()
+      ? loadRemoteSettings().then((ok) => (ok ? undefined : loadSettings()))
+      : loadSettings();
+    load.finally(() => setSettingsReady(true));
   }, []);
   useEffect(() => {
+    // Only the machine that owns the settings file writes it back — a phone
+    // browsing a desktop's projects must not overwrite them.
+    if (isPhone()) return;
     return initSettingsSync();
   }, []);
 
@@ -73,6 +83,11 @@ function AppShell() {
 
   // Wait for settings load before rendering
   if (!settingsReady) return null;
+
+  // A phone gets its own two-screen shell instead of the desktop layout. It
+  // shows the projects the desktop has added and nothing more — adding or
+  // removing them stays on the machine that owns them.
+  if (isPhone()) return <MobileShell />;
 
   return (
     <>

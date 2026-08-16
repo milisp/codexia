@@ -60,7 +60,23 @@ impl DeviceToken {
             }
         }
 
+        Self::generate_and_store()
+    }
+
+    /// Replaces the persisted token with a freshly generated one.
+    ///
+    /// Every device paired against the old token stops working, which is the
+    /// point: this is the way out when a token leaks. The running router holds
+    /// its own clone, so the caller has to restart the server for the new value
+    /// to take effect.
+    pub fn rotate() -> Result<Self, String> {
+        Self::generate_and_store()
+    }
+
+    fn generate_and_store() -> Result<Self, String> {
+        let path = token_path()?;
         let token = generate_token();
+
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent)
                 .map_err(|e| format!("Failed to create {}: {e}", parent.display()))?;

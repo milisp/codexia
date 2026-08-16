@@ -19,12 +19,14 @@
 		DBC1CC91EDB61DAA593110FE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6EF0D1C635303586F380D2AA /* Assets.xcassets */; };
 		E46B24DA65F83E00E1A2B93B /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6F952B9BA702D6F53CD9BFAC /* LaunchScreen.storyboard */; };
 		F9A16FB0897901FF8D22B1A3 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 077026EDB6B211206FE1C5AD /* main.mm */; };
+		C0DE0A11000000000000AC01 /* KeyboardAccessory.mm in Sources */ = {isa = PBXBuildFile; fileRef = C0DE0A11000000000000AC02 /* KeyboardAccessory.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		03EBC4DA7CA2AEF9B5352EC1 /* real.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = real.rs; sourceTree = "<group>"; };
 		06E7817CD71234FFCCDCB18A /* env.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = env.rs; sourceTree = "<group>"; };
 		077026EDB6B211206FE1C5AD /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		C0DE0A11000000000000AC02 /* KeyboardAccessory.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = KeyboardAccessory.mm; sourceTree = "<group>"; };
 		090F24158FB02B9AB15FA1A4 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		0CE61C916D5E33D7657F7AC0 /* init.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = init.rs; sourceTree = "<group>"; };
 		0FA982ADE35E922FFF52DBEA /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
@@ -173,6 +175,7 @@
 			isa = PBXGroup;
 			children = (
 				077026EDB6B211206FE1C5AD /* main.mm */,
+				C0DE0A11000000000000AC02 /* KeyboardAccessory.mm */,
 				A84D4E1797C97C44A15DE906 /* bindings */,
 			);
 			path = codexia;
@@ -341,6 +344,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F9A16FB0897901FF8D22B1A3 /* main.mm in Sources */,
+				C0DE0A11000000000000AC01 /* KeyboardAccessory.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -350,11 +354,12 @@
 		8DD1F3249DCD4DE905C2935C /* release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = codexia_iOS/codexia_iOS.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = "268NNH9T4Z";
 				ENABLE_BITCODE = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -385,14 +390,12 @@
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
-				DEVELOPMENT_TEAM = "268NNH9T4Z";
 			};
 			name = release;
 		};
 		AA27F4AD6C04A04C291A9CCD /* debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -459,11 +462,12 @@
 		AB470AE618BA28CFAA8E6188 /* debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = codexia_iOS/codexia_iOS.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = "268NNH9T4Z";
 				ENABLE_BITCODE = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -494,14 +498,12 @@
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
-				DEVELOPMENT_TEAM = "268NNH9T4Z";
 			};
 			name = debug;
 		};
 		ADDD8BB944CACD98C50BED5D /* release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -568,7 +570,7 @@
 				8DD1F3249DCD4DE905C2935C /* release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = debug;
+			defaultConfigurationName = release;
 		};
 		BE2B52D7A98619BDAC823937 /* Build configuration list for PBXProject "codexia" */ = {
 			isa = XCConfigurationList;
@@ -577,7 +579,7 @@
 				ADDD8BB944CACD98C50BED5D /* release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = debug;
+			defaultConfigurationName = release;
 		};
 /* End XCConfigurationList section */
 	};

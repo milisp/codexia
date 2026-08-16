@@ -20,6 +20,7 @@ type PairingState = {
   selectedHost: string | null;
   addDesktop: (desktop: PairedDesktop) => void;
   removeDesktop: (host: string) => void;
+  renameDesktop: (host: string, name: string) => void;
   selectDesktop: (host: string) => void;
 };
 
@@ -57,6 +58,11 @@ export const usePairingStore = create<PairingState>()(
           return { desktops, selectedHost };
         }),
 
+      renameDesktop: (host, name) =>
+        set((state) => ({
+          desktops: state.desktops.map((d) => (d.host === host ? { ...d, name } : d)),
+        })),
+
       selectDesktop: (host) => set({ selectedHost: host }),
     }),
     {
@@ -82,6 +88,10 @@ export const pairedDesktop = (): PairedDesktop | null => {
   const { desktops, selectedHost } = usePairingStore.getState();
   return desktops.find((d) => d.host === selectedHost) ?? null;
 };
+
+/** Reactive form of `pairedDesktop()` for components that render its name. */
+export const useSelectedDesktop = (): PairedDesktop | null =>
+  usePairingStore((s) => s.desktops.find((d) => d.host === s.selectedHost) ?? null);
 
 /**
  * The desktop serves plain HTTP over the tailnet — see the ATS exception for

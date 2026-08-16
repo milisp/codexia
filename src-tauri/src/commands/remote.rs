@@ -43,6 +43,52 @@ impl RemoteState {
     }
 }
 
+fn settings_path() -> Option<std::path::PathBuf> {
+    dirs::home_dir().map(|home| home.join(".codexia").join("settings.json"))
+}
+
+/// Whether the user left remote access switched on.
+///
+/// Kept in the same `settings.json` the frontend uses, under its own top-level
+/// key, so the desktop comes back up serving the phone without the user having
+/// to walk to the machine and flip the switch after every restart.
+pub fn remote_enabled() -> bool {
+    let Some(path) = settings_path() else { return false };
+    let Ok(raw) = std::fs::read_to_string(&path) else { return false };
+    serde_json::from_str::<Value>(&raw)
+        .ok()
+        .and_then(|v| v.get("remote")?.get("enabled")?.as_bool())
+        .unwrap_or(false)
+}
+
+/// Records the toggle, leaving every other key in the file untouched.
+fn set_remote_enabled(enabled: bool) {
+    let Some(path) = settings_path() else { return };
+
+    let mut settings = std::fs::read_to_string(&path)
+        .ok()
+        .and_then(|raw| serde_json::from_str::<Value>(&raw).ok())
+        .filter(|value| value.is_object())
+        .unwrap_or_else(|| serde_json::json!({}));
+
+    settings["remote"] = serde_json::json!({ "enabled": enabled });
+
+    if let Some(parent) = path.parent() {
+        if let Err(err) = std::fs::create_dir_all(parent) {
+            log::warn!("[remote] could not create {}: {err}", parent.display());
+            return;
+        }
+    }
+    match serde_json::to_string_pretty(&settings) {
+        Ok(contents) => {
+            if let Err(err) = std::fs::write(&path, contents) {
+                log::warn!("[remote] could not write {}: {err}", path.display());
+            }
+        }
+        Err(err) => log::warn!("[remote] could not serialize settings: {err}"),
+    }
+}
+
 fn stopped_status() -> RemoteStatus {
     RemoteStatus {
         running: false,
@@ -67,6 +113,20 @@ pub async fn remote_start(
     app: AppHandle,
     remote: State<'_, RemoteState>,
     cc_state: State<'_, CCState>,
+) -> Result<RemoteStatus, String> {
+    let status = start_server(&app, &remote, &cc_state)?;
+    set_remote_enabled(true);
+    Ok(status)
+}
+
+/// Brings the server up against the app's live state.
+///
+/// Shared by the command and by startup, which reuses it to restore the switch
+/// the user last left on.
+pub fn start_server(
+    app: &AppHandle,
+    remote: &RemoteState,
+    cc_state: &CCState,
 ) -> Result<RemoteStatus, String> {
     {
         let running = remote.inner.lock().map_err(|_| "remote state poisoned")?;
@@ -97,7 +157,7 @@ pub async fn remote_start(
     let codex = app
         .try_state::<AppState>()
         .map(|s| Arc::new(AppState { codex: s.codex.clone() }));
-    let cc = Arc::new(cc_state.inner().clone());
+    let cc = Arc::new(cc_state.clone());
     // Share the desktop's ACP state so remote clients see the same sessions.
     let acp = app
         .try_state::<codexia_acp::AcpState>()
@@ -144,6 +204,38 @@ pub async fn remote_start(
     Ok(status)
 }
 
+/// Issues a new device token, invalidating every existing pairing.
+///
+/// The running router captured the old token when it started, so the server is
+/// bounced here — otherwise the revoked token would keep working until the next
+/// app restart.
+#[tauri::command]
+pub async fn remote_rotate_token(
+    app: AppHandle,
+    remote: State<'_, RemoteState>,
+    cc_state: State<'_, CCState>,
+) -> Result<RemoteStatus, String> {
+    let was_running = {
+        let mut running = remote.inner.lock().map_err(|_| "remote state poisoned")?;
+        match running.take() {
+            Some(active) => {
+                let _ = active.shutdown.send(());
+                true
+            }
+            None => false,
+        }
+    };
+
+    codexia_web::auth::DeviceToken::rotate()?;
+    log::info!("[remote] device token rotated; paired devices must pair again");
+
+    if was_running {
+        start_server(&app, &remote, &cc_state)
+    } else {
+        Ok(stopped_status())
+    }
+}
+
 #[tauri::command]
 pub async fn remote_stop(remote: State<'_, RemoteState>) -> Result<RemoteStatus, String> {
     let mut running = remote.inner.lock().map_err(|_| "remote state poisoned")?;
@@ -152,5 +244,7 @@ pub async fn remote_stop(remote: State<'_, RemoteState>) -> Result<RemoteStatus,
         // failure here is correct rather than merely tolerable.
         let _ = active.shutdown.send(());
     }
+    drop(running);
+    set_remote_enabled(false);
     Ok(stopped_status())
 }

@@ -1,10 +1,11 @@
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, QrCode } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { DEFAULT_PORT } from '@/hooks/runtime';
+import { DEFAULT_PORT, isPhone } from '@/hooks/runtime';
+import { parsePairingUri } from '@/lib/pairing';
 import { desktopBaseUrl, type PairedDesktop, usePairingStore } from '@/stores/usePairingStore';
 
 /**
@@ -21,18 +22,37 @@ function isTailnetIP(host: string): boolean {
   return first === 100 && second >= 64 && second <= 127;
 }
 
-/** Confirms the host and token before storing them, so a typo fails here. */
-async function verify(desktop: PairedDesktop): Promise<string | null> {
+/** What `/api/pairing` reports back once the token is accepted. */
+type PairingInfo = { tailscale?: { dns_name?: string } | null };
+
+/**
+ * Confirms the host and token before storing them, so a typo fails here.
+ *
+ * Returns the desktop's own description of itself on success, which is where
+ * the auto-filled name comes from.
+ */
+async function verify(desktop: PairedDesktop): Promise<{ error: string } | { info: PairingInfo }> {
   try {
     const response = await fetch(`${desktopBaseUrl(desktop)}/api/pairing`, {
       headers: { Authorization: `Bearer ${desktop.token}` },
     });
-    if (response.status === 401) return 'The desktop rejected this token.';
-    if (!response.ok) return `The desktop answered with ${response.status}.`;
-    return null;
+    if (response.status === 401) return { error: 'The desktop rejected this token.' };
+    if (!response.ok) return { error: `The desktop answered with ${response.status}.` };
+    return { info: (await response.json()) as PairingInfo };
   } catch {
-    return 'Could not reach that desktop. Check that it is awake and on the same tailnet.';
+    return {
+      error: 'Could not reach that desktop. Check that it is awake and on the same tailnet.',
+    };
   }
+}
+
+/**
+ * The machine's own name, taken from the first label of its MagicDNS name
+ * (`codexia-mac.tail1234.ts.net` → `codexia-mac`).
+ */
+function autoName(info: PairingInfo, host: string): string {
+  const dnsName = info.tailscale?.dns_name?.replace(/\.$/, '');
+  return dnsName?.split('.')[0] || host.split('.')[0] || host;
 }
 
 /**
@@ -60,33 +80,78 @@ export function PairingView({
   const trimmedToken = token.trim();
   const canSave = trimmedHost.length > 0 && trimmedToken.length > 0 && !verifying;
 
-  const save = async () => {
+  /** Shared tail of both entry points: check the desktop answers, then store it. */
+  const pair = async (desktop: PairedDesktop) => {
     setError(null);
 
-    if (isTailnetIP(trimmedHost)) {
+    if (isTailnetIP(desktop.host)) {
       setError(
         'Use the Tailscale hostname ending in .ts.net instead of the tailnet IP; iOS blocks plain HTTP to raw addresses.'
       );
       return;
     }
 
-    const desktop: PairedDesktop = {
-      name: name.trim() || trimmedHost,
+    setVerifying(true);
+    const result = await verify(desktop);
+    setVerifying(false);
+
+    if ('error' in result) {
+      setError(result.error);
+      return;
+    }
+    // Left blank: adopt the name the desktop reports for itself. Still editable
+    // afterwards from the Desktops drawer.
+    addDesktop({ ...desktop, name: desktop.name || autoName(result.info, desktop.host) });
+    onPaired?.();
+  };
+
+  const save = () =>
+    pair({
+      name: name.trim(),
       host: trimmedHost,
       port: Number(port) || DEFAULT_PORT,
       token: trimmedToken,
-    };
+    });
 
-    setVerifying(true);
-    const failure = await verify(desktop);
-    setVerifying(false);
+  /**
+   * Reads the desktop's pairing code with the camera.
+   *
+   * The scanned values also land in the form, so a code that fails to verify
+   * leaves something the user can inspect and correct by hand.
+   */
+  const scanCode = async () => {
+    setError(null);
+    try {
+      const { Format, cancel, checkPermissions, requestPermissions, scan } = await import(
+        '@tauri-apps/plugin-barcode-scanner'
+      );
 
-    if (failure) {
-      setError(failure);
-      return;
+      const current = await checkPermissions();
+      const permission = current === 'granted' ? current : await requestPermissions();
+      if (permission !== 'granted') {
+        setError('Camera access is off for Codexia. Enable it in iOS Settings and try again.');
+        return;
+      }
+
+      const result = await scan({ windowed: false, formats: [Format.QRCode] });
+      await cancel();
+
+      const desktop = parsePairingUri(result.content);
+      if (!desktop) {
+        setError(
+          'That is not a Codexia pairing code. Open Settings → Remote access on the desktop.'
+        );
+        return;
+      }
+
+      setName(desktop.name);
+      setHost(desktop.host);
+      setPort(String(desktop.port));
+      setToken(desktop.token);
+      await pair(desktop);
+    } catch (err) {
+      setError(`Could not scan: ${err}`);
     }
-    addDesktop(desktop);
-    onPaired?.();
   };
 
   return (
@@ -95,10 +160,18 @@ export function PairingView({
         <CardHeader>
           <CardTitle>Pair desktop</CardTitle>
           <CardDescription>
-            Open Settings → Remote access on the desktop to find its hostname and device token.
+            Open Settings → Remote access on the desktop, then scan its QR code — or type the
+            hostname and token shown there.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {isPhone() && (
+            <Button variant="secondary" className="w-full" disabled={verifying} onClick={scanCode}>
+              <QrCode className="size-4" />
+              Scan QR code
+            </Button>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="pairing-name">Name</Label>
             <Input
@@ -107,6 +180,9 @@ export function PairingView({
               onChange={(e) => setName(e.target.value)}
               placeholder="My Mac"
             />
+            <p className="text-muted-foreground text-xs">
+              Leave blank to use the name the desktop reports.
+            </p>
           </div>
 
           <div className="space-y-2">

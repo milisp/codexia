@@ -50,3 +50,13 @@ export async function remoteStart() {
 export async function remoteStop() {
   return await invokeTauri<RemoteStatus>('remote_stop');
 }
+
+/**
+ * Issues a new device token, cutting off every device paired with the old one.
+ *
+ * Desktop-only: the standalone server does not own the switch it would need to
+ * bounce for a new token to take effect.
+ */
+export async function remoteRotateToken() {
+  return await invokeTauri<RemoteStatus>('remote_rotate_token');
+}

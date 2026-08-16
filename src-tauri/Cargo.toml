@@ -90,6 +90,10 @@ cpal = "0.15"
 whisper-rs = "0.12"
 sha2 = "0.10"
 
+# --- mobile-only: pairing is done by scanning the desktop's QR code ---
+[target.'cfg(any(target_os = "ios", target_os = "android"))'.dependencies]
+tauri-plugin-barcode-scanner = "2"
+
 [target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
 tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
 

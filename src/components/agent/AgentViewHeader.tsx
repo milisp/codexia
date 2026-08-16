@@ -1,16 +1,17 @@
 import { LayoutGrid, List, PanelRight, Square, SquareTerminal } from 'lucide-react';
 import { useCodexStore } from '@/components/codex/stores';
 import { NewAgentButton } from '@/components/common/NewAgentButton';
-import { GitActions } from '@/features/git';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { GitActions } from '@/features/git';
 import { useTrafficLightConfig } from '@/hooks';
+import { isPhone } from '@/hooks/runtime';
 import { useCCStore, useLayoutStore, useWorkspaceStore } from '@/stores';
-import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import type { AgentCardsViewMode } from '@/stores/useAgentCenterStore';
-import { UpdateButton } from '../../features/UpdateButton';
+import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { getFilename } from '@/utils/getFilename';
-import { Badge } from '@/components/ui/badge';
+import { UpdateButton } from '../../features/UpdateButton';
 
 const CARDS_VIEW_MODES: { mode: AgentCardsViewMode; icon: typeof LayoutGrid; title: string }[] = [
   { mode: 'solo', icon: Square, title: 'Solo view' },
@@ -36,6 +37,10 @@ export function AgentViewHeader() {
   // Show trigger when sidebar is closed; on mobile the Sheet is transient so always show
   const showTrigger = isMobile ? !openMobile : !isSidebarOpen;
   const hasActiveSession = currentThreadId || activeSessionId;
+
+  // A phone gets its own header from MobileShell: no card layouts (one card
+  // fills the screen), no right panel, and Back instead of a sidebar trigger.
+  if (isPhone()) return null;
 
   return (
     <div

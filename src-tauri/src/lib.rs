@@ -20,6 +20,7 @@ pub fn run() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_barcode_scanner::init())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(log::LevelFilter::Info)
@@ -238,6 +239,7 @@ pub fn run() {
                 commands::remote::remote_status,
                 commands::remote::remote_start,
                 commands::remote::remote_stop,
+                commands::remote::remote_rotate_token,
             ])
             .setup(|app| {
                 let app_handle = app.handle().clone();
@@ -321,6 +323,28 @@ pub fn run() {
                 }
 
                 cc::scan::start_session_scanner();
+
+                // Restore remote access if the user left it on, so a paired
+                // phone can reach this machine after a restart without someone
+                // walking over to flip the switch. Runs after the codex, cc,
+                // acp and automation states are managed — the server borrows
+                // all of them.
+                if commands::remote::remote_enabled() {
+                    let remote = app.state::<commands::remote::RemoteState>();
+                    let cc_state = app.state::<CCState>();
+                    match commands::remote::start_server(
+                        app.handle(),
+                        remote.inner(),
+                        cc_state.inner(),
+                    ) {
+                        Ok(status) => log::info!(
+                            "[remote] restored on {}:{}",
+                            status.host.unwrap_or_default(),
+                            status.port
+                        ),
+                        Err(err) => log::warn!("[remote] could not restore: {err}"),
+                    }
+                }
 
                 tauri::async_runtime::spawn(async {
                     tokio::task::spawn_blocking(codexia_git::scan_all_orphan_worktrees)

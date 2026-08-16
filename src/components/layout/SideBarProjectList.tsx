@@ -17,6 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { isPhone } from '@/hooks/runtime';
 import { useLayoutStore } from '@/stores';
 import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
@@ -52,6 +53,7 @@ export function SideBarProjectList({ onNewAction, newActionTitle, renderList }: 
           onOpenChange={(open) => toggleProject(project, open)}
           className="bg-sidebar/30"
         >
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: hover-only affordance, keyboard users reach the controls inside directly */}
           <div
             className="flex items-center gap-1 px-1 py-0.5 text-xs transition-colors hover:bg-foreground/10"
             title={project}
@@ -76,26 +78,30 @@ export function SideBarProjectList({ onNewAction, newActionTitle, renderList }: 
               )}
             </CollapsibleTrigger>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  title={`Project actions for ${getFilename(project) || project}`}
-                  className="shrink-0"
-                >
-                  <Ellipsis />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => removeProject(project)}>
-                  <X /> Remove
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => openAgentInstructions(project)}>
-                  <ScrollText /> Instructions
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Remove/Instructions edit the desktop's own project list, so a
+                phone — which only mirrors it — does not offer them. */}
+            {!isPhone() && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    title={`Project actions for ${getFilename(project) || project}`}
+                    className="shrink-0"
+                  >
+                    <Ellipsis />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => removeProject(project)}>
+                    <X /> Remove
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => openAgentInstructions(project)}>
+                    <ScrollText /> Instructions
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             <Button
               variant="ghost"
@@ -112,7 +118,8 @@ export function SideBarProjectList({ onNewAction, newActionTitle, renderList }: 
         </Collapsible>
       ))}
 
-      {projects.length === 0 && (
+      {/* The phone's home screen says this itself, with a retry. */}
+      {projects.length === 0 && !isPhone() && (
         <div className="rounded-lg border border-sidebar-border bg-sidebar/30 px-3 py-3 text-xs text-muted-foreground">
           No projects yet.
         </div>

@@ -1,12 +1,15 @@
 import { Check, Copy } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { isDesktopTauri } from '@/hooks/runtime';
+import { buildPairingUri } from '@/lib/pairing';
 import {
   type RemoteStatus,
   remoteGetStatus,
+  remoteRotateToken,
   remoteStart,
   remoteStop,
 } from '@/services/apiAdapt/remote';
@@ -42,6 +45,40 @@ function CopyField({ label, value, mask }: { label: string; value: string; mask?
   );
 }
 
+/**
+ * The QR code a phone scans to pair.
+ *
+ * Hidden until asked: the code carries the device token in the clear, and this
+ * screen is the one people share on a call or in a screenshot.
+ */
+function PairingCode({ uri }: { uri: string }) {
+  const [shown, setShown] = useState(false);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-xs text-muted-foreground">Pairing QR code</div>
+        <Button variant="ghost" size="sm" onClick={() => setShown((v) => !v)}>
+          {shown ? 'Hide' : 'Show'}
+        </Button>
+      </div>
+      {shown ? (
+        <div className="flex flex-col items-center gap-2 rounded border p-4">
+          {/* Fixed white background: a QR code has to stay light-on-dark-free to scan. */}
+          <QRCodeSVG value={uri} size={192} bgColor="#ffffff" fgColor="#000000" marginSize={2} />
+          <p className="text-center text-xs text-muted-foreground">
+            In the Codexia mobile app, tap “Scan QR code”.
+          </p>
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Contains the token. Only show it to a camera you trust.
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function RemoteAccessSettings() {
   const [status, setStatus] = useState<RemoteStatus | null>(null);
   const [busy, setBusy] = useState(false);
@@ -69,6 +106,26 @@ export function RemoteAccessSettings() {
       setError(String(err));
       // Re-read rather than trust the optimistic value: a failed start leaves
       // the server stopped, and the switch must reflect that.
+      await refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function rotate() {
+    if (
+      !window.confirm(
+        'Issue a new device token? Every paired device stops working until it pairs again.'
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      setStatus(await remoteRotateToken());
+    } catch (err) {
+      setError(String(err));
       await refresh();
     } finally {
       setBusy(false);
@@ -122,6 +179,35 @@ export function RemoteAccessSettings() {
 
           {status && <CopyField label="Port" value={String(status.port)} />}
           {status?.token && <CopyField label="Device token" value={status.token} mask />}
+
+          {status?.token && tailscale && (
+            <PairingCode
+              uri={buildPairingUri({
+                name: tailscale.dns_name.split('.')[0],
+                host: tailscale.dns_name,
+                port: status.port,
+                token: status.token,
+              })}
+            />
+          )}
+
+          {canToggle && status?.token && (
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-xs text-muted-foreground">
+                Rotating the token revokes it everywhere. Every phone paired with this machine has
+                to scan the new code.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                disabled={busy}
+                onClick={rotate}
+              >
+                Rotate token
+              </Button>
+            </div>
+          )}
 
           {desktops.length > 0 ? (
             <div className="space-y-3 border-t pt-4">

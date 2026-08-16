@@ -9,8 +9,8 @@
 
 import { getHomeDirectory, readFile, writeFile } from '@/services/apiAdapt';
 import { fetchRemoteSettings } from '@/services/apiAdapt/settings';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
 const SETTINGS_FILE = '/.codexia/settings.json';
 const SETTINGS_VERSION = 1;
@@ -27,8 +27,10 @@ type WorkspaceData = {
 };
 
 interface SettingsFile {
-  version: number;
+  version?: number;
   workspace?: Partial<WorkspaceData>;
+  /** Keys owned by the backend (e.g. `remote`) are carried through untouched. */
+  [key: string]: unknown;
 }
 
 // ── File I/O ─────────────────────────────────────────────────────────────────
@@ -76,13 +78,27 @@ export async function loadSettings(): Promise<void> {
   applySettings(data);
 }
 
-/** Load settings from the connected desktop via P2P API. Used on iOS. */
-export async function loadRemoteSettings(): Promise<void> {
+/** Why the last remote load produced no projects, for the phone to show. */
+let lastRemoteError: string | null = null;
+export const remoteSettingsError = (): string | null => lastRemoteError;
+
+/**
+ * Load settings from the connected desktop via its API. Used on iOS.
+ *
+ * Returns false when the desktop answered with nothing usable, so the caller
+ * can fall back to reading the file over the remote filesystem API instead.
+ */
+export async function loadRemoteSettings(): Promise<boolean> {
   try {
-    const data = await fetchRemoteSettings();
-    await applySettings(data as SettingsFile);
+    const data = (await fetchRemoteSettings()) as SettingsFile;
+    lastRemoteError = data.workspace ? null : 'The desktop returned no workspace settings.';
+    if (!data.workspace) return false;
+    applySettings(data);
+    return true;
   } catch (err) {
+    lastRemoteError = String(err);
     console.error('[settings] loadRemoteSettings failed:', err);
+    return false;
   }
 }
 
@@ -115,7 +131,10 @@ function scheduleWrite(): void {
     writeTimer = null;
     try {
       const path = await getFilePath();
-      await writeFile(path, JSON.stringify(snapshot(), null, 2));
+      // Merge rather than replace: the backend keeps its own keys in this file
+      // (`remote.enabled`), and a blind overwrite would drop them.
+      const existing = (await readSettingsFile()) ?? {};
+      await writeFile(path, JSON.stringify({ ...existing, ...snapshot() }, null, 2));
     } catch (err) {
       console.error('[settings] write failed:', err);
     }
@@ -130,5 +149,7 @@ export function initSettingsSync(): () => void {
     useWorkspaceStore.subscribe(scheduleWrite),
     useAgentSettingsStore.subscribe(scheduleWrite),
   ];
-  return () => unsubs.forEach((fn) => fn());
+  return () => {
+    for (const fn of unsubs) fn();
+  };
 }

@@ -1,8 +1,9 @@
-import { Check, Monitor, Plus, Trash2 } from 'lucide-react';
+import { Check, Monitor, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { PairingView } from '@/components/pairing/PairingView';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Input } from '@/components/ui/input';
 import {
   Sheet,
   SheetContent,
@@ -13,10 +14,13 @@ import {
 import { type PairedDesktop, usePairingStore } from '@/stores/usePairingStore';
 
 /**
- * Manages paired desktops: switch between them, remove one, or pair another.
+ * Manages paired desktops: switch between them, rename or remove one, or pair
+ * another.
  *
  * A drawer rather than a dropdown — a menu row cannot carry a delete
- * affordance, and removing a pairing is the one thing a menu could not do.
+ * affordance, and removing a pairing is the one thing a menu could not do. It
+ * slides up from the bottom because on a phone that is where the thumb is, and
+ * this is reached from the header of a sidebar that already occupies the left.
  */
 export function DesktopDrawer({
   open,
@@ -29,9 +33,24 @@ export function DesktopDrawer({
   const selectedHost = usePairingStore((s) => s.selectedHost);
   const selectDesktop = usePairingStore((s) => s.selectDesktop);
   const removeDesktop = usePairingStore((s) => s.removeDesktop);
+  const renameDesktop = usePairingStore((s) => s.renameDesktop);
 
   const [pairing, setPairing] = useState(false);
   const [pendingDeletion, setPendingDeletion] = useState<PairedDesktop | null>(null);
+  const [editingHost, setEditingHost] = useState<string | null>(null);
+  const [draftName, setDraftName] = useState('');
+
+  const startRename = (desktop: PairedDesktop) => {
+    setEditingHost(desktop.host);
+    setDraftName(desktop.name);
+  };
+
+  const commitRename = () => {
+    if (!editingHost) return;
+    const name = draftName.trim();
+    if (name) renameDesktop(editingHost, name);
+    setEditingHost(null);
+  };
 
   const select = (desktop: PairedDesktop) => {
     if (desktop.host === selectedHost) {
@@ -56,7 +75,7 @@ export function DesktopDrawer({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="left" className="w-[min(92vw,380px)] p-0">
+        <SheetContent side="bottom" className="max-h-[80vh] p-0">
           <SheetHeader className="border-b">
             <SheetTitle>Desktops</SheetTitle>
             <SheetDescription>
@@ -67,6 +86,24 @@ export function DesktopDrawer({
           <div className="flex flex-col gap-1 overflow-y-auto p-2">
             {desktops.map((desktop) => {
               const isSelected = desktop.host === selectedHost;
+              if (editingHost === desktop.host) {
+                return (
+                  <div key={desktop.host} className="flex items-center gap-2 px-2 py-1">
+                    <Input
+                      autoFocus
+                      value={draftName}
+                      onChange={(e) => setDraftName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') commitRename();
+                        if (e.key === 'Escape') setEditingHost(null);
+                      }}
+                    />
+                    <Button size="sm" onClick={commitRename}>
+                      Save
+                    </Button>
+                  </div>
+                );
+              }
               return (
                 <div
                   key={desktop.host}
@@ -89,6 +126,15 @@ export function DesktopDrawer({
                       </span>
                     </span>
                   </button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 shrink-0 text-muted-foreground"
+                    aria-label={`Rename ${desktop.name}`}
+                    onClick={() => startRename(desktop)}
+                  >
+                    <Pencil className="size-4" />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"
