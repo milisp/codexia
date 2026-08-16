@@ -5,6 +5,12 @@
             "description": "Use Garry Tan's exact Claude Code setup: 23 opinionated tools that serve as CEO, Designer, Eng Manager, Release Manager, Doc Engineer, and QA",
             "url": "https://github.com/garrytan/gstack",
             "setup": "git clone --single-branch --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/gstack && cd ~/.claude/skills/gstack && ./setup"
+        },
+        {
+            "name": "Agent QA",
+            "description": "Project-level QA harness for natural-language web and mobile tests, with MCP and Agent Skills for Codex workflows",
+            "url": "https://github.com/vostride/agent-qa",
+            "setup": "npm install -D agent-qa@0.1.21 && npx agent-qa init"
         }
     ]
 }
