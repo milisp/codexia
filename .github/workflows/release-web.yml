@@ -62,11 +62,25 @@ jobs:
           package_path="/tmp/codexia-web-${version}-linux-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz"
           echo "WEB_PACKAGE_PATH=${package_path}" >> "$GITHUB_ENV"
 
+      # This job can win the race against release.yml and create the release
+      # first, so it has to carry the same body or the release ends up empty.
+      - name: Read release notes
+        id: notes
+        shell: bash
+        run: |
+          {
+            echo 'body<<RELEASE_NOTE_EOF'
+            cat ./docs/RELEASE_NOTE.md
+            printf '\nRELEASE_NOTE_EOF\n'
+          } >> "$GITHUB_OUTPUT"
+
       - name: Upload web package to release
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ env.WEB_PACKAGE_PATH }}
           tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body: ${{ steps.notes.outputs.body }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -110,11 +124,23 @@ jobs:
           package_path="/tmp/codexia-web-${version}-darwin-aarch64.tar.gz"
           echo "WEB_PACKAGE_PATH=${package_path}" >> "$GITHUB_ENV"
 
+      - name: Read release notes
+        id: notes
+        shell: bash
+        run: |
+          {
+            echo 'body<<RELEASE_NOTE_EOF'
+            cat ./docs/RELEASE_NOTE.md
+            printf '\nRELEASE_NOTE_EOF\n'
+          } >> "$GITHUB_OUTPUT"
+
       - name: Upload web package to release
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ env.WEB_PACKAGE_PATH }}
           tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body: ${{ steps.notes.outputs.body }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -155,10 +181,22 @@ jobs:
           $path = Join-Path $env:TEMP "codexia-web-$version-windows-x86_64.zip"
           "WEB_PACKAGE_PATH=$path" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
+      - name: Read release notes
+        id: notes
+        shell: bash
+        run: |
+          {
+            echo 'body<<RELEASE_NOTE_EOF'
+            cat ./docs/RELEASE_NOTE.md
+            printf '\nRELEASE_NOTE_EOF\n'
+          } >> "$GITHUB_OUTPUT"
+
       - name: Upload web package to release
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ env.WEB_PACKAGE_PATH }}
           tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body: ${{ steps.notes.outputs.body }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
