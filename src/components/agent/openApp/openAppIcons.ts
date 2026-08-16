@@ -1,0 +1,36 @@
+import antigravityIcon from '@/assets/app-icons/antigravity.png';
+import cursorIcon from '@/assets/app-icons/cursor.png';
+import finderIcon from '@/assets/app-icons/finder.png';
+import ghosttyIcon from '@/assets/app-icons/ghostty.png';
+import vscodeIcon from '@/assets/app-icons/vscode.png';
+import zedIcon from '@/assets/app-icons/zed.png';
+import { isMacos } from '@/hooks/runtime';
+
+const GENERIC_APP_SVG =
+  "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'><rect x='4' y='3' width='16' height='18' rx='3' ry='3'/><path d='M9 7h6'/><path d='M9 11h6'/><path d='M9 15h4'/></svg>";
+
+export const GENERIC_APP_ICON = `data:image/svg+xml;utf8,${encodeURIComponent(GENERIC_APP_SVG)}`;
+
+const GENERIC_FOLDER_SVG =
+  "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'><path d='M3 7a2 2 0 0 1 2-2h5l2 2h9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/></svg>";
+
+export const GENERIC_FOLDER_ICON = `data:image/svg+xml;utf8,${encodeURIComponent(GENERIC_FOLDER_SVG)}`;
+
+export function getKnownOpenAppIcon(id: string): string | null {
+  switch (id) {
+    case 'vscode':
+      return vscodeIcon;
+    case 'cursor':
+      return cursorIcon;
+    case 'zed':
+      return zedIcon;
+    case 'ghostty':
+      return ghosttyIcon;
+    case 'antigravity':
+      return antigravityIcon;
+    case 'finder':
+      return isMacos() ? finderIcon : GENERIC_FOLDER_ICON;
+    default:
+      return null;
+  }
+}

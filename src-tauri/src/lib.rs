@@ -109,6 +109,8 @@ pub fn run() {
                 commands::codex::respond_to_file_change_approval,
                 commands::codex::respond_to_request_user_input,
                 commands::codex::initialize_codex_async,
+                commands::openapp::check_app_installed,
+                commands::openapp::open_workspace_in,
                 commands::fs::read_directory,
                 commands::fs::get_home_directory,
                 commands::fs::search_files,

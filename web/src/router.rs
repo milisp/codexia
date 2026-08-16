@@ -38,6 +38,7 @@ use super::{
         api_list_threads, api_load_manifest, api_load_manifests,
         api_mark_notes_synced, api_prevent_sleep,
         api_login_account, api_model_list, api_model_list_post, api_read_directory, api_read_file,
+        api_check_app_installed, api_open_workspace_in,
         api_read_dxt_setting,
         api_read_pdf_content, api_read_text_file_lines,
         api_read_xlsx_content, api_respond_command_execution_approval,
@@ -188,6 +189,8 @@ pub fn create_router(state: WebServerState) -> Router {
         )
         .route("/api/codex/review/start", post(api_start_review))
         .route("/api/filesystem/read-directory", post(api_read_directory))
+        .route("/api/openapp/check-app-installed", post(api_check_app_installed))
+        .route("/api/openapp/open-workspace-in", post(api_open_workspace_in))
         .route("/api/filesystem/home-directory", get(api_get_home_directory))
         .route("/api/filesystem/canonicalize-path", post(api_canonicalize_path))
         .route("/api/filesystem/search-files", post(api_search_files))

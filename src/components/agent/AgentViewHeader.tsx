@@ -12,6 +12,7 @@ import type { AgentCardsViewMode } from '@/stores/useAgentCenterStore';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { getFilename } from '@/utils/getFilename';
 import { UpdateButton } from '../../features/UpdateButton';
+import { OpenAppMenu } from './openApp/OpenAppMenu';
 
 const CARDS_VIEW_MODES: { mode: AgentCardsViewMode; icon: typeof LayoutGrid; title: string }[] = [
   { mode: 'solo', icon: Square, title: 'Solo view' },
@@ -58,6 +59,7 @@ export function AgentViewHeader() {
         {!hasActiveSession && <Badge variant="secondary">{getFilename(cwd)}</Badge>}
       </div>
       <span className="flex items-center gap-1 pr-2">
+        {cwd && <OpenAppMenu path={cwd} />}
         <span className="flex items-center gap-0.5 border rounded-md p-0.5">
           {CARDS_VIEW_MODES.map(({ mode, icon: Icon, title }) => (
             <Button

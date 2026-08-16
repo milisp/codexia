@@ -1,6 +1,7 @@
 pub mod dxt;
 pub mod fs;
 pub mod insights;
+pub mod openapp;
 pub mod skills;
 pub mod skillssh;
 pub mod sleep;

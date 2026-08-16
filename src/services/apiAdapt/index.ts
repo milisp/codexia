@@ -10,6 +10,7 @@ export * from './dxt';
 export * from './filesystem';
 export * from './git';
 export * from './note';
+export * from './openapp';
 export type {
   DbNote,
   InstalledSkillItem,
