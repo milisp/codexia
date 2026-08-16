@@ -11,6 +11,7 @@ import { type Accent, type Theme, useThemeStore } from '@/stores/settings';
 import { LanguageSelector } from './LanguageSelector';
 
 const ACCENT_OPTIONS: Array<{ value: Accent; label: string; colorClass: string }> = [
+  { value: 'ghibli', label: 'Ghibli', colorClass: 'bg-emerald-700' },
   { value: 'black', label: 'Noir', colorClass: 'bg-slate-800' },
   { value: 'pink', label: 'Pink', colorClass: 'bg-pink-500' },
   { value: 'blue', label: 'Blue', colorClass: 'bg-blue-500' },

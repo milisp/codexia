@@ -252,8 +252,71 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
 }
 
-/* Grok-style dark starfield background, opt-in via the "starfield" toggle */
-.dark.starfield body {
+/* Soft nature-toned accent theme (sage green + warm cream), inspired by
+   pastoral animation palettes but using original, non-trademarked colors/name */
+.accent-ghibli {
+  --primary: oklch(0.55 0.09 145);
+  --primary-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.96 0.03 95);
+  --accent-foreground: oklch(0.3 0.05 145);
+  --ring: oklch(0.65 0.07 145);
+  --sidebar-primary: oklch(0.55 0.09 145);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.96 0.03 95);
+  --sidebar-accent-foreground: oklch(0.3 0.05 145);
+}
+.dark.accent-ghibli {
+  --primary: oklch(0.75 0.08 145);
+  --primary-foreground: oklch(0.205 0 0);
+  --accent: oklch(0.28 0.04 95);
+  --accent-foreground: oklch(0.9 0.03 95);
+  --ring: oklch(0.65 0.07 145);
+  --sidebar-primary: oklch(0.75 0.08 145);
+  --sidebar-primary-foreground: oklch(0.205 0 0);
+  --sidebar-accent: oklch(0.28 0.04 95);
+  --sidebar-accent-foreground: oklch(0.9 0.03 95);
+}
+
+/* Soft sky/meadow gradient backdrop for the ghibli accent theme, topped with
+   a hand-drawn hills-and-fox scene (public/themes/ghibli-scene-*.svg) */
+.accent-ghibli body {
+  background-color: var(--background);
+  background-image:
+    url("/themes/ghibli-scene-light.svg"),
+    radial-gradient(ellipse 70% 50% at 15% 0%, oklch(0.93 0.05 145 / 45%), transparent 70%),
+    radial-gradient(ellipse 60% 45% at 100% 10%, oklch(0.95 0.05 95 / 50%), transparent 70%),
+    linear-gradient(180deg, oklch(0.98 0.015 95) 0%, oklch(0.96 0.02 145) 100%);
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+  background-position: center bottom, 0 0, 0 0, 0 0;
+  background-size: min(1400px, 180vw) auto, 100% 100%, 100% 100%, 100% 100%;
+  background-attachment: fixed;
+}
+
+.dark.accent-ghibli body {
+  background-color: var(--background);
+  background-image:
+    url("/themes/ghibli-scene-dark.svg"),
+    radial-gradient(ellipse 70% 50% at 15% 0%, oklch(0.3 0.05 145 / 35%), transparent 70%),
+    radial-gradient(ellipse 60% 45% at 100% 10%, oklch(0.28 0.04 95 / 35%), transparent 70%),
+    linear-gradient(180deg, oklch(0.16 0.015 145) 0%, oklch(0.13 0.015 95) 100%);
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+  background-position: center bottom, 0 0, 0 0, 0 0;
+  background-size: min(1400px, 180vw) auto, 100% 100%, 100% 100%, 100% 100%;
+  background-attachment: fixed;
+}
+
+.accent-ghibli .app-main-bg {
+  background-color: transparent;
+}
+
+.accent-ghibli [data-sidebar="sidebar"],
+.accent-ghibli .bg-sidebar {
+  background-color: color-mix(in oklch, var(--sidebar) 90%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+/* Grok-style dark starfield background, opt-in via the "starfield" toggle (Noir accent only) */
+.dark.starfield.accent-black body {
   background-color: var(--background);
   background-image:
     radial-gradient(1px 1px at 10% 15%, rgba(255, 255, 255, 0.9), transparent),
@@ -276,12 +339,12 @@
   background-attachment: fixed;
 }
 
-.dark.starfield .bg-background {
+.dark.starfield.accent-black .app-main-bg {
   background-color: transparent;
 }
 
-.dark.starfield [data-sidebar="sidebar"],
-.dark.starfield .bg-sidebar {
+.dark.starfield.accent-black [data-sidebar="sidebar"],
+.dark.starfield.accent-black .bg-sidebar {
   backdrop-filter: blur(12px);
 }
 
@@ -294,7 +357,7 @@
   background-attachment: fixed;
 }
 
-.has-custom-background .bg-background {
+.has-custom-background .app-main-bg {
   background-color: transparent;
 }
 

@@ -5,7 +5,7 @@ import { persist } from 'zustand/middleware';
 export type Theme = 'light' | 'dark' | 'system';
 
 // Accent color theme
-export type Accent = 'black' | 'pink' | 'blue' | 'green' | 'purple' | 'orange';
+export type Accent = 'ghibli' | 'black' | 'pink' | 'blue' | 'green' | 'purple' | 'orange';
 
 interface ThemeState {
   theme: Theme;
@@ -23,7 +23,7 @@ export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
       theme: 'system',
-      accent: 'black',
+      accent: 'ghibli',
       starfield: true,
       backgroundImage: null,
       setTheme: (theme: Theme) => set({ theme }),

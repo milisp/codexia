@@ -56,6 +56,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     // Classes to cleanup
     const themes = ['light', 'dark'];
     const accents = [
+      'accent-ghibli',
       'accent-black',
       'accent-pink',
       'accent-blue',
