@@ -138,8 +138,7 @@ Related:
 
 ## License
 
-Dual-licensed under **AGPL-3.0** (open source) and a **Commercial License** (closed-source / SaaS use).
-See [COMMERCIAL.md](COMMERCIAL.md) for details.
+Licensed under the [MIT License](LICENSE).
 
 ---
 
