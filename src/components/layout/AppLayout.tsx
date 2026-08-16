@@ -17,11 +17,11 @@ const AutoMationsView = lazy(() =>
 const InsightsView = lazy(() => import('@/features/insight/InsightsView'));
 
 // Inner component so it can call useSidebar() inside SidebarProvider
-function LayoutContent({ mainContent }: { mainContent: React.ReactNode }) {
-  const MIN_RIGHT_PANEL_SIZE = 22;
-  const MAX_RIGHT_PANEL_SIZE = 75;
-  const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+const MIN_RIGHT_PANEL_SIZE = 22;
+const MAX_RIGHT_PANEL_SIZE = 75;
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
+function LayoutContent({ mainContent }: { mainContent: React.ReactNode }) {
   const {
     isSidebarOpen,
     setSidebarOpen,
@@ -37,7 +37,13 @@ function LayoutContent({ mainContent }: { mainContent: React.ReactNode }) {
   const canShowRightPanel = view === 'agent';
   const isRightPanelVisible = canShowRightPanel && isRightPanelOpen;
   const rightPanelRef = useRef<ImperativePanelHandle>(null);
+  const mainPanelRef = useRef<ImperativePanelHandle>(null);
   const isMobile = useIsMobile();
+  // Focus mode hides the main agent thread so the right panel (diff/tasks/etc.)
+  // can take the full width — useful when reviewing a diff or reading notes
+  // without the agent chat competing for attention.
+  const isFocusModeActive =
+    canShowRightPanel && isRightPanelVisible && isRightPanelFocused && !isMobile;
   const hasInitializedMobileLayoutRef = useRef(false);
   const { setOpenMobile } = useSidebar();
 
@@ -50,6 +56,10 @@ function LayoutContent({ mainContent }: { mainContent: React.ReactNode }) {
       panel.collapse();
       return;
     }
+    if (isFocusModeActive) {
+      panel.expand();
+      return;
+    }
     if (isRightPanelVisible) {
       const nextSize = clamp(rightPanelSize, MIN_RIGHT_PANEL_SIZE, MAX_RIGHT_PANEL_SIZE);
       panel.resize(nextSize);
@@ -58,7 +68,7 @@ function LayoutContent({ mainContent }: { mainContent: React.ReactNode }) {
     } else {
       panel.collapse();
     }
-  }, [isMobile, isRightPanelVisible, rightPanelSize, setRightPanelSize]);
+  }, [isFocusModeActive, isMobile, isRightPanelVisible, rightPanelSize, setRightPanelSize]);
 
   useEffect(() => {
     if (!isMobile) {
@@ -72,53 +82,59 @@ function LayoutContent({ mainContent }: { mainContent: React.ReactNode }) {
   }, [isMobile, isRightPanelOpen, isSidebarOpen, setRightPanelOpen, setSidebarOpen]);
 
   const handleRightPanelResize = (size: number) => {
-    if (!isRightPanelVisible || size <= 0) return;
+    if (!isRightPanelVisible || isFocusModeActive || size <= 0) return;
     const nextSize = clamp(size, MIN_RIGHT_PANEL_SIZE, MAX_RIGHT_PANEL_SIZE);
     if (nextSize !== rightPanelSize) setRightPanelSize(nextSize);
   };
 
-  // Focus mode hides the main agent thread so the right panel (diff/tasks/etc.)
-  // can take the full width — useful when reviewing a diff or reading notes
-  // without the agent chat competing for attention.
-  const isFocusModeActive =
-    canShowRightPanel && isRightPanelVisible && isRightPanelFocused && !isMobile;
+  // Focus mode collapses the main panel instead of swapping the tree, so the
+  // right panel (and long-lived children like the terminal) stays mounted.
+  useEffect(() => {
+    const panel = mainPanelRef.current;
+    if (!panel) return;
+    if (isFocusModeActive) panel.collapse();
+    else panel.expand();
+  }, [isFocusModeActive]);
 
   return (
     <SidebarInset className="min-w-0 overflow-hidden h-full">
       <div className="relative flex flex-1 flex-col min-h-0 h-full">
-        {isFocusModeActive ? (
-          // Focus mode: right panel takes the full width, main agent thread is hidden.
-          <div className="flex min-h-0 min-w-0 w-full flex-1">
-            <RightPanel />
-          </div>
-        ) : (
-          <ResizablePanelGroup
-            direction="horizontal"
-            className="flex min-h-0 min-w-0 w-full flex-1"
+        <ResizablePanelGroup direction="horizontal" className="flex min-h-0 min-w-0 w-full flex-1">
+          <ResizablePanel
+            ref={mainPanelRef}
+            defaultSize={isRightPanelVisible && !isMobile ? 32 : 100}
+            minSize={25}
+            collapsible
+            collapsedSize={0}
           >
-            <ResizablePanel defaultSize={isRightPanelVisible && !isMobile ? 32 : 100} minSize={25}>
-              {mainContent}
-            </ResizablePanel>
-            {canShowRightPanel && (
-              <>
-                <ResizableHandle withHandle className={isMobile ? 'hidden' : ''} />
-                <ResizablePanel
-                  ref={rightPanelRef}
-                  defaultSize={isRightPanelVisible && !isMobile ? rightPanelSize : 0}
-                  minSize={MIN_RIGHT_PANEL_SIZE}
-                  maxSize={MAX_RIGHT_PANEL_SIZE}
-                  onResize={handleRightPanelResize}
-                  collapsible
-                  collapsedSize={0}
-                  onCollapse={() => setRightPanelOpen(false)}
-                  onExpand={() => setRightPanelOpen(true)}
-                >
-                  {!isMobile && <RightPanel />}
-                </ResizablePanel>
-              </>
-            )}
-          </ResizablePanelGroup>
-        )}
+            {mainContent}
+          </ResizablePanel>
+          {canShowRightPanel && (
+            <>
+              <ResizableHandle
+                withHandle
+                className={isMobile || isFocusModeActive ? 'hidden' : ''}
+              />
+              <ResizablePanel
+                ref={rightPanelRef}
+                defaultSize={isRightPanelVisible && !isMobile ? rightPanelSize : 0}
+                minSize={MIN_RIGHT_PANEL_SIZE}
+                // Focus mode collapses the main panel, so the right panel must
+                // be allowed to take the whole width.
+                maxSize={isFocusModeActive ? 100 : MAX_RIGHT_PANEL_SIZE}
+                onResize={handleRightPanelResize}
+                collapsible
+                collapsedSize={0}
+                onCollapse={() => setRightPanelOpen(false)}
+                onExpand={() => setRightPanelOpen(true)}
+                // On mobile the right panel is rendered as an overlay below.
+                className={isMobile ? 'hidden' : ''}
+              >
+                {!isMobile && <RightPanel />}
+              </ResizablePanel>
+            </>
+          )}
+        </ResizablePanelGroup>
 
         {isMobile && canShowRightPanel && isRightPanelOpen && (
           <>
