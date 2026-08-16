@@ -1,7 +1,7 @@
 import type { UnlistenFn } from '@tauri-apps/api/event';
 import { listen } from '@tauri-apps/api/event';
 import { Loader2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { isTauri } from '@/hooks/runtime';
@@ -23,6 +23,12 @@ interface FileViewerProps {
   filePath: string;
 }
 
+const getFileExtension = (path: string) => {
+  const base = getFilename(path);
+  const lastDot = base.lastIndexOf('.');
+  return lastDot > -1 ? base.substring(lastDot + 1).toLowerCase() : '';
+};
+
 export function FileViewer({ filePath }: FileViewerProps) {
   const isTauriRuntime = isTauri();
   const [content, setContent] = useState<string>('');
@@ -34,18 +40,11 @@ export function FileViewer({ filePath }: FileViewerProps) {
   const [diskChanged, setDiskChanged] = useState(false);
   const prevWatchedDirRef = useRef<string | null>(null);
   const [canonicalFile, setCanonicalFile] = useState<string | null>(null);
-  const [fileTrigger, setFileTrigger] = useState(0);
   const { resolvedTheme } = useThemeContext();
   const { setInputValue } = useInputStore();
   const { addNote } = useNoteStore();
 
-  const getFileExtension = (path: string) => {
-    const base = getFilename(path);
-    const lastDot = base.lastIndexOf('.');
-    return lastDot > -1 ? base.substring(lastDot + 1).toLowerCase() : '';
-  };
-
-  const loadFile = async () => {
+  const loadFile = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -73,13 +72,7 @@ export function FileViewer({ filePath }: FileViewerProps) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const prevFilePathRef = useRef(filePath);
-  if (filePath !== prevFilePathRef.current) {
-    prevFilePathRef.current = filePath;
-    setFileTrigger((prev) => prev + 1);
-  }
+  }, [filePath]);
 
   // Reset content/error inline during render when filePath becomes falsy
   if (!filePath && (content !== '' || error !== null)) {
@@ -88,7 +81,6 @@ export function FileViewer({ filePath }: FileViewerProps) {
   }
 
   useEffect(() => {
-    if (fileTrigger === 0) return;
     if (!filePath) {
       return;
     }
@@ -101,7 +93,7 @@ export function FileViewer({ filePath }: FileViewerProps) {
         setCanonicalFile(filePath);
       }
     })();
-  }, [filePath, fileTrigger]);
+  }, [filePath, loadFile]);
 
   useEffect(() => {
     setCurrentContent(content);
@@ -203,7 +195,7 @@ export function FileViewer({ filePath }: FileViewerProps) {
     return () => {
       if (unlisten) unlisten();
     };
-  }, [filePath, canonicalFile, content, currentContent, isTauriRuntime]);
+  }, [filePath, canonicalFile, content, currentContent, isTauriRuntime, loadFile]);
 
   if (!filePath) return null;
 
