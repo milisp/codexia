@@ -1,6 +1,6 @@
 import { listen } from '@tauri-apps/api/event';
 import { Archive, FolderX, GitFork, Loader2 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ServerNotification } from '@/bindings/ServerNotification';
 import type {
   Thread,
@@ -8,7 +8,7 @@ import type {
   ThreadListResponse,
   ThreadNameUpdatedNotification,
 } from '@/bindings/v2';
-import { useCodexStore, useThreadListStore } from '@/components/codex/stores';
+import { useCodexStore, useConfigStore, useThreadListStore } from '@/components/codex/stores';
 import { RenameThreadDialog } from '@/components/codex/thread/RenameThreadDialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,7 +26,6 @@ import { codexService } from '@/services/codexService';
 import { useAgentCenterStore, useLayoutStore } from '@/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { formatThreadAge } from '@/utils/formatThreadAge';
-import { modelProviders } from '../constants';
 
 interface ThreadListProps {
   cwd: string;
@@ -34,12 +33,15 @@ interface ThreadListProps {
 
 const EMPTY_LIST: ThreadListResponse = { data: [], nextCursor: null, backwardsCursor: null };
 
+const PAGE_SIZE = 3;
+
 export function ThreadList({ cwd }: ThreadListProps) {
   const { cwd: workspaceCwd, setCwd } = useWorkspaceStore();
   const { setView } = useLayoutStore();
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
   const { currentThreadId, threadStatusMap, threads: storeThreads } = useCodexStore();
   const { sortKey } = useThreadListStore();
+  const modelProvider = useConfigStore((s) => s.modelProvider);
   const [response, setResponse] = useState<ThreadListResponse>(EMPTY_LIST);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [renameThreadId, setRenameThreadId] = useState<string | null>(null);
@@ -51,13 +53,21 @@ export function ThreadList({ cwd }: ThreadListProps) {
 
   // --- Thread loading (search + sort delegated to backend) ---
 
+  // Only show threads of the provider currently selected in the composer.
+  const providerFilter = useMemo(() => [modelProvider], [modelProvider]);
+
+  // Keep however many threads are already visible when the list reloads
+  // (select / delete / archive / fork) instead of collapsing back to one page.
+  const loadedRef = useRef({ cwd, count: 0 });
+  if (loadedRef.current.cwd !== cwd) loadedRef.current = { cwd, count: 0 };
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: refreshCounter is the manual reload trigger
   useEffect(() => {
     let cancelled = false;
     const params: ThreadListParams = {
-      limit: 3,
+      limit: Math.max(PAGE_SIZE, loadedRef.current.count),
       sortKey,
-      modelProviders: modelProviders,
+      modelProviders: providerFilter,
       cwd,
       useStateDbOnly: true,
     };
@@ -65,6 +75,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
       try {
         const res = await listThreads(params);
         if (cancelled) return;
+        loadedRef.current = { cwd, count: res.data.length };
         setResponse(res);
       } catch (err) {
         if (!cancelled) console.error('Failed to load threads:', err);
@@ -179,7 +190,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
       const params: ThreadListParams = {
         cursor: nextCursor,
         limit: 20,
-        modelProviders: modelProviders,
+        modelProviders: providerFilter,
         useStateDbOnly: true,
         sortKey,
         cwd,
@@ -187,15 +198,14 @@ export function ThreadList({ cwd }: ThreadListProps) {
       const res = await listThreads(params);
       setResponse((prev) => {
         const seen = new Set(prev.data.map((t) => t.id));
-        return {
-          ...res,
-          data: [...prev.data, ...res.data.filter((t) => !seen.has(t.id))],
-        };
+        const data = [...prev.data, ...res.data.filter((t) => !seen.has(t.id))];
+        loadedRef.current = { cwd, count: data.length };
+        return { ...res, data };
       });
     } finally {
       setIsLoadingMore(false);
     }
-  }, [cwd, isLoadingMore, nextCursor, sortKey]);
+  }, [cwd, isLoadingMore, nextCursor, sortKey, providerFilter]);
 
   const openRenameDialog = useCallback((thread: Thread) => {
     // Prefer explicit name, fall back to preview (first message).
