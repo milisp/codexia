@@ -1,71 +1,63 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
+import { CopyButton } from '@/components/common';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import type { ToolResultBlock, ToolUseBlock } from '../../../types/messages';
 import { CommandValue } from '../ToolInputDisplay';
 
 interface Props {
   block: ToolUseBlock;
   inlineError?: ToolResultBlock | null;
-  showError: boolean;
-  onToggleError: () => void;
 }
 
-export function BashTool({ block, inlineError, showError, onToggleError }: Props) {
-  const [showCommand, setShowCommand] = useState(false);
+export function BashTool({ block, inlineError }: Props) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const command: string = block.input?.command ?? '';
+  const errorText = inlineError
+    ? typeof inlineError.content === 'string'
+      ? inlineError.content
+      : JSON.stringify(inlineError.content)
+    : null;
 
   return (
-    <>
-      <div className="flex items-center flex-wrap gap-0.5">
+    <div className="flex flex-col gap-2 w-full min-w-0">
+      <button
+        type="button"
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="group flex gap-2 items-center text-sm font-mono text-muted-foreground hover:text-foreground transition-colors text-left w-full cursor-pointer"
+      >
         <Badge
           variant="secondary"
-          className="text-[10px] h-4 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border-none"
+          className="shrink-0 text-[10px] h-4 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border-none"
         >
           Bash
         </Badge>
-        {block.input?.description && (
-          <Badge variant="outline" className="text-[10px] h-4">
-            {block.input.description}
-          </Badge>
-        )}
-        {block.input?.command && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowCommand((p) => !p)}
-            className="h-4 w-4"
-          >
-            {showCommand ? (
-              <ChevronDown className="h-3 w-3" />
-            ) : (
-              <ChevronRight className="h-3 w-3" />
-            )}
-          </Button>
-        )}
-        {inlineError && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleError}
-            className="h-4 w-4 text-red-500 hover:text-red-600"
-          >
-            {showError ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-          </Button>
-        )}
-      </div>
-      {block.input?.command && showCommand && (
-        <div className="mt-2">
-          <CommandValue value={block.input.command} />
+
+        <code className="bg-muted/40 px-1.5 py-0.5 rounded border border-transparent group-hover:border-border w-0 flex-1 block truncate">
+          {command || block.input?.description}
+        </code>
+
+        <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150 ml-auto">
+          {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+        </div>
+      </button>
+
+      {isExpanded && (
+        <div className="rounded-md overflow-hidden flex flex-col">
+          <CommandValue value={command} />
+
+          {errorText && (
+            <div className="relative flex items-start justify-between gap-4 bg-zinc-900 dark:bg-zinc-950 border-x border-b border-zinc-700/60 rounded-b-md group/output">
+              <div className="text-[11px] font-mono text-red-400 flex-1 break-all whitespace-pre-wrap py-2 px-3 max-h-48 overflow-y-auto">
+                {errorText}
+              </div>
+              <div className="shrink-0 opacity-0 group-hover/output:opacity-100 transition-opacity duration-150">
+                <CopyButton text={errorText} />
+              </div>
+            </div>
+          )}
         </div>
       )}
-      {inlineError && showError && (
-        <div className="mt-1 text-xs whitespace-pre-wrap break-words text-red-600 dark:text-red-400 border-t border-red-500/20 pt-1">
-          {typeof inlineError.content === 'string'
-            ? inlineError.content
-            : JSON.stringify(inlineError.content)}
-        </div>
-      )}
-    </>
+    </div>
   );
 }
