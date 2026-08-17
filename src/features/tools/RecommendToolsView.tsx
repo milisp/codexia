@@ -1,6 +1,6 @@
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { Check, Copy, ExternalLink, Terminal } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import recommendData from '@/assets/recommend.json';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -11,6 +11,9 @@ interface Tool {
   url: string;
   setup: string;
 }
+
+const REMOTE_RECOMMEND_URL =
+  'https://raw.githubusercontent.com/milisp/codexia/main/src/assets/recommend.json';
 
 function SetupPopover({ setup }: { setup: string }) {
   const [copied, setCopied] = useState(false);
@@ -68,7 +71,28 @@ function ToolCard({ tool }: { tool: Tool }) {
 }
 
 export function RecommendToolsView() {
-  const tools = (recommendData as { tools: Tool[] }).tools;
+  const [tools, setTools] = useState<Tool[]>((recommendData as { tools: Tool[] }).tools);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    // `cache: 'no-cache'` lets the browser revalidate with the server
+    // (using its own ETag/Last-Modified) instead of always re-downloading.
+    fetch(REMOTE_RECOMMEND_URL, { cache: 'no-cache' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { tools: Tool[] } | null) => {
+        if (!cancelled && data?.tools) {
+          setTools(data.tools);
+        }
+      })
+      .catch(() => {
+        // ignore network errors, keep bundled data
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="flex flex-col gap-2 p-4">
