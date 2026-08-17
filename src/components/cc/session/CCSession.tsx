@@ -160,7 +160,7 @@ export default function CCSession({ sessionId, disableListener = false }: CCSess
           ref={scrollContainerRef}
           className="h-full overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:display-none"
         >
-          <div className="flex flex-col gap-2 p-4">
+          <div className="thread-surface flex flex-col gap-2 p-4">
             {/* Message list */}
             {messageGroups.map((group) =>
               group.kind === 'explored' ? (

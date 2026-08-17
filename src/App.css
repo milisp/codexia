@@ -312,11 +312,21 @@
 /* The scene backdrop stays visible around the conversation, but the message
    column itself needs a readable ground: bare text events (agent messages and
    friends) render with no background of their own. */
+/* Light mode: the scene is already near-white, so a translucent panel reads as
+   nothing. Use an opaque white card with a defined edge instead. */
 .accent-ghibli .thread-surface {
-  background-color: color-mix(in oklch, var(--background) 82%, transparent);
-  backdrop-filter: blur(10px);
+  background-color: oklch(1 0 0);
+  border: 1px solid oklch(0.87 0.02 145);
   border-radius: var(--radius-lg);
   padding-inline: 1rem;
+  box-shadow: 0 6px 24px oklch(0.4 0.06 145 / 14%);
+}
+
+.dark.accent-ghibli .thread-surface {
+  background-color: color-mix(in oklch, var(--background) 94%, transparent);
+  backdrop-filter: blur(16px) saturate(120%);
+  border-color: var(--border);
+  box-shadow: 0 8px 32px oklch(0 0 0 / 30%);
 }
 
 .accent-ghibli [data-sidebar="sidebar"],
