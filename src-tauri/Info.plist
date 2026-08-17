@@ -4,16 +4,6 @@
 <dict>
   <key>NSRequiresAquaSystemAppearance</key>
   <false/>
-  <key>LSMinimumSystemVersion</key>
-  <string>10.15</string>
-  <key>CFBundleShortVersionString</key>
-  <string>0.44.0</string>
-  <key>CFBundleName</key>
-  <string>Codexia</string>
-  <key>CFBundleDisplayName</key>
-  <string>Codexia</string>
-  <key>CFBundleIdentifier</key>
-  <string>dev.milisp.codexia</string>
   <key>NSAppleEventsUsageDescription</key>
   <string>Codexia needs to send Apple Events to other applications.</string>
   <key>NSAppleScriptEnabled</key>
