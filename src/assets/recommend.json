@@ -11,6 +11,12 @@
             "description": "Project-level QA harness for natural-language web and mobile tests, with MCP and Agent Skills for Codex workflows",
             "url": "https://github.com/vostride/agent-qa",
             "setup": "npm install -D agent-qa@0.1.21 && npx agent-qa init"
+        },
+        {
+            "name": "ClawMetry",
+            "description": "Zero-config local dashboard for Codex CLI sessions, tokens, costs, and tool calls, alongside 20+ other agent runtimes",
+            "url": "https://github.com/vivekchand/clawmetry",
+            "setup": "pip install clawmetry && clawmetry"
         }
     ]
 }
