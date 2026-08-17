@@ -87,7 +87,7 @@ export function CodexThread({ threadId, fillHeight = true }: CodexThreadProps = 
       {/* Messages Area */}
       <div className="flex-1 min-h-0 overflow-hidden">
         <ScrollArea ref={scrollAreaRootRef} className="h-full px-4 pb-4">
-          <div className="max-w-3xl mx-auto space-y-2 py-4">
+          <div className="thread-surface max-w-3xl mx-auto space-y-2 py-4">
             {renderedEvents.map((entry) => (
               <div key={entry.key}>{entry.content}</div>
             ))}

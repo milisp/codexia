@@ -309,6 +309,16 @@
   background-color: transparent;
 }
 
+/* The scene backdrop stays visible around the conversation, but the message
+   column itself needs a readable ground: bare text events (agent messages and
+   friends) render with no background of their own. */
+.accent-ghibli .thread-surface {
+  background-color: color-mix(in oklch, var(--background) 82%, transparent);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-lg);
+  padding-inline: 1rem;
+}
+
 .accent-ghibli [data-sidebar="sidebar"],
 .accent-ghibli .bg-sidebar {
   background-color: color-mix(in oklch, var(--sidebar) 90%, transparent);
