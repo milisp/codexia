@@ -5,6 +5,7 @@ rather than scanning everything.
 
 | Version | Date | Notes |
 | --- | --- | --- |
+| [0.46.0](./0.46.0.md) | 2026-08-16 | Ghibli theme, open-app support, MIT relicense, PostHog removed |
 | [0.45.0](./0.45.0.md) | 2026-08-16 | Tauri iOS app with mobile shell, multiple paired desktops, multi-session ACP connections |
 | [0.44.0](./0.44.0.md) | 2026-08-10 | Claude Code effort levels and permission modes, automation runner, Windows portable archive |
 | [0.43.0](./0.43.0.md) | 2026-08-09 | ACP agent connections, iOS remote control, Grok approval toggle |
