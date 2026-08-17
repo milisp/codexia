@@ -238,6 +238,7 @@ pub fn run() {
                 commands::codex::codex_home,
                 commands::env::get_env,
                 commands::env::set_env,
+                commands::updater::is_homebrew_install,
                 commands::remote::remote_status,
                 commands::remote::remote_start,
                 commands::remote::remote_stop,

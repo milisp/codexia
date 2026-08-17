@@ -11,7 +11,6 @@ import { useCCStore, useLayoutStore, useWorkspaceStore } from '@/stores';
 import type { AgentCardsViewMode } from '@/stores/useAgentCenterStore';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { getFilename } from '@/utils/getFilename';
-import { UpdateButton } from '../../features/UpdateButton';
 import { OpenAppMenu } from './openApp/OpenAppMenu';
 
 const CARDS_VIEW_MODES: { mode: AgentCardsViewMode; icon: typeof LayoutGrid; title: string }[] = [
@@ -53,7 +52,6 @@ export function AgentViewHeader() {
           <div className={`flex gap-2 items-center ${needsTrafficLightOffset ? 'pl-20' : 'pl-2'}`}>
             <SidebarTrigger />
             <NewAgentButton />
-            <UpdateButton />
           </div>
         )}
         {!hasActiveSession && <Badge variant="secondary">{getFilename(cwd)}</Badge>}

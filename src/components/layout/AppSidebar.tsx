@@ -27,7 +27,7 @@ import { useLayoutStore } from '@/stores';
 import { useAcpStore } from '@/stores/useAcpStore';
 import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { UpdateButton } from '../../features/UpdateButton';
+import { UpdateIndicator } from '../../features/UpdateIndicator';
 import { NewAgentButton } from '../common/NewAgentButton';
 import { SessionManagerDialog } from '../common/SessionManagerDialog';
 import { SideBarAddProjectButton } from './SideBarAddProjectButton';
@@ -103,7 +103,6 @@ export function AppSideBar() {
             data-tauri-drag-region
           >
             <SidebarTrigger className="h-7 w-7" />
-            <UpdateButton />
             <Button
               variant="ghost"
               size="icon"
@@ -211,13 +210,17 @@ export function AppSideBar() {
             <UserInfo />
           </div>
           <div className="flex-shrink-0 pr-2 flex items-center gap-2">
-            <a
-              href="https://github.com/milisp/codexia/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Bug className="h-4 w-4" />
-            </a>
+            <UpdateIndicator
+              fallback={
+                <a
+                  href="https://github.com/milisp/codexia/issues"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Bug className="h-4 w-4" />
+                </a>
+              }
+            />
           </div>
         </SidebarFooter>
       </Sidebar>
