@@ -1,26 +1,44 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
+  <defs>
+    <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f3ecc9" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#f3ecc9" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <!-- moon glow halo -->
+  <circle cx="660" cy="80" r="90" fill="url(#moonGlow)" />
   <!-- moon -->
-  <circle cx="660" cy="80" r="40" fill="#e8f0e0" fill-opacity="0.5" />
+  <circle cx="660" cy="80" r="38" fill="#f3ecc9" fill-opacity="0.75" />
+  <!-- stars -->
+  <g fill="#f3ecc9" fill-opacity="0.6">
+    <circle cx="80" cy="60" r="1.4" />
+    <circle cx="180" cy="40" r="1" />
+    <circle cx="260" cy="90" r="1.6" />
+    <circle cx="380" cy="50" r="1.2" />
+    <circle cx="440" cy="110" r="1" />
+    <circle cx="720" cy="150" r="1.4" />
+    <circle cx="760" cy="60" r="1" />
+  </g>
   <!-- far hills -->
-  <path d="M0 220 C 120 170, 260 190, 400 210 C 540 230, 680 170, 800 200 L 800 400 L 0 400 Z" fill="#33422f" fill-opacity="0.55" />
+  <path d="M0 220 C 120 170, 260 190, 400 210 C 540 230, 680 170, 800 200 L 800 400 L 0 400 Z" fill="#3a5a6b" fill-opacity="0.45" />
   <!-- near hills -->
-  <path d="M0 270 C 140 230, 300 260, 460 240 C 620 220, 700 260, 800 250 L 800 400 L 0 400 Z" fill="#25311f" fill-opacity="0.6" />
+  <path d="M0 270 C 140 230, 300 260, 460 240 C 620 220, 700 260, 800 250 L 800 400 L 0 400 Z" fill="#233d4a" fill-opacity="0.6" />
   <!-- tree -->
   <g transform="translate(120,250)">
-    <rect x="-4" y="20" width="8" height="34" fill="#4a3a29" fill-opacity="0.6" rx="2" />
-    <circle cx="0" cy="0" r="26" fill="#3c5a34" fill-opacity="0.6" />
-    <circle cx="-18" cy="14" r="18" fill="#3c5a34" fill-opacity="0.5" />
-    <circle cx="18" cy="14" r="18" fill="#3c5a34" fill-opacity="0.5" />
+    <rect x="-4" y="20" width="8" height="34" fill="#3a2f24" fill-opacity="0.6" rx="2" />
+    <circle cx="0" cy="0" r="26" fill="#3e6b52" fill-opacity="0.55" />
+    <circle cx="-18" cy="14" r="18" fill="#3e6b52" fill-opacity="0.45" />
+    <circle cx="18" cy="14" r="18" fill="#3e6b52" fill-opacity="0.45" />
   </g>
   <!-- fireflies -->
-  <g fill="#e8f2c8" fill-opacity="0.7">
+  <g fill="#e8f2c8" fill-opacity="0.8">
     <circle cx="520" cy="150" r="2" />
     <circle cx="545" cy="170" r="1.6" />
     <circle cx="500" cy="180" r="1.8" />
     <circle cx="600" cy="140" r="2" />
   </g>
   <!-- fox silhouette resting on the hill -->
-  <g transform="translate(320,258)" fill="#8a5a34" fill-opacity="0.5">
+  <g transform="translate(320,258)" fill="#c98a4f" fill-opacity="0.45">
     <path d="M0 20 C -4 4 8 -10 24 -8 C 34 -18 46 -14 46 -2 C 58 -4 62 10 52 16 C 54 24 46 30 36 26 C 28 34 8 32 0 20 Z" />
     <path d="M20 -9 L14 -20 L26 -12 Z" />
     <path d="M34 -13 L40 -24 L44 -12 Z" />
