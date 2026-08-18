@@ -18,9 +18,18 @@ export function McpToolCallItem({ item }: Props) {
 
   return (
     <div className="flex flex-col gap-1.5 w-full text-sm text-neutral-600 dark:text-neutral-300">
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: role and tabIndex are applied together with the handler, both gated on hasDetails */}
       <div
         className={`flex items-center gap-2 ${hasDetails ? 'cursor-pointer select-none' : ''}`}
+        role={hasDetails ? 'button' : undefined}
+        tabIndex={hasDetails ? 0 : undefined}
         onClick={() => hasDetails && setIsExpanded(!isExpanded)}
+        onKeyDown={(e) => {
+          if (hasDetails && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            setIsExpanded(!isExpanded);
+          }
+        }}
       >
         <Badge>{item.server}</Badge>
         <span className="font-mono font-medium">{item.tool}</span>

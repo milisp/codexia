@@ -48,6 +48,7 @@ export const UserMessageItem = ({
             <div className="flex flex-wrap gap-2">
               {images.map((src, index) => (
                 <img
+                  // biome-ignore lint/suspicious/noArrayIndexKey: the same image may be attached twice, so src is not unique
                   key={`remote-${index}`}
                   src={src}
                   alt={`Uploaded ${index + 1}`}
@@ -56,6 +57,7 @@ export const UserMessageItem = ({
               ))}
               {localImages.map((src, index) => (
                 <img
+                  // biome-ignore lint/suspicious/noArrayIndexKey: the same image may be attached twice, so src is not unique
                   key={`local-${index}`}
                   src={src}
                   alt={`Uploaded ${index + 1}`}

@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useCodexStore } from '@/components/codex/stores';
-import { codexService } from '@/services/codexService';
 import { gitRemoveWorktree } from '@/services/apiAdapt/git';
+import { codexService } from '@/services/codexService';
 import { useAgentCenterStore } from '@/stores';
 import { useCCStore } from '@/stores/cc';
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
@@ -39,10 +39,13 @@ export default function TasksPanel() {
   const { threadStatusMap, currentThreadId } = useCodexStore();
   const { setSelectedAgent } = useAgentSettingsStore();
 
-  const isRunning = (card: AgentCenterCard) =>
-    card.kind === 'codex'
-      ? threadStatusMap[card.id]?.type === 'active'
-      : !!sessionLoadingMap[card.id];
+  const isRunning = useCallback(
+    (card: AgentCenterCard) =>
+      card.kind === 'codex'
+        ? threadStatusMap[card.id]?.type === 'active'
+        : !!sessionLoadingMap[card.id],
+    [threadStatusMap, sessionLoadingMap]
+  );
 
   const handleRemove = (card: AgentCenterCard) => {
     removeCard(card);
@@ -74,15 +77,9 @@ export default function TasksPanel() {
     else switchToSession(card.id);
   };
 
-  const runningCards = useMemo(
-    () => cards.filter((c) => isRunning(c)),
-    [cards, threadStatusMap, sessionLoadingMap]
-  );
+  const runningCards = useMemo(() => cards.filter((c) => isRunning(c)), [cards, isRunning]);
 
-  const idleCards = useMemo(
-    () => cards.filter((c) => !isRunning(c)),
-    [cards, threadStatusMap, sessionLoadingMap]
-  );
+  const idleCards = useMemo(() => cards.filter((c) => !isRunning(c)), [cards, isRunning]);
 
   return (
     <div className="flex flex-row h-full w-full min-w-0 overflow-hidden">
@@ -96,7 +93,19 @@ export default function TasksPanel() {
             </div>
           ) : (
             runningCards.map((card) => (
-              <div key={card.id} onClick={() => selectCard(card)} className="cursor-pointer">
+              <div
+                key={card.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => selectCard(card)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    selectCard(card);
+                  }
+                }}
+                className="cursor-pointer"
+              >
                 <AgentCard
                   card={card}
                   onRemove={() => handleRemove(card)}
@@ -118,7 +127,19 @@ export default function TasksPanel() {
             </div>
           ) : (
             idleCards.map((card) => (
-              <div key={card.id} onClick={() => selectCard(card)} className="cursor-pointer">
+              <div
+                key={card.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => selectCard(card)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    selectCard(card);
+                  }
+                }}
+                className="cursor-pointer"
+              >
                 <AgentCard
                   card={card}
                   onRemove={() => handleRemove(card)}

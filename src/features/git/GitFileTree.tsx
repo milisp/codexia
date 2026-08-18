@@ -64,7 +64,15 @@ export function GitFileTree({
         key={node.path}
         className={`group flex items-center gap-2 rounded px-2 py-1 text-xs border cursor-pointer ${active ? 'bg-accent border-accent-foreground/20' : 'border-transparent hover:bg-accent/40'}`}
         style={{ paddingLeft: depth * 12 + 20 }}
+        role="button"
+        tabIndex={0}
         onClick={() => onSelectPath(selectedDiffSection, node.path)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onSelectPath(selectedDiffSection, node.path);
+          }
+        }}
       >
         <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         <span className="truncate flex-1" title={node.path}>

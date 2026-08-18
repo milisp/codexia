@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/components/ui/use-toast';
-import { codexService } from '@/services/codexService';
 import { deleteFile, listThreads } from '@/services/apiAdapt';
+import { codexService } from '@/services/codexService';
 import { useAgentCenterStore, useLayoutStore } from '@/stores';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { formatThreadAge } from '@/utils/formatThreadAge';
@@ -160,7 +160,7 @@ export function CodexThreadManager({ onClose }: CodexThreadManagerProps) {
     const deletedIds = new Set(items.map((t) => t.id));
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      deletedIds.forEach((id) => next.delete(id));
+      for (const id of deletedIds) next.delete(id);
       return next;
     });
     setThreads((prev) => prev.filter((t) => !deletedIds.has(t.id)));
@@ -229,6 +229,7 @@ export function CodexThreadManager({ onClose }: CodexThreadManagerProps) {
                 }
               }}
             >
+              {/* biome-ignore lint/a11y/noStaticElementInteractions: not a control — it only stops the row's click from reaching the parent */}
               <div onClick={(e) => e.stopPropagation()} className="shrink-0">
                 <Checkbox
                   checked={selectedIds.has(thread.id)}

@@ -67,11 +67,13 @@ export function CCSessionManager({ open, onClose }: CCSessionManagerProps) {
     }
   }, [offset, toast]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: search is the trigger for the debounced filter
   useEffect(() => {
     if (!open) return;
     void load();
   }, [load, open]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: search is the trigger for the debounced filter
   useEffect(() => {
     setOffset(0);
     setSelectedIds(new Set());
@@ -118,7 +120,7 @@ export function CCSessionManager({ open, onClose }: CCSessionManagerProps) {
     setSessions((prev) => prev.filter((s) => !ids.includes(s.session_id)));
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      ids.forEach((id) => next.delete(id));
+      for (const id of ids) next.delete(id);
       return next;
     });
     if (failed > 0) {
@@ -163,6 +165,7 @@ export function CCSessionManager({ open, onClose }: CCSessionManagerProps) {
                 }
               }}
             >
+              {/* biome-ignore lint/a11y/noStaticElementInteractions: not a control — it only stops the row's click from reaching the parent */}
               <div onClick={(e) => e.stopPropagation()} className="shrink-0">
                 <Checkbox
                   checked={selectedIds.has(session.session_id)}

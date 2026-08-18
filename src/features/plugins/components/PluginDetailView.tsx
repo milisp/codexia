@@ -1,18 +1,18 @@
-import { useMemo } from 'react';
-import { Loader2, MessageCircleCode, Plus, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { convertFileSrc } from '@tauri-apps/api/core';
-import { toast } from '@/components/ui/use-toast';
+import { Loader2, MessageCircleCode, Plus, Trash2 } from 'lucide-react';
+import { useMemo } from 'react';
 import type { PluginDetail } from '@/bindings/v2';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
+import { useExternalUrl } from '../hooks/useExternalUrl';
 import {
   AppsSection,
-  SkillsSection,
   AppTemplatesSection,
-  InfoRow,
   ExternalLinkRow,
+  InfoRow,
+  SkillsSection,
 } from './plugin-detail';
-import { useExternalUrl } from '../hooks/useExternalUrl';
 
 interface PluginDetailViewProps {
   plugin: PluginDetail;
@@ -159,7 +159,7 @@ export function PluginDetailView({
             <div className="grid gap-2 grid-cols-2 md:grid-cols-3">
               {screenshots.map((screenshot, index) => (
                 <img
-                  key={index}
+                  key={screenshot}
                   src={screenshot}
                   alt={`${displayName} screenshot ${index + 1}`}
                   className="rounded-lg object-cover aspect-video w-full"
@@ -177,7 +177,7 @@ export function PluginDetailView({
             <h4 className="text-sm font-medium">MCP Servers ({mcpServers.length})</h4>
             <div className="flex flex-wrap gap-1">
               {mcpServers.map((server) => (
-                <div className="flex">
+                <div key={server} className="flex">
                   {iconSrc && (
                     <img
                       src={iconSrc}

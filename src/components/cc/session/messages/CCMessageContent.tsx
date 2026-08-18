@@ -39,7 +39,11 @@ export function CCMessageContent({ msg, isToolBlock, inlineErrors }: Props) {
         <div className="text-xs text-red-500 px-1 mb-2">Error: {msg.message.error}</div>
       )}
       {renderItems.map((item, gi) => (
-        <div key={gi} className={item.mt}>
+        <div
+          // biome-ignore lint/suspicious/noArrayIndexKey: derived render groups, positional by construction
+          key={gi}
+          className={item.mt}
+        >
           {item.kind === 'explored' ? (
             <ExploredGroup
               items={item.items}

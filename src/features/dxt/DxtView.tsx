@@ -35,10 +35,16 @@ export default function DxtView({ refreshTrigger }: { refreshTrigger?: number } 
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {dxtList.map((dxt, idx) => {
+            {dxtList.map((dxt) => {
               const user = dxt.author?.name || 'unknown';
               const repo = dxt.name || 'unknown';
-              return <DxtCard key={idx} dxt={dxt} onClick={() => setSelectedDxt({ user, repo })} />;
+              return (
+                <DxtCard
+                  key={`${user}/${repo}`}
+                  dxt={dxt}
+                  onClick={() => setSelectedDxt({ user, repo })}
+                />
+              );
             })}
           </div>
         </div>

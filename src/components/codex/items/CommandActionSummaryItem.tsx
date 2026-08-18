@@ -60,6 +60,7 @@ export const CommandActionSummaryItem = ({
           <div className="mt-1 ml-2 space-y-1 border-l pl-1 border-border/50">
             {actions.map((action, i) => (
               <CommandActionItem
+                // biome-ignore lint/suspicious/noArrayIndexKey: append-only action list, no stable id
                 key={i}
                 action={action}
                 commandItemId={commandItemId}
@@ -97,6 +98,7 @@ export const CommandActionSummaryItem = ({
             <div className="ml-2 space-y-1 border-l pl-1 border-border/50">
               {hiddenActions.map((action, i) => (
                 <CommandActionItem
+                  // biome-ignore lint/suspicious/noArrayIndexKey: append-only action list, no stable id
                   key={i}
                   action={action}
                   commandItemId={commandItemId}

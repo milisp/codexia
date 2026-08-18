@@ -31,7 +31,7 @@ function NoteListItem({
     <div
       role="button"
       tabIndex={0}
-      aria-selected={isSelected}
+      aria-pressed={isSelected}
       onClick={() => onSelect(note.id)}
       onKeyDown={handleKeyDown}
       className={`group relative flex flex-col items-start gap-1 rounded-lg px-3 py-3 text-left text-sm transition-all hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer ${

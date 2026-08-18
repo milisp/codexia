@@ -10,8 +10,8 @@ export function ToolPrompt({ manifest }: { manifest: z.infer<typeof DxtManifestS
         <h2 className="text-lg font-semibold mb-2">Tools</h2>
         {manifest.tools && manifest.tools.length > 0 ? (
           <ul className="list-disc pl-5">
-            {manifest.tools.map((tool, idx) => (
-              <li key={idx} className="mb-1">
+            {manifest.tools.map((tool) => (
+              <li key={tool.name} className="mb-1">
                 <span className="font-medium">{tool.name}</span>
               </li>
             ))}
@@ -25,8 +25,8 @@ export function ToolPrompt({ manifest }: { manifest: z.infer<typeof DxtManifestS
         <h2 className="text-lg font-semibold mb-2">Prompts</h2>
         {manifest.prompts && manifest.prompts.length > 0 ? (
           <ul className="list-disc pl-5">
-            {manifest.prompts.map((prompt, idx) => (
-              <li key={idx} className="mb-2">
+            {manifest.prompts.map((prompt) => (
+              <li key={prompt.name} className="mb-2">
                 <div className="font-medium">{prompt.name}</div>
                 {prompt.description && (
                   <div className="text-gray-600 text-sm">{prompt.description}</div>

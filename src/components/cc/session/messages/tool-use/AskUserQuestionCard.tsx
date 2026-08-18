@@ -100,7 +100,11 @@ export function AskUserQuestionCard({ block }: Props) {
           <span className="text-xs font-medium">Answered</span>
         </div>
         {submitted.map((ans, i) => (
-          <div key={i} className="text-xs text-foreground/80 pl-5">
+          <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: answers are plain strings and may repeat
+            key={i}
+            className="text-xs text-foreground/80 pl-5"
+          >
             {ans}
           </div>
         ))}
@@ -118,7 +122,7 @@ export function AskUserQuestionCard({ block }: Props) {
       </div>
 
       {questions.map((q, qIdx) => (
-        <div key={qIdx} className="space-y-2">
+        <div key={q.question} className="space-y-2">
           <p className="text-sm text-foreground">{q.question}</p>
 
           <div className="flex flex-col gap-1.5">

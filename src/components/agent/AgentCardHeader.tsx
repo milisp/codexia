@@ -28,9 +28,18 @@ export function AgentCardHeader({
   const dotAnimate = status !== 'idle' ? 'animate-pulse' : '';
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: role and tabIndex are applied together with the handler, both gated on onSelect
     <div
       className="flex items-center gap-2 px-2 py-1.5 border-b bg-muted/30 shrink-0"
+      role={onSelect ? 'button' : undefined}
+      tabIndex={onSelect ? 0 : undefined}
       onClick={onSelect}
+      onKeyDown={(e) => {
+        if (onSelect && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
       style={onSelect ? { cursor: 'pointer' } : undefined}
     >
       {onClose && (

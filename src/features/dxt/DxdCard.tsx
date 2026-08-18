@@ -7,7 +7,15 @@ export function DxtCard({ dxt, onClick }: { dxt: any; onClick?: () => void }) {
   return (
     <div
       className="flex flex-col p-3 rounded-xl border bg-card text-card-foreground shadow-sm hover:shadow-lg transition-shadow cursor-pointer"
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick?.();
+        }
+      }}
     >
       <div className="flex flex-row items-center gap-3">
         {dxt.icon ? (

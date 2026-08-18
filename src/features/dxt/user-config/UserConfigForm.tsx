@@ -114,7 +114,11 @@ function UserConfigField({
           </div>
         )}
         {values.map((v, idx) => (
-          <div key={idx} className="flex items-center gap-2 mb-1">
+          <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: plain string values, index is their only identity
+            key={idx}
+            className="flex items-center gap-2 mb-1"
+          >
             <ConfigInput
               type={option.type}
               value={v}

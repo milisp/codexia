@@ -87,6 +87,8 @@ export const ScreenshotPopover: React.FC<ScreenshotPopoverProps> = ({ onScreensh
     }
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: loadScreenshotableItems is rebuilt every render; the effect should run on open only
+  // biome-ignore lint/correctness/useExhaustiveDependencies: loadScreenshotableItems is rebuilt every render; the effect should run on open only
   useEffect(() => {
     if (isOpen) {
       loadScreenshotableItems();
@@ -151,7 +153,7 @@ export const ScreenshotPopover: React.FC<ScreenshotPopoverProps> = ({ onScreensh
                     'Screen & System Audio Recording',
                     'Add App',
                   ].map((step, index) => (
-                    <li key={index} className="relative pl-6">
+                    <li key={step} className="relative pl-6">
                       <span className="absolute left-[-13px] flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-[10px] font-bold border-4 border-card">
                         {index + 1}
                       </span>

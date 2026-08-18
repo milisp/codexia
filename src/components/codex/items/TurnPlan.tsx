@@ -15,7 +15,7 @@ export function TurnPlan({ plan, explanation }: TurnPlanProps) {
       )}
       <div className="flex flex-col">
         {plan.map((p, index) => (
-          <div key={index} className="flex items-start gap-2">
+          <div key={p.step} className="flex items-start gap-2">
             {/* Status Icon Column */}
             <div className="flex flex-col items-center flex-shrink-0 w-6 py-0.5">
               <div className="relative w-5 h-5 flex items-center justify-center">

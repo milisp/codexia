@@ -55,6 +55,7 @@ export function DiffViewer({
   const [collapsed, setCollapsed] = useState(isCollapsed);
   const copyTimeoutRef = useRef<number | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: resetKey is a trigger dependency, used for its identity change alone
   useEffect(() => {
     return () => {
       if (copyTimeoutRef.current) {
@@ -63,6 +64,7 @@ export function DiffViewer({
     };
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: resetKey is a trigger dependency, used for its identity change alone
   useEffect(() => {
     setCollapsed(isCollapsed);
   }, [isCollapsed, resetKey]);
@@ -239,6 +241,7 @@ export function DiffViewer({
         <div className="font-mono text-sm overflow-auto max-h-[500px] min-w-0">
           {diffLines.map((line, i) => (
             <div
+              // biome-ignore lint/suspicious/noArrayIndexKey: diff lines are positional by definition
               key={i}
               className={cn(
                 'flex border-b last:border-0',

@@ -64,6 +64,7 @@ export function ContributionHeatmap({ data, color, range }: HeatmapProps) {
             const x = wi * (CELL + GAP);
             const y = di * (CELL + GAP);
             return (
+              // biome-ignore lint/a11y/noStaticElementInteractions: hover-only tooltip on a decorative heatmap cell
               <rect
                 key={ds}
                 x={x}

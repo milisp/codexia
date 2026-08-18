@@ -83,7 +83,11 @@ export function AcpToolCall({ entry }: { entry: ToolEntry }) {
 
       <CollapsibleContent className="space-y-2 border-t px-2 py-2">
         {content.map((item, i) => (
-          <ToolContent key={i} item={item} />
+          <ToolContent
+            // biome-ignore lint/suspicious/noArrayIndexKey: append-only content stream, no stable id
+            key={i}
+            item={item}
+          />
         ))}
         {rawInput && (
           <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-all rounded bg-muted/50 p-2 font-mono text-[11px]">
@@ -92,8 +96,8 @@ export function AcpToolCall({ entry }: { entry: ToolEntry }) {
         )}
         {entry.locations && entry.locations.length > 0 && (
           <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
-            {entry.locations.map((loc, i) => (
-              <span key={i} className="font-mono">
+            {entry.locations.map((loc) => (
+              <span key={loc.line ? `${loc.path}:${loc.line}` : loc.path} className="font-mono">
                 {loc.line ? `${loc.path}:${loc.line}` : loc.path}
               </span>
             ))}

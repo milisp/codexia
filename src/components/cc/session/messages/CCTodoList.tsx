@@ -22,6 +22,7 @@ export function CCTodoList({ todos }: Props) {
     <div className="flex flex-col gap-0.5 py-1">
       {visible.map((todo, idx) => (
         <div
+          // biome-ignore lint/suspicious/noArrayIndexKey: todo text is not unique; the index disambiguates identical entries
           key={todo.content + idx}
           className={cn(
             'flex items-center gap-2 rounded px-2 py-1',

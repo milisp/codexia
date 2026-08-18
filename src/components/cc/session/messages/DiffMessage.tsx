@@ -83,6 +83,7 @@ export function DiffMessage({ oldString, newString }: DiffMessageProps) {
               <tbody>
                 {diffLines.map((line, index) => (
                   <tr
+                    // biome-ignore lint/suspicious/noArrayIndexKey: diff lines are positional by definition
                     key={index}
                     className={
                       line.type === 'add'

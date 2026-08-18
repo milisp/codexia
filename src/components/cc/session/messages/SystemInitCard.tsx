@@ -27,9 +27,9 @@ export function SystemInitCard({ msg }: Props) {
       </div>
       {showTools && msg.tools && (
         <div className="mt-2 pt-2 border-t border-border flex flex-wrap gap-1">
-          {msg.tools.map((tool: string, i: number) => (
+          {msg.tools.map((tool: string) => (
             <span
-              key={i}
+              key={tool}
               className="text-[10px] px-1.5 py-0.5 rounded-sm bg-muted text-muted-foreground border border-border/50"
             >
               {tool}

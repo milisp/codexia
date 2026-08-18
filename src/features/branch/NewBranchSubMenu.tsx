@@ -58,6 +58,7 @@ export function NewBranchSubMenu({ cwd, onBranchCreated, onCloseMenu }: NewBranc
         <span>New branch</span>
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent className="w-56 p-2 ml-1">
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: not a control — it only stops the row's click from reaching the parent */}
         <div className="flex flex-col gap-1.5" onClick={(e) => e.stopPropagation()}>
           <Input
             autoFocus

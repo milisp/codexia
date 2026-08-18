@@ -70,6 +70,7 @@ export const ShellCommand = ({ command, commandItemId, aggregatedOutput }: Shell
             <code className="text-foreground flex-1 break-all whitespace-pre-wrap pt-1 max-h-48 overflow-y-auto">
               $ {command}
             </code>
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: not a control — it only stops the row's click from reaching the parent */}
             <div onClick={(e) => e.stopPropagation()} className="shrink-0">
               <CopyButton text={command} />
             </div>
@@ -80,6 +81,7 @@ export const ShellCommand = ({ command, commandItemId, aggregatedOutput }: Shell
               <div className="text-xs text-muted-foreground flex-1 break-all whitespace-pre-wrap pt-1 px-2 max-h-48 overflow-y-auto">
                 {aggregatedOutput}
               </div>
+              {/* biome-ignore lint/a11y/noStaticElementInteractions: not a control — it only stops the row's click from reaching the parent */}
               <div
                 onClick={(e) => e.stopPropagation()}
                 className="shrink-0 opacity-0 group-hover/output:opacity-100 transition-opacity duration-150"

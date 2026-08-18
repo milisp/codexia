@@ -176,6 +176,7 @@ export function BrowserProjects({
   const hasParentRow = parentPath && !search;
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: container-level key handling for list navigation; focus lives on the child controls
     <div className="flex flex-col outline-none" onKeyDown={handleKeyDown}>
       <div className="flex items-center gap-1 border-b px-2 py-1.5 bg-muted/10 justify-center">
         <DropdownMenu>

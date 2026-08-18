@@ -42,7 +42,10 @@ export const WebPreview: React.FC<WebPreviewProps> = ({ url = '', onUrlChange })
     // Force iframe reload by changing key
     const iframe = document.querySelector('#web-preview-iframe') as HTMLIFrameElement;
     if (iframe) {
-      iframe.src = iframe.src;
+      // Re-assigning through a temporary forces the iframe to reload.
+      const { src } = iframe;
+      iframe.src = 'about:blank';
+      iframe.src = src;
     }
     setTimeout(() => setIsLoading(false), 1000);
   };
@@ -123,6 +126,7 @@ export const WebPreview: React.FC<WebPreviewProps> = ({ url = '', onUrlChange })
             {history.length > 0 ? (
               <ul className="flex flex-col gap-2">
                 {history.map((historyUrl: string, idx: number) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: history can hold the same URL twice (A -> B -> A)
                   <li key={idx}>
                     <Button
                       onClick={() => addUrl(historyUrl)}

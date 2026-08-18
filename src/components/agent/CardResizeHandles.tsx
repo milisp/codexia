@@ -14,16 +14,14 @@ export function CardResizeHandles({ startDrag, onDragMove, endDrag }: ResizeHand
   return (
     <>
       <div
-        role="separator"
-        aria-orientation="vertical"
+        aria-hidden="true"
         onPointerDown={startDrag('width')}
         onPointerMove={onDragMove}
         onPointerUp={endDrag}
         className="absolute top-0 right-0 h-full w-1.5 cursor-ew-resize hover:bg-primary/40 z-10"
       />
       <div
-        role="separator"
-        aria-orientation="horizontal"
+        aria-hidden="true"
         onPointerDown={startDrag('height')}
         onPointerMove={onDragMove}
         onPointerUp={endDrag}
