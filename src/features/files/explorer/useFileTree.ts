@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type FsChangeEvent, useDirWatch } from '@/hooks/useDirWatch';
 import {
   canonicalizePath,
   readDirectory,
@@ -10,7 +11,6 @@ import { useSettingsStore } from '@/stores/settings';
 import { getFilename } from '@/utils/getFilename';
 import type { FileNode } from './types';
 import { buildSearchTree, normalizeName, shouldSkipEntry, sortNodes } from './utils';
-import { useDirWatch, type FsChangeEvent } from '@/hooks/useDirWatch';
 
 export type UseFileTreeReturn = {
   treeContainerRef: React.RefObject<HTMLDivElement | null>;
@@ -31,6 +31,22 @@ export type UseFileTreeReturn = {
   toggle: (path: string) => void;
   loadChildren: (node: FileNode) => Promise<void>;
   selectedFilePath: string | null;
+};
+
+const updateChildren = (node: FileNode, targetPath: string, children: FileNode[]): FileNode => {
+  if (node.path === targetPath) return { ...node, children };
+  if (!node.children) return node;
+  return { ...node, children: node.children.map((c) => updateChildren(c, targetPath, children)) };
+};
+
+const findNodeByPath = (node: FileNode, targetPath: string): FileNode | null => {
+  if (node.path === targetPath) return node;
+  if (!node.children) return null;
+  for (const child of node.children) {
+    const match = findNodeByPath(child, targetPath);
+    if (match) return match;
+  }
+  return null;
 };
 
 export function useFileTree(folder: string): UseFileTreeReturn {
@@ -80,6 +96,7 @@ export function useFileTree(folder: string): UseFileTreeReturn {
   );
 
   // Load root directory
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey is a manual refresh trigger, used for its identity change alone
   useEffect(() => {
     let isActive = true;
     const load = async () => {
@@ -150,6 +167,7 @@ export function useFileTree(folder: string): UseFileTreeReturn {
   }
 
   // Search
+  // biome-ignore lint/correctness/useExhaustiveDependencies: driven solely by searchTrigger, which the block above bumps once per meaningful input change; listing the inputs directly would re-debounce the search on every render
   useEffect(() => {
     let isActive = true;
     if (searchTrigger === 0) return;
@@ -210,7 +228,7 @@ export function useFileTree(folder: string): UseFileTreeReturn {
       for (const p of collectDirPaths(child)) dirs.add(p);
     }
     setSearchExpanded(dirs);
-  }, [collectDirPaths, displayRoot, isSearching, normalizedFilterText]);
+  }, [collectDirPaths, displayRoot, isSearching]);
 
   const toggle = (path: string) => {
     const setter = isSearching ? setSearchExpanded : setExpanded;
@@ -220,22 +238,6 @@ export function useFileTree(folder: string): UseFileTreeReturn {
       else next.add(path);
       return next;
     });
-  };
-
-  const updateChildren = (node: FileNode, targetPath: string, children: FileNode[]): FileNode => {
-    if (node.path === targetPath) return { ...node, children };
-    if (!node.children) return node;
-    return { ...node, children: node.children.map((c) => updateChildren(c, targetPath, children)) };
-  };
-
-  const findNodeByPath = (node: FileNode, targetPath: string): FileNode | null => {
-    if (node.path === targetPath) return node;
-    if (!node.children) return null;
-    for (const child of node.children) {
-      const match = findNodeByPath(child, targetPath);
-      if (match) return match;
-    }
-    return null;
   };
 
   const loadChildren = async (node: FileNode) => {

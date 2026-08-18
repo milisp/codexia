@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { ProjectSelector } from '@/features/ProjectSelector';
 import {
   Select,
   SelectContent,
@@ -7,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ProjectSelector } from '@/features/ProjectSelector';
 import { type McpScope, usePluginStore, useWorkspaceStore } from '@/stores';
 
 interface McpConfigScopeSelectorProps {
@@ -18,6 +18,7 @@ export function McpConfigScopeSelector({ onProjectChange }: McpConfigScopeSelect
   const { cwd } = useWorkspaceStore();
   const mountedRef = useRef(false);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: cwd is the trigger — this fires on cwd change only, not when the parent re-creates onProjectChange
   useEffect(() => {
     if (!mountedRef.current) {
       mountedRef.current = true;

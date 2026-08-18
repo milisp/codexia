@@ -179,6 +179,7 @@ function GroupSection({
   const [draft, setDraft] = useState(title);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey is a trigger dependency, used for its identity change alone
   useEffect(() => {
     if (editing) inputRef.current?.focus();
   }, [editing]);
@@ -294,6 +295,7 @@ export function InstalledTab({
     }
   }, [scope, cwd]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey is a trigger dependency, used for its identity change alone
   useEffect(() => {
     void load();
   }, [load, refreshKey]);

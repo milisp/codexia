@@ -13,6 +13,8 @@ export default function FilesPanel() {
   const [isFileTreeVisible, setIsFileTreeVisible] = useState(!isMobile);
 
   // Collapse tree on mobile when cwd changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: cwd is the trigger for reloading the panel
+  // biome-ignore lint/correctness/useExhaustiveDependencies: cwd is the trigger for reloading the panel
   useEffect(() => {
     setIsFileTreeVisible(!isMobile);
   }, [cwd, isMobile]);

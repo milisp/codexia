@@ -11,6 +11,8 @@ export function UserMessage({ text }: { text: string }) {
   const [overflows, setOverflows] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: text is the trigger — the effect measures the node after it re-renders
+  // biome-ignore lint/correctness/useExhaustiveDependencies: text is the trigger — the effect measures the node after it re-renders
   useLayoutEffect(() => {
     if (contentRef.current) {
       setOverflows(contentRef.current.scrollHeight > MAX_COLLAPSED_HEIGHT);

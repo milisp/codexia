@@ -7,12 +7,12 @@ import {
   useRequestUserInputStore,
 } from '@/components/codex/stores';
 import { Button } from '@/components/ui/button';
-import { codexService } from '@/services/codexService';
 import {
   gitApplyWorktreeChanges,
   gitHasWorktreeChanges,
   gitRemoveWorktree,
 } from '@/services/apiAdapt/git';
+import { codexService } from '@/services/codexService';
 import type { AgentCenterCard } from '@/stores/useAgentCenterStore';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
@@ -126,7 +126,7 @@ export function CodexAgentCard({
         }
         const result = await gitHasWorktreeChanges(cwd, worktreeKey);
         setWorktreeHasChanges(result.has_changes);
-      } catch (error) {
+      } catch {
         setWorktreeHasChanges(false);
       }
     };

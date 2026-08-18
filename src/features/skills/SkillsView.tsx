@@ -1,10 +1,10 @@
 import { Search } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { BrowseTab } from '@/features/skills/BrowseTab';
-import { SkillGroupsBar } from '@/features/skills/SkillGroupsBar';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
+import { BrowseTab } from '@/features/skills/BrowseTab';
+import { SkillGroupsBar } from '@/features/skills/SkillGroupsBar';
 import { useTrafficLightConfig } from '@/hooks';
 import {
   listCentralSkills,
@@ -26,6 +26,8 @@ export default function SkillsView() {
   const [groupsConfig, setGroupsConfig] = useState<SkillGroupsConfig>({ groups: [] });
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: installedRefreshKey is a trigger dependency, used for its identity change alone
+  // biome-ignore lint/correctness/useExhaustiveDependencies: installedRefreshKey is a trigger dependency, used for its identity change alone
   useEffect(() => {
     listCentralSkills(scope, cwd ?? undefined)
       .then((skills) => setInstalledNames(new Set(skills.map((s) => s.name))))

@@ -17,9 +17,9 @@ import {
   dictationStart,
   dictationStop,
 } from '@/services/apiAdapt/dictation';
+import { useDictationStore } from '@/stores/settings/useDictationStore';
 import { DictationPopoverContent } from './DictationPopoverContent';
 import { DownloadProgressRing } from './DownloadProgressRing';
-import { useDictationStore } from '@/stores/settings/useDictationStore';
 
 interface DictationButtonProps {
   onTranscript: (text: string) => void;
@@ -234,7 +234,7 @@ export function DictationButton({ onTranscript }: DictationButtonProps) {
       console.error('Failed to start dictation:', error);
       toast.error(`Failed to start dictation: ${error}`);
     }
-  }, [selectedModelId, isPreparingModel]);
+  }, [selectedModelId, isPreparingModel, isPickerOpen, modelStatus, showModelSelectionDialog]);
 
   if (!isDesktopTauri()) {
     return null;

@@ -51,6 +51,8 @@ export function LocalStorageDialog({ defaultOpen = false }: { defaultOpen?: bool
 
   const refresh = () => setEntries(getLocalStorageEntries());
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshTrigger is a trigger dependency, used for its identity change alone; refresh is rebuilt every render
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshTrigger is a trigger dependency, used for its identity change alone; refresh is rebuilt every render
   useEffect(() => {
     if (refreshTrigger === 0) return;
     refresh();

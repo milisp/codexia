@@ -50,6 +50,7 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps = {}) {
   }, []);
 
   // Auto-resize textarea height to fit content
+  // biome-ignore lint/correctness/useExhaustiveDependencies: input is the trigger — the effect measures the textarea after it re-renders with the new value
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
@@ -108,6 +109,8 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps = {}) {
       setConnected,
       handleNewSession,
       setCurrentAgentCardId,
+      onAfterSend,
+      overrideSend,
     ]
   );
 

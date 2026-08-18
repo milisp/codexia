@@ -87,7 +87,7 @@ export function McpServerCard({ server, workingDir, onServerUpdated }: McpServer
       setIsEditing(false);
       onServerUpdated();
       toast.success(`Server "${editName}" updated successfully`);
-    } catch (error) {
+    } catch {
       toast.error('Failed to update server or invalid environment JSON format');
     }
   };

@@ -22,6 +22,8 @@ export default function AcpSession() {
 
   useAcpEvents(connectionId);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: entries.length is the trigger — scroll to the newest entry when one arrives
+  // biome-ignore lint/correctness/useExhaustiveDependencies: entries.length is the trigger — scroll to the newest entry when one arrives
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [entries.length]);

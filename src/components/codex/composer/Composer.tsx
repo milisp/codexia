@@ -60,10 +60,12 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refocus the composer whenever the thread switches or a focus request is raised
   useEffect(() => {
     textareaRef.current?.focus();
   }, [currentThreadId, inputFocusTrigger]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: inputValue is the trigger — the effect measures the textarea after it re-renders with the new value
   useEffect(() => {
     const ta = textareaRef.current;
     if (ta) {

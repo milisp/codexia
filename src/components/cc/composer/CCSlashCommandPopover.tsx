@@ -32,12 +32,12 @@ export function CCSlashCommandPopover({
   const setSlashCommands = useCCStore((s) => s.setSlashCommands);
   const cwd = useWorkspaceStore((s) => s.cwd);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: one-shot load on mount; the length guard makes any re-run a no-op
   useEffect(() => {
     if (slashCommands.length > 0) return;
     ccGetSlashCommands(cwd || undefined)
       .then(setSlashCommands)
       .catch((err) => console.error('[CCSlashCommandPopover] Failed to load slash commands:', err));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSelect = useCallback(

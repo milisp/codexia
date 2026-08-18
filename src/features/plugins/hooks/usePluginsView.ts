@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
-import { readSkillGroups, type SkillGroupsConfig, writeSkillGroups } from '@/services';
-import { pluginInstall, pluginRead, pluginUninstall } from '@/services';
-import { useAgentSettingsStore, usePluginStore, useLayoutStore } from '@/stores';
-import { useInputStore } from '@/stores/useInputStore';
-import { toast } from '@/components/ui/use-toast';
 import type { PluginDetail } from '@/bindings/v2';
+import { toast } from '@/components/ui/use-toast';
+import {
+  pluginInstall,
+  pluginRead,
+  pluginUninstall,
+  readSkillGroups,
+  type SkillGroupsConfig,
+  writeSkillGroups,
+} from '@/services';
+import { useAgentSettingsStore, useLayoutStore, usePluginStore } from '@/stores';
+import { useInputStore } from '@/stores/useInputStore';
 import { useExternalUrl } from './useExternalUrl';
 
 /** The four primary views shown by the left-side TabSwitcher. */
@@ -126,7 +132,7 @@ export function usePluginsView() {
         setInstallingPluginId(null);
       }
     },
-    [refreshSelectedPluginDetail]
+    [refreshSelectedPluginDetail, openExternalUrl]
   );
 
   const handlePluginUninstall = useCallback(

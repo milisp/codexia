@@ -95,7 +95,7 @@ export function CodeEditor({
   const getAceMode = useMemo(() => {
     const extension = getFileExtension();
     return aceMapping[extension] || 'text';
-  }, [filePath]);
+  }, [getFileExtension]);
 
   // Determine if we should allow editing based on file extension
   const isEditableFile = useMemo(() => {
@@ -122,6 +122,7 @@ export function CodeEditor({
   }, [onSave, isReadOnly, isEditableFile, editedContent]);
 
   // Handle cursor position tracking
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handleAceSelection is declared below and rebuilt every render; depending on it would re-attach the Ace listeners continuously
   useEffect(() => {
     if (!aceEditor) return;
 
@@ -306,6 +307,7 @@ export function CodeEditor({
   };
 
   // Effect to handle search navigation in Ace Editor
+  // biome-ignore lint/correctness/useExhaustiveDependencies: editedContent is read only to locate the term at navigation time; depending on it would re-run the highlight on every keystroke
   useEffect(() => {
     if (aceEditor && searchResults.length > 0 && currentSearchIndex >= 0 && showSearch) {
       const targetLine = searchResults[currentSearchIndex];

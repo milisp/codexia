@@ -34,8 +34,10 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export function ActivityAreaChart({ heatmaps, range }: { heatmaps: AgentHeatmaps; range: Range }) {
   const weeks = weeksForRange(range);
-  const today = new Date();
-  const startDate = subDays(today, weeks * 7 - 1);
+  const { today, startDate } = useMemo(() => {
+    const now = new Date();
+    return { today: now, startDate: subDays(now, weeks * 7 - 1) };
+  }, [weeks]);
 
   const { chartData, activeKeys } = useMemo(() => {
     const keys = (Object.keys(AGENT_CONFIG) as AgentKey[]).filter((k) => !!heatmaps[k]);
@@ -52,7 +54,7 @@ export function ActivityAreaChart({ heatmaps, range }: { heatmaps: AgentHeatmaps
       return entry;
     });
     return { chartData: data, activeKeys: keys };
-  }, [heatmaps, weeks, startDate]);
+  }, [heatmaps, startDate, today]);
 
   const tickInterval = Math.max(1, Math.floor(chartData.length / 7));
 

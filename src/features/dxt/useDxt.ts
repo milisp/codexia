@@ -183,10 +183,12 @@ export function useDxt(refreshTrigger?: number) {
     }
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: one-shot load on mount
   useEffect(() => {
     void initializeManifests();
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshTrigger is a manual refresh trigger, used for its identity change alone
   useEffect(() => {
     if (refreshTrigger) void initializeManifests();
   }, [refreshTrigger]);

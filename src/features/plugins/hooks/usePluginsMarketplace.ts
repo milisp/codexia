@@ -1,20 +1,17 @@
 // Hook to manage plugin marketplaces logic for PluginsMarketplaceView
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from '@/components/ui/use-toast';
-import { useAgentSettingsStore, useLayoutStore } from '@/stores';
-import { useInputStore } from '@/stores/useInputStore';
-import { pluginInstall, pluginList, pluginRead } from '@/services';
-
 import type {
   MarketplaceLoadErrorInfo,
   PluginMarketplaceEntry,
   PluginSummary,
 } from '@/bindings/v2';
+import { toast } from '@/components/ui/use-toast';
+import { pluginInstall, pluginList, pluginRead } from '@/services';
+import { useAgentSettingsStore, useLayoutStore } from '@/stores';
+import { useInputStore } from '@/stores/useInputStore';
 import { usePluginsViewContext } from '../hooks';
 import { useExternalUrl } from './useExternalUrl';
-
-const { openExternalUrl } = useExternalUrl();
 
 /**
  * Provides state and handlers for the marketplace view.
@@ -31,6 +28,7 @@ export function usePluginsMarketplace(refreshTrigger = 0) {
   const { setView } = useLayoutStore();
   const { appendInputValue } = useInputStore();
   const { handlePluginDetail } = usePluginsViewContext();
+  const { openExternalUrl } = useExternalUrl();
 
   // Load all marketplaces
   const loadPlugins = useCallback(async () => {
@@ -93,7 +91,7 @@ export function usePluginsMarketplace(refreshTrigger = 0) {
         setInstallingPluginId(null);
       }
     },
-    [loadPlugins]
+    [loadPlugins, openExternalUrl]
   );
 
   const handleUsePlugin = useCallback(
@@ -128,6 +126,7 @@ export function usePluginsMarketplace(refreshTrigger = 0) {
   );
 
   // Reload when component mounts or refreshTrigger changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshTrigger is a manual refresh trigger, used for its identity change alone
   useEffect(() => {
     void loadPlugins();
   }, [loadPlugins, refreshTrigger]);

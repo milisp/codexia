@@ -22,7 +22,7 @@ export function ExplorerSettings() {
     if (names.length === 0) {
       return;
     }
-    names.forEach((name) => addHiddenName(name));
+    for (const name of names) addHiddenName(name);
     setDraftHiddenNames('');
   };
 

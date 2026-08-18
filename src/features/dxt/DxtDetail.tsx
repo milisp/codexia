@@ -1,9 +1,9 @@
 import { Plus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { z } from 'zod';
-import { Footer, ToolPrompt, UserConfigForm } from '@/features/dxt';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Footer, ToolPrompt, UserConfigForm } from '@/features/dxt';
 import {
   loadManifest,
   unifiedAddMcpServer,
@@ -150,6 +150,7 @@ export default function DxtDetail({ user, repo }: { user: string; repo: string }
   }
 
   // First useEffect: load manifest
+  // biome-ignore lint/correctness/useExhaustiveDependencies: driven by manifestTrigger, which the block above bumps once per user/repo change
   useEffect(() => {
     if (manifestTrigger === 0) return;
     if (!user || !repo) {
@@ -186,7 +187,8 @@ export default function DxtDetail({ user, repo }: { user: string; repo: string }
       });
   }, [manifestTrigger]);
 
-  // Second useEffect: check mcpServers after manifest is loaded
+  // Second useEffect: check mcpServers after manifest is loaded.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the listed deps are exactly checkInstallation's own inputs; it is a plain function declaration, so depending on it directly would re-run on every render
   useEffect(() => {
     checkInstallation();
   }, [manifest, selectedAgent, cwd]);
@@ -312,7 +314,7 @@ export default function DxtDetail({ user, repo }: { user: string; repo: string }
       };
       try {
         await unifiedEnableMcpServer(_serverItem);
-      } catch (error) {}
+      } catch {}
     }
   }
 

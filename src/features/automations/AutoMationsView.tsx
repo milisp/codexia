@@ -41,6 +41,8 @@ export function AutoMationsView() {
     }
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: one-shot load on mount; loadAutomations is rebuilt every render
+  // biome-ignore lint/correctness/useExhaustiveDependencies: one-shot load on mount; loadAutomations is rebuilt every render
   useEffect(() => {
     void loadAutomations();
   }, []);

@@ -39,6 +39,8 @@ export default function CCMcpView({ refreshKey }: CCMcpViewProps) {
     }
   }, [workingDir]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: workingDir and refreshTrigger are triggers — fetchServers reads them itself
+  // biome-ignore lint/correctness/useExhaustiveDependencies: workingDir and refreshTrigger are triggers — fetchServers reads them itself
   useEffect(() => {
     fetchServers();
   }, [fetchServers, workingDir, refreshTrigger]);

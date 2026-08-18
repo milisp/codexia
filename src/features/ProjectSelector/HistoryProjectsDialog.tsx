@@ -1,7 +1,6 @@
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { Clock3, FolderPlus, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { BrowserProjects } from '@/features/ProjectSelector/BrowserProjects';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -13,11 +12,12 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BrowserProjects } from '@/features/ProjectSelector/BrowserProjects';
 import { isDesktopTauri } from '@/hooks/runtime';
 import { cn } from '@/lib/utils';
 import { codexService } from '@/services/codexService';
-import { useLayoutStore } from '@/stores/useLayoutStore';
 import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
+import { useLayoutStore } from '@/stores/useLayoutStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { getFilename } from '@/utils/getFilename';
 
@@ -85,7 +85,7 @@ export function HistoryProjectsDialog() {
 
     try {
       setIsContinuing(true);
-      selectedProjects.forEach((path) => addProject(path));
+      for (const path of selectedProjects) addProject(path);
       setCwd(selectedProjects[0]);
       setSelectedAgent(continueAgent);
       setActiveSidebarTab(continueAgent);

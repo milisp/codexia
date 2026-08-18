@@ -69,7 +69,7 @@ export function NoteEditor({
           latestContentRef.current = nextContent;
           lastSavedContentRef.current = nextContent;
         }
-      } catch (err) {
+      } catch {
         if (isActive) {
           setContent('# New note');
           latestContentRef.current = '# New note';
@@ -105,7 +105,7 @@ export function NoteEditor({
           setTags(nextTags);
           setTagInput('');
         }
-      } catch (err) {
+      } catch {
         if (isActive) {
           setTags([]);
           setTagInput('');
@@ -169,6 +169,8 @@ export function NoteEditor({
     }, 700);
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: unmount-only flush; saveNote is rebuilt every render and reads its input from a ref
+  // biome-ignore lint/correctness/useExhaustiveDependencies: unmount-only flush; saveNote is rebuilt every render and reads its input from a ref
   useEffect(() => {
     return () => {
       if (debounceRef.current) {

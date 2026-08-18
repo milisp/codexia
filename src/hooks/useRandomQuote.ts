@@ -16,6 +16,8 @@ export function useRandomQuote(trigger?: any) {
   const { enabledQuoteCategories } = useSettingsStore();
   const [quote, setQuote] = useState<Quote | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: trigger is a trigger dependency, used for its identity change alone
+  // biome-ignore lint/correctness/useExhaustiveDependencies: trigger is a trigger dependency, used for its identity change alone
   useEffect(() => {
     const fetchQuote = async () => {
       const isZh = locale === 'zh';

@@ -16,9 +16,9 @@ interface OverviewProps {
   pricing: Record<string, ModelPricing>;
 }
 
-export function OverviewTab({ heatmaps, range, pricing }: OverviewProps) {
-  const keys = Object.keys(AGENT_CONFIG) as AgentKey[];
+const keys = Object.keys(AGENT_CONFIG) as AgentKey[];
 
+export function OverviewTab({ heatmaps, range, pricing }: OverviewProps) {
   const totalSessions = keys.reduce((s, k) => s + (heatmaps[k]?.total_files ?? 0), 0);
   const totalTokens = keys.reduce((s, k) => s + (heatmaps[k]?.token_stats.total_tokens ?? 0), 0);
   const totalCost = keys.reduce((s, k) => {

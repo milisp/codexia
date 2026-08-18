@@ -26,7 +26,7 @@ export function GitCommitDialog({ isOpen, onClose, onConfirm }: GitCommitDialogP
       await onConfirm(commitMessage);
       setCommitMessage('');
       onClose();
-    } catch (err) {
+    } catch {
     } finally {
       setLoading(false);
     }

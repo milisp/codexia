@@ -78,7 +78,7 @@ export function McpAddServerForm({
       setNewEnv('');
       onServerAdded();
       toast.success(`Server "${newServerName}" added successfully`);
-    } catch (error) {
+    } catch {
       toast.error('Failed to add server or invalid environment JSON format');
     }
   };

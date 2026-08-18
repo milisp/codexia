@@ -36,6 +36,8 @@ export function useCodexEvents(enabled = true) {
     }
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: one-shot initial sync; syncAccountState is rebuilt every render
+  // biome-ignore lint/correctness/useExhaustiveDependencies: one-shot initial sync; syncAccountState is rebuilt every render
   useEffect(() => {
     if (!enabled) {
       return;

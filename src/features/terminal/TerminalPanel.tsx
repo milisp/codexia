@@ -16,8 +16,7 @@ export function TerminalPanel({ isActive }: TerminalPanelProps) {
   // Auto-open a first session the first time this tab is used.
   useEffect(() => {
     if (terminals.length === 0) addTerminal();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [terminals.length, addTerminal]);
 
   return (
     <div className="h-full min-h-0 flex flex-col bg-black text-zinc-100">

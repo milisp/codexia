@@ -2,7 +2,6 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { Check, ChevronDown, FolderOpen, FolderPlus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { type ThreadCwdMode, useConfigStore } from '@/components/codex/stores';
-import { BrowserProjects } from '@/features/ProjectSelector';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -10,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { BrowserProjects } from '@/features/ProjectSelector';
 import { isDesktopTauri } from '@/hooks/runtime';
 import { useCCStore } from '@/stores';
 import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
@@ -50,7 +50,7 @@ export function WorkspaceSwitcher() {
     } else {
       setBrowseMode(true);
     }
-  }, [addProject, setCwd, cwd]);
+  }, [addProject, setCwd]);
 
   const repoLabel = cwd ? (cwd.split('/').filter(Boolean).pop() ?? cwd) : 'No project';
 

@@ -33,6 +33,7 @@ export function useScrollToBottom<T>(
   // Mirrors isAtBottom for use inside the ResizeObserver callback below, which
   // must read the latest value without re-subscribing on every state change.
   const isAtBottomRef = useRef(isAtBottom);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: dependencyList is the caller-supplied trigger for re-checking scroll position
   useEffect(() => {
     isAtBottomRef.current = isAtBottom;
   }, [isAtBottom]);
@@ -87,6 +88,7 @@ export function useScrollToBottom<T>(
   }, [checkIsAtBottom, scrollToBottom]);
 
   // Auto-scroll to bottom on new content, but only if the user is already near the bottom
+  // biome-ignore lint/correctness/useExhaustiveDependencies: dependencyList is the caller-supplied trigger for re-checking scroll position
   useEffect(() => {
     if (checkIsAtBottom()) {
       scrollToBottom('auto');

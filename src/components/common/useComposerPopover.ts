@@ -113,6 +113,7 @@ export function useComposerPopover<T>({
   const filteredItems = filter ? items.filter((item) => filter(item, query)) : items;
 
   // Run detect on every input change
+  // biome-ignore lint/correctness/useExhaustiveDependencies: query and open are the triggers for recomputing the popover selection
   useEffect(() => {
     const result = detect(input);
     setOpen(result.open);
@@ -120,6 +121,7 @@ export function useComposerPopover<T>({
   }, [input, detect]);
 
   // Reset selection when visible list changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: query and open are the triggers for recomputing the popover selection
   useEffect(() => {
     setSelectedIndex(0);
   }, [query, open]);
