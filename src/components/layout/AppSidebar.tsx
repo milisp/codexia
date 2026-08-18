@@ -31,6 +31,7 @@ import { UpdateIndicator } from '../../features/UpdateIndicator';
 import { NewAgentButton } from '../common/NewAgentButton';
 import { SessionManagerDialog } from '../common/SessionManagerDialog';
 import { SideBarAddProjectButton } from './SideBarAddProjectButton';
+import { SideBarPinnedList } from './SideBarPinnedList';
 import { SideBarAcpTab, SideBarClaudeTab, SideBarCodexTab } from './SideBarTab';
 import { UserInfo } from './UserInfo';
 
@@ -157,6 +158,8 @@ export function AppSideBar() {
               <BarChart2 className="h-4 w-4" />
               {t('insights')}
             </Button>
+
+            <SideBarPinnedList />
           </div>
 
           {/* Tab switcher row */}

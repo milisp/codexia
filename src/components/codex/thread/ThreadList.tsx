@@ -1,6 +1,6 @@
 import { listen } from '@tauri-apps/api/event';
 import type { LucideIcon } from 'lucide-react';
-import { Archive, FolderX, GitFork, Loader2 } from 'lucide-react';
+import { Archive, FolderX, GitFork, Loader2, Pin, PinOff } from 'lucide-react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ServerNotification } from '@/bindings/ServerNotification';
@@ -26,6 +26,7 @@ import { archiveThread, deleteThread, listThreads, renameThread } from '@/servic
 import { gitRemoveWorktree } from '@/services/apiAdapt/git';
 import { codexService } from '@/services/codexService';
 import { useAgentCenterStore, useLayoutStore } from '@/stores';
+import { usePinStore } from '@/stores/usePinStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { formatThreadAge } from '@/utils/formatThreadAge';
 
@@ -51,6 +52,8 @@ export function ThreadList({ cwd }: ThreadListProps) {
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
   const { currentThreadId, threadStatusMap, threads: storeThreads } = useCodexStore();
   const { sortKey } = useThreadListStore();
+  const pinnedIds = usePinStore((s) => s.pinned);
+  const togglePin = usePinStore((s) => s.togglePin);
   const modelProvider = useConfigStore((s) => s.modelProvider);
   const [response, setResponse] = useState<ThreadListResponse>(EMPTY_LIST);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -303,27 +306,50 @@ export function ThreadList({ cwd }: ThreadListProps) {
 
   // Shared action list for the context menu.
   const threadActions = useCallback(
-    (thread: Thread): ThreadAction[] => [
-      { label: 'Rename', onSelect: () => openRenameDialog(thread) },
-      { label: 'Fork', icon: GitFork, onSelect: () => void handleFork(thread.id) },
-      { label: 'Archive', icon: Archive, onSelect: () => void handleArchive(thread.id) },
-      ...(thread.cwd.includes('/.codexia/worktrees/')
-        ? [
-            {
-              label: 'Delete Worktree',
-              icon: FolderX,
-              onSelect: () => void handleDeleteWorktree(thread),
-            },
-          ]
-        : []),
-      { label: 'Delete', destructive: true, onSelect: () => void handleDelete(thread.id) },
-      {
-        label: 'Copy Id',
-        separatorBefore: true,
-        onSelect: () => void navigator.clipboard.writeText(thread.id),
-      },
-    ],
-    [openRenameDialog, handleFork, handleArchive, handleDeleteWorktree, handleDelete]
+    (thread: Thread): ThreadAction[] => {
+      const isPinned = pinnedIds.some((p) => p.id === thread.id);
+      return [
+        { label: 'Rename', onSelect: () => openRenameDialog(thread) },
+        {
+          label: isPinned ? 'Unpin' : 'Pin',
+          icon: isPinned ? PinOff : Pin,
+          onSelect: () =>
+            togglePin({
+              kind: 'codex',
+              id: thread.id,
+              title: thread.name ?? thread.preview,
+              cwd: thread.cwd || cwd,
+            }),
+        },
+        { label: 'Fork', icon: GitFork, onSelect: () => void handleFork(thread.id) },
+        { label: 'Archive', icon: Archive, onSelect: () => void handleArchive(thread.id) },
+        ...(thread.cwd.includes('/.codexia/worktrees/')
+          ? [
+              {
+                label: 'Delete Worktree',
+                icon: FolderX,
+                onSelect: () => void handleDeleteWorktree(thread),
+              },
+            ]
+          : []),
+        { label: 'Delete', destructive: true, onSelect: () => void handleDelete(thread.id) },
+        {
+          label: 'Copy Id',
+          separatorBefore: true,
+          onSelect: () => void navigator.clipboard.writeText(thread.id),
+        },
+      ];
+    },
+    [
+      cwd,
+      pinnedIds,
+      togglePin,
+      openRenameDialog,
+      handleFork,
+      handleArchive,
+      handleDeleteWorktree,
+      handleDelete,
+    ]
   );
 
   return (

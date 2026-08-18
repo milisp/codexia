@@ -1,5 +1,5 @@
 // Single row in the SessionList, including the action dropdown menu.
-import { Copy, FolderX, Loader2, MoreVertical, Trash2 } from 'lucide-react';
+import { Copy, FolderX, Loader2, MoreVertical, Pin, PinOff, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { SdkSessionInfo } from '@/lib/sessions';
+import { usePinStore } from '@/stores/usePinStore';
 import { formatThreadAge } from '@/utils/formatThreadAge';
 
 interface SessionListItemProps {
@@ -32,6 +33,9 @@ export function SessionListItem({
   onRequestDelete,
 }: SessionListItemProps) {
   const isWorktree = (session.cwd ?? '').includes('/.codexia/worktrees/');
+  const pinned = usePinStore((s) => s.pinned);
+  const togglePin = usePinStore((s) => s.togglePin);
+  const isPinned = pinned.some((p) => p.id === session.session_id);
 
   return (
     <div
@@ -78,6 +82,20 @@ export function SessionListItem({
             <DropdownMenuItem onClick={(e) => onCopyId(e, session.session_id)}>
               <Copy className="h-3 w-3" />
               <span>Copy Session ID</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePin({
+                  kind: 'cc',
+                  id: session.session_id,
+                  title: session.summary,
+                  cwd: session.cwd ?? '',
+                });
+              }}
+            >
+              {isPinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
+              <span>{isPinned ? 'Unpin' : 'Pin'}</span>
             </DropdownMenuItem>
             {isWorktree && (
               <DropdownMenuItem
