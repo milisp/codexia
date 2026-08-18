@@ -10,15 +10,12 @@ export interface CustomModel {
 }
 
 interface ModelSettingsStore {
-  // User-added models keyed by provider (e.g. { ollama: ['llama3'], custom: ['my-model'] })
+  // User-added model ids keyed by provider. Which providers exist is read from
+  // config.toml, not from here.
   models: Record<string, CustomModel[]>;
-
-  // Providers the user hid from the model selector.
-  hiddenProviders: string[];
 
   addModel: (provider: string, model: CustomModel) => void;
   removeModel: (provider: string, id: string) => void;
-  setProviderVisible: (provider: string, visible: boolean) => void;
 
   // Convenience accessors for the old API surface (used in settings UI)
   getModels: (provider: string) => CustomModel[];
@@ -28,16 +25,6 @@ export const useModelSettingsStore = create<ModelSettingsStore>()(
   persist(
     (set, get) => ({
       models: {},
-      hiddenProviders: [],
-
-      setProviderVisible: (provider, visible) =>
-        set((state) => ({
-          hiddenProviders: visible
-            ? state.hiddenProviders.filter((p) => p !== provider)
-            : state.hiddenProviders.includes(provider)
-              ? state.hiddenProviders
-              : [...state.hiddenProviders, provider],
-        })),
 
       addModel: (provider, model) =>
         set((state) => {
@@ -58,6 +45,13 @@ export const useModelSettingsStore = create<ModelSettingsStore>()(
     }),
     {
       name: 'model-settings',
+      version: 2,
+      // v0/v1 also tracked `providers` and `hiddenProviders`; providers now come
+      // from config.toml, so only the custom model ids are carried over.
+      migrate: (persisted) => {
+        const state = (persisted ?? {}) as { models?: Record<string, CustomModel[]> };
+        return { models: state.models ?? {} } as never;
+      },
     }
   )
 );

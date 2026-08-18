@@ -56,6 +56,8 @@ use super::{
         api_unified_enable_mcp_server, api_unified_read_mcp_config,
         api_unified_remove_mcp_server, api_update_note, api_write_file,
         api_get_settings_file, api_save_settings_file, api_pairing_info, health_check, api_model_list_other, api_load_env_keys, api_set_env,
+        api_list_provider_presets, api_add_model_provider, api_list_config_providers,
+        api_remove_model_provider,
     },
     types::WebServerState,
     websocket::{sse_handler, ws_handler},
@@ -160,6 +162,10 @@ pub fn create_router(state: WebServerState) -> Router {
             get(api_model_list).post(api_model_list_post),
         )
         .route("/api/codex/model/list-other", get(api_model_list_other))
+        .route("/api/codex/provider/presets", get(api_list_provider_presets))
+        .route("/api/codex/provider/add", post(api_add_model_provider))
+        .route("/api/codex/provider/list", get(api_list_config_providers))
+        .route("/api/codex/provider/remove", post(api_remove_model_provider))
         .route("/api/codex/load_env_keys", get(api_load_env_keys))
         .route("/api/codex/set_env", post(api_set_env))
         .route(

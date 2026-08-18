@@ -41,7 +41,12 @@ import type {
   TurnSteerParams,
   TurnSteerResponse,
 } from '@/bindings/v2';
-import type { EnvStatusItem, FrontendProviderModels } from '@/components/codex/types';
+import type {
+  ConfigProvider,
+  EnvStatusItem,
+  FrontendProviderModels,
+  ProviderPreset,
+} from '@/components/codex/types';
 import { dual, dualGet, dualVoid, invokeTauri, isDesktopTauri, toast } from './shared';
 
 export * from './mcp';
@@ -236,6 +241,41 @@ export async function listOtherModels() {
     undefined,
     '/api/codex/model/list-other'
   );
+}
+
+export async function listProviderPresets() {
+  return await dualGet<ProviderPreset[]>(
+    'list_provider_presets',
+    undefined,
+    '/api/codex/provider/presets'
+  );
+}
+
+// Persists the provider into the user's codex config.toml.
+export async function addModelProvider(params: {
+  provider: string;
+  baseUrl: string;
+  envKey: string;
+}) {
+  await dualVoid(
+    'add_model_provider',
+    { provider: params.provider, baseUrl: params.baseUrl, envKey: params.envKey },
+    '/api/codex/provider/add',
+    { provider: params.provider, base_url: params.baseUrl, env_key: params.envKey }
+  );
+}
+
+// Providers actually present in the user's config.toml.
+export async function listConfigProviders() {
+  return await dualGet<ConfigProvider[]>(
+    'list_config_providers',
+    undefined,
+    '/api/codex/provider/list'
+  );
+}
+
+export async function removeModelProvider(provider: string) {
+  await dualVoid('remove_model_provider', { provider }, '/api/codex/provider/remove', { provider });
 }
 
 export async function loadEnvKeys() {

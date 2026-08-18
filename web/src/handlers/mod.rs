@@ -85,6 +85,63 @@ pub(super) async fn api_model_list_other() -> Result<Json<Value>, ErrorResponse>
     }
 }
 
+#[derive(Deserialize)]
+pub struct AddProviderPayload {
+    provider: String,
+    base_url: String,
+    env_key: String,
+}
+
+pub(super) async fn api_list_provider_presets() -> Result<Json<Value>, ErrorResponse> {
+    match codexia_codex::providers::list_provider_presets() {
+        Ok(presets) => Ok(Json(json!(presets))),
+        Err(e) => Err(ErrorResponse { error: e }),
+    }
+}
+
+pub(super) async fn api_add_model_provider(
+    AxumState(state): AxumState<WebServerState>,
+    Json(payload): Json<AddProviderPayload>,
+) -> Result<StatusCode, ErrorResponse> {
+    let codex = state.codex_state.as_deref().ok_or_else(|| ErrorResponse {
+        error: "codex backend is not available (codex binary not found in PATH)".to_string(),
+    })?;
+    codexia_codex::config::provider::write_model_provider(
+        &codex.codex,
+        &payload.provider,
+        &payload.base_url,
+        &payload.env_key,
+    )
+    .await
+    .map_err(|e| ErrorResponse { error: e })?;
+    Ok(StatusCode::OK)
+}
+
+pub(super) async fn api_list_config_providers(
+    AxumState(state): AxumState<WebServerState>,
+) -> Result<Json<Value>, ErrorResponse> {
+    let codex = state.codex_state.as_deref().ok_or_else(|| ErrorResponse {
+        error: "codex backend is not available (codex binary not found in PATH)".to_string(),
+    })?;
+    match codexia_codex::config::provider::read_model_providers(&codex.codex).await {
+        Ok(providers) => Ok(Json(json!(providers))),
+        Err(e) => Err(ErrorResponse { error: e }),
+    }
+}
+
+#[derive(Deserialize)]
+pub struct RemoveProviderPayload {
+    provider: String,
+}
+
+pub(super) async fn api_remove_model_provider(
+    Json(payload): Json<RemoveProviderPayload>,
+) -> Result<StatusCode, ErrorResponse> {
+    codexia_codex::config::provider::remove_model_provider(&payload.provider)
+        .map_err(|e| ErrorResponse { error: e })?;
+    Ok(StatusCode::OK)
+}
+
 pub(super) async fn api_load_env_keys() -> Result<Json<Value>, ErrorResponse> {
     match load_env_keys().await {
         Ok(items) => Ok(Json(json!(items))),

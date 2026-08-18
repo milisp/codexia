@@ -23,7 +23,7 @@
       "model_provider": "ollama",
       "base_url": "http://localhost:11434/v1",
       "signup_url": "https://ollama.com/signup",
-      "env_key": "OLLAMA_API_KEY",
+      "env_key": "",
       "auto_discover": true
     },
     {

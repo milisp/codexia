@@ -1,8 +1,8 @@
-//! Reads `llms.json` at compile time and writes all `model_providers` entries
-//! to the Codex app-server config on startup.
+//! Reads and writes the `model_providers` entries of the user's `config.toml`.
+//! Nothing is written unless the user explicitly adds or removes a provider.
 
 use crate::app_server::CodexAppServer;
-use crate::providers::RootConfig;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 /// Maximum number of retry attempts when the app-server is not yet initialized.
@@ -52,46 +52,136 @@ async fn upsert_config_value(
 /// cannot be overridden via `config/value/write`.
 const BUILTIN_PROVIDER_IDS: &[&str] = &["ollama"];
 
-/// Reads all providers from the bundled `llms.json` and writes each one to
-/// the Codex app-server under `model_providers.<provider_name>`.
+/// Writes a single provider to the Codex app-server under
+/// `model_providers.<name>`, which persists it in the user's `config.toml`.
+///
+/// Only called when the user explicitly adds a provider — nothing is written
+/// at startup, so an untouched `config.toml` stays untouched.
 ///
 /// Built-in provider IDs (e.g. `ollama`) are skipped since the app-server
 /// rejects attempts to override them.
+pub async fn write_model_provider(
+    client: &CodexAppServer,
+    name: &str,
+    base_url: &str,
+    env_key: &str,
+) -> Result<(), String> {
+    if BUILTIN_PROVIDER_IDS.contains(&name) {
+        log::debug!("Skipping built-in provider: {}", name);
+        return Ok(());
+    }
+
+    let provider_value = json!({
+        "name": name,
+        "env_key": env_key,
+        "base_url": base_url,
+    });
+
+    upsert_config_value(client, &format!("model_providers.{}", name), provider_value).await?;
+    log::debug!("Config written for provider: {}", name);
+    Ok(())
+}
+
+/// A `model_providers` entry as it exists in the user's config.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ConfigProvider {
+    pub name: String,
+    pub base_url: Option<String>,
+    pub env_key: Option<String>,
+}
+
+/// Lists the providers actually present in the effective Codex config.
 ///
-/// Each provider entry is transformed from the `llms.json` schema into the
-/// app-server config schema: the `model_provider` field is renamed to `name`.
-pub async fn write_model_providers(client: &CodexAppServer) -> Result<(), String> {
-    let json_str = include_str!("../llms.json");
-    let config: RootConfig =
-        serde_json::from_str(json_str).map_err(|e| format!("Failed to parse llms.json: {}", e))?;
+/// `config/read` only types the *active* `model_provider`, so the full
+/// `model_providers` table is picked out of the untyped config layers.
+pub async fn read_model_providers(
+    client: &CodexAppServer,
+) -> Result<Vec<ConfigProvider>, String> {
+    let response = client
+        .send_request("config/read", json!({ "includeLayers": true }))
+        .await
+        .map_err(|e| format!("Failed to read config: {:?}", e))?;
 
-    for provider in config.data {
-        // Skip reserved built-in providers — the app-server rejects overrides.
-        if BUILTIN_PROVIDER_IDS.contains(&provider.model_provider.as_str()) {
-            log::debug!(
-                "Skipping built-in provider: {}",
-                provider.model_provider
-            );
+    // Later layers override earlier ones, matching how the app-server merges them.
+    let layers = response
+        .get("layers")
+        .and_then(|l| l.as_array())
+        .cloned()
+        .unwrap_or_default();
+
+    let mut providers: Vec<ConfigProvider> = Vec::new();
+    for layer in layers {
+        let Some(table) = layer
+            .get("config")
+            .and_then(|c| c.get("model_providers"))
+            .and_then(|p| p.as_object())
+        else {
             continue;
-        }
+        };
 
-        let provider_value = json!({
-            "name": provider.model_provider,
-            "env_key": provider.env_key,
-            "base_url": provider.base_url,
-        });
-
-        let key_path = format!("model_providers.{}", provider.model_provider);
-
-        match upsert_config_value(client, &key_path, provider_value).await {
-            Ok(_) => {
-                log::debug!("Config written for provider: {}", provider.model_provider);
-            }
-            Err(e) => {
-                log::error!("{}", e);
+        for (name, value) in table {
+            let provider = ConfigProvider {
+                name: name.clone(),
+                base_url: value
+                    .get("base_url")
+                    .and_then(|v| v.as_str())
+                    .map(str::to_string),
+                env_key: value
+                    .get("env_key")
+                    .and_then(|v| v.as_str())
+                    .map(str::to_string),
+            };
+            match providers.iter_mut().find(|p| p.name == provider.name) {
+                Some(existing) => *existing = provider,
+                None => providers.push(provider),
             }
         }
     }
 
-    Ok(())
+    // `ollama` is a built-in of the app-server: never written to config.toml
+    // and needs no API key, but it must always be selectable.
+    if !providers.iter().any(|p| p.name == "ollama") {
+        providers.push(ConfigProvider {
+            name: "ollama".to_string(),
+            base_url: Some("http://localhost:11434/v1".to_string()),
+            env_key: None,
+        });
+    }
+
+    providers.sort_by(|a, b| a.name.cmp(&b.name));
+    Ok(providers)
+}
+
+/// Drops `model_providers.<name>` from the user's `config.toml`.
+///
+/// Done by editing the file directly: the app-server config write API has no
+/// delete operation.
+pub fn remove_model_provider(name: &str) -> Result<(), String> {
+    use std::str::FromStr;
+    use toml_edit::Document;
+
+    let path = super::get_config_path()?;
+    if !path.exists() {
+        return Ok(());
+    }
+
+    let content = std::fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read config file: {}", e))?;
+    let mut doc =
+        Document::from_str(&content).map_err(|e| format!("Failed to parse config file: {}", e))?;
+
+    let Some(providers) = doc
+        .get_mut("model_providers")
+        .and_then(|item| item.as_table_like_mut())
+    else {
+        return Ok(());
+    };
+    providers.remove(name);
+
+    let is_empty = providers.is_empty();
+    if is_empty {
+        doc.as_table_mut().remove("model_providers");
+    }
+
+    super::toml_helpers::write_document_with_backup(&path, &doc)
 }

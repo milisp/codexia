@@ -68,6 +68,41 @@ export async function invokeTauri<T>(
   return invoke<T>(command, payload);
 }
 
+// Tauri errors arrive as plain strings, often wrapping a JSON-RPC error such as
+// `Request failed: {"code":-32600,"message":"..."}`. Show the inner message.
+function formatInvokeError(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error);
+  const start = raw.indexOf('{');
+  if (start !== -1) {
+    try {
+      const payload = JSON.parse(raw.slice(start)) as { message?: string };
+      if (payload?.message) return payload.message;
+    } catch {}
+  }
+  return raw;
+}
+
+// Same as `invokeTauri`, but surfaces failures as a toast like the web path does.
+async function invokeTauriWithToast<T>(
+  command: string,
+  payload: Record<string, unknown> | undefined,
+  options?: { suppressToast?: boolean }
+): Promise<T> {
+  try {
+    return await invoke<T>(command, payload);
+  } catch (error) {
+    const message = formatInvokeError(error);
+    if (!options?.suppressToast) {
+      toast({
+        title: 'Request failed',
+        description: message,
+        variant: 'destructive',
+      });
+    }
+    throw new Error(message);
+  }
+}
+
 export async function getJson<T>(path: string): Promise<T> {
   return getJsonWithOptions<T>(path);
 }
@@ -162,7 +197,7 @@ export async function dual<T>(
   options?: { suppressToast?: boolean }
 ): Promise<T> {
   if (isDesktopTauri()) {
-    return await invokeTauri<T>(command, tauriArgs);
+    return await invokeTauriWithToast<T>(command, tauriArgs, options);
   }
   return await postJsonWithOptions<T>(path, body, options);
 }
@@ -174,7 +209,7 @@ export async function dualGet<T>(
   options?: { suppressToast?: boolean }
 ): Promise<T> {
   if (isDesktopTauri()) {
-    return await invokeTauri<T>(command, tauriArgs);
+    return await invokeTauriWithToast<T>(command, tauriArgs, options);
   }
   return await getJsonWithOptions<T>(path, options);
 }
@@ -186,7 +221,7 @@ export async function dualVoid(
   body?: unknown
 ): Promise<void> {
   if (isDesktopTauri()) {
-    await invokeTauri(command, tauriArgs);
+    await invokeTauriWithToast(command, tauriArgs);
     return;
   }
   await postNoContent(path, body);

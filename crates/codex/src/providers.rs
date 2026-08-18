@@ -59,6 +59,15 @@ pub struct FrontendProviderModels {
     pub models: Vec<FrontendModel>,
 }
 
+/// Providers bundled in `llms.json`, returned verbatim as suggestions for the
+/// "add provider" UI. Nothing here is applied to the user's config until they
+/// pick one (or type their own).
+pub fn list_provider_presets() -> Result<Vec<ProviderConfig>, String> {
+    let json_str = include_str!("./llms.json");
+    let config: RootConfig = serde_json::from_str(json_str).map_err(|e| e.to_string())?;
+    Ok(config.data)
+}
+
 pub async fn load_env_keys() -> Result<Vec<EnvStatusItem>, String> {
     let json_str = include_str!("./llms.json");
     let config: RootConfig = serde_json::from_str(json_str).map_err(|e| e.to_string())?;
@@ -93,6 +102,9 @@ pub async fn load_and_fetch_models() -> Result<Vec<FrontendProviderModels>, Stri
     for provider in config.data {
         let mut frontend_models = Vec::new();
 
+        // Only auto-discovering providers (ollama, custom) list models here.
+        // The static `models` of the others are suggestions offered while
+        // adding a model, not entries pushed into the user's model list.
         if provider.auto_discover {
             let url = format!("{}/models", provider.base_url.trim_end_matches('/'));
             if let Ok(resp) = client.get(&url).send().await {
@@ -104,13 +116,6 @@ pub async fn load_and_fetch_models() -> Result<Vec<FrontendProviderModels>, Stri
                         });
                     }
                 }
-            }
-        } else if let Some(static_models) = provider.models {
-            for model in static_models {
-                frontend_models.push(FrontendModel {
-                    id: model.id,
-                    context_length: Some(model.context_length),
-                });
             }
         }
 

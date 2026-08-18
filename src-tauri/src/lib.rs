@@ -78,6 +78,10 @@ pub fn run() {
             .manage(DictationState::default())
             .invoke_handler(tauri::generate_handler![
                 commands::codex::list_other_models,
+                commands::codex::list_provider_presets,
+                commands::codex::add_model_provider,
+                commands::codex::list_config_providers,
+                commands::codex::remove_model_provider,
                 commands::codex::load_env_keys,
                 commands::codex::start_thread,
                 commands::codex::resume_thread,
@@ -274,16 +278,12 @@ pub fn run() {
                             "codex startup timing: total connect during setup took {:?}",
                             codex_init_started_at.elapsed()
                         );
-                        let client_clone = codex_client.clone();
                         app.handle().manage(codex::AppState { codex: codex_client });
                         app.handle().manage(codex::CodexInitializationState::new(
                             Arc::clone(&event_sink),
                         ));
-                        tauri::async_runtime::spawn(async move {
-                        if let Err(e) = codex::config::provider::write_model_providers(&*client_clone).await {
-                                log::error!("Failed to write model provider configs: {}", e);
-                            }
-                        });
+                        // Providers are written to config.toml only when the user
+                        // adds one explicitly (see `add_model_provider`).
                     }
                     Err(err) => {
                         log::warn!(
