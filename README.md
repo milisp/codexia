@@ -66,7 +66,7 @@ runs without installing.
 
 ## Also by me
 
-- [Plux](https://milisp.dev/plux) - Codexia's prompt notepad, but system-wide. Double-tap <kbd>Shift</kbd> to keep whatever text you have selected, or grab a screenshot, without leaving the window you're in. One click later it's *inside* Codexia, Codex, Claude, Cursor or your terminal — app focused, input filled, ready to send. Not copied for you to paste. macOS and Windows.
+- [Plux](https://milisp.dev/plux) - Capture now, turn it into a todo, send it to AI anytime.
 
 ## Recommend tools
 
@@ -117,7 +117,6 @@ Contributor note:
 - **Permission control**: Configure file and network access per agent
 - **Local storage**: All data stays on your machine
 - **Open source**: Full transparency through open source code
-- **Telemetry**: Opt-in only, off by default
 
 ## Contributing
 
@@ -125,7 +124,6 @@ Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) for setup and
 
 Community forks:
 - [jeremiahodom/codex-ui](https://github.com/jeremiahodom/codex-ui) — Node.js backend with API/SSE
-- [Itexoft/codexia](https://github.com/Itexoft/codexia) — SSH integration
 - [nuno5645/codexia](https://github.com/nuno5645/codexia) — Reasoning and token count events
 
 Related:
@@ -139,9 +137,3 @@ Related:
 ## License
 
 Licensed under the [MIT License](LICENSE).
-
----
-
-## Other Projects
-If you like this tool, check out my other open-source works:
-* [seeker](https://github.com/milisp/seeker) - Deepseek Agent command center.
