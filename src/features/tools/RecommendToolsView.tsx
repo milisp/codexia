@@ -14,7 +14,7 @@ interface Tool {
 }
 
 const REMOTE_RECOMMEND_URL =
-  'https://raw.githubusercontent.com/milisp/codexia/main/src/assets/recommend.json';
+  'https://raw.githubusercontent.com/milisp/codexia/master/src/assets/recommend.json';
 
 function SetupPopover({ setup }: { setup: string }) {
   const [copied, setCopied] = useState(false);
