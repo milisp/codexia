@@ -9,25 +9,18 @@ import {
   replaceAtTrigger,
   useComposerPopover,
 } from '@/components/common/useComposerPopover';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
-import { startReview } from '@/services';
 import { codexService } from '@/services/codexService';
+import { SLASH_COMMANDS, type SlashCommand, type SlashDialog } from './slashCommands';
 
-const SLASH_COMMANDS = [{ id: 'review', description: 'Review uncommitted changes' }];
 const detectSlash = detectWordBoundaryTrigger('/');
-const filterCmd = (cmd: { id: string }, query: string) => cmd.id.startsWith(query.toLowerCase());
+const filterCmd = (cmd: SlashCommand, query: string) => cmd.id.startsWith(query.toLowerCase());
 
 interface SlashCommandPopoverProps {
   input: string;
   setInputValue: (v: string) => void;
   editorRef: ComposerEditorRef;
   triggerElement: HTMLElement | null;
+  onOpenDialog: (dialog: SlashDialog) => void;
 }
 
 export function SlashCommandPopover({
@@ -35,40 +28,34 @@ export function SlashCommandPopover({
   setInputValue,
   editorRef,
   triggerElement,
+  onOpenDialog,
 }: SlashCommandPopoverProps) {
   const { currentThreadId } = useCodexStore();
 
   const handleSelect = useCallback(
-    async (cmd: { id: string; description: string }) => {
-      // Remove the /command text from input
+    async (cmd: SlashCommand) => {
+      // Drop the /command text before running it.
       const newValue = replaceAtTrigger(input, '/', '');
       const cleaned = (newValue ?? input).replace(/^\s+/, '').trimEnd();
       applyEditorReplacement(cleaned, setInputValue, editorRef);
 
-      // Execute the command
-      if (cmd.id === 'review') {
-        let targetThreadId = currentThreadId;
-        if (!targetThreadId) {
-          try {
+      try {
+        await cmd.run({
+          currentThreadId,
+          openDialog: onOpenDialog,
+          ensureThread: async () => {
+            if (currentThreadId) {
+              return currentThreadId;
+            }
             const thread = await codexService.threadStart();
-            targetThreadId = thread.id;
-          } catch (error) {
-            console.error('Failed to start thread for review:', error);
-            return;
-          }
-        }
-        try {
-          await startReview({
-            threadId: targetThreadId,
-            target: { type: 'uncommittedChanges' },
-            delivery: null,
-          });
-        } catch (error) {
-          console.error('Failed to start review:', error);
-        }
+            return thread.id;
+          },
+        });
+      } catch (error) {
+        console.error(`Failed to run /${cmd.id}:`, error);
       }
     },
-    [input, setInputValue, editorRef, currentThreadId]
+    [input, setInputValue, editorRef, currentThreadId, onOpenDialog]
   );
 
   const { open, filteredItems, selectedIndex, setSelectedIndex, itemRefs } = useComposerPopover({
@@ -95,32 +82,28 @@ export function SlashCommandPopover({
       }
       className="z-[9999] w-64 overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md"
     >
-      <Command shouldFilter={false}>
-        <CommandList>
-          {filteredItems.length === 0 ? (
-            <CommandEmpty>No commands found</CommandEmpty>
-          ) : (
-            <CommandGroup>
-              {filteredItems.map((cmd, index) => (
-                <CommandItem
-                  key={cmd.id}
-                  value={cmd.id}
-                  ref={(el) => {
-                    itemRefs.current[index] = el;
-                  }}
-                  data-selected={index === selectedIndex}
-                  className="flex flex-col items-start gap-0.5 data-[selected=true]:bg-accent"
-                  onClick={() => handleSelect(cmd)}
-                  onMouseEnter={() => setSelectedIndex(index)}
-                >
-                  <div className="font-medium text-sm">/{cmd.id}</div>
-                  <div className="text-xs text-muted-foreground">{cmd.description}</div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
-        </CommandList>
-      </Command>
+      {/* Plain buttons rather than cmdk: CommandItem owns its own `data-selected`
+          and swallows clicks, which left this list unable to highlight or select. */}
+      <div className="max-h-72 overflow-y-auto p-1">
+        {filteredItems.map((cmd, index) => (
+          <button
+            key={cmd.id}
+            type="button"
+            ref={(el) => {
+              itemRefs.current[index] = el;
+            }}
+            data-selected={index === selectedIndex}
+            className="flex w-full cursor-pointer flex-col items-start gap-0.5 rounded-sm px-2 py-1.5 text-left data-[selected=true]:bg-accent"
+            onMouseEnter={() => setSelectedIndex(index)}
+            // Keep the editor focused so the command can replace the composer text.
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => handleSelect(cmd)}
+          >
+            <div className="font-medium text-sm">/{cmd.id}</div>
+            <div className="text-xs text-muted-foreground">{cmd.description}</div>
+          </button>
+        ))}
+      </div>
       <div className="border-t border-border px-4 py-2 text-xs text-muted-foreground bg-muted/30">
         <span>↑↓ navigate</span>
         <span className="ml-3">↵ select</span>

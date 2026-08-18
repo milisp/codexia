@@ -3,8 +3,8 @@ import type {
   SandboxPolicy,
   Thread,
   ThreadForkParams,
-  ThreadGoalSetParams,
   ThreadGoalClearParams,
+  ThreadGoalSetParams,
   ThreadListParams,
   ThreadResumeParams,
   ThreadRollbackParams,
@@ -20,14 +20,15 @@ import {
   gitCreateWorktree,
   listThreads,
   skillList,
+  threadCompactStart,
   threadFork,
+  threadGoalClear,
+  threadGoalSet,
   threadResume,
   threadRollback,
   turnInterrupt,
   turnStart,
   turnSteer,
-  threadGoalSet,
-  threadGoalClear,
 } from './apiAdapt';
 
 const sandboxModeToPolicy = (mode: SandboxMode, networkAccess: boolean): SandboxPolicy => {
@@ -419,6 +420,14 @@ export const codexService = {
       return response;
     } catch (error: unknown) {
       console.error('[CodexService] threadGoalSet error:', error);
+      throw error;
+    }
+  },
+  async threadCompact(threadId: string) {
+    try {
+      return await threadCompactStart({ threadId });
+    } catch (error: unknown) {
+      console.error('[CodexService] threadCompact error:', error);
       throw error;
     }
   },

@@ -22,6 +22,7 @@ export type {
   UnifiedMcpConfig,
 } from './shared';
 export * from './terminal';
+export * from './threadOps';
 
 const SESSION_META_STORAGE_KEY = 'codexia.session_meta';
 const SESSION_META_FILE_PATH = '~/.plux/session_meta.json';

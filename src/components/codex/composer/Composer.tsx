@@ -17,7 +17,9 @@ import { ComposerToolbarProvider } from './ComposerToolbarContext';
 import { DictationButton } from './DictationButton';
 import { ComposerEditor, type ComposerEditorHandle } from './editor/ComposerEditor';
 import { ModelReasonSelector } from './ModelReasonSelector';
+import { SlashCommandDialogs } from './SlashCommandDialogs';
 import { SlashCommandPopover } from './SlashCommandsSelector';
+import type { SlashDialog } from './slashCommands';
 
 interface ComposerProps {
   overrideSend?: (text: string) => void;
@@ -45,6 +47,7 @@ function goalStatusLabel(status: ThreadGoal['status']): string {
 
 export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
   const [images, setImages] = useState<string[]>([]);
+  const [slashDialog, setSlashDialog] = useState<SlashDialog | null>(null);
   const { inputValue, setInputValue, appendFileLinks } = useInputStore();
   const { currentThreadId, currentTurnId, inputFocusTrigger, goalEnabled, setGoalEnabled } =
     useCodexStore();
@@ -200,6 +203,7 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
           setInputValue={setInputValue}
           editorRef={editorRef}
           triggerElement={wrapperRef.current}
+          onOpenDialog={setSlashDialog}
         />
 
         <div className="max-w-3xl mx-2 sm:mx-auto border rounded-xl bg-background shadow-sm focus-within:ring-1 focus-within:ring-ring transition-all overflow-hidden">
@@ -332,6 +336,7 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
           </div>
         </div>
       </form>
+      <SlashCommandDialogs open={slashDialog} onClose={() => setSlashDialog(null)} />
     </div>
   );
 }
