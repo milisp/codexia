@@ -85,7 +85,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
     return () => {
       cancelled = true;
     };
-  }, [cwd, sortKey, refreshCounter]);
+  }, [cwd, sortKey, providerFilter, refreshCounter]);
 
   const refresh = useCallback(() => setRefreshCounter((n) => n + 1), []);
 
