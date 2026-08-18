@@ -1,6 +1,12 @@
 {
     "tools": [
         {
+            "name": "Plux",
+            "description": "Capture now with a shortcut. Turn it into a todo, send it to AI anytime.",
+            "url": "https://milisp.dev/plux",
+            "badge": "Made by us"
+        },
+        {
             "name": "gstack",
             "description": "Use Garry Tan's exact Claude Code setup: 23 opinionated tools that serve as CEO, Designer, Eng Manager, Release Manager, Doc Engineer, and QA",
             "url": "https://github.com/garrytan/gstack",

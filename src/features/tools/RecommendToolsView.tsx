@@ -1,15 +1,16 @@
-import { openUrl } from '@tauri-apps/plugin-opener';
 import { Check, Copy, ExternalLink, Terminal } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import recommendData from '@/assets/recommend.json';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useExternalUrl } from '@/features/plugins/hooks/useExternalUrl';
 
 interface Tool {
   name: string;
   description: string;
   url: string;
-  setup: string;
+  setup?: string;
+  badge?: string;
 }
 
 const REMOTE_RECOMMEND_URL =
@@ -47,25 +48,29 @@ function SetupPopover({ setup }: { setup: string }) {
 }
 
 function ToolCard({ tool }: { tool: Tool }) {
+  const { openExternalUrl } = useExternalUrl();
+
   return (
     <div className="flex items-start gap-3 rounded-lg border bg-card p-3 hover:bg-accent/30 transition-colors">
-      <div className="flex-1 min-w-0">
+      <button
+        type="button"
+        className="flex-1 min-w-0 text-left"
+        onClick={() => void openExternalUrl(tool.url)}
+      >
         <div className="flex items-center gap-1.5 mb-1">
           <span className="text-sm font-medium truncate">{tool.name}</span>
+          <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
+          {tool.badge && (
+            <span className="shrink-0 rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
+              {tool.badge}
+            </span>
+          )}
         </div>
         <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
           {tool.description}
         </p>
-        <button
-          type="button"
-          className="mt-1.5 flex items-center gap-1 text-[11px] text-primary/70 hover:text-primary transition-colors"
-          onClick={() => void openUrl(tool.url)}
-        >
-          <ExternalLink className="h-3 w-3" />
-          <span className="truncate max-w-[200px]">{tool.url}</span>
-        </button>
-      </div>
-      <SetupPopover setup={tool.setup} />
+      </button>
+      {tool.setup && <SetupPopover setup={tool.setup} />}
     </div>
   );
 }

@@ -66,7 +66,7 @@ runs without installing.
 
 ## Also by me
 
-- [Plux](https://milisp.dev/plux) - Capture now, turn it into a todo, send it to AI anytime.
+- [Plux](https://milisp.dev/plux) - Capture now with a shortcut. Turn it into a todo, send it to AI anytime.
 
 ## Recommend tools
 
