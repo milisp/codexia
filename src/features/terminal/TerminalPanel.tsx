@@ -10,13 +10,28 @@ interface TerminalPanelProps {
 }
 
 export function TerminalPanel({ isActive }: TerminalPanelProps) {
-  const { terminals, activeTerminalId, addTerminal, removeTerminal, setActiveTerminalId } =
-    useLayoutStore();
+  const {
+    terminals,
+    activeTerminalId,
+    addTerminal,
+    removeTerminal,
+    setActiveTerminalId,
+    isRightPanelOpen,
+  } = useLayoutStore();
 
-  // Auto-open a first session the first time this tab is used.
+  // The right panel collapses to width 0 instead of unmounting, so `isActive`
+  // alone stays true while it is closed. Panes must know the panel is really
+  // visible, otherwise they fit to a 0x0 container (which wipes the rendered
+  // buffer) and never refit/refocus when it reopens.
+  const panelVisible = isActive && isRightPanelOpen;
+
+  // Auto-open a first session the first time this tab is used. Mount-only on
+  // purpose: re-running when terminals.length drops back to 0 would silently
+  // reopen a fresh terminal the moment the user closes the last one.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: mount-only by design, see above
   useEffect(() => {
     if (terminals.length === 0) addTerminal();
-  }, [terminals.length, addTerminal]);
+  }, []);
 
   return (
     <div className="h-full min-h-0 flex flex-col bg-black text-zinc-100">
@@ -78,8 +93,8 @@ export function TerminalPanel({ isActive }: TerminalPanelProps) {
         {terminals.map((tab) => (
           <TerminalPane
             key={tab.id}
-            active={isActive && tab.id === activeTerminalId}
-            panelOpen={isActive}
+            active={panelVisible && tab.id === activeTerminalId}
+            panelOpen={panelVisible}
           />
         ))}
       </div>

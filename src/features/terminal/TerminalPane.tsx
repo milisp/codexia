@@ -104,7 +104,9 @@ export function TerminalPane({ active, panelOpen }: TerminalPaneProps) {
     }
 
     requestAnimationFrame(() => {
-      fitAddon.fit();
+      // Fitting a collapsed container shrinks the buffer to its minimum and
+      // loses the rendered output, so only fit once it has real size.
+      if (container.clientWidth > 1 && container.clientHeight > 1) fitAddon.fit();
       term.focus();
     });
   }, [active, panelOpen]);
@@ -235,7 +237,9 @@ export function TerminalPane({ active, panelOpen }: TerminalPaneProps) {
       if (!active || !panelOpen) return;
       const term = terminalRef.current;
       const fitAddon = fitAddonRef.current;
-      if (!term || !fitAddon) return;
+      const container = containerRef.current;
+      if (!term || !fitAddon || !container) return;
+      if (container.clientWidth < 2 || container.clientHeight < 2) return;
       fitAddon.fit();
       const sid = sessionIdRef.current;
       if (sid) {
