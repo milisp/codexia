@@ -27,7 +27,7 @@ interface CodexThreadProps {
 }
 
 export function CodexThread({ threadId, fillHeight = true }: CodexThreadProps = {}) {
-  const { currentThreadId, events, turnTimingMap } = useCodexStore();
+  const { currentThreadId, events, turnTimingMap, retryNoticeMap } = useCodexStore();
 
   // Use the explicitly provided threadId when embedded, otherwise fall back
   // to the globally active thread.
@@ -36,6 +36,7 @@ export function CodexThread({ threadId, fillHeight = true }: CodexThreadProps = 
   // Get events for the active thread
   const currentThreadEvents = activeThreadId ? events[activeThreadId] || [] : [];
   const turnTiming = activeThreadId ? turnTimingMap[activeThreadId] : undefined;
+  const retryNotice = activeThreadId ? retryNoticeMap[activeThreadId] : undefined;
 
   const { scrollAreaRootRef, bottomAnchorRef, isAtBottom, scrollToBottom } =
     useScrollToBottom(currentThreadEvents);
@@ -95,7 +96,7 @@ export function CodexThread({ threadId, fillHeight = true }: CodexThreadProps = 
               <Fragment key={entry.key}>{entry.content}</Fragment>
             ))}
             <ApprovalItem />
-            <WorkingIndicator turnTiming={turnTiming} />
+            <WorkingIndicator turnTiming={turnTiming} retryNotice={retryNotice} />
             <RequestUserInputItem currentThreadId={activeThreadId} />
             <div ref={bottomAnchorRef} aria-hidden="true" />
           </div>

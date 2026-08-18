@@ -2,22 +2,15 @@ import type { ServerNotification } from '@/bindings';
 import type {
   CommandExecutionStatus,
   Thread,
+  ThreadGoal,
   ThreadStatus,
   ThreadTokenUsage,
-  ThreadGoal,
 } from '@/bindings/v2';
 
 /**
- * Per-thread turn timing, tracked as the single source of truth for
- * "how long is this turn taking / how long did it take".
- *
- * Sourced directly from turn/started + turn/completed + error notifications,
- * independent of thread/status/changed. thread/status/changed only carries
- * active/idle/error flags with no timestamps, and can race with turn events
- * (e.g. on error/interrupt), so deriving elapsed time by scanning the raw
- * events array for turn/started vs turn/completed produced stale/incorrect
- * timers when the two streams disagreed. Keeping timing here, updated
- * directly by the turn lifecycle events, removes that race entirely.
+ * Per-thread turn timing, fed by turn/started + turn/completed + error.
+ * Deliberately independent of thread/status/changed, which carries no
+ * timestamps and races with the turn events on error/interrupt.
  */
 export interface TurnTiming {
   turnId: string;
@@ -59,6 +52,8 @@ export interface EventsSlice {
   commandStatusMap: Record<string, CommandExecutionStatus>;
   /** Command duration map: itemId -> durationMs, populated on item/completed for commandExecution. */
   commandDurationMap: Record<string, number | null>;
+  /** Latest retryable error message per thread; shown on the working indicator, cleared by the next event. */
+  retryNoticeMap: Record<string, string>;
   /** Per-thread token usage from thread/tokenUsage/updated */
   tokenUsageMap: Record<string, ThreadTokenUsage>;
   /** Per-thread goal from thread/goal/updated */

@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { ServerNotification } from '@/bindings';
-import type { ThreadTokenUsage, ThreadGoal } from '@/bindings/v2';
+import type { ThreadGoal, ThreadTokenUsage } from '@/bindings/v2';
 import { compactDeltaEvents } from './eventUtils';
 import type { CodexStore, EventsSlice, TurnTiming } from './types';
 
@@ -10,6 +10,7 @@ export const createEventsSlice: StateCreator<CodexStore, [], [], EventsSlice> = 
   turnTimingMap: {},
   commandStatusMap: {},
   commandDurationMap: {},
+  retryNoticeMap: {},
   tokenUsageMap: {},
   goalMap: {},
   goalEnabled: false,
@@ -17,6 +18,18 @@ export const createEventsSlice: StateCreator<CodexStore, [], [], EventsSlice> = 
   addEvent: (threadId: string, event: ServerNotification) => {
     set((state: CodexStore) => {
       const existingEvents = state.events[threadId] || [];
+
+      // Each retry emits another error, so keeping them out of the transcript
+      // is what stops "Reconnecting... 1/5" from stacking up five lines.
+      let isRetryNotice = false;
+      let retryNoticeMap = state.retryNoticeMap;
+      if (event.method === 'error' && event.params.willRetry) {
+        isRetryNotice = true;
+        retryNoticeMap = { ...retryNoticeMap, [threadId]: event.params.error.message };
+      } else if (retryNoticeMap[threadId] !== undefined) {
+        const { [threadId]: _cleared, ...rest } = retryNoticeMap;
+        retryNoticeMap = rest;
+      }
 
       // Deduplicate turn/diff/updated events
       // If this is a turn/diff/updated event, remove previous ones with the same turnId
@@ -30,12 +43,12 @@ export const createEventsSlice: StateCreator<CodexStore, [], [], EventsSlice> = 
         });
       }
 
-      const compactedEvents = compactDeltaEvents(filteredEvents, event);
-
-      const newEvents = {
-        ...state.events,
-        [threadId]: compactedEvents,
-      };
+      const newEvents = isRetryNotice
+        ? state.events
+        : {
+            ...state.events,
+            [threadId]: compactDeltaEvents(filteredEvents, event),
+          };
 
       let threadStatusMap = state.threadStatusMap;
       if (event.method === 'thread/status/changed') {
@@ -75,12 +88,8 @@ export const createEventsSlice: StateCreator<CodexStore, [], [], EventsSlice> = 
           };
         }
       } else if (event.method === 'error') {
-        // Standalone error notification: if it targets the turn we're tracking,
-        // no turn/completed has landed yet, and the server isn't about to retry,
-        // mark it failed so the UI stops showing "Working..." even if
-        // turn/completed never arrives. If willRetry is true, the turn is still
-        // in progress (a retry or further turn/completed is expected), so keep
-        // ticking instead of freezing the duration prematurely.
+        // A non-retryable error may arrive without any turn/completed, so mark
+        // the turn failed here or the UI shows "Working..." forever.
         const existing = turnTimingMap[threadId];
         if (
           existing &&
@@ -135,6 +144,7 @@ export const createEventsSlice: StateCreator<CodexStore, [], [], EventsSlice> = 
         turnTimingMap,
         commandStatusMap,
         commandDurationMap,
+        retryNoticeMap,
         goalMap,
       };
     });
