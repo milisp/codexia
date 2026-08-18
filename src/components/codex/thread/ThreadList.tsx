@@ -1,6 +1,8 @@
 import { listen } from '@tauri-apps/api/event';
+import type { LucideIcon } from 'lucide-react';
 import { Archive, FolderX, GitFork, Loader2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ServerNotification } from '@/bindings/ServerNotification';
 import type {
   Thread,
@@ -31,6 +33,14 @@ interface ThreadListProps {
   cwd: string;
 }
 
+interface ThreadAction {
+  label: string;
+  icon?: LucideIcon;
+  destructive?: boolean;
+  separatorBefore?: boolean;
+  onSelect: () => void;
+}
+
 const EMPTY_LIST: ThreadListResponse = { data: [], nextCursor: null, backwardsCursor: null };
 
 const PAGE_SIZE = 3;
@@ -47,6 +57,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
   const [renameThreadId, setRenameThreadId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [refreshCounter, setRefreshCounter] = useState(0);
+  const [pressedThreadId, setPressedThreadId] = useState<string | null>(null);
 
   const nextCursor = response.nextCursor;
 
@@ -252,18 +263,95 @@ export function ThreadList({ cwd }: ThreadListProps) {
     // thread/name/updated notification patches response.data directly.
   }, [renameThreadId, renameValue]);
 
+  // --- Touch long press opens the context menu (touch devices get no
+  // native contextmenu event, so synthesize one at the touch point) ---
+
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFiredRef = useRef(false);
+
+  const cancelLongPress = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    setPressedThreadId(null);
+  }, []);
+
+  const startLongPress = useCallback(
+    (e: ReactPointerEvent, threadId: string) => {
+      if (e.pointerType === 'mouse') return;
+      const target = e.currentTarget;
+      const { clientX, clientY } = e;
+      cancelLongPress();
+      longPressFiredRef.current = false;
+      setPressedThreadId(threadId);
+      longPressTimerRef.current = setTimeout(() => {
+        longPressFiredRef.current = true;
+        setPressedThreadId(null);
+        // The press may have started a native text selection that runs past
+        // the row; drop it before opening the menu.
+        window.getSelection()?.removeAllRanges();
+        target.dispatchEvent(
+          new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX, clientY })
+        );
+      }, 450);
+    },
+    [cancelLongPress]
+  );
+
+  useEffect(() => cancelLongPress, [cancelLongPress]);
+
+  // Shared action list for the context menu.
+  const threadActions = useCallback(
+    (thread: Thread): ThreadAction[] => [
+      { label: 'Rename', onSelect: () => openRenameDialog(thread) },
+      { label: 'Fork', icon: GitFork, onSelect: () => void handleFork(thread.id) },
+      { label: 'Archive', icon: Archive, onSelect: () => void handleArchive(thread.id) },
+      ...(thread.cwd.includes('/.codexia/worktrees/')
+        ? [
+            {
+              label: 'Delete Worktree',
+              icon: FolderX,
+              onSelect: () => void handleDeleteWorktree(thread),
+            },
+          ]
+        : []),
+      { label: 'Delete', destructive: true, onSelect: () => void handleDelete(thread.id) },
+      {
+        label: 'Copy Id',
+        separatorBefore: true,
+        onSelect: () => void navigator.clipboard.writeText(thread.id),
+      },
+    ],
+    [openRenameDialog, handleFork, handleArchive, handleDeleteWorktree, handleDelete]
+  );
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col select-none [-webkit-user-select:none] [-webkit-touch-callout:none]">
       <div className="min-h-0 flex-1">
         {threads.map((thread) => (
           <ContextMenu key={thread.id}>
             <ContextMenuTrigger asChild>
               <div
-                onClick={() => void handleOpenThread(thread.id, thread.preview)}
+                onClick={() => {
+                  if (longPressFiredRef.current) {
+                    longPressFiredRef.current = false;
+                    return;
+                  }
+                  void handleOpenThread(thread.id, thread.preview);
+                }}
+                onPointerDown={(e) => startLongPress(e, thread.id)}
+                onPointerUp={cancelLongPress}
+                onPointerMove={cancelLongPress}
+                onPointerCancel={cancelLongPress}
                 role="button"
                 tabIndex={0}
-                className={`group grid grid-cols-[1fr_auto] items-center gap-2 w-full text-left p-2 rounded-lg transition-colors ${
+                className={`group grid grid-cols-[1fr_auto] items-center gap-2 w-full text-left p-2 rounded-lg transition-all duration-200 touch-pan-y select-none [-webkit-user-select:none] [-webkit-touch-callout:none] ${
                   currentThreadId === thread.id ? 'bg-zinc-700/50' : 'hover:bg-zinc-800/30'
+                } ${
+                  pressedThreadId === thread.id
+                    ? 'scale-[0.97] bg-accent/60 ring-1 ring-ring/60'
+                    : 'scale-100'
                 }`}
               >
                 <div className="text-sm font-medium truncate min-w-0 pr-2 flex items-center gap-1.5">
@@ -283,7 +371,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
                       e.stopPropagation();
                       void handleArchive(thread.id);
                     }}
-                    className="absolute right-0 inline-flex items-center justify-center h-6 w-6 rounded hover:bg-accent/50 transition-colors text-muted-foreground opacity-0 group-hover:opacity-100 max-md:opacity-100"
+                    className="absolute right-0 inline-flex items-center justify-center h-6 w-6 rounded hover:bg-accent/50 transition-colors text-muted-foreground opacity-0 group-hover:opacity-100"
                   >
                     <Archive className="h-3.5 w-3.5" />
                   </button>
@@ -291,27 +379,18 @@ export function ThreadList({ cwd }: ThreadListProps) {
               </div>
             </ContextMenuTrigger>
             <ContextMenuContent className="w-44">
-              <ContextMenuItem onSelect={() => openRenameDialog(thread)}>Rename</ContextMenuItem>
-              <ContextMenuItem onSelect={() => void handleFork(thread.id)}>
-                <GitFork className="mr-2 h-4 w-4" />
-                Fork
-              </ContextMenuItem>
-              <ContextMenuItem onSelect={() => void handleArchive(thread.id)}>
-                Archive
-              </ContextMenuItem>
-              {thread.cwd.includes('/.codexia/worktrees/') && (
-                <ContextMenuItem onSelect={() => void handleDeleteWorktree(thread)}>
-                  <FolderX className="mr-2 h-4 w-4" />
-                  Delete Worktree
-                </ContextMenuItem>
-              )}
-              <ContextMenuItem variant="destructive" onSelect={() => void handleDelete(thread.id)}>
-                Delete
-              </ContextMenuItem>
-              <ContextMenuSeparator />
-              <ContextMenuItem onSelect={() => void navigator.clipboard.writeText(thread.id)}>
-                Copy Id
-              </ContextMenuItem>
+              {threadActions(thread).map((action) => (
+                <Fragment key={action.label}>
+                  {action.separatorBefore && <ContextMenuSeparator />}
+                  <ContextMenuItem
+                    variant={action.destructive ? 'destructive' : 'default'}
+                    onSelect={action.onSelect}
+                  >
+                    {action.icon && <action.icon className="mr-2 h-4 w-4" />}
+                    {action.label}
+                  </ContextMenuItem>
+                </Fragment>
+              ))}
             </ContextMenuContent>
           </ContextMenu>
         ))}

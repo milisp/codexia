@@ -50,7 +50,7 @@ export function MobileHome({
   }, []);
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col">
+    <div className="relative flex h-full min-h-0 flex-col select-none [-webkit-user-select:none] [-webkit-touch-callout:none]">
       {/* Row 1: the machine this phone is pointed at. */}
       <header className="flex h-12 shrink-0 items-center gap-2 border-b px-3">
         <span className="min-w-0 flex-1 truncate font-medium text-base">
