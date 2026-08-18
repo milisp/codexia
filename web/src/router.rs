@@ -45,6 +45,7 @@ use super::{
         api_rollback_thread, api_fork_thread,
         api_search_files, api_search_files_by_name, api_skills_config_write, api_skills_list, api_start_review,
         api_start_thread, api_watch_directory, api_unwatch_directory,
+        api_mcp_server_oauth_login, api_list_mcp_server_status,
         api_skill_groups_read, api_skill_groups_write,
         api_skills_clone_repo, api_skills_delete_central, api_skills_install_marketplace,
         api_skills_link_to_agent, api_skills_list_central, api_skills_list_installed,
@@ -147,6 +148,8 @@ pub fn create_router(state: WebServerState) -> Router {
     let protected = Router::new()
         .route("/ws", get(ws_handler))
         .route("/api/events", get(sse_handler))
+        .route("/api/codex/mcp/oauth/login", post(api_mcp_server_oauth_login))
+        .route("/api/codex/mcp/status/list", post(api_list_mcp_server_status))
         .route("/api/codex/thread/start", post(api_start_thread))
         .route("/api/codex/start-thread", post(api_start_thread))
         .route("/api/codex/thread/resume", post(api_resume_thread))

@@ -1,3 +1,9 @@
+import type {
+  ListMcpServerStatusParams,
+  ListMcpServerStatusResponse,
+  McpServerOauthLoginParams,
+  McpServerOauthLoginResponse,
+} from '@/bindings/v2';
 import { dual, dualVoid, type UnifiedMcpClientName, type UnifiedMcpConfig } from './shared';
 
 export async function unifiedReadMcpConfig(
@@ -64,4 +70,22 @@ export async function unifiedDisableMcpServer(params: {
     path: params.path,
     server_name: params.serverName,
   });
+}
+
+export async function mcpServerOauthLogin(params: McpServerOauthLoginParams) {
+  return await dual<McpServerOauthLoginResponse>(
+    'mcp_server_oauth_login',
+    { params },
+    '/api/codex/mcp/oauth/login',
+    params
+  );
+}
+
+export async function listMcpServerStatus(params: ListMcpServerStatusParams) {
+  return await dual<ListMcpServerStatusResponse>(
+    'list_mcp_server_status',
+    { params },
+    '/api/codex/mcp/status/list',
+    params
+  );
 }

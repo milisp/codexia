@@ -101,6 +101,8 @@ pub fn run() {
                 commands::codex::login_account,
                 commands::codex::skills_list,
                 commands::codex::skills_config_write,
+                commands::codex::mcp_server_oauth_login,
+                commands::codex::list_mcp_server_status,
                 commands::codex::thread_compact_start,
                 commands::codex::thread_memory_mode_set,
                 commands::codex::memory_reset,

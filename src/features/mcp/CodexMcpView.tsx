@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DefaultMcpServers, getServerProtocol, McpServerCard, McpServerForm } from '@/features/mcp';
 import { unifiedAddMcpServer, unifiedReadMcpConfig, unifiedRemoveMcpServer } from '@/services';
+import { useMcpAuthStatus } from './useMcpAuthStatus';
 
 interface CodexMcpViewProps {
   refreshKey?: number;
@@ -14,6 +15,7 @@ interface CodexMcpViewProps {
 export function CodexMcpView({ refreshKey }: CodexMcpViewProps) {
   const [servers, setServers] = useState<Record<string, McpServerConfig>>({});
   const [activeTab, setActiveTab] = useState('configured');
+  const { authStatuses, refreshAuthStatuses } = useMcpAuthStatus();
   const [editingServer, setEditingServer] = useState<string | null>(null);
   const [editConfig, setEditConfig] = useState<{
     name: string;
@@ -174,6 +176,8 @@ export function CodexMcpView({ refreshKey }: CodexMcpViewProps) {
                       loadServers={loadServers}
                       setServers={setServers}
                       onEdit={handleEditServer}
+                      authStatus={authStatuses[name]}
+                      onAuthChanged={refreshAuthStatuses}
                     />
                   )}
                 </div>

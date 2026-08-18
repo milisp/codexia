@@ -311,3 +311,27 @@ pub(crate) async fn api_unified_read_mcp_config(
         .map_err(to_error_response)?;
     Ok(Json(result))
 }
+
+pub(crate) async fn api_mcp_server_oauth_login(
+    AxumState(state): AxumState<WebServerState>,
+    Json(params): Json<Value>,
+) -> Result<Json<Value>, ErrorResponse> {
+    let result = require_codex(&state)?
+        .codex
+        .send_request("mcpServer/oauth/login", params)
+        .await
+        .map_err(to_error_response)?;
+    Ok(Json(result))
+}
+
+pub(crate) async fn api_list_mcp_server_status(
+    AxumState(state): AxumState<WebServerState>,
+    Json(params): Json<Value>,
+) -> Result<Json<Value>, ErrorResponse> {
+    let result = require_codex(&state)?
+        .codex
+        .send_request("mcpServerStatus/list", params)
+        .await
+        .map_err(to_error_response)?;
+    Ok(Json(result))
+}
