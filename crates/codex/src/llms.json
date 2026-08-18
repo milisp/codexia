@@ -95,6 +95,13 @@
       ]
     },
     {
+      "model_provider": "lmstudio",
+      "base_url": "http://localhost:1234/v1",
+      "signup_url": "https://lmstudio.ai",
+      "env_key": "",
+      "auto_discover": true
+    },
+    {
       "model_provider": "custom",
       "base_url": "http://localhost:8000/v1",
       "signup_url": "",

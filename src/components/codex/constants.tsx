@@ -2,6 +2,7 @@ export const modelProviders = [
   'openai',
   'atlascloud',
   'ollama',
+  'lmstudio',
   'openrouter',
   'nvidia',
   'custom',

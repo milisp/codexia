@@ -50,7 +50,7 @@ async fn upsert_config_value(
 
 /// Provider IDs that are reserved built-ins in the Codex app-server and
 /// cannot be overridden via `config/value/write`.
-const BUILTIN_PROVIDER_IDS: &[&str] = &["ollama"];
+const BUILTIN_PROVIDER_IDS: &[&str] = &["ollama", "lmstudio"];
 
 /// Writes a single provider to the Codex app-server under
 /// `model_providers.<name>`, which persists it in the user's `config.toml`.
@@ -138,12 +138,19 @@ pub async fn read_model_providers(
         }
     }
 
-    // `ollama` is a built-in of the app-server: never written to config.toml
-    // and needs no API key, but it must always be selectable.
+    // `ollama` and `lmstudio` are built-ins of the app-server: never written
+    // to config.toml and need no API key, but must always be selectable.
     if !providers.iter().any(|p| p.name == "ollama") {
         providers.push(ConfigProvider {
             name: "ollama".to_string(),
             base_url: Some("http://localhost:11434/v1".to_string()),
+            env_key: None,
+        });
+    }
+    if !providers.iter().any(|p| p.name == "lmstudio") {
+        providers.push(ConfigProvider {
+            name: "lmstudio".to_string(),
+            base_url: Some("http://localhost:1234/v1".to_string()),
             env_key: None,
         });
     }
