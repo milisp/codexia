@@ -9,6 +9,8 @@ import type {
   LoginAccountResponse,
   ModelListParams,
   ModelListResponse,
+  PluginInstalledParams,
+  PluginInstalledResponse,
   PluginInstallParams,
   PluginInstallResponse,
   PluginListParams,
@@ -324,6 +326,15 @@ export async function pluginList(params: PluginListParams) {
     'plugin_list',
     { params },
     '/api/codex/plugin/list',
+    params
+  );
+}
+
+export async function pluginInstalled(params: PluginInstalledParams) {
+  return await dual<PluginInstalledResponse>(
+    'plugin_installed',
+    { params },
+    '/api/codex/plugin/installed',
     params
   );
 }

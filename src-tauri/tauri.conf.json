@@ -37,6 +37,9 @@
           "$RESOURCE/**",
           "$HOME/.cache/**/*",
           "$HOME/.codex/.tmp/**/*",
+          "$HOME/.codex/plugins/**/*",
+          "$HOME/.codex/skills/**/*",
+          "$HOME/.codex/skills/.system/**/*",
           "$HOME/**",
           "$TEMP/**"
         ]

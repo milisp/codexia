@@ -102,6 +102,7 @@ pub fn run() {
                 commands::codex::skills_list,
                 commands::codex::skills_config_write,
                 commands::codex::plugin_list,
+                commands::codex::plugin_installed,
                 commands::codex::plugin_read,
                 commands::codex::plugin_install,
                 commands::codex::plugin_uninstall,

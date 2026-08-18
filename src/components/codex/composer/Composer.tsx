@@ -15,8 +15,8 @@ import { AccessModePopover } from './AccessModePopover';
 import { ComposerMenu } from './ComposerMenu';
 import { ComposerToolbarProvider } from './ComposerToolbarContext';
 import { DictationButton } from './DictationButton';
+import { ComposerEditor, type ComposerEditorHandle } from './editor/ComposerEditor';
 import { ModelReasonSelector } from './ModelReasonSelector';
-import { SkillsInputPopover } from './SkillsPopover';
 import { SlashCommandPopover } from './SlashCommandsSelector';
 
 interface ComposerProps {
@@ -56,29 +56,17 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
   // from ThreadGoal.status rather than a local UI toggle).
   const threadGoal = useThreadGoal();
 
-  const isComposing = useRef(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<ComposerEditorHandle>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: refocus the composer whenever the thread switches or a focus request is raised
   useEffect(() => {
-    textareaRef.current?.focus();
+    editorRef.current?.focus();
   }, [currentThreadId, inputFocusTrigger]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: inputValue is the trigger — the effect measures the textarea after it re-renders with the new value
-  useEffect(() => {
-    const ta = textareaRef.current;
-    if (ta) {
-      ta.style.height = 'auto';
-      ta.style.height = `${ta.scrollHeight}px`;
-    }
-  }, [inputValue]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && !isComposing.current) {
-      e.preventDefault();
-      textareaRef.current?.form?.requestSubmit();
-    }
+  const handleEditorSubmit = useCallback(() => {
+    formRef.current?.requestSubmit();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -169,6 +157,15 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
     }
   };
 
+  // Append a `$mention` (optionally followed by a starter prompt) from the plus
+  // menu. The editor turns the known mention text back into a chip via its
+  // external-value sync, so this only has to deal with plain strings.
+  const handleInsertMention = (text: string) => {
+    const separator = !inputValue || /\s$/.test(inputValue) ? '' : ' ';
+    setInputValue(`${inputValue}${separator}${text} `);
+    editorRef.current?.focus();
+  };
+
   // Clear the goal server-side. Local goalMap state is updated via the
   // thread/goal/cleared notification once the server confirms, so we don't
   // optimistically mutate the store here (avoids it being resurrected by a
@@ -187,23 +184,21 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
 
   return (
     <div>
-      <form onSubmit={handleSubmit} className="pb-[env(safe-area-inset-bottom)] bg-background">
+      <form
+        ref={formRef}
+        onSubmit={handleSubmit}
+        className="pb-[env(safe-area-inset-bottom)] bg-background"
+      >
         <FileMentionPopover
           input={inputValue}
           setInput={setInputValue}
-          editorRef={textareaRef}
+          editorRef={editorRef}
           triggerElement={wrapperRef.current}
         />
         <SlashCommandPopover
           input={inputValue}
           setInputValue={setInputValue}
-          editorRef={textareaRef}
-          triggerElement={wrapperRef.current}
-        />
-        <SkillsInputPopover
-          input={inputValue}
-          setInputValue={setInputValue}
-          editorRef={textareaRef}
+          editorRef={editorRef}
           triggerElement={wrapperRef.current}
         />
 
@@ -230,19 +225,12 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
           )}
 
           <div ref={wrapperRef} className="max-h-64 overflow-y-auto px-3 pt-3">
-            <textarea
-              ref={textareaRef}
+            <ComposerEditor
+              ref={editorRef}
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onCompositionStart={() => {
-                isComposing.current = true;
-              }}
-              onCompositionEnd={() => {
-                isComposing.current = false;
-              }}
+              onChange={setInputValue}
+              onSubmit={handleEditorSubmit}
               placeholder={goalEnabled ? 'Enter goal...' : 'Do anything... / $ @'}
-              className="w-full min-h-[44px] resize-none bg-transparent text-base md:text-sm outline-none placeholder:text-muted-foreground"
             />
           </div>
 
@@ -262,6 +250,7 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
                 <ComposerMenu
                   onImagesSelected={(paths) => setImages((prev) => [...prev, ...paths])}
                   onFilesSelected={appendFileLinks}
+                  onInsertMention={handleInsertMention}
                 />
                 <AccessModePopover />
                 {/* Draft mode: entering a new goal, not yet set on the thread. */}

@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import { useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useCodexStore } from '@/components/codex/stores';
+import type { ComposerEditorRef } from '@/components/common/useComposerPopover';
 import {
   applyEditorReplacement,
   detectWordBoundaryTrigger,
@@ -25,7 +26,7 @@ const filterCmd = (cmd: { id: string }, query: string) => cmd.id.startsWith(quer
 interface SlashCommandPopoverProps {
   input: string;
   setInputValue: (v: string) => void;
-  editorRef: React.RefObject<HTMLTextAreaElement | null>;
+  editorRef: ComposerEditorRef;
   triggerElement: HTMLElement | null;
 }
 

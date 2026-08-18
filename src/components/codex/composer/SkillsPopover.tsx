@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { SkillsListEntry } from '@/bindings/v2/SkillsListEntry';
+import type { ComposerEditorRef } from '@/components/common/useComposerPopover';
 import {
   applyEditorReplacement,
   detectWordBoundaryTrigger,
@@ -21,7 +22,7 @@ const detectDollar = detectWordBoundaryTrigger('$');
 interface SkillsInputPopoverProps {
   input: string;
   setInputValue: (v: string) => void;
-  editorRef: React.RefObject<HTMLTextAreaElement | null>;
+  editorRef: ComposerEditorRef;
   triggerElement: HTMLElement | null;
 }
 

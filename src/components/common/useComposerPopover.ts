@@ -170,19 +170,31 @@ export function useComposerPopover<T>({
 // ---------------------------------------------------------------------------
 
 /**
- * Apply a text replacement to the input store and the textarea, then focus it.
+ * Editor surface a popover can focus after applying a replacement. Either the
+ * legacy `<textarea>` or the Lexical composer handle, which only exposes focus
+ * (its caret is placed at the end by the external-value sync).
+ */
+export interface ComposerEditorTarget {
+  focus: () => void;
+  setSelectionRange?: (start: number, end: number) => void;
+}
+
+export type ComposerEditorRef = React.RefObject<ComposerEditorTarget | null>;
+
+/**
+ * Apply a text replacement to the input store and the editor, then focus it.
  */
 export function applyEditorReplacement(
   newValue: string,
   setInput: (v: string) => void,
-  editorRef: React.RefObject<HTMLTextAreaElement | null>
+  editorRef: ComposerEditorRef
 ) {
   setInput(newValue);
-  const ta = editorRef.current;
-  if (ta) {
-    ta.focus();
+  const target = editorRef.current;
+  if (target) {
+    target.focus();
     requestAnimationFrame(() => {
-      ta.setSelectionRange(newValue.length, newValue.length);
+      target.setSelectionRange?.(newValue.length, newValue.length);
     });
   }
 }

@@ -1,6 +1,7 @@
 import { FileText } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { defaultStyles, FileIcon } from 'react-file-icon';
+import type { ComposerEditorRef } from '@/components/common/useComposerPopover';
 import {
   applyEditorReplacement,
   detectAtMention,
@@ -22,7 +23,7 @@ interface FileItem {
 interface FileMentionPopoverProps {
   input: string;
   setInput: (v: string) => void;
-  editorRef: React.RefObject<HTMLTextAreaElement | null>;
+  editorRef: ComposerEditorRef;
   triggerElement: HTMLElement | null;
 }
 

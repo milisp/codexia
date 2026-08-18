@@ -39,3 +39,12 @@ pub async fn plugin_uninstall(
     let result = state.codex.send_request("plugin/uninstall", params).await?;
     Ok(result)
 }
+
+#[tauri::command]
+pub async fn plugin_installed(
+    params: Value,
+    state: State<'_, AppState>,
+) -> Result<Value, String> {
+    let result = state.codex.send_request("plugin/installed", params).await?;
+    Ok(result)
+}

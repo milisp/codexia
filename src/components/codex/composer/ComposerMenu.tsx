@@ -1,12 +1,23 @@
 import { open } from '@tauri-apps/plugin-dialog';
-import { ScreenshotPopover } from '@/components/codex/composer/ScreenshotPopover';
-import { Check, File, Globe, Image as ImageIcon, PlusIcon, Target } from 'lucide-react';
+import {
+  Check,
+  ChevronRight,
+  File,
+  Globe,
+  Image as ImageIcon,
+  PlusIcon,
+  Target,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ScreenshotPopover } from '@/components/codex/composer/ScreenshotPopover';
 import { useCodexStore, useConfigStore } from '@/components/codex/stores';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { type MentionItem, mentionsWithIcon, useMentionItems } from './mentions';
+
 interface SelectFilesMenuItemProps {
   onFilesSelected?: (paths: string[]) => void;
   onAfterSelect?: () => void;
@@ -52,16 +63,80 @@ export function SelectFilesMenuItem({
   );
 }
 
+interface MentionMenuItemProps {
+  item: MentionItem;
+  onInsert: (text: string) => void;
+}
+
+function MentionMenuItem({ item, onInsert }: MentionMenuItemProps) {
+  const [promptsOpen, setPromptsOpen] = useState(false);
+  const hasPrompts = item.defaultPrompts.length > 0;
+
+  return (
+    <div className="flex items-center">
+      <Button
+        variant="ghost"
+        className="flex-1 justify-start gap-2 px-2 hover:bg-blue-500 hover:text-white transition-colors"
+        onClick={() => onInsert(item.insertText)}
+      >
+        {item.iconSrc && <img src={item.iconSrc} alt="" className="w-4 h-4" />}
+        <span className="flex-1 text-left truncate">{item.displayName}</span>
+      </Button>
+      {hasPrompts && (
+        <Popover open={promptsOpen} onOpenChange={setPromptsOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0 hover:bg-blue-500 hover:text-white transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            className="w-64 max-h-[50vh] overflow-y-auto p-1"
+            side="right"
+            align="start"
+          >
+            <div className="flex flex-col gap-1">
+              {item.defaultPrompts.map((prompt) => (
+                <Button
+                  key={prompt}
+                  variant="ghost"
+                  className="justify-start gap-2 px-2 h-auto py-1.5 whitespace-normal text-left hover:bg-blue-500 hover:text-white transition-colors"
+                  onClick={() => {
+                    setPromptsOpen(false);
+                    onInsert(`${item.insertText} ${prompt}`);
+                  }}
+                >
+                  {prompt}
+                </Button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+      )}
+    </div>
+  );
+}
+
 export interface ComposerMenuProps {
   onImagesSelected?: (paths: string[]) => void;
   onFilesSelected?: (paths: string[]) => void;
+  onInsertMention?: (text: string) => void;
 }
 
-export function ComposerMenu({ onImagesSelected, onFilesSelected }: ComposerMenuProps) {
+export function ComposerMenu({
+  onImagesSelected,
+  onFilesSelected,
+  onInsertMention,
+}: ComposerMenuProps) {
   const { webSearchRequest, setWebSearch } = useConfigStore();
   const { goalEnabled, setGoalEnabled } = useCodexStore();
   const { t } = useTranslation('composer');
   const [openState, setOpenState] = useState(false);
+  const { items } = useMentionItems();
+  const mentionItems = mentionsWithIcon(items);
 
   const handleSelectImage = async () => {
     try {
@@ -94,7 +169,7 @@ export function ComposerMenu({ onImagesSelected, onFilesSelected }: ComposerMenu
           <PlusIcon className="w-4 h-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-48 p-1" align="start">
+      <PopoverContent className="w-48 max-h-[45vh] overflow-y-auto p-1" align="start">
         <div className="flex flex-col gap-1">
           <Button
             variant="ghost"
@@ -147,6 +222,21 @@ export function ComposerMenu({ onImagesSelected, onFilesSelected }: ComposerMenu
             <Target className="w-4 h-4" />
             <span className="flex-1 text-left">{t('goal')}</span>
           </Button>
+          {mentionItems.length > 0 && (
+            <>
+              <Separator className="my-1" />
+              {mentionItems.map((item) => (
+                <MentionMenuItem
+                  key={item.key}
+                  item={item}
+                  onInsert={(text) => {
+                    onInsertMention?.(text);
+                    setOpenState(false);
+                  }}
+                />
+              ))}
+            </>
+          )}
         </div>
       </PopoverContent>
     </Popover>
