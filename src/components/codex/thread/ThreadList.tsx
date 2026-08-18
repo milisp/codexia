@@ -48,8 +48,20 @@ export function ThreadList({ cwd }: ThreadListProps) {
   const [renameValue, setRenameValue] = useState('');
   const [refreshCounter, setRefreshCounter] = useState(0);
 
-  const threads = response.data;
   const nextCursor = response.nextCursor;
+
+  // A freshly started thread is not in the state DB yet, so the backend list
+  // does not return it. Merge in live threads from the store so it shows up
+  // immediately; the DB row takes over on the next reload.
+  const threads = useMemo(() => {
+    const seen = new Set(response.data.map((t) => t.id));
+    const live = storeThreads.filter(
+      (t) => t.cwd === cwd && t.modelProvider === modelProvider && !seen.has(t.id)
+    );
+    if (live.length === 0) return response.data;
+    const key = sortKey === 'created_at' ? 'createdAt' : 'updatedAt';
+    return [...live, ...response.data].sort((a, b) => b[key] - a[key]);
+  }, [response.data, storeThreads, cwd, modelProvider, sortKey]);
 
   // --- Thread loading (search + sort delegated to backend) ---
 
@@ -142,7 +154,12 @@ export function ThreadList({ cwd }: ThreadListProps) {
 
   const handleArchive = useCallback(
     async (threadId: string) => {
-      await archiveThread(threadId);
+      try {
+        await archiveThread(threadId);
+      } catch (err) {
+        toast.error('Failed to archive thread', { description: String(err) });
+        return;
+      }
       refresh();
     },
     [refresh]
@@ -151,7 +168,12 @@ export function ThreadList({ cwd }: ThreadListProps) {
   const handleFork = useCallback(
     async (threadId: string) => {
       const thread = threads.find((t) => t.id === threadId);
-      await codexService.threadFork(threadId);
+      try {
+        await codexService.threadFork(threadId);
+      } catch (err) {
+        toast.error('Failed to fork thread', { description: String(err) });
+        return;
+      }
       addAgentCard({ kind: 'codex', id: threadId, preview: thread?.preview, cwd });
       setCurrentAgentCardId(threadId);
       setView('agent');
@@ -174,7 +196,12 @@ export function ThreadList({ cwd }: ThreadListProps) {
 
   const handleDelete = useCallback(
     async (threadId: string) => {
-      await deleteThread(threadId);
+      try {
+        await deleteThread(threadId);
+      } catch (err) {
+        toast.error('Failed to delete thread', { description: String(err) });
+        return;
+      }
       if (currentThreadId === threadId) {
         await codexService.setCurrentThread(null);
       }
@@ -215,7 +242,12 @@ export function ThreadList({ cwd }: ThreadListProps) {
 
   const handleRenameSubmit = useCallback(async () => {
     if (!renameThreadId || !renameValue.trim()) return;
-    await renameThread(renameThreadId, renameValue.trim());
+    try {
+      await renameThread(renameThreadId, renameValue.trim());
+    } catch (err) {
+      toast.error('Failed to rename thread', { description: String(err) });
+      return;
+    }
     setRenameThreadId(null);
     // thread/name/updated notification patches response.data directly.
   }, [renameThreadId, renameValue]);
@@ -238,7 +270,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
                   {threadStatusMap[thread.id]?.type === 'active' && (
                     <Loader2 className="h-3 w-3 shrink-0 animate-spin text-muted-foreground" />
                   )}
-                  {thread.name ?? thread.preview}
+                  {thread.name ?? (thread.preview || 'New chat')}
                 </div>
                 <div className="flex items-center justify-end h-6 w-12 relative">
                   <span className="text-xs text-muted-foreground whitespace-nowrap group-hover:hidden">
