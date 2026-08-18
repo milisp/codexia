@@ -9,8 +9,6 @@ type PluginState = {
   setSkillScope: (scope: SkillScope) => void;
   mcpScope: McpScope;
   setMcpScope: (scope: McpScope) => void;
-  selectedDxt: { user: string; repo: string } | null;
-  setSelectedDxt: (dxt: { user: string; repo: string } | null) => void;
 };
 
 export const usePluginStore = create<PluginState>()(
@@ -20,9 +18,14 @@ export const usePluginStore = create<PluginState>()(
       setSkillScope: (skillScope) => set({ skillScope }),
       mcpScope: 'local',
       setMcpScope: (mcpScope) => set({ mcpScope }),
-      selectedDxt: null,
-      setSelectedDxt: (selectedDxt) => set({ selectedDxt }),
     }),
-    { name: 'plugin-store' }
+    {
+      name: 'plugin-store',
+      version: 1,
+      migrate: (persisted) => {
+        const { selectedDxt: _removed, ...rest } = (persisted ?? {}) as Record<string, unknown>;
+        return rest as PluginState;
+      },
+    }
   )
 );

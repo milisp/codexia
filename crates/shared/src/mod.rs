@@ -1,6 +1,5 @@
 // Pure utility modules live in the codexia-shared crate to keep them
 // usable by the standalone web binary without a circular dependency.
-pub use codexia_shared::dxt;
 pub use codexia_shared::event_sink;
 pub use codexia_shared::fs;
 pub use codexia_shared::insights;

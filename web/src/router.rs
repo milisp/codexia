@@ -24,8 +24,8 @@ use super::{
         api_cc_send_message, api_cc_set_permission_mode, api_cc_update_settings,
         api_create_automation, api_delete_automation, api_list_automation_runs, api_list_automations, api_run_automation_now, api_set_automation_paused,
         api_update_automation,
-        api_check_manifests_exist, api_codex_home, api_create_note, api_delete_file,
-        api_delete_note, api_download_and_extract_manifests,
+        api_codex_home, api_create_note, api_delete_file,
+        api_delete_note,
         api_get_account, api_get_agent_heatmaps, api_get_home_directory, api_get_insight_filter_options,
         api_get_insight_rankings, api_get_note_by_id, api_get_notes,
         api_get_unsynced_notes,
@@ -35,16 +35,14 @@ use super::{
         api_git_diff_stats, api_git_file_diff, api_git_file_diff_meta, api_git_list_branches,
         api_git_create_worktree, api_git_reverse_files, api_git_stage_files,
         api_git_status, api_git_unstage_files, api_git_commit, api_git_push,
-        api_list_threads, api_load_manifest, api_load_manifests,
+        api_list_threads,
         api_mark_notes_synced, api_prevent_sleep,
         api_login_account, api_model_list, api_model_list_post, api_read_directory, api_read_file,
         api_check_app_installed, api_open_workspace_in,
-        api_read_dxt_setting,
         api_read_pdf_content, api_read_text_file_lines,
         api_read_xlsx_content, api_respond_command_execution_approval,
         api_respond_file_change_approval, api_respond_user_input, api_resume_thread,
         api_rollback_thread, api_fork_thread,
-        api_save_dxt_setting,
         api_search_files, api_search_files_by_name, api_skills_config_write, api_skills_list, api_start_review,
         api_start_thread, api_watch_directory, api_unwatch_directory,
         api_skill_groups_read, api_skill_groups_write,
@@ -247,12 +245,6 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/codex/mcp/remove", post(api_unified_remove_mcp_server))
         .route("/api/codex/mcp/enable", post(api_unified_enable_mcp_server))
         .route("/api/codex/mcp/disable", post(api_unified_disable_mcp_server))
-        .route("/api/dxt/manifests", get(api_load_manifests))
-        .route("/api/dxt/manifest", post(api_load_manifest))
-        .route("/api/dxt/manifests/exist", get(api_check_manifests_exist))
-        .route("/api/dxt/manifests/download", post(api_download_and_extract_manifests))
-        .route("/api/dxt/setting/read", post(api_read_dxt_setting))
-        .route("/api/dxt/setting/save", post(api_save_dxt_setting))
         .route(
             "/api/git/create-worktree",
             post(api_git_create_worktree),

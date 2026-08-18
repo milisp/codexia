@@ -14,7 +14,7 @@ import { useInputStore } from '@/stores/useInputStore';
 import { useExternalUrl } from './useExternalUrl';
 
 /** The four primary views shown by the left-side TabSwitcher. */
-export type MainTab = 'Plugins' | 'Tools' | 'Skills' | 'MCP';
+export type MainTab = 'Plugins' | 'Tools' | 'Skills';
 /** A full-screen overlay that replaces the main content; null means "no overlay". */
 export type Overlay = 'manage' | 'add' | 'detail' | null;
 export type ManageTab = 'Skills' | 'MCPs';
@@ -42,12 +42,7 @@ export function usePluginsView() {
   const { setView } = useLayoutStore();
   const { appendInputValue } = useInputStore();
 
-  const {
-    skillScope: scope,
-    setSkillScope: setScope,
-    selectedDxt,
-    setSelectedDxt,
-  } = usePluginStore();
+  const { skillScope: scope, setSkillScope: setScope } = usePluginStore();
 
   useEffect(() => {
     readSkillGroups()
@@ -188,8 +183,6 @@ export function usePluginsView() {
     saveGroups,
     scope,
     setScope,
-    selectedDxt,
-    setSelectedDxt,
     handleMcpAdded,
     selectedPluginDetail,
     handlePluginDetail,

@@ -61,7 +61,7 @@ Frontend API URL construction uses `VITE_WEB_PORT` and targets:
 
 - `GET /health` for liveness checks
 - `GET /ws` for WebSocket upgrade and event streaming
-- `POST|GET /api/...` for codex, filesystem, git, notes, terminal, cc, mcp, dxt, and usage
+- `POST|GET /api/...` for codex, filesystem, git, notes, terminal, cc, mcp, and usage
 
 ### Static and SPA Fallback
 

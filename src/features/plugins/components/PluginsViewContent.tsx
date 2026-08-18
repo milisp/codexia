@@ -1,15 +1,14 @@
 import CCMcpView from '@/components/cc/mcp/CCMcpView';
-import DxtView from '@/features/dxt/DxtView';
 import { CodexMcpView } from '@/features/mcp/CodexMcpView';
 import { McpAddPanel } from '@/features/mcp/McpAddPanel';
 import { Clone } from '@/features/skills/Clone';
 import { InstalledTab } from '@/features/skills/InstalledTab';
 import SkillsViewContent from '@/features/skills/SkillsView';
 import { RecommendToolsView } from '@/features/tools/RecommendToolsView';
-import { PluginsMarketplaceView } from './PluginsMarketplaceView';
-import { PluginDetailView } from './PluginDetailView';
 import { useAgentSettingsStore } from '@/stores';
 import { usePluginsViewContext } from '../hooks';
+import { PluginDetailView } from './PluginDetailView';
+import { PluginsMarketplaceView } from './PluginsMarketplaceView';
 import { TabSwitcher } from './TabSwitcher';
 
 /** Main content area: switches between Tools / MCP / Skills, or a manage / add overlay. */
@@ -42,7 +41,6 @@ export function PluginsViewContent() {
       )}
       {!overlay && mainTab === 'Skills' && <SkillsViewContent />}
       {!overlay && mainTab === 'Tools' && <RecommendToolsView />}
-      {!overlay && mainTab === 'MCP' && <DxtView refreshTrigger={refreshTrigger} />}
 
       {overlay === 'manage' && (
         <div className="flex flex-col h-full">

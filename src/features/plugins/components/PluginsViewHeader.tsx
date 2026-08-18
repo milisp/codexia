@@ -7,12 +7,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useTrafficLightConfig } from '@/hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLayoutStore } from '@/stores';
 import { usePluginsViewContext } from '../hooks';
 import { TabSwitcher } from './TabSwitcher';
-import { SidebarTrigger } from '@/components/ui/sidebar';
 
 /** Top toolbar: back button, tab switcher, manage/add actions, agent switcher. */
 export function PluginsViewHeader() {
@@ -26,8 +26,6 @@ export function PluginsViewHeader() {
     setOverlay,
     addTab,
     setAddTab,
-    selectedDxt,
-    setSelectedDxt,
     setRefreshTrigger,
     selectedPluginDetail,
     handlePluginDetail,
@@ -39,13 +37,12 @@ export function PluginsViewHeader() {
       data-tauri-drag-region
     >
       {!isSidebarOpen && <SidebarTrigger className="h-7 w-7" />}
-      {/* Back button: shown in add overlay or dxt detail */}
-      {(overlay === 'add' || (mainTab === 'MCP' && !overlay && selectedDxt)) && (
+      {overlay === 'add' && (
         <Button
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => (overlay === 'add' ? setOverlay('manage') : setSelectedDxt(null))}
+          onClick={() => setOverlay('manage')}
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -74,11 +71,10 @@ export function PluginsViewHeader() {
           onBack={() => handlePluginDetail(null)}
         />
       ) : (
-        !overlay &&
-        !selectedDxt && (
+        !overlay && (
           <>
             <TabSwitcher
-              tabs={['Plugins', 'Skills', 'Tools', 'MCP'] as const}
+              tabs={['Plugins', 'Skills', 'Tools'] as const}
               active={mainTab}
               onChange={setMainTab}
               showLabel={!isMobile}
@@ -89,7 +85,7 @@ export function PluginsViewHeader() {
 
       <div className="flex-1" />
 
-      {!overlay && !selectedDxt && (
+      {!overlay && (
         <Button
           variant="ghost"
           size="icon"
@@ -102,7 +98,7 @@ export function PluginsViewHeader() {
 
       <AgentSwitcher />
 
-      {!overlay && !selectedDxt && (
+      {!overlay && (
         <>
           <Button
             variant="ghost"
@@ -125,11 +121,7 @@ export function PluginsViewHeader() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setRefreshTrigger((k) => k + 1)}>
                 <RotateCcw className="h-3.5 w-3.5 mr-2" />
-                {mainTab === 'MCP'
-                  ? 'Reload extensions'
-                  : mainTab === 'Skills'
-                    ? 'Refresh skills'
-                    : 'Refresh tools'}
+                {mainTab === 'Skills' ? 'Refresh skills' : 'Refresh tools'}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
