@@ -1,7 +1,7 @@
 {
   "name": "codexia",
   "private": true,
-  "version": "0.46.0",
+  "version": "0.47.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,6 +11,7 @@
     "tauri": "tauri",
     "tauri:dev:web": "cargo run --bin codexia-web",
     "format": "biome format --write",
+    "bump-version": "node scripts/bump-version.mjs",
     "prepare": "husky",
     "test": "vitest run",
     "test:watch": "vitest"
