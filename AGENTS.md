@@ -11,6 +11,7 @@
 - UI: use shadcn UI components first, Button, Input, etc.
 - code comment language: English-only
 - Zustand: for state management with persistence
+- Don't break Fast Refresh: a `.tsx` file rendering UI must only export PascalCase components (no lowercase JSX-returning helpers), otherwise HMR falls back to a full page reload and drops in-flight events
 
 ## Common Commands
 - `bun tauri dev` - read the backend output

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ServerNotification } from '@/bindings/ServerNotification';
 import type { ApprovalRequest, RequestUserInputRequest } from '@/components/codex/stores';
 import { openEventStream } from '@/lib/eventStream';
@@ -18,6 +18,12 @@ export function useSseEventBridge({
   onUserInputRequest,
   onNotification,
 }: SseEventHandlers) {
+  // Handlers are read through a ref so the effect below depends only on
+  // `enabled`. Re-running it on every render would tear down and reopen the
+  // event stream, dropping events during the reconnect.
+  const handlersRef = useRef({ onApproval, onUserInputRequest, onNotification });
+  handlersRef.current = { onApproval, onUserInputRequest, onNotification };
+
   useEffect(() => {
     if (!enabled) {
       return;
@@ -37,17 +43,17 @@ export function useSseEventBridge({
           return;
         }
         if (envelope.event === 'codex/approval-request') {
-          onApproval(envelope.payload as ApprovalRequest);
+          handlersRef.current.onApproval(envelope.payload as ApprovalRequest);
           return;
         }
         if (envelope.event === 'codex/request-user-input') {
-          onUserInputRequest(envelope.payload as RequestUserInputRequest);
+          handlersRef.current.onUserInputRequest(envelope.payload as RequestUserInputRequest);
           return;
         }
         if (envelope.event === 'codex:notification') {
-          onNotification(envelope.payload as ServerNotification);
+          handlersRef.current.onNotification(envelope.payload as ServerNotification);
         }
       },
     });
-  }, [enabled, onApproval, onUserInputRequest, onNotification]);
+  }, [enabled]);
 }

@@ -67,7 +67,12 @@ const getRollbackTurnsForTurn = (
   return laterTurnIds.size + 1;
 };
 
-export const renderEvent = (event: ServerNotification, context?: RenderEventContext) => {
+type EventItemProps = {
+  event: ServerNotification;
+  context?: RenderEventContext;
+};
+
+export const EventItem = ({ event, context }: EventItemProps) => {
   const fileChangeMap = {
     add: 'Created',
     delete: 'Deleted',
@@ -122,7 +127,7 @@ export const renderEvent = (event: ServerNotification, context?: RenderEventCont
       const { item } = event.params;
       switch (item.type) {
         case 'agentMessage':
-          return <AgentMessageItem text={item.text} />;
+          return item.text.trim() ? <AgentMessageItem text={item.text} /> : null;
         case 'userMessage':
         case 'commandExecution':
           return null;
@@ -171,7 +176,7 @@ export const renderEvent = (event: ServerNotification, context?: RenderEventCont
     case 'turn/plan/updated':
       return <TurnPlan plan={event.params.plan} explanation={event.params.explanation} />;
     case 'item/agentMessage/delta':
-      return <AgentMessageItem text={event.params.delta} />;
+      return event.params.delta.trim() ? <AgentMessageItem text={event.params.delta} /> : null;
     case 'item/fileChange/outputDelta':
       return null;
     case 'item/commandExecution/terminalInteraction':

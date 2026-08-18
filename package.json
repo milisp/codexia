@@ -16,7 +16,7 @@
     "test:watch": "vitest"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx,json,css}": "biome check --write --no-errors-on-unmatched"
+    "*.{ts,tsx,js,jsx,json,css}": "biome check --write --no-errors-on-unmatched --diagnostic-level=error"
   },
   "dependencies": {
     "@git-diff-view/react": "^0.0.39",

@@ -33,7 +33,7 @@ const EMPTY_EVENTS: ServerNotification[] = [];
 /**
  * Tracks which threads belong to which automation task.
  * Events for those threads are read directly from useCodexStore,
- * so renderEvent() can be used for full fidelity rendering.
+ * so EventItem can be used for full fidelity rendering.
  */
 export function useAutomationRuns() {
   const [runMetaByTask, setRunMetaByTask] = useState<RunMetaByTask>({});

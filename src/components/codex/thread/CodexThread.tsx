@@ -1,8 +1,8 @@
-import { type ReactNode, useMemo } from 'react';
+import { Fragment, type ReactNode, useMemo } from 'react';
 import { useCodexStore } from '@/components/codex/stores';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useScrollToBottom } from '../hooks';
-import { renderEvent } from '../items';
+import { EventItem } from '../items';
 import { ApprovalItem } from '../items/ApprovalItem';
 import { CommandActionSummaryItem } from '../items/CommandActionSummaryItem';
 import { RequestUserInputItem } from '../items/RequestUserInputItem';
@@ -77,9 +77,12 @@ export function CodexThread({ threadId, fillHeight = true }: CodexThreadProps = 
       }
     }
 
-    const rendered = renderEvent(event, { events: currentThreadEvents, eventIndex: index });
-    if (rendered === null) continue;
-    renderedEvents.push({ key: `event-${index}`, content: rendered });
+    renderedEvents.push({
+      key: `event-${index}`,
+      content: (
+        <EventItem event={event} context={{ events: currentThreadEvents, eventIndex: index }} />
+      ),
+    });
   }
 
   return (
@@ -89,7 +92,7 @@ export function CodexThread({ threadId, fillHeight = true }: CodexThreadProps = 
         <ScrollArea ref={scrollAreaRootRef} className="h-full px-4 pb-4">
           <div className="thread-surface max-w-3xl mx-auto space-y-2 py-4">
             {renderedEvents.map((entry) => (
-              <div key={entry.key}>{entry.content}</div>
+              <Fragment key={entry.key}>{entry.content}</Fragment>
             ))}
             <ApprovalItem />
             <WorkingIndicator turnTiming={turnTiming} />

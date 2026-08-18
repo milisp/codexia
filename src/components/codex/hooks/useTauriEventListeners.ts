@@ -1,5 +1,5 @@
 import { listen } from '@tauri-apps/api/event';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ServerNotification } from '@/bindings/ServerNotification';
 import type { CodexParseErrorEvent, CodexStderrEvent } from '@/components/codex/CodexInternalEvent';
 import type { ApprovalRequest, RequestUserInputRequest } from '@/components/codex/stores';
@@ -20,6 +20,12 @@ export function useTauriEventListeners({
   onUserInputRequest,
   onNotification,
 }: TauriEventHandlers) {
+  // Handlers are read through a ref so the effect below depends only on
+  // `enabled`. Re-running it on every render would unlisten and re-register
+  // asynchronously, dropping every event emitted during the gap.
+  const handlersRef = useRef({ onApproval, onUserInputRequest, onNotification });
+  handlersRef.current = { onApproval, onUserInputRequest, onNotification };
+
   useEffect(() => {
     if (!enabled) {
       return;
@@ -42,15 +48,15 @@ export function useTauriEventListeners({
     };
 
     void registerListener<ApprovalRequest>('codex/approval-request', (event) => {
-      onApproval(event.payload);
+      handlersRef.current.onApproval(event.payload);
     });
 
     void registerListener<RequestUserInputRequest>('codex/request-user-input', (event) => {
-      onUserInputRequest(event.payload);
+      handlersRef.current.onUserInputRequest(event.payload);
     });
 
     void registerListener<ServerNotification>('codex:notification', (event) => {
-      onNotification(event.payload);
+      handlersRef.current.onNotification(event.payload);
     });
 
     void registerListener<CodexStderrEvent>('codex:stderr', (event) => {
@@ -67,7 +73,7 @@ export function useTauriEventListeners({
 
     return () => {
       cancelled = true;
-      unlisteners.forEach((unlisten) => unlisten());
+      for (const unlisten of unlisteners) unlisten();
     };
-  }, [enabled, onApproval, onUserInputRequest, onNotification]);
+  }, [enabled]);
 }

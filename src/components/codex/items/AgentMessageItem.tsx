@@ -1,6 +1,6 @@
+import { Streamdown } from 'streamdown';
 import { CopyButton } from '@/components/common';
 import { useWindowFocus } from '@/hooks/useWindowFocus';
-import { Streamdown } from 'streamdown';
 
 type AgentMessageItemProps = {
   text: string;
@@ -9,7 +9,7 @@ type AgentMessageItemProps = {
 export const AgentMessageItem = ({ text }: AgentMessageItemProps) => {
   const isWindowFocused = useWindowFocus();
 
-  if (!text.length) return null;
+  if (!text.trim()) return null;
 
   return (
     <div className="group flex flex-col items-start gap-1">
