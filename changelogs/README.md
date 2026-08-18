@@ -5,6 +5,7 @@ rather than scanning everything.
 
 | Version | Date | Notes |
 | --- | --- | --- |
+| [0.47.0](./0.47.0.md) | 2026-08-18 | New Lexical composer with slash commands, user-managed providers, MCP OAuth, plugin search |
 | [0.46.0](./0.46.0.md) | 2026-08-16 | Ghibli theme, open-app support, MIT relicense, PostHog removed |
 | [0.45.0](./0.45.0.md) | 2026-08-16 | Tauri iOS app with mobile shell, multiple paired desktops, multi-session ACP connections |
 | [0.44.0](./0.44.0.md) | 2026-08-10 | Claude Code effort levels and permission modes, automation runner, Windows portable archive |

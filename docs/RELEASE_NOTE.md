@@ -1,15 +1,26 @@
 ## 🎉 What's New
 
-### 🎨 Ghibli Theme
-A new accent theme with a scene backdrop, with follow-up polish so the thread surface and message backdrop stay readable in both light and dark mode.
+### ✍️ A New Composer
+The message input is now a Lexical editor with `$` mention chips, plus a slash command registry with `/compact`, `/init`, `/memories` and more.
 
-### 🚀 Open in External Apps
-Open files and projects in external apps directly from Codexia, with icons and support for both the desktop and web builds.
+### 🔌 Bring Your Own Providers
+Add and edit your own model providers from settings, with LM Studio now built in.
 
-### 📜 Relicensed under MIT
-Codexia is now licensed under MIT.
+### 🔐 MCP OAuth
+Log in to remote MCP servers with OAuth.
+
+### 🧩 Plugin Marketplace
+Search plugins and browse them by category.
+
+### 📌 Pinning & Touch
+Pin threads and sessions so they stick around, and use long-press context menus on touch devices.
+
+### 🇫🇷 French
+Codexia now ships a French translation.
 
 ### 🐛 Fixes & Polish
-- The Codex thread list now filters by the selected provider and preserves the previously loaded page size.
-- ChatGPT login moved into a dialog from the user menu.
-- Removed PostHog analytics.
+- Live threads are merged into the thread list, with error handling and refresh on provider filter change.
+- Transient connection errors now show a retry notice.
+- Terminal buffer is no longer lost on invalid container dimensions.
+- Update status moved into a sidebar indicator.
+- DXT support was removed.
