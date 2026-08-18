@@ -121,7 +121,11 @@ export function PluginsViewHeader() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setRefreshTrigger((k) => k + 1)}>
                 <RotateCcw className="h-3.5 w-3.5 mr-2" />
-                {mainTab === 'Skills' ? 'Refresh skills' : 'Refresh tools'}
+                {mainTab === 'Skills'
+                  ? 'Refresh skills'
+                  : mainTab === 'Plugins'
+                    ? 'Refresh plugins'
+                    : 'Refresh tools'}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

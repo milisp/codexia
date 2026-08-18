@@ -1,5 +1,5 @@
-import { Badge } from '@/components/ui/badge';
 import type { PluginDetail } from '@/bindings/v2';
+import { Badge } from '@/components/ui/badge';
 
 interface AppTemplatesSectionProps {
   appTemplates: PluginDetail['appTemplates'];

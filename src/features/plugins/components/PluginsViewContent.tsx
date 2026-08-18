@@ -36,8 +36,11 @@ export function PluginsViewContent() {
 
   return (
     <div className="flex-1 min-h-0 overflow-hidden">
-      {!overlay && mainTab === 'Plugins' && (
-        <PluginsMarketplaceView refreshTrigger={refreshTrigger} />
+      {/* Kept mounted under the detail overlay so going back does not reload the list. */}
+      {(!overlay || overlay === 'detail') && mainTab === 'Plugins' && (
+        <div className={overlay === 'detail' ? 'hidden' : 'h-full'}>
+          <PluginsMarketplaceView refreshTrigger={refreshTrigger} />
+        </div>
       )}
       {!overlay && mainTab === 'Skills' && <SkillsViewContent />}
       {!overlay && mainTab === 'Tools' && <RecommendToolsView />}
@@ -87,7 +90,7 @@ export function PluginsViewContent() {
               plugin={selectedPluginDetail}
               isInstalling={installingPluginId === selectedPluginDetail.summary.id}
               isUninstalling={uninstallingPluginId === selectedPluginDetail.summary.id}
-              canInstall={!!selectedPluginDetail.marketplacePath}
+              canInstall
               onInstall={() => handlePluginInstall(selectedPluginDetail)}
               onUninstall={() => handlePluginUninstall(selectedPluginDetail)}
               onUse={() => handleUsePlugin(selectedPluginDetail)}

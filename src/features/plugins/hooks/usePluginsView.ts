@@ -11,6 +11,7 @@ import {
 } from '@/services';
 import { useAgentSettingsStore, useLayoutStore, usePluginStore } from '@/stores';
 import { useInputStore } from '@/stores/useInputStore';
+import { pluginDetailRequestTarget, pluginUninstallId } from './pluginTargets';
 import { useExternalUrl } from './useExternalUrl';
 
 /** The four primary views shown by the left-side TabSwitcher. */
@@ -70,13 +71,18 @@ export function usePluginsView() {
     }
   }, []);
 
+  /** Flip the installed flag on the open detail page without waiting for a re-read. */
+  const setSelectedInstalled = useCallback((installed: boolean) => {
+    setSelectedPluginDetail((prev) =>
+      prev ? { ...prev, summary: { ...prev.summary, installed } } : prev
+    );
+  }, []);
+
   const refreshSelectedPluginDetail = useCallback(async (plugin: PluginDetail) => {
+    const target = pluginDetailRequestTarget(plugin);
+    if (!target) return;
     try {
-      const response = await pluginRead({
-        marketplacePath: plugin.marketplacePath,
-        remoteMarketplaceName: plugin.marketplacePath ? null : plugin.marketplaceName,
-        pluginName: plugin.summary.name,
-      });
+      const response = await pluginRead(target);
       setSelectedPluginDetail(response.plugin);
     } catch (error) {
       console.error('Failed to refresh plugin detail:', error);
@@ -85,11 +91,12 @@ export function usePluginsView() {
 
   const handlePluginInstall = useCallback(
     async (plugin: PluginDetail) => {
-      const { summary, marketplacePath } = plugin;
-      if (!marketplacePath) {
+      const { summary } = plugin;
+      const target = pluginDetailRequestTarget(plugin);
+      if (!target) {
         toast({
           title: 'Install unavailable',
-          description: 'This plugin marketplace does not expose a local install path yet.',
+          description: 'This plugin cannot be addressed by the current marketplace.',
           variant: 'destructive',
         });
         return;
@@ -97,16 +104,14 @@ export function usePluginsView() {
 
       setInstallingPluginId(summary.id);
       try {
-        const response = await pluginInstall({
-          marketplacePath,
-          pluginName: summary.name,
-        });
+        const response = await pluginInstall(target);
 
         const authTargets = response.appsNeedingAuth.filter((app) => app.installUrl);
         if (authTargets.length > 0) {
           await openExternalUrl(authTargets[0].installUrl!);
         }
 
+        setSelectedInstalled(true);
         await refreshSelectedPluginDetail(plugin);
         setRefreshTrigger((t) => t + 1);
         toast({
@@ -127,15 +132,25 @@ export function usePluginsView() {
         setInstallingPluginId(null);
       }
     },
-    [refreshSelectedPluginDetail, openExternalUrl]
+    [refreshSelectedPluginDetail, setSelectedInstalled, openExternalUrl]
   );
 
   const handlePluginUninstall = useCallback(
     async (plugin: PluginDetail) => {
       const { summary } = plugin;
+      const pluginId = pluginUninstallId(summary);
+      if (!pluginId) {
+        toast({
+          title: 'Uninstall failed',
+          description: 'This plugin has no identifier to uninstall.',
+          variant: 'destructive',
+        });
+        return;
+      }
       setUninstallingPluginId(summary.id);
       try {
-        await pluginUninstall({ pluginId: summary.id });
+        await pluginUninstall({ pluginId });
+        setSelectedInstalled(false);
         await refreshSelectedPluginDetail(plugin);
         setRefreshTrigger((t) => t + 1);
         toast({
@@ -153,7 +168,7 @@ export function usePluginsView() {
         setUninstallingPluginId(null);
       }
     },
-    [refreshSelectedPluginDetail]
+    [refreshSelectedPluginDetail, setSelectedInstalled]
   );
 
   const handleUsePlugin = useCallback(

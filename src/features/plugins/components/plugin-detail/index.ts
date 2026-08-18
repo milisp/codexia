@@ -1,5 +1,5 @@
-export { AppTemplatesSection } from './AppTemplatesSection';
 export { AppsSection } from './AppsSection';
-export { SkillsSection } from './SkillsSection';
-export { InfoRow } from './InfoRow';
+export { AppTemplatesSection } from './AppTemplatesSection';
 export { ExternalLinkRow } from './ExternalLinkRow';
+export { InfoRow } from './InfoRow';
+export { SkillsSection } from './SkillsSection';

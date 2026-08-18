@@ -1,8 +1,7 @@
-// Hook to manage plugin marketplaces logic for PluginsMarketplaceView
-
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   MarketplaceLoadErrorInfo,
+  PluginDetail,
   PluginMarketplaceEntry,
   PluginSummary,
 } from '@/bindings/v2';
@@ -11,7 +10,40 @@ import { pluginInstall, pluginList, pluginRead } from '@/services';
 import { useAgentSettingsStore, useLayoutStore } from '@/stores';
 import { useInputStore } from '@/stores/useInputStore';
 import { usePluginsViewContext } from '../hooks';
+import {
+  dedupePluginEntries,
+  type PluginEntry,
+  pluginRequestTarget,
+  preferredLocalSources,
+} from './pluginTargets';
 import { useExternalUrl } from './useExternalUrl';
+
+/**
+ * Process-wide cache of the last plugin/list result, so re-entering the view
+ * (or coming back from a detail page) renders instantly instead of refetching
+ * the remote catalog.
+ */
+let listCache: {
+  marketplaces: PluginMarketplaceEntry[];
+  errors: MarketplaceLoadErrorInfo[];
+} | null = null;
+
+/** Build a placeholder detail from a list summary so the detail page can render immediately. */
+function summaryToDetail(marketplace: PluginMarketplaceEntry, plugin: PluginSummary): PluginDetail {
+  return {
+    marketplaceName: marketplace.name,
+    marketplacePath: marketplace.path,
+    summary: plugin,
+    shareUrl: null,
+    description: null,
+    skills: [],
+    hooks: [],
+    apps: [],
+    appTemplates: [],
+    mcpServers: [],
+    scheduledTasks: null,
+  };
+}
 
 /**
  * Provides state and handlers for the marketplace view.
@@ -19,10 +51,13 @@ import { useExternalUrl } from './useExternalUrl';
  * The component passes an optional `refreshTrigger` prop; changing it forces a reload.
  */
 export function usePluginsMarketplace(refreshTrigger = 0) {
-  const [marketplaces, setMarketplaces] = useState<PluginMarketplaceEntry[]>([]);
-  const [errors, setErrors] = useState<MarketplaceLoadErrorInfo[]>([]);
+  const [marketplaces, setMarketplaces] = useState<PluginMarketplaceEntry[]>(
+    listCache?.marketplaces ?? []
+  );
+  const [errors, setErrors] = useState<MarketplaceLoadErrorInfo[]>(listCache?.errors ?? []);
   const [isLoading, setIsLoading] = useState(false);
   const [installingPluginId, setInstallingPluginId] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
 
   const { setSelectedAgent } = useAgentSettingsStore();
   const { setView } = useLayoutStore();
@@ -30,11 +65,16 @@ export function usePluginsMarketplace(refreshTrigger = 0) {
   const { handlePluginDetail } = usePluginsViewContext();
   const { openExternalUrl } = useExternalUrl();
 
-  // Load all marketplaces
-  const loadPlugins = useCallback(async () => {
+  const loadPlugins = useCallback(async (forceRefetch = false) => {
     setIsLoading(true);
     try {
-      const response = await pluginList({});
+      // forceRefetch also makes the app-server re-sync the curated marketplace
+      // checkout under ~/.codex/.tmp instead of serving its in-memory catalog.
+      const response = await pluginList({ forceRefetch });
+      listCache = {
+        marketplaces: response.marketplaces,
+        errors: response.marketplaceLoadErrors,
+      };
       setMarketplaces(response.marketplaces);
       setErrors(response.marketplaceLoadErrors);
     } catch (error) {
@@ -46,12 +86,38 @@ export function usePluginsMarketplace(refreshTrigger = 0) {
     }
   }, []);
 
+  /** Flip the installed flag locally so the list stays in sync without a full reload. */
+  const markInstalled = useCallback((pluginId: string, installed: boolean) => {
+    setMarketplaces((prev) => {
+      const next = prev.map((m) => ({
+        ...m,
+        plugins: m.plugins.map((p) => (p.id === pluginId ? { ...p, installed } : p)),
+      }));
+      if (listCache) listCache = { ...listCache, marketplaces: next };
+      return next;
+    });
+  }, []);
+
+  const preferred = useMemo(() => preferredLocalSources(marketplaces), [marketplaces]);
+
+  /** One entry per plugin, with duplicates across marketplaces collapsed. */
+  const entries = useMemo(() => {
+    const all: PluginEntry[] = [];
+    for (const marketplace of marketplaces) {
+      for (const plugin of marketplace.plugins) {
+        all.push({ marketplace, plugin });
+      }
+    }
+    return dedupePluginEntries(all);
+  }, [marketplaces]);
+
   const handleInstall = useCallback(
     async (marketplace: PluginMarketplaceEntry, plugin: PluginSummary) => {
-      if (!marketplace.path) {
+      const target = pluginRequestTarget(marketplace, plugin, preferred);
+      if (!target) {
         toast({
           title: 'Install unavailable',
-          description: 'This plugin marketplace does not expose a local install path yet.',
+          description: 'This plugin cannot be addressed by the current marketplace.',
           variant: 'destructive',
         });
         return;
@@ -59,18 +125,14 @@ export function usePluginsMarketplace(refreshTrigger = 0) {
 
       setInstallingPluginId(plugin.id);
       try {
-        const response = await pluginInstall({
-          marketplacePath: marketplace.path,
-          pluginName: plugin.name,
-        });
+        const response = await pluginInstall(target);
 
         const authTargets = response.appsNeedingAuth.filter((app) => app.installUrl);
         if (authTargets.length > 0) {
           await openExternalUrl(authTargets[0].installUrl!);
         }
 
-        // Refresh list after install
-        await loadPlugins();
+        markInstalled(plugin.id, true);
         toast({
           title: authTargets.length > 0 ? 'Plugin installed, auth required' : 'Plugin installed',
           description:
@@ -91,7 +153,7 @@ export function usePluginsMarketplace(refreshTrigger = 0) {
         setInstallingPluginId(null);
       }
     },
-    [loadPlugins, openExternalUrl]
+    [markInstalled, openExternalUrl, preferred]
   );
 
   const handleUsePlugin = useCallback(
@@ -106,58 +168,66 @@ export function usePluginsMarketplace(refreshTrigger = 0) {
 
   const handleShowDetail = useCallback(
     async (marketplace: PluginMarketplaceEntry, plugin: PluginSummary) => {
+      // Open immediately with what the list already knows, then fill in the rest.
+      handlePluginDetail(summaryToDetail(marketplace, plugin));
+      const target = pluginRequestTarget(marketplace, plugin, preferred);
+      if (!target) return;
       try {
-        const response = await pluginRead({
-          marketplacePath: marketplace.path ?? null,
-          remoteMarketplaceName: marketplace.path ? null : marketplace.name,
-          pluginName: plugin.name,
-        });
+        const response = await pluginRead(target);
         handlePluginDetail(response.plugin);
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        toast({
-          title: 'Failed to load plugin details',
-          description: message,
-          variant: 'destructive',
-        });
+        // The detail page already shows what the list knows; a failed enrich
+        // (e.g. the remote catalog 404s on this plugin) is not worth a toast.
+        console.warn('Failed to load plugin details:', error);
       }
     },
-    [handlePluginDetail]
+    [handlePluginDetail, preferred]
   );
 
-  // Reload when component mounts or refreshTrigger changes
-  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshTrigger is a manual refresh trigger, used for its identity change alone
+  const lastTrigger = useRef(refreshTrigger);
   useEffect(() => {
-    void loadPlugins();
+    // Serve the first render from cache; only hit the backend when there is
+    // nothing cached or the user explicitly asked for a refresh.
+    const refreshRequested = refreshTrigger !== lastTrigger.current;
+    lastTrigger.current = refreshTrigger;
+    if (listCache && !refreshRequested) return;
+    void loadPlugins(refreshRequested);
   }, [loadPlugins, refreshTrigger]);
 
-  // Grouping logic (same as original component)
   const browseGroups = useMemo(() => {
-    const groupsMap = new Map<
-      string,
-      { marketplace: PluginMarketplaceEntry; plugin: PluginSummary }[]
-    >();
-    marketplaces.forEach((m) => {
-      m.plugins.forEach((p) => {
-        const category = p.interface?.category || 'Others';
-        if (!groupsMap.has(category)) {
-          groupsMap.set(category, []);
-        }
-        groupsMap.get(category)!.push({ marketplace: m, plugin: p });
-      });
+    const needle = query.trim().toLowerCase();
+    const groupsMap = new Map<string, PluginEntry[]>();
+    entries.forEach(({ marketplace: m, plugin: p }) => {
+      if (needle) {
+        const haystack = [
+          p.name,
+          p.interface?.displayName ?? '',
+          p.interface?.shortDescription ?? '',
+        ]
+          .join(' ')
+          .toLowerCase();
+        if (!haystack.includes(needle)) return;
+      }
+      const category = p.interface?.category || 'Others';
+      if (!groupsMap.has(category)) {
+        groupsMap.set(category, []);
+      }
+      groupsMap.get(category)!.push({ marketplace: m, plugin: p });
     });
     return Array.from(groupsMap.entries()).sort(([a], [b]) => {
       if (a === 'Others') return 1;
       if (b === 'Others') return -1;
       return a.localeCompare(b);
     });
-  }, [marketplaces]);
+  }, [entries, query]);
 
   return {
     marketplaces,
     errors,
     isLoading,
     installingPluginId,
+    query,
+    setQuery,
     loadPlugins,
     handleInstall,
     handleUsePlugin,

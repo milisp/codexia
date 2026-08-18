@@ -1,6 +1,6 @@
 import { Blocks, Package2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { MCP } from '@/components/icons';
+import { Button } from '@/components/ui/button';
 
 export function TabSwitcher<T extends string>({
   tabs,

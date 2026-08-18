@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { useExternalUrl } from '../hooks/useExternalUrl';
+import { hideBrokenImage } from './imageFallback';
 import {
   AppsSection,
   AppTemplatesSection,
@@ -13,6 +14,7 @@ import {
   InfoRow,
   SkillsSection,
 } from './plugin-detail';
+import { pluginIconSrc } from './pluginIcon';
 
 interface PluginDetailViewProps {
   plugin: PluginDetail;
@@ -23,21 +25,6 @@ interface PluginDetailViewProps {
   onUninstall?: () => void;
   onUse?: () => void;
   onBack?: () => void;
-}
-
-function getPluginIconPath(plugin: PluginDetail): string | null {
-  const summary = plugin.summary;
-  const iface = summary.interface;
-  if (!iface) return null;
-
-  // Prefer logo over composerIcon, and local over remote
-  if (iface.logo) {
-    return iface.logo;
-  }
-  if (iface.composerIcon) {
-    return iface.composerIcon;
-  }
-  return null;
 }
 
 function getPluginScreenshots(plugin: PluginDetail): string[] {
@@ -78,10 +65,7 @@ export function PluginDetailView({
   const description = iface?.shortDescription ?? name;
   const capabilities = iface?.capabilities ?? [];
 
-  const iconSrc = useMemo(() => {
-    const iconPath = getPluginIconPath(plugin);
-    return iconPath ? convertFileSrc(iconPath) : null;
-  }, [plugin]);
+  const iconSrc = useMemo(() => pluginIconSrc(plugin.summary), [plugin]);
 
   const screenshots = useMemo(() => getPluginScreenshots(plugin), [plugin]);
 
@@ -106,6 +90,7 @@ export function PluginDetailView({
               src={iconSrc}
               alt={`${displayName} icon`}
               className="h-12 w-12 rounded-lg object-cover flex-shrink-0"
+              onError={hideBrokenImage}
             />
           )}
           <div className="space-y-1 flex-1 min-w-0">
@@ -164,6 +149,7 @@ export function PluginDetailView({
                   alt={`${displayName} screenshot ${index + 1}`}
                   className="rounded-lg object-cover aspect-video w-full"
                   loading="lazy"
+                  onError={hideBrokenImage}
                 />
               ))}
             </div>
@@ -183,6 +169,7 @@ export function PluginDetailView({
                       src={iconSrc}
                       alt={`${displayName} icon`}
                       className="h-6 w-6 rounded-lg object-cover flex-shrink-0"
+                      onError={hideBrokenImage}
                     />
                   )}
                   {server}

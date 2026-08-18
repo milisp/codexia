@@ -1,8 +1,9 @@
 import { Loader2, MessageCircleCode, Plus, Trash2 } from 'lucide-react';
+import type { MarketplaceLoadErrorInfo, PluginSummary } from '@/bindings/v2';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { convertFileSrc } from '@tauri-apps/api/core';
-import type { MarketplaceLoadErrorInfo, PluginSummary } from '@/bindings/v2';
+import { hideBrokenImage } from './imageFallback';
+import { pluginIconSrc } from './pluginIcon';
 
 interface PluginCardProps {
   plugin: PluginSummary;
@@ -14,20 +15,6 @@ interface PluginCardProps {
   onUse?: () => void;
   onDetail?: () => void;
   showManageActions?: boolean;
-}
-
-function getPluginIconPath(plugin: PluginSummary): string | null {
-  const iface = plugin.interface;
-  if (!iface) return null;
-
-  // Prefer logo over composerIcon, and local over remote
-  if (iface.logo) {
-    return iface.logo;
-  }
-  if (iface.composerIcon) {
-    return iface.composerIcon;
-  }
-  return null;
 }
 
 export function PluginCard({
@@ -43,8 +30,7 @@ export function PluginCard({
 }: PluginCardProps) {
   const displayName = plugin.interface?.displayName ?? plugin.name;
   const description = plugin.interface?.shortDescription ?? plugin.name;
-  const iconPath = getPluginIconPath(plugin);
-  const iconSrc = iconPath ? convertFileSrc(iconPath) : null;
+  const iconSrc = pluginIconSrc(plugin);
 
   const handleDetailClick = (e: React.MouseEvent) => {
     if (onDetail) {
@@ -68,6 +54,7 @@ export function PluginCard({
                 src={iconSrc}
                 alt={`${displayName} icon`}
                 className="h-10 w-10 rounded-lg object-cover flex-shrink-0"
+                onError={hideBrokenImage}
               />
             )}
             <div className="space-y-1">

@@ -1,6 +1,6 @@
-import { Badge } from '@/components/ui/badge';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import type { PluginDetail } from '@/bindings/v2';
+import { Badge } from '@/components/ui/badge';
 
 interface SkillsSectionProps {
   skills: PluginDetail['skills'];
