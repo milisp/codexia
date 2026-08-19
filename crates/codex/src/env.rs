@@ -123,3 +123,43 @@ pub fn set_env(key: String, value: String) -> Result<(), String> {
         Ok(())
     }
 }
+/// Env var names referenced by `model_providers.*.env_key`, gathered from the
+/// user's `config.toml` and from the bundled provider presets.
+///
+/// Needed before the app-server is up, so the config file is read directly
+/// instead of going through `config/read`.
+pub fn provider_env_keys() -> Vec<String> {
+    let mut keys: Vec<String> = crate::providers::list_provider_presets()
+        .unwrap_or_default()
+        .into_iter()
+        .map(|p| p.env_key)
+        .collect();
+
+    let config_path = crate::utils::codex_home().join("config.toml");
+    if let Ok(text) = std::fs::read_to_string(&config_path)
+        && let Ok(toml::Value::Table(root)) = text.parse::<toml::Value>()
+        && let Some(toml::Value::Table(providers)) = root.get("model_providers")
+    {
+        for provider in providers.values() {
+            if let Some(env_key) = provider.get("env_key").and_then(toml::Value::as_str) {
+                keys.push(env_key.to_string());
+            }
+        }
+    }
+
+    keys.sort();
+    keys.dedup();
+    keys.retain(|k| !k.is_empty());
+    keys
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn provider_env_keys_includes_config_and_presets() {
+        let keys = super::provider_env_keys();
+        assert!(keys.iter().any(|k| k == "OPENROUTER_API_KEY"));
+        assert!(!keys.iter().any(String::is_empty));
+        assert_eq!(keys.len(), keys.iter().collect::<std::collections::HashSet<_>>().len());
+    }
+}

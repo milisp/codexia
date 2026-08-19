@@ -111,6 +111,13 @@ pub async fn connect_codex(event_sink: Arc<dyn EventSink>) -> Result<Arc<CodexAp
         cmd
     };
 
+    // A GUI launch inherits none of the login shell's exports, so providers
+    // configured with `env_key` would see a missing variable. Resolve them the
+    // same way the settings UI does and pass them to the child.
+    for (key, value) in crate::env::get_envs(&crate::env::provider_env_keys()) {
+        command.env(key, value);
+    }
+
     command.stdin(std::process::Stdio::piped());
     command.stdout(std::process::Stdio::piped());
     command.stderr(std::process::Stdio::piped());
