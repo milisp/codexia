@@ -20,99 +20,107 @@ interface CCListenerOptions {
 }
 
 /**
+ * Signals `useCCSessionManager` that this session's listener is bound.
+ * Only standalone listeners signal; embedded ones are not what it waits for.
+ */
+function dispatchReady(eventName: string, sessionId: string, embedded: boolean) {
+  if (embedded) return;
+  window.dispatchEvent(new CustomEvent(eventName, { detail: { sessionId } }));
+}
+
+/**
+ * Subscribes to a backend event, over Tauri IPC on desktop and SSE elsewhere,
+ * and signals readiness once the subscription is live.
+ * Returns the effect cleanup that tears the subscription down.
+ */
+function subscribe<T>(
+  event: string,
+  readyEvent: string,
+  sessionId: string,
+  embedded: boolean,
+  onPayload: (payload: T) => void
+): () => void {
+  if (isDesktopTauri()) {
+    const unlistenPromise = listen<T>(event, (e) => onPayload(e.payload));
+    void unlistenPromise.then(() => dispatchReady(readyEvent, sessionId, embedded));
+    return () => {
+      void unlistenPromise.then((fn) => fn());
+    };
+  }
+
+  const closeStream = openEventStream({
+    label: `[CCSession/${event}]`,
+    onEvent: (envelope) => {
+      if (envelope.event === event) onPayload(envelope.payload as T);
+    },
+  });
+  dispatchReady(readyEvent, sessionId, embedded);
+  return closeStream;
+}
+
+/**
  * Hook to listen for message stream events from the Tauri backend.
  * Supports both standalone (global active session) and embedded (per-session) modes.
  */
 export function useCCSessionListener({ disabled = false, sessionId }: CCListenerOptions = {}) {
-  const { activeSessionId, addMessage, addMessageToSession, setSlashCommands } = useCCStore();
+  const activeSessionId = useCCStore((s) => s.activeSessionId);
+  const addMessage = useCCStore((s) => s.addMessage);
+  const addMessageToSession = useCCStore((s) => s.addMessageToSession);
+  const setSlashCommands = useCCStore((s) => s.setSlashCommands);
 
   // In embedded mode the target session is the explicit sessionId; otherwise the active one.
   const targetSessionId = sessionId ?? activeSessionId;
 
   useEffect(() => {
     if (disabled || !targetSessionId) return;
-    console.info('[CCSession] Bind message listener', { targetSessionId });
 
     const handleMessage = (message: CCMessage) => {
       const msgSessionId = (message as { session_id?: string }).session_id;
       if (msgSessionId && msgSessionId !== targetSessionId) return;
 
-      console.info('[CCSession] Received message', message);
-
       if (sessionId) {
         addMessageToSession(sessionId, message);
-      } else {
-        if (message.type === 'system' && (message as SystemMessage).subtype === 'init') {
-          const cmds = (message as SystemMessage).slash_commands;
-          if (Array.isArray(cmds)) setSlashCommands(cmds);
-        }
-        addMessage(message);
+        return;
       }
+
+      if (message.type === 'system' && (message as SystemMessage).subtype === 'init') {
+        const cmds = (message as SystemMessage).slash_commands;
+        if (Array.isArray(cmds)) setSlashCommands(cmds);
+      }
+      addMessage(message);
     };
 
-    if (isDesktopTauri()) {
-      const unlistenPromise = listen<CCMessage>('cc-message', (event) => {
-        handleMessage(event.payload);
-      });
-
-      void unlistenPromise.then(() => {
-        console.info('[CCSession] Message listener ready (Tauri)', { targetSessionId });
-        if (!sessionId) {
-          window.dispatchEvent(
-            new CustomEvent(CC_LISTENER_READY_EVENT, { detail: { sessionId: targetSessionId } })
-          );
-        }
-      });
-
-      return () => {
-        void unlistenPromise.then((fn) => fn());
-      };
-    }
-
-    // SSE path for non-Tauri (iOS via P2P).
-    console.info('[CCSession] Opening SSE connection', {
+    return subscribe<CCMessage>(
+      'cc-message',
+      CC_LISTENER_READY_EVENT,
       targetSessionId,
-      isTauri: 'isDesktopTauri=' + isDesktopTauri(),
-    });
-    const closeStream = openEventStream({
-      label: '[CCSession]',
-      onEvent: (envelope) => {
-        if (envelope.event === 'cc-message') {
-          handleMessage(envelope.payload as CCMessage);
-        }
-      },
-    });
-    console.info('[CCSession] Message listener ready (SSE)', { targetSessionId });
-    if (!sessionId) {
-      window.dispatchEvent(
-        new CustomEvent(CC_LISTENER_READY_EVENT, { detail: { sessionId: targetSessionId } })
-      );
-    }
-
-    return closeStream;
+      Boolean(sessionId),
+      handleMessage
+    );
   }, [disabled, targetSessionId, sessionId, addMessage, addMessageToSession, setSlashCommands]);
 }
+
+type PermPayload = {
+  requestId: string;
+  sessionId: string;
+  toolName: string;
+  toolInput: Record<string, unknown>;
+  alwaysAllowTarget?: 'project' | 'session';
+};
 
 /**
  * Hook to listen for permission requests from the Tauri backend.
  * Supports both standalone (global active session) and embedded (per-session) modes.
  */
 export function useCCPermissionListener({ disabled = false, sessionId }: CCListenerOptions = {}) {
-  const { activeSessionId, addMessage, addMessageToSession } = useCCStore();
+  const activeSessionId = useCCStore((s) => s.activeSessionId);
+  const addMessage = useCCStore((s) => s.addMessage);
+  const addMessageToSession = useCCStore((s) => s.addMessageToSession);
 
   const targetSessionId = sessionId ?? activeSessionId;
 
   useEffect(() => {
     if (disabled || !targetSessionId) return;
-    console.info('[CCSession] Bind permission listener', { targetSessionId });
-
-    type PermPayload = {
-      requestId: string;
-      sessionId: string;
-      toolName: string;
-      toolInput: Record<string, unknown>;
-      alwaysAllowTarget?: 'project' | 'session';
-    };
 
     const handlePermission = (payload: PermPayload) => {
       const {
@@ -149,46 +157,12 @@ export function useCCPermissionListener({ disabled = false, sessionId }: CCListe
       }
     };
 
-    if (isDesktopTauri()) {
-      const unlistenPromise = listen<PermPayload>('cc-permission-request', (event) => {
-        handlePermission(event.payload);
-      });
-
-      void unlistenPromise.then(() => {
-        console.info('[CCSession] Permission listener ready (Tauri)', { targetSessionId });
-        if (!sessionId) {
-          window.dispatchEvent(
-            new CustomEvent(CC_PERMISSION_LISTENER_READY_EVENT, {
-              detail: { sessionId: targetSessionId },
-            })
-          );
-        }
-      });
-
-      return () => {
-        void unlistenPromise.then((fn) => fn());
-      };
-    }
-
-    // SSE path for non-Tauri (iOS via P2P).
-    console.info('[CCSession] Opening permission SSE connection', { targetSessionId });
-    const closeStream = openEventStream({
-      label: '[CCSession/permission]',
-      onEvent: (envelope) => {
-        if (envelope.event === 'cc-permission-request') {
-          handlePermission(envelope.payload as PermPayload);
-        }
-      },
-    });
-    console.info('[CCSession] Permission listener ready (SSE)', { targetSessionId });
-    if (!sessionId) {
-      window.dispatchEvent(
-        new CustomEvent(CC_PERMISSION_LISTENER_READY_EVENT, {
-          detail: { sessionId: targetSessionId },
-        })
-      );
-    }
-
-    return closeStream;
+    return subscribe<PermPayload>(
+      'cc-permission-request',
+      CC_PERMISSION_LISTENER_READY_EVENT,
+      targetSessionId,
+      Boolean(sessionId),
+      handlePermission
+    );
   }, [disabled, targetSessionId, sessionId, addMessage, addMessageToSession]);
 }
