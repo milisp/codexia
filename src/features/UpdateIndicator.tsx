@@ -56,7 +56,9 @@ export function UpdateIndicator({ fallback }: { fallback: ReactNode }) {
       title={title}
       disabled={stage === 'installing' || stage === 'restarting'}
       onClick={() => void startUpdate()}
-      className={stage === 'ready' ? 'text-primary' : undefined}
+      className={
+        stage === 'ready' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : undefined
+      }
     >
       {stage === 'downloading' && percent !== undefined ? (
         <ProgressRing percent={percent} />
