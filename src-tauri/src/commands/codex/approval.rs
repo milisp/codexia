@@ -62,3 +62,23 @@ pub async fn respond_to_mcp_elicitation(
     )
     .await
 }
+
+#[tauri::command]
+pub async fn respond_to_permissions_approval(
+    request_id: RequestId,
+    permissions: Value,
+    scope: String,
+    strict_auto_review: bool,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    send_approval(
+        &state,
+        request_id,
+        json!({
+            "permissions": permissions,
+            "scope": scope,
+            "strictAutoReview": strict_auto_review,
+        }),
+    )
+    .await
+}

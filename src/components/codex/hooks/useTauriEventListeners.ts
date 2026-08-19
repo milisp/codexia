@@ -5,6 +5,7 @@ import type { CodexParseErrorEvent, CodexStderrEvent } from '@/components/codex/
 import type {
   ApprovalRequest,
   ElicitationRequest,
+  PermissionsRequest,
   RequestUserInputRequest,
 } from '@/components/codex/stores';
 
@@ -13,6 +14,7 @@ interface TauriEventHandlers {
   onApproval: (payload: ApprovalRequest) => void;
   onUserInputRequest: (payload: RequestUserInputRequest) => void;
   onElicitationRequest: (payload: ElicitationRequest) => void;
+  onPermissionsRequest: (payload: PermissionsRequest) => void;
   onNotification: (payload: ServerNotification) => void;
 }
 
@@ -24,6 +26,7 @@ export function useTauriEventListeners({
   onApproval,
   onUserInputRequest,
   onElicitationRequest,
+  onPermissionsRequest,
   onNotification,
 }: TauriEventHandlers) {
   // Handlers are read through a ref so the effect below depends only on
@@ -33,9 +36,16 @@ export function useTauriEventListeners({
     onApproval,
     onUserInputRequest,
     onElicitationRequest,
+    onPermissionsRequest,
     onNotification,
   });
-  handlersRef.current = { onApproval, onUserInputRequest, onElicitationRequest, onNotification };
+  handlersRef.current = {
+    onApproval,
+    onUserInputRequest,
+    onElicitationRequest,
+    onPermissionsRequest,
+    onNotification,
+  };
 
   useEffect(() => {
     if (!enabled) {
@@ -68,6 +78,10 @@ export function useTauriEventListeners({
 
     void registerListener<ElicitationRequest>('codex/elicitation-request', (event) => {
       handlersRef.current.onElicitationRequest(event.payload);
+    });
+
+    void registerListener<PermissionsRequest>('codex/permissions-request', (event) => {
+      handlersRef.current.onPermissionsRequest(event.payload);
     });
 
     void registerListener<ServerNotification>('codex:notification', (event) => {

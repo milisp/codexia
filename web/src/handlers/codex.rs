@@ -1,6 +1,7 @@
 use super::to_error_response;
 use super::types::{
-    ApprovalDecisionParams, McpElicitationResponseParams, UnifiedMcpAddParams, UnifiedMcpReadParams, UnifiedMcpRemoveParams,
+    ApprovalDecisionParams, McpElicitationResponseParams, PermissionsApprovalParams,
+    UnifiedMcpAddParams, UnifiedMcpReadParams, UnifiedMcpRemoveParams,
     UnifiedMcpToggleParams, UserInputResponseParams,
 };
 use axum::{Json, extract::State as AxumState, http::StatusCode};
@@ -257,6 +258,26 @@ pub(crate) async fn api_respond_mcp_elicitation(
                 "action": params.action,
                 "content": params.content,
                 "_meta": params.meta,
+            }),
+        )
+        .await
+        .map_err(to_error_response)?;
+
+    Ok(StatusCode::OK)
+}
+
+pub(crate) async fn api_respond_permissions_approval(
+    AxumState(state): AxumState<WebServerState>,
+    Json(params): Json<PermissionsApprovalParams>,
+) -> Result<StatusCode, ErrorResponse> {
+    require_codex(&state)?
+        .codex
+        .send_response(
+            params.request_id,
+            json!({
+                "permissions": params.permissions,
+                "scope": params.scope,
+                "strictAutoReview": params.strict_auto_review,
             }),
         )
         .await

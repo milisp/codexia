@@ -3,6 +3,7 @@ import type { ServerNotification } from '@/bindings/ServerNotification';
 import type {
   ApprovalRequest,
   ElicitationRequest,
+  PermissionsRequest,
   RequestUserInputRequest,
 } from '@/components/codex/stores';
 import { openEventStream } from '@/lib/eventStream';
@@ -12,6 +13,7 @@ interface SseEventHandlers {
   onApproval: (payload: ApprovalRequest) => void;
   onUserInputRequest: (payload: RequestUserInputRequest) => void;
   onElicitationRequest: (payload: ElicitationRequest) => void;
+  onPermissionsRequest: (payload: PermissionsRequest) => void;
   onNotification: (payload: ServerNotification) => void;
 }
 
@@ -22,6 +24,7 @@ export function useSseEventBridge({
   onApproval,
   onUserInputRequest,
   onElicitationRequest,
+  onPermissionsRequest,
   onNotification,
 }: SseEventHandlers) {
   // Handlers are read through a ref so the effect below depends only on
@@ -31,9 +34,16 @@ export function useSseEventBridge({
     onApproval,
     onUserInputRequest,
     onElicitationRequest,
+    onPermissionsRequest,
     onNotification,
   });
-  handlersRef.current = { onApproval, onUserInputRequest, onElicitationRequest, onNotification };
+  handlersRef.current = {
+    onApproval,
+    onUserInputRequest,
+    onElicitationRequest,
+    onPermissionsRequest,
+    onNotification,
+  };
 
   useEffect(() => {
     if (!enabled) {
@@ -63,6 +73,10 @@ export function useSseEventBridge({
         }
         if (envelope.event === 'codex/elicitation-request') {
           handlersRef.current.onElicitationRequest(envelope.payload as ElicitationRequest);
+          return;
+        }
+        if (envelope.event === 'codex/permissions-request') {
+          handlersRef.current.onPermissionsRequest(envelope.payload as PermissionsRequest);
           return;
         }
         if (envelope.event === 'codex:notification') {

@@ -29,6 +29,15 @@ pub(crate) struct McpElicitationResponseParams {
 }
 
 #[derive(Deserialize)]
+pub(crate) struct PermissionsApprovalParams {
+    pub(crate) request_id: RequestId,
+    pub(crate) permissions: Value,
+    pub(crate) scope: String,
+    #[serde(default)]
+    pub(crate) strict_auto_review: bool,
+}
+
+#[derive(Deserialize)]
 pub(crate) struct NotesListParams {
     #[serde(default, alias = "userId")]
     pub(crate) user_id: Option<String>,

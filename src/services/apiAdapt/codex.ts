@@ -5,11 +5,13 @@ import type {
   GetAccountParams,
   GetAccountRateLimitsResponse,
   GetAccountResponse,
+  GrantedPermissionProfile,
   LoginAccountParams,
   LoginAccountResponse,
   McpServerElicitationAction,
   ModelListParams,
   ModelListResponse,
+  PermissionGrantScope,
   PluginInstalledParams,
   PluginInstalledResponse,
   PluginInstallParams,
@@ -234,6 +236,25 @@ export async function respondToMcpElicitation(
     { requestId, action, content, meta },
     '/api/codex/approval/mcp-elicitation',
     { request_id: requestId, action, content, meta }
+  );
+}
+
+export async function respondToPermissionsApproval(
+  requestId: RequestId,
+  permissions: GrantedPermissionProfile,
+  scope: PermissionGrantScope,
+  strictAutoReview = false
+) {
+  return await dualVoid(
+    'respond_to_permissions_approval',
+    { requestId, permissions, scope, strictAutoReview },
+    '/api/codex/approval/permissions',
+    {
+      request_id: requestId,
+      permissions,
+      scope,
+      strict_auto_review: strictAutoReview,
+    }
   );
 }
 

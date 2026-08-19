@@ -18,6 +18,9 @@ pub async fn handle_server_request(
         // approval through elicitation. Dropping it stalls the tool call until
         // the server times out, so it must reach the UI.
         "mcpServer/elicitation/request" => ("codex/elicitation-request", "mcpServerElicitation"),
+        // Sandbox escalation (extra network or filesystem access) blocks the
+        // turn the same way until the client answers.
+        "item/permissions/requestApproval" => ("codex/permissions-request", "permissionsApproval"),
         // Ignore unsupported server requests
         _ => return,
     };

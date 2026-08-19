@@ -3,6 +3,7 @@ import {
   useApprovalStore,
   useCodexStore,
   useElicitationStore,
+  usePermissionsStore,
   useRequestUserInputStore,
 } from '@/components/codex/stores';
 import { isDesktopTauri } from '@/hooks/runtime';
@@ -63,12 +64,14 @@ export function useCodexEvents(enabled = true) {
   const onApproval = useApprovalStore.getState().addApproval;
   const onUserInputRequest = useRequestUserInputStore.getState().addRequest;
   const onElicitationRequest = useElicitationStore.getState().addRequest;
+  const onPermissionsRequest = usePermissionsStore.getState().addRequest;
 
   const sharedHandlers = {
     enabled,
     onApproval,
     onUserInputRequest,
     onElicitationRequest,
+    onPermissionsRequest,
     onNotification: handleServerNotification,
   };
 
