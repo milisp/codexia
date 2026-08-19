@@ -123,6 +123,7 @@ pub fn run() {
                 commands::codex::respond_to_command_execution_approval,
                 commands::codex::respond_to_file_change_approval,
                 commands::codex::respond_to_request_user_input,
+                commands::codex::respond_to_mcp_elicitation,
                 commands::codex::initialize_codex_async,
                 commands::openapp::check_app_installed,
                 commands::openapp::open_workspace_in,

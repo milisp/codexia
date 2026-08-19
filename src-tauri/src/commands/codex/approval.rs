@@ -42,3 +42,23 @@ pub async fn respond_to_request_user_input(
 ) -> Result<(), String> {
     send_approval(&state, request_id, response).await
 }
+
+#[tauri::command]
+pub async fn respond_to_mcp_elicitation(
+    request_id: RequestId,
+    action: String,
+    content: Option<Value>,
+    meta: Option<Value>,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    send_approval(
+        &state,
+        request_id,
+        json!({
+            "action": action,
+            "content": content,
+            "_meta": meta,
+        }),
+    )
+    .await
+}

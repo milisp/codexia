@@ -14,6 +14,10 @@ pub async fn handle_server_request(
         "item/commandExecution/requestApproval" => ("codex/approval-request", "commandExecution"),
         "item/fileChange/requestApproval" => ("codex/approval-request", "fileChange"),
         "item/tool/requestUserInput" => ("codex/request-user-input", "requestUserInput"),
+        // MCP servers (e.g. the bundled computer-use plugin) ask for per-action
+        // approval through elicitation. Dropping it stalls the tool call until
+        // the server times out, so it must reach the UI.
+        "mcpServer/elicitation/request" => ("codex/elicitation-request", "mcpServerElicitation"),
         // Ignore unsupported server requests
         _ => return,
     };

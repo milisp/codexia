@@ -19,6 +19,16 @@ pub(crate) struct UserInputResponseParams {
 }
 
 #[derive(Deserialize)]
+pub(crate) struct McpElicitationResponseParams {
+    pub(crate) request_id: RequestId,
+    pub(crate) action: String,
+    #[serde(default)]
+    pub(crate) content: Option<Value>,
+    #[serde(default)]
+    pub(crate) meta: Option<Value>,
+}
+
+#[derive(Deserialize)]
 pub(crate) struct NotesListParams {
     #[serde(default, alias = "userId")]
     pub(crate) user_id: Option<String>,

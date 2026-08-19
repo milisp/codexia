@@ -5,6 +5,7 @@ import { useScrollToBottom } from '../hooks';
 import { EventItem } from '../items';
 import { ApprovalItem } from '../items/ApprovalItem';
 import { CommandActionSummaryItem } from '../items/CommandActionSummaryItem';
+import { ElicitationItem } from '../items/ElicitationItem';
 import { RequestUserInputItem } from '../items/RequestUserInputItem';
 import { ScrollToBottomButton } from '../widget/ScrollToBottomButton';
 import { WorkingIndicator } from '../widget/WorkingIndicator';
@@ -98,6 +99,7 @@ export function CodexThread({ threadId, fillHeight = true }: CodexThreadProps = 
             <ApprovalItem />
             <WorkingIndicator turnTiming={turnTiming} retryNotice={retryNotice} />
             <RequestUserInputItem currentThreadId={activeThreadId} />
+            <ElicitationItem currentThreadId={activeThreadId} />
             <div ref={bottomAnchorRef} aria-hidden="true" />
           </div>
         </ScrollArea>

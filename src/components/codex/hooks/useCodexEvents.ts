@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import {
   useApprovalStore,
   useCodexStore,
+  useElicitationStore,
   useRequestUserInputStore,
 } from '@/components/codex/stores';
 import { isDesktopTauri } from '@/hooks/runtime';
@@ -61,11 +62,13 @@ export function useCodexEvents(enabled = true) {
   // defined once in the Zustand store initializer.
   const onApproval = useApprovalStore.getState().addApproval;
   const onUserInputRequest = useRequestUserInputStore.getState().addRequest;
+  const onElicitationRequest = useElicitationStore.getState().addRequest;
 
   const sharedHandlers = {
     enabled,
     onApproval,
     onUserInputRequest,
+    onElicitationRequest,
     onNotification: handleServerNotification,
   };
 

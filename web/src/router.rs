@@ -41,7 +41,8 @@ use super::{
         api_check_app_installed, api_open_workspace_in,
         api_read_pdf_content, api_read_text_file_lines,
         api_read_xlsx_content, api_respond_command_execution_approval,
-        api_respond_file_change_approval, api_respond_user_input, api_resume_thread,
+        api_respond_file_change_approval, api_respond_mcp_elicitation, api_respond_user_input,
+        api_resume_thread,
         api_rollback_thread, api_fork_thread,
         api_search_files, api_search_files_by_name, api_skills_config_write, api_skills_list, api_start_review,
         api_start_thread, api_watch_directory, api_unwatch_directory,
@@ -193,6 +194,10 @@ pub fn create_router(state: WebServerState) -> Router {
         .route(
             "/api/codex/approval/user-input",
             post(api_respond_user_input),
+        )
+        .route(
+            "/api/codex/approval/mcp-elicitation",
+            post(api_respond_mcp_elicitation),
         )
         .route("/api/codex/review/start", post(api_start_review))
         .route("/api/filesystem/read-directory", post(api_read_directory))

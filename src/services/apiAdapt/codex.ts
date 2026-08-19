@@ -7,6 +7,7 @@ import type {
   GetAccountResponse,
   LoginAccountParams,
   LoginAccountResponse,
+  McpServerElicitationAction,
   ModelListParams,
   ModelListResponse,
   PluginInstalledParams,
@@ -219,6 +220,20 @@ export async function respondToFileChangeApproval(
     { requestId, decision },
     '/api/codex/approval/file-change',
     { request_id: requestId, decision }
+  );
+}
+
+export async function respondToMcpElicitation(
+  requestId: RequestId,
+  action: McpServerElicitationAction,
+  content: unknown = null,
+  meta: unknown = null
+) {
+  return await dualVoid(
+    'respond_to_mcp_elicitation',
+    { requestId, action, content, meta },
+    '/api/codex/approval/mcp-elicitation',
+    { request_id: requestId, action, content, meta }
   );
 }
 

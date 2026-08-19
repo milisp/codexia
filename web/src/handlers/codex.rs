@@ -1,6 +1,6 @@
 use super::to_error_response;
 use super::types::{
-    ApprovalDecisionParams, UnifiedMcpAddParams, UnifiedMcpReadParams, UnifiedMcpRemoveParams,
+    ApprovalDecisionParams, McpElicitationResponseParams, UnifiedMcpAddParams, UnifiedMcpReadParams, UnifiedMcpRemoveParams,
     UnifiedMcpToggleParams, UserInputResponseParams,
 };
 use axum::{Json, extract::State as AxumState, http::StatusCode};
@@ -239,6 +239,26 @@ pub(crate) async fn api_respond_user_input(
     require_codex(&state)?
         .codex
         .send_response(params.request_id, params.response)
+        .await
+        .map_err(to_error_response)?;
+
+    Ok(StatusCode::OK)
+}
+
+pub(crate) async fn api_respond_mcp_elicitation(
+    AxumState(state): AxumState<WebServerState>,
+    Json(params): Json<McpElicitationResponseParams>,
+) -> Result<StatusCode, ErrorResponse> {
+    require_codex(&state)?
+        .codex
+        .send_response(
+            params.request_id,
+            json!({
+                "action": params.action,
+                "content": params.content,
+                "_meta": params.meta,
+            }),
+        )
         .await
         .map_err(to_error_response)?;
 

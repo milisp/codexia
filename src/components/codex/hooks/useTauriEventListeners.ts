@@ -2,12 +2,17 @@ import { listen } from '@tauri-apps/api/event';
 import { useEffect, useRef } from 'react';
 import type { ServerNotification } from '@/bindings/ServerNotification';
 import type { CodexParseErrorEvent, CodexStderrEvent } from '@/components/codex/CodexInternalEvent';
-import type { ApprovalRequest, RequestUserInputRequest } from '@/components/codex/stores';
+import type {
+  ApprovalRequest,
+  ElicitationRequest,
+  RequestUserInputRequest,
+} from '@/components/codex/stores';
 
 interface TauriEventHandlers {
   enabled: boolean;
   onApproval: (payload: ApprovalRequest) => void;
   onUserInputRequest: (payload: RequestUserInputRequest) => void;
+  onElicitationRequest: (payload: ElicitationRequest) => void;
   onNotification: (payload: ServerNotification) => void;
 }
 
@@ -18,13 +23,19 @@ export function useTauriEventListeners({
   enabled,
   onApproval,
   onUserInputRequest,
+  onElicitationRequest,
   onNotification,
 }: TauriEventHandlers) {
   // Handlers are read through a ref so the effect below depends only on
   // `enabled`. Re-running it on every render would unlisten and re-register
   // asynchronously, dropping every event emitted during the gap.
-  const handlersRef = useRef({ onApproval, onUserInputRequest, onNotification });
-  handlersRef.current = { onApproval, onUserInputRequest, onNotification };
+  const handlersRef = useRef({
+    onApproval,
+    onUserInputRequest,
+    onElicitationRequest,
+    onNotification,
+  });
+  handlersRef.current = { onApproval, onUserInputRequest, onElicitationRequest, onNotification };
 
   useEffect(() => {
     if (!enabled) {
@@ -53,6 +64,10 @@ export function useTauriEventListeners({
 
     void registerListener<RequestUserInputRequest>('codex/request-user-input', (event) => {
       handlersRef.current.onUserInputRequest(event.payload);
+    });
+
+    void registerListener<ElicitationRequest>('codex/elicitation-request', (event) => {
+      handlersRef.current.onElicitationRequest(event.payload);
     });
 
     void registerListener<ServerNotification>('codex:notification', (event) => {

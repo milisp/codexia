@@ -1,12 +1,17 @@
 import { useEffect, useRef } from 'react';
 import type { ServerNotification } from '@/bindings/ServerNotification';
-import type { ApprovalRequest, RequestUserInputRequest } from '@/components/codex/stores';
+import type {
+  ApprovalRequest,
+  ElicitationRequest,
+  RequestUserInputRequest,
+} from '@/components/codex/stores';
 import { openEventStream } from '@/lib/eventStream';
 
 interface SseEventHandlers {
   enabled: boolean;
   onApproval: (payload: ApprovalRequest) => void;
   onUserInputRequest: (payload: RequestUserInputRequest) => void;
+  onElicitationRequest: (payload: ElicitationRequest) => void;
   onNotification: (payload: ServerNotification) => void;
 }
 
@@ -16,13 +21,19 @@ export function useSseEventBridge({
   enabled,
   onApproval,
   onUserInputRequest,
+  onElicitationRequest,
   onNotification,
 }: SseEventHandlers) {
   // Handlers are read through a ref so the effect below depends only on
   // `enabled`. Re-running it on every render would tear down and reopen the
   // event stream, dropping events during the reconnect.
-  const handlersRef = useRef({ onApproval, onUserInputRequest, onNotification });
-  handlersRef.current = { onApproval, onUserInputRequest, onNotification };
+  const handlersRef = useRef({
+    onApproval,
+    onUserInputRequest,
+    onElicitationRequest,
+    onNotification,
+  });
+  handlersRef.current = { onApproval, onUserInputRequest, onElicitationRequest, onNotification };
 
   useEffect(() => {
     if (!enabled) {
@@ -48,6 +59,10 @@ export function useSseEventBridge({
         }
         if (envelope.event === 'codex/request-user-input') {
           handlersRef.current.onUserInputRequest(envelope.payload as RequestUserInputRequest);
+          return;
+        }
+        if (envelope.event === 'codex/elicitation-request') {
+          handlersRef.current.onElicitationRequest(envelope.payload as ElicitationRequest);
           return;
         }
         if (envelope.event === 'codex:notification') {
