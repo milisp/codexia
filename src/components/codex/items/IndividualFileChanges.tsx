@@ -1,9 +1,9 @@
 import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import type { FileUpdateChange } from '@/bindings/v2';
-import { DiffViewer } from '@/features/DiffViewer';
 import { Markdown } from '@/components/Markdown';
 import { Button } from '@/components/ui/button';
+import { DiffViewer } from '@/features/DiffViewer';
 import { getFilename } from '@/utils/getFilename';
 import type { DiffViewerInput } from './fileChangeLogic';
 
@@ -53,7 +53,7 @@ export const IndividualFileChanges = ({
 
         return (
           <div key={key}>
-            <div className="flex items-center gap-2">
+            <div className="group flex items-center gap-2">
               <Button
                 variant="ghost"
                 className="h-auto px-1 text-sm"
@@ -61,12 +61,19 @@ export const IndividualFileChanges = ({
               >
                 {fileChangeMap[change.kind.type]}
               </Button>
-              <Markdown value={`[${getFilename(change.path)}](${change.path})`} />
+              <span className="w-fit shrink-0">
+                <Markdown value={`[${getFilename(change.path)}](${change.path})`} />
+              </span>
               <span className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                 <span className="text-green-600 dark:text-green-400">+{addedCount}</span>
                 <span className="text-red-600 dark:text-red-400">-{removedCount}</span>
               </span>
-              <Button size="icon" variant="ghost" onClick={() => toggleExpanded(key)}>
+              <Button
+                className="hidden group-hover:flex"
+                size="icon"
+                variant="ghost"
+                onClick={() => toggleExpanded(key)}
+              >
                 <ChevronRight
                   className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
                 />
