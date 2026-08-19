@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { isTauri } from '@/hooks/runtime';
-import { getAccountWithParams, loginAccount } from '@/services';
+import { getAccountWithParams, loginAccount, saveAccountSnapshot } from '@/services';
 
 interface CodexAuthProps {
   onAuthenticated?: () => void;
@@ -89,6 +89,15 @@ export function CodexAuth({ onAuthenticated }: CodexAuthProps = {}) {
   useEffect(() => {
     refreshAccount(false);
   }, [refreshAccount]);
+
+  // Keep a local snapshot of every ChatGPT account the user signs into, so
+  // it can be switched back to later without logging out.
+  useEffect(() => {
+    const account = accountResponse?.account;
+    if (account?.type === 'chatgpt' && account.email) {
+      saveAccountSnapshot(account.email, account.email, account.planType).catch(console.error);
+    }
+  }, [accountResponse]);
 
   useEffect(() => {
     if (!isTauriRuntime) {

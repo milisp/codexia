@@ -1,5 +1,6 @@
 import type { ServerNotification } from '@/bindings';
 import type {
+  Account,
   CommandExecutionStatus,
   Thread,
   ThreadGoal,
@@ -27,6 +28,8 @@ export interface ThreadsSlice {
   currentThreadId: string | null;
   currentTurnId: string | null;
   hasAccount: boolean | null;
+  /** Logged-in account details, null when signed out or not yet resolved. */
+  account: Account | null;
   activeThreadIds: string[]; // Track resumed/active threads
   inputFocusTrigger: number; // Increment to trigger focus in InputArea
   threadListNextCursor: string | null;
@@ -35,7 +38,7 @@ export interface ThreadsSlice {
   setThreads: (threads: Thread[]) => void;
   appendThreads: (threads: Thread[]) => void;
   setThreadListNextCursor: (cursor: string | null) => void;
-  setHasAccount: (hasAccount: boolean | null) => void;
+  setAccount: (account: Account | null) => void;
   triggerInputFocus: () => void;
 
   // Selectors

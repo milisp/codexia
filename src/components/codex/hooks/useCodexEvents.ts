@@ -31,20 +31,19 @@ export function useCodexEvents(enabled = true) {
   const syncAccountState = async (refreshToken: boolean) => {
     try {
       const response = await getAccountWithParams({ refreshToken });
-      useCodexStore.getState().setHasAccount(Boolean(response.account));
+      useCodexStore.getState().setAccount(response.account);
     } catch (error) {
       console.error('[useCodexEvents] Failed to sync account state:', error);
-      useCodexStore.getState().setHasAccount(false);
+      useCodexStore.getState().setAccount(null);
     }
   };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: one-shot initial sync; syncAccountState is rebuilt every render
   // biome-ignore lint/correctness/useExhaustiveDependencies: one-shot initial sync; syncAccountState is rebuilt every render
   useEffect(() => {
     if (!enabled) {
       return;
     }
-    void syncAccountState(false);
+    syncAccountState(false).catch(console.error);
     // Only re-run when enabled toggles; syncAccountState identity is stable
     // enough for this one-shot initial sync.
     // eslint-disable-next-line react-hooks/exhaustive-deps

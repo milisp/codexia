@@ -175,6 +175,39 @@ export async function loginAccount(params: LoginAccountParams) {
   );
 }
 
+export interface AccountSnapshotSummary {
+  label: string;
+  email: string | null;
+  planType: string | null;
+  isCurrent: boolean;
+}
+
+export async function saveAccountSnapshot(
+  label: string,
+  email: string | null,
+  planType: string | null
+) {
+  if (!isDesktopTauri()) return;
+  return await invokeTauri<void>('save_account_snapshot', { label, email, planType });
+}
+
+export async function listAccountSnapshots() {
+  if (!isDesktopTauri()) return [];
+  return await invokeTauri<AccountSnapshotSummary[]>('list_account_snapshots');
+}
+
+export async function removeAccountSnapshot(label: string) {
+  if (!isDesktopTauri()) return;
+  return await invokeTauri<void>('remove_account_snapshot', { label });
+}
+
+export async function switchAccountSnapshot(label: string) {
+  if (!isDesktopTauri()) {
+    return Promise.reject(new Error('switchAccountSnapshot is only available in Tauri mode.'));
+  }
+  return await invokeTauri<LoginAccountResponse>('switch_account_snapshot', { label });
+}
+
 export async function startReview(params: ReviewStartParams) {
   return await dual<ReviewStartResponse>(
     'start_review',

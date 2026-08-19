@@ -1,3 +1,4 @@
+pub mod accounts;
 pub mod app_server;
 pub mod automation_runner;
 pub mod config;
