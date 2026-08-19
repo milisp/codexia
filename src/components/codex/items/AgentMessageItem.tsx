@@ -13,7 +13,7 @@ export const AgentMessageItem = ({ text }: AgentMessageItemProps) => {
 
   return (
     <div className="group flex flex-col items-start gap-1">
-      <div className="flex w-fit rounded-md border p-2">
+      <div className="w-fit min-w-0 max-w-full overflow-x-auto rounded-md border p-2">
         <Streamdown>{text}</Streamdown>
       </div>
       <div
