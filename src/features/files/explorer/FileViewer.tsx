@@ -14,7 +14,8 @@ import {
   watchDirectory,
   writeFile,
 } from '@/services';
-import { useInputStore, useNoteStore } from '@/stores';
+import { useInputStore } from '@/stores';
+import { useTodoStore } from '@/stores/useTodoStore';
 import { getErrorMessage } from '@/utils/errorUtils';
 import { getFilename } from '@/utils/getFilename';
 import { CodeEditor } from '../editor/CodeEditor';
@@ -42,7 +43,7 @@ export function FileViewer({ filePath }: FileViewerProps) {
   const [canonicalFile, setCanonicalFile] = useState<string | null>(null);
   const { resolvedTheme } = useThemeContext();
   const { setInputValue } = useInputStore();
-  const { addNote } = useNoteStore();
+  const addTodo = useTodoStore((state) => state.addTodo);
 
   const loadFile = useCallback(async () => {
     setLoading(true);
@@ -260,8 +261,8 @@ export function FileViewer({ filePath }: FileViewerProps) {
               onSendToAI={(text) => {
                 setInputValue(text);
               }}
-              onAddToNote={(text) => {
-                addNote(text);
+              onAddToTodo={(text) => {
+                addTodo(text);
               }}
               className="flex-1"
             />

@@ -1,6 +1,6 @@
 // Pinned threads/sessions across all projects, shown as a collapsible sidebar section.
 import { ChevronDown, ChevronRight, Pin, PinOff } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
@@ -16,10 +16,11 @@ export function SideBarPinnedList() {
   const unpin = usePinStore((s) => s.unpin);
   const { setCwd } = useWorkspaceStore();
   const { setView, setActiveSidebarTab } = useLayoutStore();
+  const open = useLayoutStore((s) => s.isPinnedListOpen);
+  const setOpen = useLayoutStore((s) => s.setPinnedListOpen);
   const { setSelectedAgent } = useAgentSettingsStore();
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
   const { handleSessionSelect } = useCCSessionManager();
-  const [open, setOpen] = useState(true);
 
   const handleOpen = useCallback(
     async (item: PinnedItem) => {

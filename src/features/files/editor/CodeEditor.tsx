@@ -41,7 +41,7 @@ interface CodeEditorProps {
   onSave?: (content: string) => Promise<void>;
   onSelectionChange?: (selectedText: string) => void;
   onSendToAI?: (selectedText: string) => void;
-  onAddToNote?: (selectedText: string) => void;
+  onAddToTodo?: (selectedText: string) => void;
   className?: string;
 }
 
@@ -53,7 +53,7 @@ export function CodeEditor({
   onSave,
   onSelectionChange,
   onSendToAI,
-  onAddToNote,
+  onAddToTodo,
   className = '',
 }: CodeEditorProps) {
   // Local state
@@ -467,7 +467,7 @@ export function CodeEditor({
       {/* Editor Content */}
       <div className="flex-1 overflow-hidden relative" ref={editorContainerRef}>
         {/* Floating Selection Actions */}
-        {selection?.text.trim() && selection.position && (onSendToAI || onAddToNote) && (
+        {selection?.text.trim() && selection.position && (onSendToAI || onAddToTodo) && (
           <div
             data-floating-selection-toolbar
             className={`absolute z-10 flex items-center gap-1 p-1 rounded shadow-lg border ${
@@ -493,16 +493,16 @@ export function CodeEditor({
                 <Send className="w-4 h-4" />
               </Button>
             )}
-            {onAddToNote && (
+            {onAddToTodo && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  onAddToNote(selection.text);
+                  onAddToTodo(selection.text);
                   setSelection(null);
                 }}
                 className="p-1 h-auto"
-                title="Add selected text to note"
+                title="Add selected text to todo"
               >
                 <FileText className="w-4 h-4" />
               </Button>

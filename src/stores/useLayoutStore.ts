@@ -19,7 +19,7 @@ export type viewType =
   | 'usage'
   | 'insights';
 
-export type RightPanelTab = 'diff' | 'tasks' | 'note' | 'terminal' | 'webpreview' | 'files';
+export type RightPanelTab = 'diff' | 'tasks' | 'todo' | 'terminal' | 'webpreview' | 'files';
 
 interface LayoutStore {
   isSidebarOpen: boolean;
@@ -58,6 +58,9 @@ interface LayoutStore {
   // Sidebar project collapse state: projectPath -> isOpen
   expandedProjects: Record<string, boolean>;
   setProjectExpanded: (project: string, open: boolean) => void;
+  // Sidebar "Pinned" section collapse state
+  isPinnedListOpen: boolean;
+  setPinnedListOpen: (open: boolean) => void;
 }
 
 export const useLayoutStore = create<LayoutStore>()(
@@ -136,10 +139,12 @@ export const useLayoutStore = create<LayoutStore>()(
         set((state) => ({
           expandedProjects: { ...state.expandedProjects, [project]: open },
         })),
+      isPinnedListOpen: true,
+      setPinnedListOpen: (open) => set({ isPinnedListOpen: open }),
     }),
     {
       name: 'layout-storage',
-      version: 5,
+      version: 6,
       partialize: (state) => ({
         isSidebarOpen: state.isSidebarOpen,
         isRightPanelOpen: state.isRightPanelOpen,
@@ -152,11 +157,23 @@ export const useLayoutStore = create<LayoutStore>()(
         diffWordWrap: state.diffWordWrap,
         diffSplitMode: state.diffSplitMode,
         expandedProjects: state.expandedProjects,
+        isPinnedListOpen: state.isPinnedListOpen,
       }),
       migrate: (persistedState: any, version: number) => {
         if (version < 5) {
           if (persistedState && 'history' in persistedState) {
             delete persistedState.history;
+          }
+        }
+        if (version < 6 && persistedState) {
+          // The notes panel became the todos panel.
+          if (persistedState.activeRightPanelTab === 'note') {
+            persistedState.activeRightPanelTab = 'todo';
+          }
+          if (Array.isArray(persistedState.openRightPanelTabs)) {
+            persistedState.openRightPanelTabs = persistedState.openRightPanelTabs.map(
+              (tab: string) => (tab === 'note' ? 'todo' : tab)
+            );
           }
         }
         return persistedState;

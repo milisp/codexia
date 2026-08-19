@@ -38,54 +38,6 @@ pub(crate) struct PermissionsApprovalParams {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct NotesListParams {
-    #[serde(default, alias = "userId")]
-    pub(crate) user_id: Option<String>,
-}
-
-#[derive(Deserialize)]
-pub(crate) struct CreateNoteParams {
-    pub(crate) id: String,
-    #[serde(default, alias = "userId")]
-    pub(crate) user_id: Option<String>,
-    pub(crate) title: String,
-    pub(crate) content: String,
-    #[serde(default)]
-    pub(crate) tags: Option<Vec<String>>,
-}
-
-#[derive(Deserialize)]
-pub(crate) struct GetNoteByIdParams {
-    pub(crate) id: String,
-}
-
-#[derive(Deserialize)]
-pub(crate) struct UpdateNoteParams {
-    pub(crate) id: String,
-    #[serde(default)]
-    pub(crate) title: Option<String>,
-    #[serde(default)]
-    pub(crate) content: Option<String>,
-    #[serde(default)]
-    pub(crate) tags: Option<Vec<String>>,
-}
-
-#[derive(Deserialize)]
-pub(crate) struct DeleteNoteParams {
-    pub(crate) id: String,
-}
-
-#[derive(Deserialize)]
-pub(crate) struct ToggleFavoriteParams {
-    pub(crate) id: String,
-}
-
-#[derive(Deserialize)]
-pub(crate) struct NotesMarkSyncedParams {
-    pub(crate) ids: Vec<String>,
-}
-
-#[derive(Deserialize)]
 pub(crate) struct SkillsMarketplaceParams {
     pub(crate) selected_agent: String,
     pub(crate) scope: String,

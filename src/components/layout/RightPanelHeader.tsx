@@ -3,12 +3,12 @@ import {
   Diff,
   Files,
   Kanban,
+  ListTodo,
   type LucideIcon,
   Maximize2,
   Minimize2,
   PanelRight,
   SquareTerminal,
-  StickyNote,
   X,
 } from 'lucide-react';
 import { NewAgentButton } from '@/components/common/NewAgentButton';
@@ -24,6 +24,7 @@ import { useTrafficLightConfig } from '@/hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLayoutStore } from '@/stores';
 import type { RightPanelTab } from '@/stores/useLayoutStore';
+import { useTodoStore } from '@/stores/useTodoStore';
 
 export type { RightPanelTab };
 
@@ -36,7 +37,7 @@ interface TabConfig {
 // Order tabs the way users scan them: work-in-progress first, reference last.
 const TAB_BUTTONS: TabConfig[] = [
   { tab: 'diff', icon: Diff, label: 'Review' },
-  { tab: 'note', icon: StickyNote, label: 'Notes' },
+  { tab: 'todo', icon: ListTodo, label: 'Todos' },
   { tab: 'terminal', icon: SquareTerminal, label: 'Terminal' },
   { tab: 'webpreview', icon: Chrome, label: 'Browser' },
   { tab: 'files', icon: Files, label: 'Files' },
@@ -58,6 +59,7 @@ export function RightPanelHeader() {
     isSidebarOpen,
   } = useLayoutStore();
   const { needsTrafficLightOffset } = useTrafficLightConfig(isSidebarOpen);
+  const todos = useTodoStore((state) => state.todos);
 
   const openTab = (tab: RightPanelTab) => {
     setActiveRightPanelTab(tab);
@@ -70,6 +72,10 @@ export function RightPanelHeader() {
   };
 
   const closedTabs = TAB_BUTTONS.filter((t) => !openRightPanelTabs.includes(t.tab));
+
+  // A captured todo lands in a panel the user may not be looking at, so the
+  // tab carries the count until they open it.
+  const openTodoCount = todos.filter((todo) => !todo.isDone).length;
 
   if (openRightPanelTabs.length === 0) {
     return (
@@ -139,6 +145,11 @@ export function RightPanelHeader() {
               >
                 <Icon className="size-4" />
                 <span className="text-xs hidden lg:block">{config.label}</span>
+                {tab === 'todo' && openTodoCount > 0 && activeRightPanelTab !== tab && (
+                  <span className="rounded-full bg-primary px-1.5 text-[10px] leading-4 text-primary-foreground">
+                    {openTodoCount}
+                  </span>
+                )}
               </Button>
               <button
                 type="button"
@@ -163,6 +174,11 @@ export function RightPanelHeader() {
                 <DropdownMenuItem key={tab} onClick={() => openTab(tab)}>
                   <Icon className="size-4" />
                   {label}
+                  {tab === 'todo' && openTodoCount > 0 && (
+                    <span className="ml-auto text-[10px] text-muted-foreground">
+                      {openTodoCount}
+                    </span>
+                  )}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>

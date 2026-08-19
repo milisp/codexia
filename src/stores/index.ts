@@ -10,6 +10,5 @@ export * from './useAgentSettingsStore';
 export * from './useEditorStore';
 export * from './useInputStore';
 export { useLayoutStore } from './useLayoutStore';
-export * from './useNoteStore';
 export * from './usePluginStore';
 export * from './useWorkspaceStore';

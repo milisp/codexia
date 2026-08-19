@@ -8,10 +8,8 @@ export * from './codex';
 export * from './dictation';
 export * from './filesystem';
 export * from './git';
-export * from './note';
 export * from './openapp';
 export type {
-  DbNote,
   InstalledSkillItem,
   MarketplaceSkillItem,
   SkillAgent,

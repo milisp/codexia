@@ -9,8 +9,10 @@ import { AppLayout } from '@/components/layout';
 import { MobileShell } from '@/components/mobile/MobileShell';
 import { PairingView } from '@/components/pairing/PairingView';
 import { HistoryProjectsDialog } from '@/features/ProjectSelector';
+import { TodoCaptureHint } from '@/features/todos/TodoCaptureHint';
 import { isDesktopTauri, isPhone } from '@/hooks/runtime';
 import { useAppDeepLink } from '@/hooks/useAppDeepLink';
+import { useDoubleShiftCapture } from '@/hooks/useDoubleShiftCapture';
 import { useUrlParamThread } from '@/hooks/useUrlParamThread';
 import { hasActiveWork } from '@/lib/hasActiveWork';
 import { initSettingsSync, loadRemoteSettings, loadSettings } from '@/lib/settings';
@@ -77,6 +79,9 @@ function AppShell() {
   // Listen to codex events only after backend is initialized
   useCodexEvents(codexReady);
 
+  // Shift-Shift on a text selection captures it as a todo
+  useDoubleShiftCapture();
+
   // Web-mode deep link: ?agent=codex&thread=<id>&cwd=<path> (or agent=cc&session=<id>)
   useUrlParamThread(codexReady);
 
@@ -91,6 +96,7 @@ function AppShell() {
   return (
     <>
       <AppLayout />
+      <TodoCaptureHint />
       <HistoryProjectsDialog />
       <QuitDialog open={quitDialogOpen} onOpenChange={setQuitDialogOpen} />
     </>

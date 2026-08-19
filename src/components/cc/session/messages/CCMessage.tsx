@@ -1,4 +1,4 @@
-import { AddToNote, CopyButton } from '@/components/common';
+import { AddToTodo, CopyButton } from '@/components/common';
 import { Card } from '@/components/ui/card';
 import { useCCStore } from '@/stores/cc';
 import { useCCSettingsStore } from '@/stores/settings/useCCSettingsStore';
@@ -46,7 +46,7 @@ export function CCMessage({ message: msg, index: idx, inlineErrors }: CCMessageP
           {assistantText && (
             <div className="invisible group-hover:visible flex flex-col gap-0.5 shrink-0 pt-0.5">
               <CopyButton text={assistantText} className="h-4 w-4 text-muted-foreground" />
-              <AddToNote text={assistantText} className="h-4 w-4 text-muted-foreground" />
+              <AddToTodo text={assistantText} className="h-4 w-4 text-muted-foreground" />
             </div>
           )}
           <div className="flex-1 min-w-0">

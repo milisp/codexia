@@ -24,19 +24,16 @@ use super::{
         api_cc_send_message, api_cc_set_permission_mode, api_cc_update_settings,
         api_create_automation, api_delete_automation, api_list_automation_runs, api_list_automations, api_run_automation_now, api_set_automation_paused,
         api_update_automation,
-        api_codex_home, api_create_note, api_delete_file,
-        api_delete_note,
+        api_codex_home, api_delete_file,
         api_get_account, api_get_agent_heatmaps, api_get_home_directory, api_get_insight_filter_options,
-        api_get_insight_rankings, api_get_note_by_id, api_get_notes,
-        api_get_unsynced_notes,
-        api_git_branch_info, api_git_checkout_branch, api_git_create_branch,
+        api_get_insight_rankings, api_git_branch_info, api_git_checkout_branch, api_git_create_branch,
         api_git_apply_worktree_changes,
         api_git_remove_worktree,
         api_git_diff_stats, api_git_file_diff, api_git_file_diff_meta, api_git_list_branches,
         api_git_create_worktree, api_git_reverse_files, api_git_stage_files,
         api_git_status, api_git_unstage_files, api_git_commit, api_git_push,
         api_list_threads,
-        api_mark_notes_synced, api_prevent_sleep,
+        api_prevent_sleep,
         api_login_account, api_model_list, api_model_list_post, api_read_directory, api_read_file,
         api_check_app_installed, api_open_workspace_in,
         api_read_pdf_content, api_read_text_file_lines,
@@ -54,10 +51,10 @@ use super::{
         api_skills_list_marketplace, api_skills_uninstall_installed,
         api_skillssh_install, api_skillssh_leaderboard, api_skillssh_search,
         api_terminal_resize, api_terminal_start, api_terminal_stop,
-        api_terminal_write, api_toggle_favorite, api_turn_interrupt, api_turn_start,
+        api_terminal_write, api_turn_interrupt, api_turn_start,
         api_unified_add_mcp_server, api_unified_disable_mcp_server,
         api_unified_enable_mcp_server, api_unified_read_mcp_config,
-        api_unified_remove_mcp_server, api_update_note, api_write_file,
+        api_unified_remove_mcp_server, api_write_file,
         api_get_settings_file, api_save_settings_file, api_pairing_info, health_check, api_model_list_other, api_load_env_keys, api_set_env,
         api_list_provider_presets, api_add_model_provider, api_list_config_providers,
         api_remove_model_provider,
@@ -225,14 +222,6 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/terminal/write", post(api_terminal_write))
         .route("/api/terminal/resize", post(api_terminal_resize))
         .route("/api/terminal/stop", post(api_terminal_stop))
-        .route("/api/notes/create", post(api_create_note))
-        .route("/api/notes/list", post(api_get_notes))
-        .route("/api/notes/get", post(api_get_note_by_id))
-        .route("/api/notes/update", post(api_update_note))
-        .route("/api/notes/delete", post(api_delete_note))
-        .route("/api/notes/toggle-favorite", post(api_toggle_favorite))
-        .route("/api/notes/mark-synced", post(api_mark_notes_synced))
-        .route("/api/notes/unsynced", post(api_get_unsynced_notes))
         .route("/api/automation/list", post(api_list_automations))
         .route("/api/automation/runs/list", post(api_list_automation_runs))
         .route("/api/automation/create", post(api_create_automation))

@@ -34,18 +34,6 @@ export type TauriFileEntry = {
   extension: string | null;
 };
 
-export type DbNote = {
-  id: string;
-  user_id: string | null;
-  title: string;
-  content: string;
-  tags: string[] | null;
-  is_favorited: boolean;
-  created_at: string;
-  updated_at: string;
-  synced_at: string | null;
-};
-
 export type TerminalStartResponse = {
   session_id: string;
   shell: string;

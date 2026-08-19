@@ -7,7 +7,6 @@ pub mod env;
 pub mod fs;
 pub mod git;
 pub mod mcp;
-pub mod notes;
 pub mod openapp;
 pub mod remote;
 pub mod skills;

@@ -3,7 +3,7 @@ import { Pencil } from 'lucide-react';
 import { useState } from 'react';
 import type { UserInput } from '@/bindings/v2';
 import { useEventPreferencesStore } from '@/components/codex/stores';
-import { AddToNote, CopyButton } from '@/components/common';
+import { AddToTodo, CopyButton } from '@/components/common';
 import { Markdown } from '@/components/Markdown';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
@@ -88,7 +88,7 @@ export const UserMessageItem = ({
             </Button>
           )}
           <CopyButton text={text} />
-          <AddToNote text={text} />
+          <AddToTodo text={text} />
         </div>
       </div>
     </div>

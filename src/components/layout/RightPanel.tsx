@@ -6,7 +6,7 @@ import { useGitStatsStore } from '@/stores/useGitStatsStore';
 import { detectWebFramework } from '../../features/web-preview/webFrameworkDetection';
 import { RightPanelHeader } from './RightPanelHeader';
 
-const NoteView = lazy(() => import('@/features/notes/NoteView'));
+const TodoView = lazy(() => import('@/features/todos/TodoView'));
 const FilesPanel = lazy(() => import('@/features/files/FilesPanel'));
 const GitDiffPanel = lazy(() => import('@/features/git/GitDiffPanel'));
 const WebPreview = lazy(() =>
@@ -93,10 +93,10 @@ export function RightPanel() {
               </div>
             )}
 
-            {activeRightPanelTab === 'note' && (
+            {activeRightPanelTab === 'todo' && (
               <div className="h-full min-h-0 overflow-hidden">
                 <Suspense fallback={null}>
-                  <NoteView />
+                  <TodoView />
                 </Suspense>
               </div>
             )}

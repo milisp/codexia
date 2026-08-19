@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
-import { AddToNote, CopyButton } from '@/components/common';
+import { AddToTodo, CopyButton } from '@/components/common';
 import { Markdown } from '@/components/Markdown';
 import { Button } from '@/components/ui/button';
 
@@ -64,7 +64,7 @@ export function UserMessage({ text }: { text: string }) {
         )}
       </div>
       <div className="invisible group-hover:visible flex flex-col gap-0.5 shrink-0 pt-0.5">
-        <AddToNote text={text} className="h-4 w-4 text-muted-foreground" />
+        <AddToTodo text={text} className="h-4 w-4 text-muted-foreground" />
         <CopyButton text={text} className="h-4 w-4 text-muted-foreground" />
       </div>
     </div>
