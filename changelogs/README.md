@@ -5,6 +5,7 @@ rather than scanning everything.
 
 | Version | Date | Notes |
 | --- | --- | --- |
+| [0.48.0](./0.48.0.md) | 2026-08-19 | Codex saved account switcher, todos panel, update indicator highlight |
 | [0.47.1](./0.47.1.md) | 2026-08-18 | Codex permission escalation and MCP elicitation prompts, provider env vars |
 | [0.47.0](./0.47.0.md) | 2026-08-18 | New Lexical composer with slash commands, user-managed providers, MCP OAuth, plugin search |
 | [0.46.0](./0.46.0.md) | 2026-08-16 | Ghibli theme, open-app support, MIT relicense, PostHog removed |

@@ -1,5 +1,8 @@
-## 🐛 Fixes
+## ✨ Added
 
-- Codex permission escalation requests now reach the UI, so commands that need elevated access prompt you instead of stalling.
-- MCP elicitation requests are forwarded to the UI, so servers asking for input can be answered.
-- Provider environment variables are passed to the `app-server` child process, so custom providers get their API keys.
+- Codex saved account switcher, so you can switch between stored accounts without re-authenticating.
+
+## 🔧 Changed
+
+- The notes panel is replaced by a todos panel.
+- The update indicator now highlights when an update is ready to install.
