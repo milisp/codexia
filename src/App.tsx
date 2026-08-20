@@ -1,6 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { I18nextProvider } from 'react-i18next';
+import { Toaster as Sonner } from 'sonner';
 import './App.css';
 
 import { useCodexEvents } from '@/components/codex/hooks';
@@ -8,6 +10,9 @@ import { QuitDialog } from '@/components/dialogs';
 import { AppLayout } from '@/components/layout';
 import { MobileShell } from '@/components/mobile/MobileShell';
 import { PairingView } from '@/components/pairing/PairingView';
+import { Toaster } from '@/components/ui/toaster';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 import { HistoryProjectsDialog } from '@/features/ProjectSelector';
 import { TodoCaptureHint } from '@/features/todos/TodoCaptureHint';
 import { isDesktopTauri, isPhone } from '@/hooks/runtime';
@@ -15,10 +20,13 @@ import { useAppDeepLink } from '@/hooks/useAppDeepLink';
 import { useDoubleShiftCapture } from '@/hooks/useDoubleShiftCapture';
 import { useUrlParamThread } from '@/hooks/useUrlParamThread';
 import { hasActiveWork } from '@/lib/hasActiveWork';
+import { i18n } from '@/lib/i18n';
 import { initSettingsSync, loadRemoteSettings, loadSettings } from '@/lib/settings';
 import { initializeCodexAsync } from '@/services/apiAdapt';
 import { usePairingStore } from '@/stores/usePairingStore';
 import type { InitializeResponse } from './bindings';
+
+const AboutView = lazy(() => import('@/views/AboutView'));
 
 function AppShell() {
   const [quitDialogOpen, setQuitDialogOpen] = useState(false);
@@ -103,7 +111,7 @@ function AppShell() {
   );
 }
 
-export default function App() {
+function AppEntry() {
   useAppDeepLink();
 
   const isPaired = usePairingStore((s) => s.desktops.length > 0);
@@ -112,4 +120,28 @@ export default function App() {
   if (isPhone() && !isPaired) return <PairingView />;
 
   return <AppShell />;
+}
+
+export default function App() {
+  const isAboutWindow = window.location.pathname === '/about';
+
+  return (
+    <ThemeProvider>
+      <I18nextProvider i18n={i18n}>
+        <TooltipProvider>
+          {isAboutWindow ? (
+            <Suspense>
+              <AboutView />
+            </Suspense>
+          ) : (
+            <>
+              <AppEntry />
+              <Toaster />
+              <Sonner position="top-center" richColors />
+            </>
+          )}
+        </TooltipProvider>
+      </I18nextProvider>
+    </ThemeProvider>
+  );
 }
