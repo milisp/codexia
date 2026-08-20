@@ -1,8 +1,8 @@
 ## ✨ Added
 
-- Codex saved account switcher, so you can switch between stored accounts without re-authenticating.
+- Codex thread item components are localized, so their labels follow the selected language.
 
-## 🔧 Changed
+## 🐛 Fixed
 
-- The notes panel is replaced by a todos panel.
-- The update indicator now highlights when an update is ready to install.
+- Diff counts stay next to the file path in file change summaries.
+- Wide agent messages now scroll horizontally instead of overflowing the layout.
