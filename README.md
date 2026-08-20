@@ -21,7 +21,7 @@ Lightweight Agent Workstation for Codex CLI + Claude Code + any Agent Client Pro
 > 💡 **Maintained by [@milisp](https://github.com/milisp)** · **[Follow me on 𝕏](https://x.com/lisp_mi)** for agentic workflows, building in public, and project updates
 > Sponsorship or custom work: [milisp@proton.me](mailto:milisp@proton.me)
 
-![Codexia Home](docs/images/codexia-agent-command-center.png)
+![Codexia Home](https://github.com/user-attachments/assets/5be5e429-8524-4032-ba59-61ac6578cb0d)
 
 ## Features
 
