@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { fmtElapsed } from '@/components/agent/utils';
 import type { TurnTiming } from '@/components/codex/stores/useCodexStore';
 
@@ -10,6 +11,7 @@ export function WorkingIndicator({
   turnTiming: TurnTiming | undefined;
   retryNotice?: string;
 }) {
+  const { t } = useTranslation('thread');
   // Re-render only; elapsed is derived from startedAtMs, never stored.
   const [, setTick] = useState(0);
   const inProgress = turnTiming?.status === 'inProgress';
@@ -31,7 +33,7 @@ export function WorkingIndicator({
   if (inProgress) {
     return (
       <div className="text-sm text-muted-foreground animate-pulse">
-        Working… {fmtElapsed(elapsed)}
+        {t('working')} {fmtElapsed(elapsed)}
         {retryNotice && (
           <span className="text-yellow-600 dark:text-yellow-400"> · {retryNotice}</span>
         )}
@@ -43,7 +45,7 @@ export function WorkingIndicator({
 
   return (
     <div className="text-xs text-muted-foreground/60">
-      Worked {fmtElapsed(turnTiming.durationMs)}
+      {t('worked')} {fmtElapsed(turnTiming.durationMs)}
     </div>
   );
 }

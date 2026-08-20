@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { McpElicitationConstOption } from '@/bindings/v2';
 import {
   type ElicitationField,
@@ -49,6 +50,7 @@ export function ElicitationItem({ currentThreadId }: ElicitationItemProps) {
   const { pendingRequests, respond } = useElicitationStore();
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [submitting, setSubmitting] = useState(false);
+  const { t } = useTranslation('thread');
 
   const request = useMemo<ElicitationRequest | null>(
     () => pendingRequests.find((pending) => pending.threadId === currentThreadId) ?? null,
@@ -64,12 +66,12 @@ export function ElicitationItem({ currentThreadId }: ElicitationItemProps) {
       <div className="rounded-md border bg-background p-4 space-y-3">
         <div className="flex items-center gap-2">
           <Badge variant="secondary">{request.serverName}</Badge>
-          <span className="font-medium">Authorization required</span>
+          <span className="font-medium">{t('elicitation.authorizationRequired')}</span>
         </div>
         <div className="text-sm text-muted-foreground">{request.message}</div>
         <div className="flex gap-2">
           <Button size="sm" onClick={() => window.open(request.url, '_blank')}>
-            Open link
+            {t('elicitation.openLink')}
           </Button>
           <Button
             size="sm"
@@ -80,7 +82,7 @@ export function ElicitationItem({ currentThreadId }: ElicitationItemProps) {
               void respond(request.requestId, 'accept').finally(() => setSubmitting(false));
             }}
           >
-            Done
+            {t('common.done')}
           </Button>
           <Button
             size="sm"
@@ -91,7 +93,7 @@ export function ElicitationItem({ currentThreadId }: ElicitationItemProps) {
               void respond(request.requestId, 'cancel').finally(() => setSubmitting(false));
             }}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       </div>
@@ -125,9 +127,11 @@ export function ElicitationItem({ currentThreadId }: ElicitationItemProps) {
     <div className="rounded-md border bg-background p-4 space-y-4">
       <div className="flex items-center gap-2">
         <Badge variant="secondary">{request.serverName}</Badge>
-        <span className="font-medium">Approval required</span>
+        <span className="font-medium">{t('elicitation.approvalRequired')}</span>
         {pendingRequests.length > 1 && (
-          <Badge variant="secondary">{pendingRequests.length} pending</Badge>
+          <Badge variant="secondary">
+            {t('common.pending', { count: pendingRequests.length })}
+          </Badge>
         )}
       </div>
 
@@ -170,7 +174,7 @@ export function ElicitationItem({ currentThreadId }: ElicitationItemProps) {
                     onValueChange={(next) => setValues((prev) => ({ ...prev, [field.id]: next }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select an option" />
+                      <SelectValue placeholder={t('elicitation.selectOption')} />
                     </SelectTrigger>
                     <SelectContent>
                       {options.map((option) => (
@@ -208,7 +212,7 @@ export function ElicitationItem({ currentThreadId }: ElicitationItemProps) {
 
           <div className="flex gap-2">
             <Button size="sm" disabled={submitting || missingRequired} onClick={submitForm}>
-              Submit
+              {t('common.submit')}
             </Button>
             <Button
               size="sm"
@@ -216,7 +220,7 @@ export function ElicitationItem({ currentThreadId }: ElicitationItemProps) {
               disabled={submitting}
               onClick={() => submitChoice('decline')}
             >
-              Decline
+              {t('common.decline')}
             </Button>
             <Button
               size="sm"
@@ -224,7 +228,7 @@ export function ElicitationItem({ currentThreadId }: ElicitationItemProps) {
               disabled={submitting}
               onClick={() => submitChoice('cancel')}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
           </div>
         </div>

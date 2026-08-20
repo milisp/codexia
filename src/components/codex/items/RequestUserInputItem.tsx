@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRequestUserInputStore } from '@/components/codex/stores';
 import { useConfigStore } from '@/components/codex/stores/useConfigStore';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +20,7 @@ type RequestUserInputItemProps = {
 };
 
 export function RequestUserInputItem({ currentThreadId }: RequestUserInputItemProps) {
+  const { t } = useTranslation('thread');
   const { pendingRequests, respondToRequest } = useRequestUserInputStore();
   const { setCollaborationMode } = useConfigStore();
 
@@ -137,7 +139,7 @@ export function RequestUserInputItem({ currentThreadId }: RequestUserInputItemPr
                     }}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select an option" />
+                      <SelectValue placeholder={t('userInput.selectOption')} />
                     </SelectTrigger>
                     <SelectContent>
                       {options.map((option) => (
@@ -152,7 +154,9 @@ export function RequestUserInputItem({ currentThreadId }: RequestUserInputItemPr
                           </div>
                         </SelectItem>
                       ))}
-                      {question.isOther && <SelectItem value="__other__">Other…</SelectItem>}
+                      {question.isOther && (
+                        <SelectItem value="__other__">{t('userInput.other')}</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                   {showOther && (
@@ -164,7 +168,7 @@ export function RequestUserInputItem({ currentThreadId }: RequestUserInputItemPr
                           [question.id]: event.target.value,
                         }))
                       }
-                      placeholder="Enter your answer"
+                      placeholder={t('userInput.enterAnswer')}
                       className="min-h-[80px]"
                     />
                   )}
@@ -175,7 +179,7 @@ export function RequestUserInputItem({ currentThreadId }: RequestUserInputItemPr
                   onChange={(event) =>
                     setAnswers((prev) => ({ ...prev, [question.id]: event.target.value }))
                   }
-                  placeholder="Enter your answer"
+                  placeholder={t('userInput.enterAnswer')}
                   className="min-h-[80px]"
                 />
               )}
@@ -186,7 +190,7 @@ export function RequestUserInputItem({ currentThreadId }: RequestUserInputItemPr
 
       <div className="flex flex-col sm:flex-row gap-2">
         <Button onClick={() => void handleSubmit()} disabled={missingAnswer || submitting}>
-          Submit
+          {t('common.submit')}
         </Button>
       </div>
     </div>

@@ -1,5 +1,7 @@
+import type { TFunction } from 'i18next';
 import { ChevronDown, ChevronRight, SquareTerminal } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CommandAction } from '@/bindings/v2';
 import { CommandActionItem } from './CommandActionItem';
 
@@ -12,18 +14,17 @@ type Props = {
 };
 
 // Count actions by type and build a summary label.
-function buildSummaryParts(actions: CommandAction[]): string[] {
+function buildSummaryParts(actions: CommandAction[], t: TFunction<'thread'>): string[] {
   const counts: Record<string, number> = { read: 0, unknown: 0, listFiles: 0, search: 0 };
   for (const a of actions) counts[a.type] = (counts[a.type] ?? 0) + 1;
 
   const parts: string[] = [];
-  const p = (n: number, singular: string, plural: string) =>
-    n > 0 ? parts.push(`${n} ${n === 1 ? singular : plural}`) : undefined;
+  const p = (n: number, key: string) => (n > 0 ? parts.push(t(key, { count: n })) : undefined);
 
-  p(counts.read, 'Read file', 'Read files');
-  p(counts.unknown, 'Ran command', 'Ran commands');
-  p(counts.listFiles, 'Listed folder', 'Listed folders');
-  p(counts.search, 'Searched', 'Searched');
+  p(counts.read, 'readFiles');
+  p(counts.unknown, 'ranCommands');
+  p(counts.listFiles, 'listedFolders');
+  p(counts.search, 'searched');
 
   return parts;
 }
@@ -34,13 +35,14 @@ export const CommandActionSummaryItem = ({
   aggregatedOutput,
   completed,
 }: Props) => {
+  const { t } = useTranslation('thread');
   const [expanded, setExpanded] = useState(false);
 
   if (actions.length === 0) return null;
 
   // All actions collapsed under summary toggle.
   if (completed) {
-    const parts = buildSummaryParts(actions);
+    const parts = buildSummaryParts(actions, t);
     if (parts.length === 0) return null;
     return (
       <div className="text-xs text-muted-foreground">
@@ -76,7 +78,7 @@ export const CommandActionSummaryItem = ({
   // Streaming: show last action inline, rest collapsed.
   const hiddenActions = actions.slice(0, -1);
   const lastAction = actions[actions.length - 1];
-  const hiddenParts = buildSummaryParts(hiddenActions);
+  const hiddenParts = buildSummaryParts(hiddenActions, t);
 
   return (
     <div className="text-xs text-muted-foreground space-y-1">

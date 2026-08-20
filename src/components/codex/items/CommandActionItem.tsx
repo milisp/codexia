@@ -1,12 +1,13 @@
+import { useTranslation } from 'react-i18next';
 import type { CommandAction } from '@/bindings/v2';
 import { Badge } from '@/components/ui/badge';
 import { getFilename } from '@/utils/getFilename';
 import { ShellCommand } from './ShellCommand';
 
-const ACTION_LABEL: Partial<Record<CommandAction['type'], string>> = {
-  listFiles: 'Listed files',
-  read: 'Read',
-  search: 'Search',
+const ACTION_LABEL_KEY: Partial<Record<CommandAction['type'], string>> = {
+  listFiles: 'action.listFiles',
+  read: 'action.read',
+  search: 'action.search',
 };
 
 export const CommandActionItem = ({
@@ -18,6 +19,8 @@ export const CommandActionItem = ({
   commandItemId?: string | null;
   aggregatedOutput?: string | null;
 }) => {
+  const { t } = useTranslation('thread');
+
   if (action.type === 'unknown') {
     return (
       <ShellCommand
@@ -28,9 +31,11 @@ export const CommandActionItem = ({
     );
   }
 
+  const labelKey = ACTION_LABEL_KEY[action.type];
+
   return (
     <div className="flex gap-2 items-center">
-      {ACTION_LABEL[action.type]}
+      {labelKey ? t(labelKey) : null}
       {action.type === 'search' && (
         <>
           <Badge variant="secondary">{action.query}</Badge>

@@ -1,6 +1,7 @@
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { Pencil } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { UserInput } from '@/bindings/v2';
 import { useEventPreferencesStore } from '@/components/codex/stores';
 import { AddToTodo, CopyButton } from '@/components/common';
@@ -24,6 +25,7 @@ export const UserMessageItem = ({
   onEdit,
   editDisabled = false,
 }: UserMessageItemProps) => {
+  const { t } = useTranslation('thread');
   const isWindowFocused = useWindowFocus();
   const images = content.filter((m) => m.type === 'image').map((m) => m.url);
   const localImages = content
@@ -81,7 +83,7 @@ export const UserMessageItem = ({
               size="icon"
               onClick={handleEdit}
               disabled={!canEdit}
-              aria-label="Edit message"
+              aria-label={t('userMessage.edit')}
               className="h-6 w-6 text-muted-foreground"
             >
               <Pencil className="h-4 w-4" />
@@ -106,6 +108,7 @@ export const EditableUserMessageItem = ({
   threadId,
   rollbackTurns,
 }: EditableUserMessageItemProps) => {
+  const { t } = useTranslation('thread');
   const [pendingText, setPendingText] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const { hasConfirmedEditRollback, setHasConfirmedEditRollback } = useEventPreferencesStore();
@@ -126,7 +129,7 @@ export const EditableUserMessageItem = ({
       setPendingText(text);
     } catch (error) {
       console.error('Failed to edit from user message:', error);
-      toast.error('Failed to edit message', {
+      toast.error(t('userMessage.editFailed'), {
         description: getErrorMessage(error),
       });
     }
@@ -141,7 +144,7 @@ export const EditableUserMessageItem = ({
       setPendingText(null);
     } catch (error) {
       console.error('Failed to edit from user message:', error);
-      toast.error('Failed to edit message', {
+      toast.error(t('userMessage.editFailed'), {
         description: getErrorMessage(error),
       });
     } finally {

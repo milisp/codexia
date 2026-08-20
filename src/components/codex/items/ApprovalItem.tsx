@@ -1,5 +1,6 @@
 import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useApprovalStore } from '@/components/codex/stores';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button';
 export function ApprovalItem() {
   const { currentApproval, pendingApprovals, respondToApproval } = useApprovalStore();
   const [showDetails, setShowDetails] = useState(false);
+  const { t } = useTranslation('thread');
 
   if (!currentApproval) return null;
 
@@ -52,9 +54,11 @@ export function ApprovalItem() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-warning" />
-          <span className="font-medium">Approval Required</span>
+          <span className="font-medium">{t('approval.title')}</span>
           {pendingApprovals.length > 1 && (
-            <Badge variant="secondary">{pendingApprovals.length} pending</Badge>
+            <Badge variant="secondary">
+              {t('common.pending', { count: pendingApprovals.length })}
+            </Badge>
           )}
         </div>
         {currentApproval.reason && (
@@ -67,12 +71,12 @@ export function ApprovalItem() {
             {showDetails ? (
               <>
                 <ChevronUp className="w-4 h-4 mr-1" />
-                Hide Details
+                {t('approval.hideDetails')}
               </>
             ) : (
               <>
                 <ChevronDown className="w-4 h-4 mr-1" />
-                Show Details
+                {t('approval.showDetails')}
               </>
             )}
           </Button>
@@ -83,7 +87,7 @@ export function ApprovalItem() {
       <div className="grid gap-3 text-sm">
         {currentApproval.type === 'commandExecution' && (
           <div>
-            <div className="font-medium mb-1">Command Execution Request:</div>
+            <div className="font-medium mb-1">{t('approval.commandRequest')}</div>
             <div className="text-muted-foreground p-2 bg-muted rounded font-mono text-xs break-all">
               itemId: {currentApproval.itemId}
             </div>
@@ -92,9 +96,9 @@ export function ApprovalItem() {
 
         {currentApproval.type === 'fileChange' && currentApproval.grantRoot && (
           <div>
-            <div className="font-medium mb-1">File Access Request:</div>
+            <div className="font-medium mb-1">{t('approval.fileRequest')}</div>
             <div className="text-muted-foreground p-2 bg-muted rounded">
-              <div className="text-xs mb-1">Allow file writes under:</div>
+              <div className="text-xs mb-1">{t('approval.allowWritesUnder')}</div>
               <div className="font-mono text-xs break-all">{currentApproval.grantRoot}</div>
             </div>
           </div>
@@ -104,9 +108,9 @@ export function ApprovalItem() {
           currentApproval.proposedExecpolicyAmendment && (
             <div>
               <div className="font-medium mb-1 flex items-center gap-2">
-                <span>Policy Amendment</span>
+                <span>{t('approval.policyAmendment')}</span>
                 <Badge variant="secondary" className="text-xs">
-                  Will skip future approvals
+                  {t('approval.skipFutureApprovals')}
                 </Badge>
               </div>
               <div className="text-muted-foreground p-2 bg-muted rounded font-mono text-xs break-all">
@@ -121,7 +125,7 @@ export function ApprovalItem() {
         <div className="grid gap-3 text-sm pt-2 border-t">
           {currentApproval.reason && (
             <div>
-              <div className="font-medium mb-1">Reason:</div>
+              <div className="font-medium mb-1">{t('approval.reason')}</div>
               <div className="text-muted-foreground p-2 bg-muted rounded text-xs">
                 {currentApproval.reason}
               </div>
@@ -133,13 +137,13 @@ export function ApprovalItem() {
       {/* Action buttons */}
       <div className="flex flex-col sm:flex-row gap-2 pt-2">
         <Button variant="outline" onClick={handleDecline} className="flex-1">
-          Decline
+          {t('common.decline')}
         </Button>
         <Button variant="secondary" onClick={handleApproveForSession} className="flex-1">
-          Approve for Session
+          {t('approval.approveForSession')}
         </Button>
         <Button onClick={handleApprove} className="flex-1">
-          Approve Once
+          {t('approval.approveOnce')}
         </Button>
       </div>
     </div>

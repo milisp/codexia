@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,18 +23,17 @@ export const EditRollbackConfirmDialog = ({
   onOpenChange,
   onConfirm,
 }: EditRollbackConfirmDialogProps) => {
+  const { t } = useTranslation('thread');
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirm edit rollback</AlertDialogTitle>
-          <AlertDialogDescription>
-            Edit will immediately rollback this turn and all later turns, then place your message
-            back into input. Continue?
-          </AlertDialogDescription>
+          <AlertDialogTitle>{t('editRollback.title')}</AlertDialogTitle>
+          <AlertDialogDescription>{t('editRollback.description')}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={submitting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={submitting}>{t('common.cancel')}</AlertDialogCancel>
           <AlertDialogAction
             disabled={submitting}
             onClick={(event) => {
@@ -41,7 +41,7 @@ export const EditRollbackConfirmDialog = ({
               onConfirm();
             }}
           >
-            Continue
+            {t('common.continue')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

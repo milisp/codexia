@@ -1,5 +1,6 @@
 import { ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { FileUpdateChange } from '@/bindings/v2';
 import { Button } from '@/components/ui/button';
 import { DiffViewer } from '@/features/DiffViewer';
@@ -20,6 +21,7 @@ type SummaryFileChangesProps = {
  * Full per-file diff view, used by the right panel's review tab.
  */
 export const SummaryFileChanges = ({ changes, getDiffViewerProps }: SummaryFileChangesProps) => {
+  const { t } = useTranslation('thread');
   const { cwd } = useWorkspaceStore();
   const [allCollapsed, setAllCollapsed] = useState(true);
   const [resetKey, setResetKey] = useState(0);
@@ -44,9 +46,7 @@ export const SummaryFileChanges = ({ changes, getDiffViewerProps }: SummaryFileC
     <div className="space-y-2 border rounded-md p-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-          <span>
-            {changes.length} file{changes.length !== 1 ? 's' : ''} changed
-          </span>
+          <span>{t('fileChanges.changed', { count: changes.length })}</span>
           <span className="flex items-center gap-2 text-xs">
             <span className="text-green-600 dark:text-green-400">+{totals.added}</span>
             <span className="text-red-600 dark:text-red-400">-{totals.removed}</span>
@@ -58,7 +58,7 @@ export const SummaryFileChanges = ({ changes, getDiffViewerProps }: SummaryFileC
           ) : (
             <ChevronsDownUp className="h-3 w-3" />
           )}
-          {allCollapsed ? 'Expand All' : 'Collapse All'}
+          {allCollapsed ? t('fileChanges.expandAll') : t('fileChanges.collapseAll')}
         </Button>
       </div>
 

@@ -1,6 +1,7 @@
 import { save } from '@tauri-apps/plugin-dialog';
 import { Check, ChevronDown, ChevronUp, Copy, Download } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Markdown } from '@/components/Markdown';
 import { Button } from '@/components/ui/button';
 import { isTauri } from '@/hooks/runtime';
@@ -11,6 +12,7 @@ type PlanContentItemProps = {
 };
 
 export const PlanContentItem = ({ text }: PlanContentItemProps) => {
+  const { t } = useTranslation('thread');
   const [collapsed, setCollapsed] = useState(true);
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<number | null>(null);
@@ -58,15 +60,17 @@ export const PlanContentItem = ({ text }: PlanContentItemProps) => {
     <div>
       <div className="overflow-hidden rounded-md border bg-accent/40">
         <div className="flex items-center justify-between px-2 py-1">
-          <span className="text-xs font-medium tracking-wide text-muted-foreground">Plan</span>
+          <span className="text-xs font-medium tracking-wide text-muted-foreground">
+            {t('plan.label')}
+          </span>
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon-xs"
               onClick={() => void handleDownload()}
               disabled={!text.length || !isTauri()}
-              aria-label="Download plan"
-              title="Download plan.md"
+              aria-label={t('plan.download')}
+              title={t('plan.downloadFile')}
             >
               <Download className="h-3.5 w-3.5" />
             </Button>
@@ -75,8 +79,8 @@ export const PlanContentItem = ({ text }: PlanContentItemProps) => {
               size="icon-xs"
               onClick={() => void handleCopy()}
               disabled={!text.length}
-              aria-label={copied ? 'Copied' : 'Copy plan'}
-              title={copied ? 'Copied' : 'Copy plan'}
+              aria-label={copied ? t('plan.copied') : t('plan.copy')}
+              title={copied ? t('plan.copied') : t('plan.copy')}
             >
               {copied ? (
                 <Check className="h-3.5 w-3.5 text-green-500" />
@@ -88,8 +92,8 @@ export const PlanContentItem = ({ text }: PlanContentItemProps) => {
               variant="ghost"
               size="icon-xs"
               onClick={() => setCollapsed((prev) => !prev)}
-              aria-label={collapsed ? 'Expand plan content' : 'Collapse plan content'}
-              title={collapsed ? 'Expand plan content' : 'Collapse plan content'}
+              aria-label={collapsed ? t('plan.expandContent') : t('plan.collapseContent')}
+              title={collapsed ? t('plan.expandContent') : t('plan.collapseContent')}
             >
               {collapsed ? (
                 <ChevronDown className="h-3.5 w-3.5" />
@@ -105,7 +109,7 @@ export const PlanContentItem = ({ text }: PlanContentItemProps) => {
       </div>
       {collapsed ? (
         <Button size="xs" onClick={() => setCollapsed(false)}>
-          Expand plan
+          {t('plan.expandPlan')}
         </Button>
       ) : null}
     </div>

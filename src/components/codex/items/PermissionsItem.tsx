@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   type PermissionsDecision,
   type PermissionsRequest,
@@ -11,12 +12,12 @@ type PermissionsItemProps = {
   currentThreadId: string | null;
 };
 
-function permissionLines(request: PermissionsRequest): string[] {
+function permissionLines(request: PermissionsRequest, networkLabel: string): string[] {
   const lines: string[] = [];
   const { network, fileSystem } = request.permissions;
 
   if (network?.enabled) {
-    lines.push('Network access');
+    lines.push(networkLabel);
   }
   if (fileSystem) {
     for (const path of fileSystem.read ?? []) {
@@ -35,6 +36,7 @@ function permissionLines(request: PermissionsRequest): string[] {
 export function PermissionsItem({ currentThreadId }: PermissionsItemProps) {
   const { pendingRequests, respond } = usePermissionsStore();
   const [submitting, setSubmitting] = useState(false);
+  const { t } = useTranslation('thread');
 
   const request = useMemo<PermissionsRequest | null>(
     () => pendingRequests.find((pending) => pending.threadId === currentThreadId) ?? null,
@@ -45,7 +47,7 @@ export function PermissionsItem({ currentThreadId }: PermissionsItemProps) {
     return null;
   }
 
-  const lines = permissionLines(request);
+  const lines = permissionLines(request, t('permissions.networkAccess'));
 
   const decide = (decision: PermissionsDecision) => {
     setSubmitting(true);
@@ -56,9 +58,11 @@ export function PermissionsItem({ currentThreadId }: PermissionsItemProps) {
     <div className="rounded-md border bg-background p-4 space-y-4">
       <div className="flex items-center gap-2">
         <Badge variant="secondary">permissions</Badge>
-        <span className="font-medium">Additional permissions requested</span>
+        <span className="font-medium">{t('permissions.title')}</span>
         {pendingRequests.length > 1 && (
-          <Badge variant="secondary">{pendingRequests.length} pending</Badge>
+          <Badge variant="secondary">
+            {t('common.pending', { count: pendingRequests.length })}
+          </Badge>
         )}
       </div>
 
@@ -77,7 +81,7 @@ export function PermissionsItem({ currentThreadId }: PermissionsItemProps) {
 
       <div className="flex flex-wrap gap-2">
         <Button size="sm" disabled={submitting} onClick={() => decide({ kind: 'grantTurn' })}>
-          Allow for this turn
+          {t('permissions.allowTurn')}
         </Button>
         <Button
           size="sm"
@@ -85,16 +89,16 @@ export function PermissionsItem({ currentThreadId }: PermissionsItemProps) {
           disabled={submitting}
           onClick={() => decide({ kind: 'grantSession' })}
         >
-          Allow for this session
+          {t('permissions.allowSession')}
         </Button>
         <Button
           size="sm"
           variant="secondary"
           disabled={submitting}
-          title="Grant for this turn, but review every subsequent command before it runs"
+          title={t('permissions.allowStrictHint')}
           onClick={() => decide({ kind: 'grantTurnStrict' })}
         >
-          Allow with strict review
+          {t('permissions.allowStrict')}
         </Button>
         <Button
           size="sm"
@@ -102,7 +106,7 @@ export function PermissionsItem({ currentThreadId }: PermissionsItemProps) {
           disabled={submitting}
           onClick={() => decide({ kind: 'deny' })}
         >
-          Deny
+          {t('permissions.deny')}
         </Button>
       </div>
     </div>

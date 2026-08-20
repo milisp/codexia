@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { ServerNotification } from '@/bindings';
 import type { FileUpdateChange } from '@/bindings/v2';
 import { Badge } from '@/components/ui/badge';
@@ -73,10 +74,11 @@ type EventItemProps = {
 };
 
 export const EventItem = ({ event, context }: EventItemProps) => {
+  const { t } = useTranslation('thread');
   const fileChangeMap = {
-    add: 'Created',
-    delete: 'Deleted',
-    update: 'Edited',
+    add: t('fileChanges.created'),
+    delete: t('fileChanges.deleted'),
+    update: t('fileChanges.edited'),
   };
 
   const renderFileChanges = (changes: FileUpdateChange[]) => (

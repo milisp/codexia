@@ -1,5 +1,6 @@
 import { Diff, Undo2 } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { DiffViewer } from '@/features/DiffViewer';
@@ -20,6 +21,7 @@ type PendingUndo = { kind: 'all' } | { kind: 'file'; path: string };
  * not render per-file diffs — that's the right panel's review tab's job.
  */
 export const ThreadFileChangesSummary = ({ changes }: ThreadFileChangesSummaryProps) => {
+  const { t } = useTranslation('thread');
   const { cwd } = useWorkspaceStore();
   const { hasConfirmedGitRevert, setHasConfirmedGitRevert } = useEditorStore();
   const openReviewTab = useOpenReviewTab();
@@ -61,7 +63,7 @@ export const ThreadFileChangesSummary = ({ changes }: ThreadFileChangesSummaryPr
     <div className="space-y-1 border rounded-md p-3">
       <div className="flex items-center justify-between gap-3">
         <div className="text-sm font-medium text-muted-foreground">
-          {changes.length} file{changes.length !== 1 ? 's' : ''} changed
+          {t('fileChanges.changed', { count: changes.length })}
         </div>
         <div className="flex items-center gap-1.5">
           <Button
@@ -70,14 +72,14 @@ export const ThreadFileChangesSummary = ({ changes }: ThreadFileChangesSummaryPr
             className="h-6 px-2 gap-1.5"
             onClick={() => requestUndo({ kind: 'all' })}
             disabled={undoing}
-            title="Undo all changes in this turn"
+            title={t('fileChanges.undoAllTitle')}
           >
             <Undo2 className="h-3 w-3" />
-            Undo All
+            {t('fileChanges.undoAll')}
           </Button>
           <Button variant="outline" size="sm" className="h-6 px-2 gap-1.5" onClick={openReviewTab}>
             <Diff className="h-3 w-3" />
-            Review
+            {t('common.review')}
             <span className="flex items-center gap-1.5 text-xs">
               <span className="text-green-600 dark:text-green-400">+{totals.added}</span>
               <span className="text-red-600 dark:text-red-400">-{totals.removed}</span>
@@ -90,8 +92,10 @@ export const ThreadFileChangesSummary = ({ changes }: ThreadFileChangesSummaryPr
         <div className="flex items-center gap-2 rounded-sm bg-destructive/10 px-2 py-1.5 text-xs">
           <span className="flex-1 text-destructive">
             {pendingUndo.kind === 'all'
-              ? `Undo all ${changes.length} file changes? This discards them on disk.`
-              : `Undo changes to ${toRelativePath(pendingUndo.path, cwd)}? This discards them on disk.`}
+              ? t('fileChanges.confirmUndoAll', { count: changes.length })
+              : t('fileChanges.confirmUndoFile', {
+                  path: toRelativePath(pendingUndo.path, cwd),
+                })}
           </span>
           <Button
             size="sm"
@@ -102,7 +106,7 @@ export const ThreadFileChangesSummary = ({ changes }: ThreadFileChangesSummaryPr
               void doUndo(pendingUndo);
             }}
           >
-            Undo
+            {t('common.undo')}
           </Button>
           <Button
             size="sm"
@@ -110,7 +114,7 @@ export const ThreadFileChangesSummary = ({ changes }: ThreadFileChangesSummaryPr
             className="h-6 px-2 text-xs"
             onClick={() => setPendingUndo(null)}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       )}
@@ -148,7 +152,7 @@ export const ThreadFileChangesSummary = ({ changes }: ThreadFileChangesSummaryPr
               className="h-5 w-5 shrink-0"
               onClick={() => requestUndo({ kind: 'file', path: change.path })}
               disabled={undoing}
-              title="Undo changes to this file"
+              title={t('fileChanges.undoFileTitle')}
             >
               <Undo2 className="h-3 w-3" />
             </Button>
