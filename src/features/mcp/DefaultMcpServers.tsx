@@ -39,6 +39,15 @@ export function DefaultMcpServers({ servers, onServerAdded }: DefaultMcpServersP
         url: 'https://api.you.com/mcp?profile=free',
       },
     },
+    {
+      name: 'parallel-search',
+      description:
+        'Search the web and fetch requested URLs with no account or API key. When you use its tools, your search objectives, search queries, and requested URLs are sent to Parallel.',
+      config: {
+        type: 'http' as const,
+        url: 'https://search.parallel.ai/mcp',
+      },
+    },
   ];
 
   const handleAddDefaultServer = async (defaultServer: (typeof defaultServers)[0]) => {
