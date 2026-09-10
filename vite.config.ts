@@ -82,6 +82,16 @@ export default defineConfig(({ mode }) => {
       port,
       strictPort: true,
       host: host || false,
+      proxy: {
+        "/api": {
+          target: `http://127.0.0.1:${env.VITE_WEB_PORT || 7420}`,
+          changeOrigin: true,
+        },
+        "/ws": {
+          target: `ws://127.0.0.1:${env.VITE_WEB_PORT || 7420}`,
+          ws: true,
+        },
+      },
       hmr: host
         ? {
           protocol: "ws",

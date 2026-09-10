@@ -42,6 +42,11 @@ const resolveApiBase = () => {
     return `http://127.0.0.1:${DESKTOP_LOCAL_PORT}`;
   }
 
+  if (!import.meta.env.PROD && !isPhone()) {
+    // Vite proxies API and WebSocket requests to the Rust server in dev.
+    return window.location.origin;
+  }
+
   if (import.meta.env.PROD && !isPhone()) {
     // Desktop web-server: assets and API share the same origin.
     return window.location.origin;

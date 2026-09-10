@@ -8,6 +8,7 @@ import { Clone } from '@/features/skills/Clone';
 import { InstalledTab } from '@/features/skills/InstalledTab';
 import SkillsViewContent from '@/features/skills/SkillsView';
 import { RecommendToolsView } from '@/features/tools/RecommendToolsView';
+import { unifiedReadMcpConfig } from '@/services';
 import { useAgentSettingsStore } from '@/stores';
 import { usePluginsViewContext } from '../hooks';
 import { PluginDetailView } from './PluginDetailView';
