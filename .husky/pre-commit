@@ -1,1 +1,2 @@
 bunx biome check --staged --no-errors-on-unmatched
+bunx tsc --noEmit
