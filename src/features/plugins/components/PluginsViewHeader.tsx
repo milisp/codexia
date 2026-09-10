@@ -72,14 +72,12 @@ export function PluginsViewHeader() {
         />
       ) : (
         !overlay && (
-          <>
-            <TabSwitcher
-              tabs={['Plugins', 'Skills', 'Tools'] as const}
-              active={mainTab}
-              onChange={setMainTab}
-              showLabel={!isMobile}
-            />
-          </>
+          <TabSwitcher
+            tabs={['Plugins', 'Skills', 'Tools', 'MCP'] as const}
+            active={mainTab}
+            onChange={setMainTab}
+            showLabel={!isMobile}
+          />
         )
       )}
 

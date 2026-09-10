@@ -3,8 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import type { McpServerConfig } from '@/components/codex/types';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DefaultMcpServers, getServerProtocol, McpServerCard, McpServerForm } from '@/features/mcp';
+import { getServerProtocol, McpServerCard, McpServerForm } from '@/features/mcp';
 import { unifiedAddMcpServer, unifiedReadMcpConfig, unifiedRemoveMcpServer } from '@/services';
 import { useMcpAuthStatus } from './useMcpAuthStatus';
 
@@ -14,7 +13,6 @@ interface CodexMcpViewProps {
 
 export function CodexMcpView({ refreshKey }: CodexMcpViewProps) {
   const [servers, setServers] = useState<Record<string, McpServerConfig>>({});
-  const [activeTab, setActiveTab] = useState('configured');
   const { authStatuses, refreshAuthStatuses } = useMcpAuthStatus();
   const [editingServer, setEditingServer] = useState<string | null>(null);
   const [editConfig, setEditConfig] = useState<{
@@ -72,7 +70,7 @@ export function CodexMcpView({ refreshKey }: CodexMcpViewProps) {
           args: editConfig.command.args.split(' ').filter((arg) => arg.trim()),
         };
 
-        if (editConfig.command.env && editConfig.command.env.trim()) {
+        if (editConfig.command.env?.trim()) {
           try {
             config.env = JSON.parse(editConfig.command.env);
           } catch {
@@ -102,7 +100,7 @@ export function CodexMcpView({ refreshKey }: CodexMcpViewProps) {
       loadServers();
     } catch (error) {
       console.error('Failed to update MCP server:', error);
-      toast.error('Failed to update MCP server: ' + error);
+      toast.error(`Failed to update MCP server: ${error}`);
     }
   };
 
@@ -114,80 +112,67 @@ export function CodexMcpView({ refreshKey }: CodexMcpViewProps) {
   return (
     <div className="container mx-auto">
       <div className="space-y-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="configured">Configured</TabsTrigger>
-            <TabsTrigger value="quick">Quick</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="quick" className="mt-6">
-            <DefaultMcpServers servers={servers} onServerAdded={loadServers} />
-          </TabsContent>
-
-          <TabsContent value="configured" className="mt-6">
-            <div className="space-y-2">
-              {Object.entries(servers).map(([name, config]) => (
-                <div key={name}>
-                  {editingServer === name ? (
-                    <div className="px-4">
-                      <div className="space-y-4">
-                        <McpServerForm
-                          serverName={editConfig?.name ?? ''}
-                          onServerNameChange={(name) =>
-                            setEditConfig((prev) => (prev ? { ...prev, name } : null))
-                          }
-                          protocol={editConfig?.protocol ?? 'stdio'}
-                          onProtocolChange={(protocol) =>
-                            setEditConfig((prev) => (prev ? { ...prev, protocol } : null))
-                          }
-                          commandConfig={
-                            editConfig?.command ?? {
-                              command: '',
-                              args: '',
-                              env: '',
-                            }
-                          }
-                          onCommandConfigChange={(command) =>
-                            setEditConfig((prev) => (prev ? { ...prev, command } : null))
-                          }
-                          httpConfig={editConfig?.http ?? { url: '' }}
-                          onHttpConfigChange={(http) =>
-                            setEditConfig((prev) => (prev ? { ...prev, http } : null))
-                          }
-                          isEditMode={true}
-                        />
-
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={handleSaveEdit}>
-                            <Save className="h-4 w-4 mr-1" />
-                            Save
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={handleCancelEdit}>
-                            <X className="h-4 w-4 mr-1" />
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <McpServerCard
-                      name={name}
-                      config={config}
-                      loadServers={loadServers}
-                      setServers={setServers}
-                      onEdit={handleEditServer}
-                      authStatus={authStatuses[name]}
-                      onAuthChanged={refreshAuthStatuses}
+        <div className="space-y-2">
+          {Object.entries(servers).map(([name, config]) => (
+            <div key={name}>
+              {editingServer === name ? (
+                <div className="px-4">
+                  <div className="space-y-4">
+                    <McpServerForm
+                      serverName={editConfig?.name ?? ''}
+                      onServerNameChange={(name) =>
+                        setEditConfig((prev) => (prev ? { ...prev, name } : null))
+                      }
+                      protocol={editConfig?.protocol ?? 'stdio'}
+                      onProtocolChange={(protocol) =>
+                        setEditConfig((prev) => (prev ? { ...prev, protocol } : null))
+                      }
+                      commandConfig={
+                        editConfig?.command ?? {
+                          command: '',
+                          args: '',
+                          env: '',
+                        }
+                      }
+                      onCommandConfigChange={(command) =>
+                        setEditConfig((prev) => (prev ? { ...prev, command } : null))
+                      }
+                      httpConfig={editConfig?.http ?? { url: '' }}
+                      onHttpConfigChange={(http) =>
+                        setEditConfig((prev) => (prev ? { ...prev, http } : null))
+                      }
+                      isEditMode={true}
                     />
-                  )}
+
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={handleSaveEdit}>
+                        <Save className="h-4 w-4 mr-1" />
+                        Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                        <X className="h-4 w-4 mr-1" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-              ))}
-              {Object.keys(servers).length === 0 && (
-                <div className="text-gray-500 text-center py-8">No MCP servers configured</div>
+              ) : (
+                <McpServerCard
+                  name={name}
+                  config={config}
+                  loadServers={loadServers}
+                  setServers={setServers}
+                  onEdit={handleEditServer}
+                  authStatus={authStatuses[name]}
+                  onAuthChanged={refreshAuthStatuses}
+                />
               )}
             </div>
-          </TabsContent>
-        </Tabs>
+          ))}
+          {Object.keys(servers).length === 0 && (
+            <div className="text-gray-500 text-center py-8">No MCP servers configured</div>
+          )}
+        </div>
       </div>
     </div>
   );
