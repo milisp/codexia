@@ -70,6 +70,7 @@ runs without installing.
 
 ## Recommend tools
 
+- [Ivy Tendril](https://github.com/Ivy-Interactive/Ivy-Tendril) - Open-source agentic software factory with an amazing UI that handles parallel Git worktrees for you, complete with programmatic verifications and fast review loops
 - [keke](https://github.com/milisp/keke-agent) - Local terminal coding agent with zero-vendor lock-in. Works with subscriptions, API keys, or self-hosted models; speaks ACP for editor/client integration
 - [oh-my-codex](https://github.com/Yeachan-Heo/oh-my-codex) - Your codex is not alone. Add hooks, agent teams, HUDs, and so much more.
 - [rtk](https://github.com/rtk-ai/rtk) - CLI proxy that reduces LLM token consumption by 60-90% on common dev commands. Single Rust binary, zero dependencies
