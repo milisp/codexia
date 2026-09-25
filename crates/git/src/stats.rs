@@ -13,18 +13,14 @@ fn count_line_changes(old: &[u8], new: &[u8]) -> GitDiffStatsCounts {
     if is_probably_binary(old) || is_probably_binary(new) {
         return GitDiffStatsCounts::default();
     }
-    let input = gix::diff::blob::intern::InternedInput::new(
+    let input = gix::diff::blob::InternedInput::new(
         gix::diff::blob::sources::byte_lines(old),
         gix::diff::blob::sources::byte_lines(new),
     );
-    let counter = gix::diff::blob::diff(
-        gix::diff::blob::Algorithm::Myers,
-        &input,
-        gix::diff::blob::sink::Counter::default(),
-    );
+    let diff = gix::diff::blob::Diff::compute(gix::diff::blob::Algorithm::Myers, &input);
     GitDiffStatsCounts {
-        additions: counter.insertions as usize,
-        deletions: counter.removals as usize,
+        additions: diff.count_additions() as usize,
+        deletions: diff.count_removals() as usize,
     }
 }
 
@@ -44,14 +40,16 @@ pub(super) fn staged_diff_stats(repo: &gix::Repository) -> Result<GitDiffStatsCo
             gix::worktree::stack::state::attributes::Source::IdMapping,
         )
         .map_err(|err| format!("Failed to prepare pathspec: {err}"))?;
-    let mut rewrites = gix::diff::Rewrites::default();
-    rewrites.limit = 0;
+    let rewrites = gix::diff::Rewrites {
+        limit: 0,
+        ..Default::default()
+    };
 
     let mut total = GitDiffStatsCounts::default();
     let mut callback_err: Option<String> = None;
     repo.tree_index_status(
         head_tree_id.as_ref(),
-        &*index,
+        &index,
         Some(&mut pathspec),
         gix::status::tree_index::TrackRenames::Given(rewrites),
         |change, _, _| {
@@ -87,7 +85,7 @@ pub(super) fn staged_diff_stats(repo: &gix::Repository) -> Result<GitDiffStatsCo
                     callback_err.get_or_insert(err);
                 }
             }
-            Ok::<_, std::convert::Infallible>(ControlFlow::Continue(()))
+            Ok(ControlFlow::Continue(()))
         },
     )
     .map_err(|err| format!("Failed to collect staged status: {err}"))?;

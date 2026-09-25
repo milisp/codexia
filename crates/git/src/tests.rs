@@ -4,19 +4,21 @@ use std::sync::{LazyLock, Mutex};
 
 static HOME_ENV_LOCK: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
 
-fn plugins_dir() -> PathBuf {
-    dirs::home_dir()
-        .unwrap_or_else(|| PathBuf::from("~"))
-        .join(".agents")
-        .join("plugins")
-}
-
 #[test]
-#[ignore = "requires network access and writes into ~/.agents/plugins"]
-fn clone_skills_repo_to_agents_plugins() {
-    let target = plugins_dir();
-    let result = clone("https://github.com/anthropics/skills.git", &target);
-    assert!(result.is_ok(), "clone failed: {result:?}");
+#[ignore = "requires network access"]
+fn clone_remote_repo_over_https() {
+    let temp = tempfile::tempdir().expect("create tempdir");
+    let target = temp.path().join("hello-world");
+    let cloned = clone("https://github.com/octocat/Hello-World.git", &target).expect("clone");
+
+    assert_eq!(cloned, target);
+    assert!(target.join("README").is_file(), "worktree should be checked out");
+    let repo = gix::open(&target).expect("open cloned repo");
+    assert!(repo.head_id().is_ok(), "cloned repo should have a HEAD commit");
+    assert!(
+        repo.find_remote("origin").is_ok(),
+        "cloned repo should have an origin remote"
+    );
 }
 
 #[test]
@@ -46,7 +48,15 @@ fn git_status_reports_whole_repo_from_subdirectory_cwd() {
 fn init_repo_with_one_commit(repo_dir: &Path) {
     use gix::bstr::ByteSlice;
 
-    let repo = gix::init(repo_dir).expect("init repo");
+    gix::init(repo_dir).expect("init repo");
+    // Repo-local identity so commits don't depend on ~/.gitconfig, which
+    // `with_temp_home` hides from tests running in parallel.
+    let config_path = repo_dir.join(".git").join("config");
+    let mut config = std::fs::read_to_string(&config_path).expect("read repo config");
+    config.push_str("[user]\n\tname = Codex Test\n\temail = codex@test.local\n");
+    std::fs::write(&config_path, config).expect("write repo config");
+
+    let repo = gix::open(repo_dir).expect("open repo");
     let empty_tree = repo.empty_tree().id().detach();
     let signature = gix::actor::SignatureRef {
         name: b"Codex Test".as_bstr(),
@@ -259,4 +269,105 @@ fn git_reverse_staged_moves_file_back_to_untracked() {
         .expect("status entry exists");
     assert_eq!(entry.index_status, '?');
     assert_eq!(entry.worktree_status, '?');
+}
+
+fn stage(repo_dir: &Path, paths: &[&str]) {
+    git_stage_files(
+        repo_dir.to_string_lossy().to_string(),
+        paths.iter().map(|path| path.to_string()).collect(),
+    )
+    .expect("stage files");
+}
+
+fn commit(repo_dir: &Path, message: &str) {
+    git_commit(repo_dir.to_string_lossy().to_string(), message.to_string()).expect("commit");
+}
+
+fn status_codes(repo_dir: &Path) -> std::collections::BTreeMap<String, (char, char)> {
+    git_status(repo_dir.to_string_lossy().to_string())
+        .expect("status ok")
+        .entries
+        .into_iter()
+        .map(|entry| (entry.path, (entry.index_status, entry.worktree_status)))
+        .collect()
+}
+
+#[test]
+fn git_status_reports_staged_add_modify_delete() {
+    let temp = tempfile::tempdir().expect("create tempdir");
+    let repo_dir = temp.path();
+    init_repo_with_one_commit(repo_dir);
+
+    std::fs::write(repo_dir.join("keep.txt"), "a\n").expect("write keep");
+    std::fs::write(repo_dir.join("gone.txt"), "b\n").expect("write gone");
+    stage(repo_dir, &["keep.txt", "gone.txt"]);
+    commit(repo_dir, "seed files");
+
+    std::fs::write(repo_dir.join("keep.txt"), "a\nb\n").expect("modify keep");
+    std::fs::remove_file(repo_dir.join("gone.txt")).expect("remove gone");
+    std::fs::write(repo_dir.join("fresh.txt"), "c\n").expect("write fresh");
+    stage(repo_dir, &["keep.txt", "gone.txt", "fresh.txt"]);
+
+    let codes = status_codes(repo_dir);
+    assert_eq!(codes.get("keep.txt"), Some(&('M', ' ')), "{codes:?}");
+    assert_eq!(codes.get("gone.txt"), Some(&('D', ' ')), "{codes:?}");
+    assert_eq!(codes.get("fresh.txt"), Some(&('A', ' ')), "{codes:?}");
+}
+
+#[test]
+fn git_status_reports_staged_and_unstaged_on_same_file() {
+    let temp = tempfile::tempdir().expect("create tempdir");
+    let repo_dir = temp.path();
+    init_repo_with_one_commit(repo_dir);
+
+    std::fs::write(repo_dir.join("demo.txt"), "v1\n").expect("write v1");
+    stage(repo_dir, &["demo.txt"]);
+    commit(repo_dir, "seed demo");
+
+    std::fs::write(repo_dir.join("demo.txt"), "v2\n").expect("write v2");
+    stage(repo_dir, &["demo.txt"]);
+    std::fs::write(repo_dir.join("demo.txt"), "v3\n").expect("write v3");
+
+    let codes = status_codes(repo_dir);
+    assert_eq!(codes.get("demo.txt"), Some(&('M', 'M')), "{codes:?}");
+}
+
+#[test]
+fn git_diff_stats_counts_staged_modification_and_deletion_against_head() {
+    let temp = tempfile::tempdir().expect("create tempdir");
+    let repo_dir = temp.path();
+    init_repo_with_one_commit(repo_dir);
+
+    std::fs::write(repo_dir.join("edit.txt"), "one\ntwo\nthree\n").expect("write edit");
+    std::fs::write(repo_dir.join("drop.txt"), "x\ny\n").expect("write drop");
+    stage(repo_dir, &["edit.txt", "drop.txt"]);
+    commit(repo_dir, "seed files");
+
+    // Replace one line and append one: +2 / -1.
+    std::fs::write(repo_dir.join("edit.txt"), "one\nTWO\nthree\nfour\n").expect("edit");
+    // Deleting a two-line file: +0 / -2.
+    std::fs::remove_file(repo_dir.join("drop.txt")).expect("remove drop");
+    stage(repo_dir, &["edit.txt", "drop.txt"]);
+
+    let stats = git_diff_stats(repo_dir.to_string_lossy().to_string()).expect("diff stats");
+    assert_eq!(stats.staged.additions, 2);
+    assert_eq!(stats.staged.deletions, 3);
+    assert_eq!(stats.unstaged.additions, 0);
+    assert_eq!(stats.unstaged.deletions, 0);
+}
+
+#[test]
+fn git_diff_stats_ignores_binary_content() {
+    let temp = tempfile::tempdir().expect("create tempdir");
+    let repo_dir = temp.path();
+    init_repo_with_one_commit(repo_dir);
+
+    std::fs::write(repo_dir.join("blob.bin"), b"\0\x01\x02\n").expect("write binary");
+    stage(repo_dir, &["blob.bin"]);
+    commit(repo_dir, "seed binary");
+    std::fs::write(repo_dir.join("blob.bin"), b"\0\x03\x04\nmore\n").expect("edit binary");
+
+    let stats = git_diff_stats(repo_dir.to_string_lossy().to_string()).expect("diff stats");
+    assert_eq!(stats.unstaged.additions, 0);
+    assert_eq!(stats.unstaged.deletions, 0);
 }
