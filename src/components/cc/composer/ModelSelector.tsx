@@ -14,7 +14,7 @@ const MODELS: { id: ModelType; label: string }[] = [
   { id: 'haiku', label: 'Haiku' },
 ];
 
-export function ModelSelector() {
+export function ModelSelector({ embedded = false }: { embedded?: boolean }) {
   const { options, updateOptions } = useCCStore();
   const [open, setOpen] = useState(false);
   const model = options.model ?? 'sonnet';
@@ -31,8 +31,8 @@ export function ModelSelector() {
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <Popover open={embedded ? true : open} onOpenChange={setOpen}>
+      {!embedded && <PopoverTrigger asChild>
         <Button
           variant="ghost"
           size="sm"
@@ -46,9 +46,9 @@ export function ModelSelector() {
           </div>
           <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         </Button>
-      </PopoverTrigger>
+      </PopoverTrigger>}
 
-      <PopoverContent className="w-56 p-0" align="end">
+      {embedded ? <div className="w-full rounded-md border bg-popover p-0">
         {/* No input: the Command root itself takes focus so arrow keys / Enter work. */}
         <Command loop tabIndex={0} className="outline-none">
           <CommandList>
@@ -72,7 +72,19 @@ export function ModelSelector() {
           value={effort}
           onChange={handleEffortChange}
         />
-      </PopoverContent>
+      </div> : <PopoverContent className="w-56 p-0" align="end">
+        <Command loop tabIndex={0} className="outline-none">
+          <CommandList>
+            <CommandGroup>{MODELS.map((item) => (
+              <CommandItem key={item.id} value={item.label} onSelect={() => handleModelChange(item.id)}>
+                <span className="flex-1">{item.label}</span>
+                {model === item.id && <Check className="h-3.5 w-3.5 shrink-0" />}
+              </CommandItem>
+            ))}</CommandGroup>
+          </CommandList>
+          <EffortSlider label="Effort" options={CC_EFFORT_LEVELS} value={effort} onChange={handleEffortChange} />
+        </Command>
+      </PopoverContent>}
     </Popover>
   );
 }

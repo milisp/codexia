@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="body" x1="26" y1="28" x2="96" y2="109" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF7E5"/>
+      <stop offset="1" stop-color="#E8D8B7"/>
+    </linearGradient>
+    <linearGradient id="visor" x1="34" y1="40" x2="88" y2="91" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9DD4CE"/>
+      <stop offset="1" stop-color="#4F9293"/>
+    </linearGradient>
+  </defs>
+  <!-- Antenna -->
+  <path d="M88 35 96 16c1-3 4-4 7-2l10 6c3 2 4 5 2 8l-12 15-15-8Z" fill="#F18D62" stroke="#60493D" stroke-width="3" stroke-linejoin="round"/>
+  <path d="m99 19 8 5-4 8" stroke="#FFD0A3" stroke-width="3" stroke-linecap="round"/>
+  <!-- Feet -->
+  <path d="m39 96-8 12c-2 4 0 7 4 9l9 3c4 1 7-1 8-5l4-13M78 101l7 14c2 4 5 5 9 3l8-5c3-2 4-6 1-9l-9-12" fill="#59676C" stroke="#354348" stroke-width="3.5" stroke-linejoin="round"/>
+  <!-- Side flippers -->
+  <path d="m19 62-8 4c-3 2-4 5-3 8l3 8c1 3 4 4 7 2l10-6M99 69l10 5c3 1 4 4 3 7l-3 7c-1 3-4 4-7 2l-9-7" fill="#E6D5B2" stroke="#8F826A" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Main body silhouette -->
+  <path d="M18 77c-4-9-4-20 0-29 7-16 24-26 46-26 24 0 42 12 48 31 5 15 1 34-9 46-10 11-26 17-44 17-19 0-35-7-43-20" fill="url(#body)" stroke="#5B5548" stroke-width="4" stroke-linejoin="round"/>
+  <!-- Visor -->
+  <path d="M28 57c3-14 16-23 34-23 18 0 31 10 34 25l-1 19c-4 14-17 22-34 22-18 0-31-9-34-23l1-20Z" fill="#354E50"/>
+  <path d="M33 58c3-11 14-18 29-18 15 0 26 8 29 20l-1 16c-3 11-14 18-29 18-15 0-26-8-29-19l1-17Z" fill="url(#visor)"/>
+  <path d="M42 51c5-4 11-6 19-6 9 0 16 3 21 8" stroke="#D8F0E6" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <!-- Face -->
+  <ellipse cx="50" cy="67" rx="4" ry="6" fill="#243237"/>
+  <ellipse cx="75" cy="67" rx="4" ry="6" fill="#243237"/>
+  <circle cx="51.5" cy="65" r="1.4" fill="white"/>
+  <circle cx="76.5" cy="65" r="1.4" fill="white"/>
+  <path d="M56 79q6 5 12 0" stroke="#633F3A" stroke-width="2.8" stroke-linecap="round"/>
+  <!-- A magnifying glass held over one eye -->
+  <path d="m37 77-12 12" stroke="#53616A" stroke-width="7" stroke-linecap="round"/>
+  <path d="m37 77-12 12" stroke="#829096" stroke-width="2" stroke-linecap="round"/>
+  <path d="M17 85c-3 0-6 3-6 7 0 5 5 9 11 8l8-3-1-10-7-3-5 1Z" fill="#59676C" stroke="#354348" stroke-width="2.5" stroke-linejoin="round"/>
+  <circle cx="44" cy="62" r="16" fill="#9ED9DC" fill-opacity=".42" stroke="#354F53" stroke-width="5"/>
+  <circle cx="44" cy="62" r="12.5" stroke="#CBEFEB" stroke-width="1.5" opacity=".9"/>
+  <path d="M36 54c2-2 4-3 7-4" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity=".8"/>
+  <!-- One subtle shell panel -->
+  <path d="M22 84c8 8 20 12 34 13" stroke="#C6B58F" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+</svg>

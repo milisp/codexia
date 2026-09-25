@@ -11,12 +11,13 @@ import { codexService } from '@/services/codexService';
 import { useAgentCenterStore } from '@/stores';
 import { useInputStore } from '@/stores/useInputStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { AgentModelPanel } from '@/components/agent/AgentModelPanel';
+import { AgentModelTrigger } from '@/components/agent/AgentModelTrigger';
 import { AccessModePopover } from './AccessModePopover';
 import { ComposerMenu } from './ComposerMenu';
 import { ComposerToolbarProvider } from './ComposerToolbarContext';
 import { DictationButton } from './DictationButton';
 import { ComposerEditor, type ComposerEditorHandle } from './editor/ComposerEditor';
-import { ModelReasonSelector } from './ModelReasonSelector';
 import { SlashCommandDialogs } from './SlashCommandDialogs';
 import { SlashCommandPopover } from './SlashCommandsSelector';
 import type { SlashDialog } from './slashCommands';
@@ -306,7 +307,7 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
               </div>
               <div className="flex items-center gap-2">
                 <ContextWindowWidget />
-                <ModelReasonSelector />
+                <AgentModelPanel trigger={<AgentModelTrigger />} />
                 <DictationButton
                   onTranscript={(text) => {
                     setInputValue(inputValue ? `${inputValue} ${text}` : text);

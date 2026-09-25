@@ -5,8 +5,9 @@ import { toast } from '@/components/ui/use-toast';
 import { acpCancel, acpPrompt, acpStart } from '@/services/apiAdapt/acp';
 import { useWorkspaceStore } from '@/stores';
 import { useAcpStore } from '@/stores/useAcpStore';
+import { AgentModelPanel } from '@/components/agent/AgentModelPanel';
+import { AgentModelTrigger } from '@/components/agent/AgentModelTrigger';
 import { captureBotOptions } from '@/stores/useBotOptionsStore';
-import { AcpModelMenu } from './AcpModelMenu';
 import { AcpSessionControls } from './AcpSessionControls';
 import { useAcpAgents } from './useAcpAgents';
 
@@ -150,7 +151,7 @@ export function AcpComposer() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <AcpModelMenu />
+          <AgentModelPanel trigger={<AgentModelTrigger />} />
           {running ? (
             <Button
               onClick={() => connectionId && acpCancel(connectionId, sessionId)}

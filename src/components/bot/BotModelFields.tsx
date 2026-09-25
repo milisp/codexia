@@ -12,8 +12,8 @@ interface BotModelFieldsProps {
 }
 
 /**
- * Account, model and reasoning effort for a bot — the composer's own
- * `AcpChoiceMenu`, driven by the cached catalogue instead of a live agent.
+ * Account, model and reasoning effort for a bot, driven by the cached
+ * catalogue instead of a live agent.
  * Picks land in the draft and are applied when the bot next starts, which is
  * the only difference from the composer's copy.
  */
@@ -59,7 +59,7 @@ export function BotModelFields({
         <div className="flex">
           <AcpChoiceMenu
             authMethods={authMethods}
-            selectedAuthMethod={provider || null}
+            selectedAuthMethod={provider}
             onSelectAuthMethod={onProviderChange}
             configOptions={configOptions}
             onConfigOptionChange={(option, value) => {

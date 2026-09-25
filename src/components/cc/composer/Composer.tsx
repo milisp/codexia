@@ -8,11 +8,12 @@ import { useCCSessionManager } from '@/hooks/useCCSessionManager';
 import { ccInterrupt, ccSendMessage } from '@/services';
 import { useAgentCenterStore, useCCInputStore } from '@/stores';
 import { useCCStore } from '@/stores/cc';
+import { AgentModelPanel } from '@/components/agent/AgentModelPanel';
+import { AgentModelTrigger } from '@/components/agent/AgentModelTrigger';
 import { CCAttachmentButton } from './CCAttachmentButton';
 import { CCSkillsPopover } from './CCSkillsPopover';
 import { CCSlashCommandPopover } from './CCSlashCommandPopover';
 import { CCUsageConsent } from './CCUsageConsent';
-import { ModelSelector } from './ModelSelector';
 
 const CC_INPUT_FOCUS_EVENT = 'cc-input-focus-request';
 
@@ -203,7 +204,7 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps = {}) {
           </div>
 
           <div className="absolute right-1 bottom-1 flex items-center gap-1.5 px-1 bg-background/50 backdrop-blur-sm rounded-md">
-            <ModelSelector />
+            <AgentModelPanel trigger={<AgentModelTrigger />} />
             <Button
               onClick={isLoading ? handleInterrupt : handleSend}
               size="icon"

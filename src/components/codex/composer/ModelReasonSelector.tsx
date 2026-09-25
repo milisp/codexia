@@ -2,6 +2,7 @@ import { Check, ChevronDown, ChevronRight, Plus, Search, Settings, X } from 'luc
 import { useCallback, useEffect, useState } from 'react';
 import type { ReasoningEffort } from '@/bindings';
 import type { Model } from '@/bindings/v2';
+import { AgentIcon } from '@/components/common/AgentIcon';
 import { useCodexStore, useConfigStore } from '@/components/codex/stores';
 import type { ModelListItem } from '@/components/codex/types';
 import { ProviderIcons } from '@/components/icons';
@@ -20,11 +21,12 @@ import { cn } from '@/lib/utils';
 import { codexService } from '@/services/codexService';
 import type { Provider } from '@/stores/settings';
 import { useModelSettingsStore } from '@/stores/settings';
+import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useModels } from '../hooks/useModels';
 import { EnvKeysDialog } from './EnvKeysDialog';
 import { nextReasoningEffort, ReasoningEffortSelector } from './ReasoningEffortSelector';
 
-// Models shown per provider before "Show all".
+// Models shown per provider before "Show all" in the composer popover.
 const COLLAPSED_MODEL_COUNT = 3;
 
 function defaultOpenAiModel(models: Model[]): Model | undefined {
@@ -90,6 +92,7 @@ type BaseModelSelectorProps = {
   onReasoningEffortChange?: (value: ReasoningEffort) => void;
   disabled?: boolean;
   onClose?: () => void;
+  mode?: 'popover' | 'panel';
 };
 
 function BaseModelSelector({
@@ -101,6 +104,7 @@ function BaseModelSelector({
   onReasoningEffortChange,
   disabled = false,
   onClose,
+  mode = 'popover',
 }: BaseModelSelectorProps) {
   const [open, setOpen] = useState(false);
   const [envKeysOpen, setEnvKeysOpen] = useState(false);
@@ -113,6 +117,7 @@ function BaseModelSelector({
   // Providers showing their full model list instead of the first few.
   const [expandedProviders, setExpandedProviders] = useState<Set<string>>(new Set());
   const { openAiModels, providerItems, allProviders, providerSuggestions } = useModels();
+  const selectedAgent = useAgentSettingsStore((s) => s.selectedAgent);
   const addCustomModel = useModelSettingsStore((s) => s.addModel);
   const removeCustomModel = useModelSettingsStore((s) => s.removeModel);
   const storedModels = useModelSettingsStore((s) => s.models);
@@ -154,7 +159,7 @@ function BaseModelSelector({
   const expanded = expandedProviders.has(provider);
   // Collapsed lists still show the selected model, wherever it ranks.
   let visibleItems = currentItems;
-  if (!expanded && !query) {
+  if (mode !== 'panel' && !expanded && !query) {
     visibleItems = currentItems.slice(0, COLLAPSED_MODEL_COUNT);
     if (activeItem && !visibleItems.includes(activeItem)) {
       visibleItems = [...visibleItems, activeItem];
@@ -199,7 +204,44 @@ function BaseModelSelector({
 
   return (
     <div className="flex items-center">
-      <Popover
+      {mode === 'panel' ? (
+        <div className="flex w-full flex-col overflow-hidden rounded-md border bg-popover">
+          <div className="flex items-center gap-1 border-b px-1 py-1">
+            <button
+              type="button"
+              onClick={() => {
+                setPickingProvider((prev) => !prev);
+                setSearchQuery('');
+              }}
+              className="flex min-w-0 flex-1 items-center gap-1.5 rounded-sm px-1.5 py-1 text-xs hover:bg-accent/50"
+            >
+              <ProviderIcons providerId={provider} size="sm" />
+              <span className="truncate">{provider}</span>
+              <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+            </button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Search models" onClick={() => setShowSearch((v) => !v)}>
+              <Search className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Providers and API keys" onClick={() => setEnvKeysOpen(true)}>
+              <Settings className="h-4 w-4" />
+            </Button>
+          </div>
+          {showSearch && <CommandInput placeholder="Search or type a model id..." value={searchQuery} onValueChange={setSearchQuery} />}
+          <Command loop>
+            <CommandList className="max-h-[min(55vh,400px)]">
+              <CommandEmpty className="py-4 text-xs text-muted-foreground">No results found</CommandEmpty>
+              {pickingProvider ? (
+                <CommandGroup>{allProviders.map((p) => <CommandItem key={p} value={p} onSelect={() => handlePickProvider(p)}>{p}</CommandItem>)}</CommandGroup>
+              ) : (
+                <CommandGroup>{visibleItems.map((item) => <ModelItem key={item.id} provider={provider} item={item} selected={item.id === value} showProvider={false} onSelect={() => handleSelect(provider, item.id)} />)}</CommandGroup>
+              )}
+            </CommandList>
+          </Command>
+          {reasoningEffort !== undefined && onReasoningEffortChange && (
+            <ReasoningEffortSelector provider={provider} openAiModel={selectedOpenAiModel} value={reasoningEffort} onChange={onReasoningEffortChange} disabled={disabled || !value} />
+          )}
+        </div>
+      ) : <Popover
         open={open}
         onOpenChange={(io) => {
           setOpen(io);
@@ -218,6 +260,7 @@ function BaseModelSelector({
             className="h-8 gap-2 px-2 border border-transparent transition-all hover:border-input hover:bg-accent/50"
             disabled={disabled}
           >
+            <AgentIcon agent={selectedAgent} />
             <div className="flex items-center gap-1.5 text-xs text-foreground">
               <span className="font-medium max-w-[120px] truncate">{activeLabel}</span>
               {reasoningEffort !== undefined && reasoningEffort !== 'none' && (
@@ -416,7 +459,7 @@ function BaseModelSelector({
             />
           )}
         </PopoverContent>
-      </Popover>
+      </Popover>}
       <EnvKeysDialog
         open={envKeysOpen}
         onOpenChange={setEnvKeysOpen}
@@ -427,7 +470,7 @@ function BaseModelSelector({
   );
 }
 
-export function ModelReasonSelector() {
+export function ModelReasonSelector({ mode = 'popover' }: { mode?: 'popover' | 'panel' }) {
   const { currentThreadId, triggerInputFocus } = useCodexStore();
   const { openAiModels } = useModels();
 
@@ -469,6 +512,21 @@ export function ModelReasonSelector() {
       void codexService.threadResume(currentThreadId);
     }
   };
+
+  if (mode === 'panel') {
+    return (
+      <BaseModelSelector
+        provider={modelProvider}
+        onProviderChange={onProviderChange}
+        value={providerModels[modelProvider] ?? ''}
+        onValueChange={setModel}
+        reasoningEffort={reasoningEffort}
+        onReasoningEffortChange={setReasoningEffort}
+        onClose={triggerInputFocus}
+        mode="panel"
+      />
+    );
+  }
 
   return (
     <BaseModelSelector

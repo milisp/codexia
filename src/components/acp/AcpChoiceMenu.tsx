@@ -1,3 +1,7 @@
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,11 +42,12 @@ interface AcpChoiceMenuProps {
   /** Shown on the trigger when nothing is picked yet. */
   placeholder?: string;
   triggerClassName?: string;
+  /** Show compact, navigable settings rows inside an existing panel. */
+  embedded?: boolean;
 }
 
 /**
- * Account, model and reasoning effort in one dropdown — one trigger rather
- * than a row of separate pickers.
+ * Account, model and reasoning effort as a dropdown or an embedded panel.
  *
  * Presentation only: it renders whatever choices it is handed and reports
  * picks back. `AcpModelMenu` wires it to a live connection (each pick is an
@@ -64,18 +69,26 @@ export function AcpChoiceMenu({
   noAccountLabel = 'Sign in',
   placeholder = 'Model',
   triggerClassName = 'flex max-w-40 items-center gap-1 truncate rounded-sm px-2 py-1 text-xs transition-colors hover:bg-accent',
+  embedded = false,
 }: AcpChoiceMenuProps) {
   const { openExternalUrl } = useExternalUrl();
+  const [page, setPage] = useState<string | null>(null);
+  const commandRef = useRef<HTMLDivElement>(null);
+  const overviewValue = useRef<string>('');
+
+  useEffect(() => {
+    if (embedded) commandRef.current?.focus();
+  }, [embedded, page]);
 
   const nonModeOptions = configOptions.filter((o) => o.category !== 'mode');
   const modelChoices = modelChoicesFor(models);
   const currentModelChoice = models
     ? (modelChoices.find((c) => c.value === effortKey(models.currentModelId, reasoningEffort)) ??
-      modelChoices.find((c) => c.value.startsWith(models.currentModelId)))
+      modelChoices.find((c) => c.value.split(EFFORT_SEPARATOR)[0] === models.currentModelId))
     : undefined;
 
   if (nonModeOptions.length === 0 && modelChoices.length === 0 && authMethods.length === 0)
-    return null;
+    return embedded ? <p className="px-2 py-3 text-xs text-muted-foreground">No model options available.</p> : null;
 
   const modelCategoryOption = nonModeOptions.find(
     (o) => o.category === 'model' || o.category === 'model_config'
@@ -104,6 +117,162 @@ export function AcpChoiceMenu({
   const triggerLabel = modelLabel ?? accountLabel;
 
   const noticeUrl = authNotice ? findUrl(authNotice) : null;
+
+  if (embedded) {
+    const selectedOption = nonModeOptions.find((option) => `config:${option.id}` === page);
+    const isAccountPage = page === 'account';
+    const isModelPage = page === 'legacy-model';
+    const detailTitle = isAccountPage && authMethods.length
+      ? accountLabelText
+      : isModelPage && modelChoices.length
+        ? 'Model'
+        : selectedOption?.name;
+
+    return (
+      <Command
+        key={page ?? 'overview'}
+        ref={commandRef}
+        loop
+        tabIndex={0}
+        className="min-w-56 outline-none"
+        onKeyDown={(event) => {
+          if (detailTitle && (event.key === 'ArrowLeft' || event.key === 'Escape' || event.key === 'Backspace')) {
+            event.preventDefault();
+            event.stopPropagation();
+            setPage(null);
+          } else if (!detailTitle && event.key === 'ArrowRight') {
+            const selected = commandRef.current?.querySelector<HTMLElement>('[cmdk-item][data-selected="true"]');
+            if (selected?.dataset.page) {
+              event.preventDefault();
+              overviewValue.current = selected.getAttribute('data-value') ?? '';
+              setPage(selected.dataset.page);
+            }
+          }
+        }}
+        defaultValue={detailTitle ? undefined : overviewValue.current || undefined}
+      >
+        {detailTitle && (
+          <Button type="button" variant="ghost" size="sm" className="h-8 justify-start gap-1 border-b px-2 text-xs" onClick={() => setPage(null)}>
+            <ChevronLeft className="size-3.5" /> {detailTitle}
+          </Button>
+        )}
+        <CommandList className="max-h-none">
+          <CommandGroup>
+            {detailTitle ? (
+              isAccountPage ? (
+                <>
+                  {authMethods.map((method) => (
+                    <CommandItem
+                      key={method.id}
+                      value={`account-${method.id}`}
+                      disabled={authenticating !== null}
+                      title={method.description ?? undefined}
+                      className="min-h-8 text-xs"
+                      onSelect={() => onSelectAuthMethod(method.id)}
+                    >
+                      <span className="min-w-0 flex-1 truncate">{method.name}</span>
+                      {authenticating === method.id ? <span>Signing in…</span> : selectedAuthMethod === method.id ? <Check className="size-3.5" /> : null}
+                    </CommandItem>
+                  ))}
+                  {authenticating && authNotice && (
+                    <div className="px-2 py-1 break-words text-muted-foreground">
+                      {noticeUrl ? <button type="button" className="underline" onClick={() => openExternalUrl(noticeUrl)}>Open this link to sign in</button> : authNotice}
+                    </div>
+                  )}
+                </>
+              ) : isModelPage ? (
+                modelChoices.map((choice) => (
+                  <CommandItem
+                    key={choice.value}
+                    value={choice.value}
+                    title={choice.description}
+                    className="min-h-8 text-xs"
+                    onSelect={() => {
+                      onModelChange(choice.value.split(EFFORT_SEPARATOR)[0], choice.effort);
+                      setPage(null);
+                    }}
+                  >
+                    <span className="min-w-0 flex-1 truncate">{choice.name}</span>
+                    {currentModelChoice?.value === choice.value && <Check className="size-3.5" />}
+                  </CommandItem>
+                ))
+              ) : (
+                selectedOption?.options?.map((choice) => (
+                  <CommandItem
+                    key={choice.value}
+                    value={choice.value}
+                    title={choice.description}
+                    className="min-h-8 text-xs"
+                    onSelect={() => {
+                      onConfigOptionChange(selectedOption, choice.value);
+                      setPage(null);
+                    }}
+                  >
+                    <span className="min-w-0 flex-1 truncate">{choice.name}</span>
+                    {selectedOption.currentValue === choice.value && <Check className="size-3.5" />}
+                  </CommandItem>
+                ))
+              )
+            ) : (
+              <>
+                {authMethods.length > 0 && (
+                  <CommandItem value="account" data-page="account" className="min-h-9 text-xs" onSelect={() => {
+                    overviewValue.current = 'account';
+                    setPage('account');
+                  }}>
+                    <span className="flex-1">{accountLabelText}</span>
+                    <span className="max-w-32 truncate text-muted-foreground">{accountLabel}</span>
+                    <ChevronRight className="size-3.5" />
+                  </CommandItem>
+                )}
+                {nonModeOptions.map((option) =>
+                  option.type === 'boolean' ? (
+                    <CommandItem
+                      key={option.id}
+                      value={option.id}
+                      className="min-h-9 text-xs"
+                      onSelect={() => onConfigOptionChange(option, option.currentValue !== true)}
+                    >
+                      <span className="flex-1">{option.name}</span>
+                      <Switch
+                        checked={option.currentValue === true}
+                        onClick={(event) => event.stopPropagation()}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') event.stopPropagation();
+                        }}
+                        onCheckedChange={(checked) => onConfigOptionChange(option, checked)}
+                      />
+                    </CommandItem>
+                  ) : (
+                    <CommandItem key={option.id} value={option.id} data-page={`config:${option.id}`} title={option.description} className="min-h-9 text-xs" onSelect={() => {
+                      overviewValue.current = option.id;
+                      setPage(`config:${option.id}`);
+                    }}>
+                      <span className="flex-1">{option.name}</span>
+                      <span className="max-w-32 truncate text-muted-foreground">
+                        {option.options?.find((choice) => choice.value === option.currentValue)?.name ?? String(option.currentValue ?? '')}
+                      </span>
+                      <ChevronRight className="size-3.5" />
+                    </CommandItem>
+                  )
+                )}
+                {configOptions.length === 0 && modelChoices.length > 0 && (
+                  <CommandItem value="model" data-page="legacy-model" className="min-h-9 text-xs" onSelect={() => {
+                    overviewValue.current = 'model';
+                    setPage('legacy-model');
+                  }}>
+                    <span className="flex-1">Model</span>
+                    <span className="max-w-32 truncate text-muted-foreground">{currentModelChoice?.name ?? models?.currentModelId}</span>
+                    <ChevronRight className="size-3.5" />
+                  </CommandItem>
+                )}
+              </>
+            )}
+          </CommandGroup>
+        </CommandList>
+      </Command>
+    );
+  }
 
   return (
     <DropdownMenu>

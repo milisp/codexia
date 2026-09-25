@@ -24,7 +24,7 @@ function ownedByMethod(text: string, methodId: string): boolean {
  * fire-and-forget — so "Account" only reflects the last method we asked for
  * and got no error back on, not a live read of the agent's session.
  */
-export function AcpModelMenu() {
+export function AcpModelMenu({ embedded = false }: { embedded?: boolean }) {
   const {
     connectionId,
     sessionId,
@@ -43,7 +43,8 @@ export function AcpModelMenu() {
   } = useAcpStore();
   const cwd = useWorkspaceStore((s) => s.cwd);
 
-  if (!connectionId || !sessionId) return null;
+  if (!connectionId || !sessionId)
+    return embedded ? <p className="px-2 py-3 text-xs text-muted-foreground">Connecting to agent…</p> : null;
 
   const apply = async (revert: () => void, request: () => Promise<void>) => {
     try {
@@ -135,6 +136,7 @@ export function AcpModelMenu() {
 
   return (
     <AcpChoiceMenu
+      embedded={embedded}
       authMethods={authMethods}
       selectedAuthMethod={selectedAuthMethod}
       onSelectAuthMethod={(methodId) => void signIn(methodId)}
