@@ -4,7 +4,7 @@
   <h1>Codexia</h1>
 
   <p>
-    <strong>Lightweight Agent command center for Codex + Claude Code + ACP agents</strong>
+    <strong>Lightweight Agent command center for Codex + Claude Agent + ACP agents</strong>
   </p>
 
   <p>
@@ -16,7 +16,7 @@
 
 </div>
 
-Lightweight Agent Workstation for Codex CLI + Claude Code + any Agent Client Protocol (ACP) agent — with task scheduler, git worktree & remote control, skills management, and a prompt notepad in one workspace
+Lightweight Agent Workstation for Codex CLI + Claude Agent + any Agent Client Protocol (ACP) agent — with task scheduler, git worktree & remote control, skills management, and a prompt notepad in one workspace
 
 > 💡 **Maintained by [@milisp](https://github.com/milisp)** · **[Follow me on 𝕏](https://x.com/lisp_mi)** for agentic workflows, building in public, and project updates
 > Sponsorship or custom work: [milisp@proton.me](mailto:milisp@proton.me)
@@ -35,7 +35,7 @@ Lightweight Agent Workstation for Codex CLI + Claude Code + any Agent Client Pro
 ## Requirements
 
 - [Codex CLI](https://github.com/openai/codex)
-- [Claude Code CLI](https://claude.ai/code)
+- [Claude Code CLI](https://claude.ai/code), which powers Claude Agent (see [usage and billing](#claude-agent-usage-and-billing))
 - Optional: any agent that speaks the [Agent Client Protocol](https://agentclientprotocol.com)
 
 ## Installation
@@ -63,6 +63,26 @@ runs without installing.
 2. Add your project directory.
 3. Enter a prompt and start your agent session.
 4. Create an Agent Task Scheduler job for recurring workflows.
+
+## Claude Agent usage and billing
+
+Claude Agent in Codexia runs your own locally installed Claude CLI through the
+Claude Agent SDK. Codexia never signs in to claude.ai on your behalf; it uses
+whatever authentication your CLI already has.
+
+- **Claude subscription (Pro / Max / Team / Enterprise):** usage from Codexia is
+  programmatic, so it counts against your plan's monthly **Agent SDK credit**,
+  billed at API rates. It does not draw from your regular interactive Claude
+  Code limits, and the credit does not roll over.
+- **API key (`ANTHROPIC_API_KEY`):** usage is billed to your Anthropic Console
+  account. Recommended for heavy use.
+
+Codexia asks you to acknowledge this once before the first Claude Agent prompt;
+the answer is stored in `~/.codexia/cc-consent.json`. Plan limits and terms are
+set by Anthropic and may change, so check
+[Anthropic's documentation](https://code.claude.com/docs/en/agent-sdk/overview)
+for the current details. Codexia is an independent project and is not
+affiliated with Anthropic.
 
 ## Also by me
 
