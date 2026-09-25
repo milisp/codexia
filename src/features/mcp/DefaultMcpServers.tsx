@@ -3,14 +3,16 @@ import { toast } from 'sonner';
 import type { McpServerConfig } from '@/components/codex/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { unifiedAddMcpServer } from '@/services';
+import { type UnifiedMcpClientName, unifiedAddMcpServer } from '@/services';
 
 interface DefaultMcpServersProps {
+  agent: UnifiedMcpClientName;
+  cwd?: string;
   servers: Record<string, McpServerConfig>;
   onServerAdded: () => void;
 }
 
-export function DefaultMcpServers({ servers, onServerAdded }: DefaultMcpServersProps) {
+export function DefaultMcpServers({ agent, cwd, servers, onServerAdded }: DefaultMcpServersProps) {
   const defaultServers = [
     {
       name: 'desktop-commander',
@@ -53,9 +55,12 @@ export function DefaultMcpServers({ servers, onServerAdded }: DefaultMcpServersP
   const handleAddDefaultServer = async (defaultServer: (typeof defaultServers)[0]) => {
     try {
       await unifiedAddMcpServer({
-        clientName: 'codex',
+        clientName: agent,
+        path: cwd,
         serverName: defaultServer.name,
         serverConfig: defaultServer.config,
+        // Claude user scope (~/.claude.json) mirrors Codex's global config.toml.
+        scope: agent === 'cc' ? 'global' : undefined,
       });
       onServerAdded();
     } catch (error) {

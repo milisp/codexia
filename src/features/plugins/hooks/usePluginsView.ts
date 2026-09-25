@@ -18,7 +18,7 @@ import { useExternalUrl } from './useExternalUrl';
 export type MainTab = 'Plugins' | 'Tools' | 'Skills' | 'MCP';
 /** A full-screen overlay that replaces the main content; null means "no overlay". */
 export type Overlay = 'manage' | 'add' | 'detail' | null;
-export type ManageTab = 'Skills' | 'MCPs';
+export type ManageTab = 'Skills' | 'MCP';
 export type AddTab = 'MCP' | 'Skill';
 export type SkillScope = 'user' | 'project';
 
@@ -30,7 +30,7 @@ export function usePluginsView() {
   const { openExternalUrl } = useExternalUrl();
   const [mainTab, setMainTab] = useState<MainTab>('Plugins');
   const [overlay, setOverlay] = useState<Overlay>(null);
-  const [manageTab, setManageTab] = useState<ManageTab>('MCPs');
+  const [manageTab, setManageTab] = useState<ManageTab>('MCP');
   const [addTab, setAddTab] = useState<AddTab>('MCP');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [manageRefreshKey, setManageRefreshKey] = useState(0);
@@ -59,7 +59,7 @@ export function usePluginsView() {
   const handleMcpAdded = useCallback(() => {
     setManageRefreshKey((k) => k + 1);
     setOverlay('manage');
-    setManageTab('MCPs');
+    setManageTab('MCP');
   }, []);
 
   const handlePluginDetail = useCallback((plugin: PluginDetail | null) => {

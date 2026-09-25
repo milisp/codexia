@@ -85,15 +85,19 @@ export function CodexMcpView({ refreshKey }: CodexMcpViewProps) {
         };
       }
 
-      await unifiedRemoveMcpServer({
-        clientName: 'codex',
-        serverName: editingServer,
-      });
+      // Add overwrites an existing entry, so write the new config first and only
+      // drop the old name after a rename succeeded; a failure never loses the server.
       await unifiedAddMcpServer({
         clientName: 'codex',
         serverName: editConfig.name,
         serverConfig: config,
       });
+      if (editConfig.name !== editingServer) {
+        await unifiedRemoveMcpServer({
+          clientName: 'codex',
+          serverName: editingServer,
+        });
+      }
 
       setEditingServer(null);
       setEditConfig(null);
