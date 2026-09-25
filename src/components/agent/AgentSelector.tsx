@@ -19,7 +19,7 @@ import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 
 const BUILTIN = [
   { id: 'codex', name: 'Codex' },
-  { id: 'cc', name: 'Claude Code' },
+  { id: 'cc', name: 'Claude Agent' },
 ] as const;
 
 /**

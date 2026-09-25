@@ -56,7 +56,7 @@ async function listOllamaModels(): Promise<OllamaModel[]> {
 }
 
 function agentLabel(agent: AutomationTask['agent']) {
-  return agent === 'cc' ? 'Claude Code' : 'Codex';
+  return agent === 'cc' ? 'Claude Agent' : 'Codex';
 }
 
 function providerLabel(provider: AutomationTask['model_provider']) {

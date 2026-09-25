@@ -71,7 +71,10 @@ export function DefaultMcpServers({ agent, cwd, servers, onServerAdded }: Defaul
 
   return (
     <div>
-      <h3 className="text-lg font-semibold mb-3">Quick Add Servers</h3>
+      <h3 className="text-lg font-semibold">Quick Add Connectors</h3>
+      <p className="text-sm text-muted-foreground mb-3">
+        Connect agents to external services through MCP servers.
+      </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {defaultServers.map((defaultServer) => {
           const isAlreadyAdded = defaultServer.name in servers;

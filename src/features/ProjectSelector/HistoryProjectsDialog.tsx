@@ -171,7 +171,7 @@ export function HistoryProjectsDialog() {
               >
                 <TabsList>
                   <TabsTrigger value="codex">Codex</TabsTrigger>
-                  <TabsTrigger value="cc">Claude Code</TabsTrigger>
+                  <TabsTrigger value="cc">Claude Agent</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>

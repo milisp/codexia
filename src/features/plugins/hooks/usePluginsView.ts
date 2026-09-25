@@ -15,11 +15,11 @@ import { pluginDetailRequestTarget, pluginUninstallId } from './pluginTargets';
 import { useExternalUrl } from './useExternalUrl';
 
 /** The four primary views shown by the left-side TabSwitcher. */
-export type MainTab = 'Plugins' | 'Tools' | 'Skills' | 'MCP';
+export type MainTab = 'Plugins' | 'Tools' | 'Skills' | 'Connectors';
 /** A full-screen overlay that replaces the main content; null means "no overlay". */
 export type Overlay = 'manage' | 'add' | 'detail' | null;
-export type ManageTab = 'Skills' | 'MCP';
-export type AddTab = 'MCP' | 'Skill';
+export type ManageTab = 'Skills' | 'Connectors';
+export type AddTab = 'Connector' | 'Skill';
 export type SkillScope = 'user' | 'project';
 
 /**
@@ -30,8 +30,8 @@ export function usePluginsView() {
   const { openExternalUrl } = useExternalUrl();
   const [mainTab, setMainTab] = useState<MainTab>('Plugins');
   const [overlay, setOverlay] = useState<Overlay>(null);
-  const [manageTab, setManageTab] = useState<ManageTab>('MCP');
-  const [addTab, setAddTab] = useState<AddTab>('MCP');
+  const [manageTab, setManageTab] = useState<ManageTab>('Connectors');
+  const [addTab, setAddTab] = useState<AddTab>('Connector');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [manageRefreshKey, setManageRefreshKey] = useState(0);
   const [groupsConfig, setGroupsConfig] = useState<SkillGroupsConfig>({ groups: [] });
@@ -59,7 +59,7 @@ export function usePluginsView() {
   const handleMcpAdded = useCallback(() => {
     setManageRefreshKey((k) => k + 1);
     setOverlay('manage');
-    setManageTab('MCP');
+    setManageTab('Connectors');
   }, []);
 
   const handlePluginDetail = useCallback((plugin: PluginDetail | null) => {

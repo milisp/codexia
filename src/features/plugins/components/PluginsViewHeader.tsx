@@ -56,7 +56,7 @@ export function PluginsViewHeader() {
         </Button>
       ) : overlay === 'add' ? (
         <TabSwitcher
-          tabs={['MCP', 'Skill'] as const}
+          tabs={['Connector', 'Skill'] as const}
           active={addTab}
           onChange={setAddTab}
           showLabel={!isMobile}
@@ -73,7 +73,7 @@ export function PluginsViewHeader() {
       ) : (
         !overlay && (
           <TabSwitcher
-            tabs={['Plugins', 'Skills', 'Tools', 'MCP'] as const}
+            tabs={['Plugins', 'Skills', 'Tools', 'Connectors'] as const}
             active={mainTab}
             onChange={setMainTab}
             showLabel={!isMobile}
@@ -104,7 +104,7 @@ export function PluginsViewHeader() {
             className="h-8 w-8"
             title="Add MCP server or install skill"
             onClick={() => {
-              setAddTab(mainTab === 'Skills' ? 'Skill' : 'MCP');
+              setAddTab(mainTab === 'Skills' ? 'Skill' : 'Connector');
               setOverlay('add');
             }}
           >

@@ -33,7 +33,7 @@ export function AgentSwitcher({ variant = 'icon', className }: AgentSwitcherProp
             }`}
           >
             <AgentIcon agent={agent} />
-            <span>{agent === 'cc' ? 'Claude Code' : 'Codex'}</span>
+            <span>{agent === 'cc' ? 'Claude Agent' : 'Codex'}</span>
           </button>
         ))}
       </div>

@@ -124,7 +124,7 @@ export default function AgentsMdView() {
             <Tabs value={currentAgent} onValueChange={handleAgentChange} className="w-auto">
               <TabsList>
                 <TabsTrigger value="codex">Codex</TabsTrigger>
-                <TabsTrigger value="cc">Claude Code</TabsTrigger>
+                <TabsTrigger value="cc">Claude Agent</TabsTrigger>
               </TabsList>
             </Tabs>
             <Tabs
