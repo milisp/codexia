@@ -22,3 +22,6 @@ pub use crate::worktree::{
     clone, git_apply_worktree_changes, git_create_worktree, git_remove_worktree,
     git_has_worktree_changes, scan_all_orphan_worktrees,
 };
+
+#[cfg(test)]
+mod tests;
