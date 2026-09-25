@@ -81,15 +81,15 @@ fn find_app_bundle_macos(app_name: &str) -> Option<PathBuf> {
     }
     if let Ok(home) = std::env::var("HOME") {
         let home_apps = PathBuf::from(home).join("Applications");
-        if home_apps.exists() {
-            if let Ok(entries) = std::fs::read_dir(&home_apps) {
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.is_dir() {
-                        let file_name = path.file_name()?.to_string_lossy().to_string();
-                        if file_name.to_lowercase() == normalized_lower {
-                            return Some(path);
-                        }
+        if home_apps.exists()
+            && let Ok(entries) = std::fs::read_dir(&home_apps)
+        {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    let file_name = path.file_name()?.to_string_lossy().to_string();
+                    if file_name.to_lowercase() == normalized_lower {
+                        return Some(path);
                     }
                 }
             }
@@ -114,30 +114,30 @@ fn find_app_windows(app_name: &str) -> Option<PathBuf> {
         search_paths.push(PathBuf::from(pf86));
     }
 
-    if let Ok(output) = Command::new("where").arg(app_name).output() {
-        if output.status.success() {
-            let path_str = String::from_utf8_lossy(&output.stdout);
-            if let Some(first_line) = path_str.lines().next() {
-                return Some(PathBuf::from(first_line.trim()));
-            }
+    if let Ok(output) = Command::new("where").arg(app_name).output()
+        && output.status.success()
+    {
+        let path_str = String::from_utf8_lossy(&output.stdout);
+        if let Some(first_line) = path_str.lines().next() {
+            return Some(PathBuf::from(first_line.trim()));
         }
     }
 
     for root in search_paths {
-        if root.exists() {
-            if let Ok(entries) = std::fs::read_dir(&root) {
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.is_dir() {
-                        let file_name = path.file_name()?.to_string_lossy().to_string();
-                        if file_name.to_lowercase().contains(&app_name.to_lowercase()) {
-                            if let Ok(inner) = std::fs::read_dir(&path) {
-                                for inner_entry in inner.flatten() {
-                                    let inner_path = inner_entry.path();
-                                    if inner_path.extension().map_or(false, |ext| ext == "exe") {
-                                        return Some(inner_path);
-                                    }
-                                }
+        if root.exists()
+            && let Ok(entries) = std::fs::read_dir(&root)
+        {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    let file_name = path.file_name()?.to_string_lossy().to_string();
+                    if file_name.to_lowercase().contains(&app_name.to_lowercase())
+                        && let Ok(inner) = std::fs::read_dir(&path)
+                    {
+                        for inner_entry in inner.flatten() {
+                            let inner_path = inner_entry.path();
+                            if inner_path.extension().is_some_and(|ext| ext == "exe") {
+                                return Some(inner_path);
                             }
                         }
                     }
@@ -150,15 +150,15 @@ fn find_app_windows(app_name: &str) -> Option<PathBuf> {
 
 #[cfg(target_os = "linux")]
 fn find_app_linux(app_name: &str) -> Option<PathBuf> {
-    if let Ok(output) = Command::new("which").arg(app_name).output() {
-        if output.status.success() {
-            let path_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
-            if !path_str.is_empty() {
-                return Some(PathBuf::from(path_str));
-            }
+    if let Ok(output) = Command::new("which").arg(app_name).output()
+        && output.status.success()
+    {
+        let path_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if !path_str.is_empty() {
+            return Some(PathBuf::from(path_str));
         }
     }
-    let paths = vec!["/usr/bin", "/usr/local/bin", "/opt", "/snap/bin"];
+    let paths = ["/usr/bin", "/usr/local/bin", "/opt", "/snap/bin"];
     for path in paths {
         let full = PathBuf::from(path).join(app_name);
         if full.exists() {

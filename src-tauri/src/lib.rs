@@ -6,10 +6,10 @@ mod commands;
 pub mod dictation;
 #[cfg(desktop)]
 mod event_sink;
-#[cfg(all(any(windows, target_os = "linux")))]
-mod window;
-#[cfg(all(target_os = "macos"))]
+#[cfg(target_os = "macos")]
 mod menu;
+#[cfg(any(windows, target_os = "linux"))]
+mod window;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -251,15 +251,17 @@ pub fn run() {
             // macOS: clicking the Dock icon when the main window is hidden should show it.
             #[cfg(target_os = "macos")]
             {
-            use tauri::Manager;
-            if let tauri::RunEvent::Reopen { has_visible_windows, .. } = &_event {
-                if !has_visible_windows {
-                    if let Some(window) = _app.get_webview_window("main") {
-                        let _ = window.show();
-                        let _ = window.set_focus();
-                    }
+                use tauri::Manager;
+                if let tauri::RunEvent::Reopen {
+                    has_visible_windows,
+                    ..
+                } = &_event
+                    && !has_visible_windows
+                    && let Some(window) = _app.get_webview_window("main")
+                {
+                    let _ = window.show();
+                    let _ = window.set_focus();
                 }
-            }
             }
         });
 }

@@ -46,9 +46,10 @@ fn extract_owner_repo(repo: &gix::Repository) -> (String, String) {
         });
 
     if let Some(url) = url_str
-        && let Some(pair) = parse_remote_url_owner_repo(&url) {
-            return pair;
-        }
+        && let Some(pair) = parse_remote_url_owner_repo(&url)
+    {
+        return pair;
+    }
 
     // Fall back to directory name as repo name
     let repo_name = repo
@@ -245,12 +246,11 @@ fn parse_remote_url_owner_repo(url: &str) -> Option<(String, String)> {
     // Normalize SSH colon separator to slash so both formats share the same split logic
     let normalized = if url.contains("://") {
         url.to_string()
-    } else if let Some(pos) = url.find(':') {
+    } else {
+        let pos = url.find(':')?;
         let mut s = url.to_string();
         s.replace_range(pos..=pos, "/");
         s
-    } else {
-        return None;
     };
 
     // Take the last two non-empty path segments: owner and repo

@@ -83,10 +83,10 @@ impl NoSleepController {
             }
         }
 
-        if self.active_conversations.is_empty() {
-            if let Some(nosleep) = self.nosleep.as_ref() {
-                nosleep.stop().map_err(|err| err.to_string())?;
-            }
+        if self.active_conversations.is_empty()
+            && let Some(nosleep) = self.nosleep.as_ref()
+        {
+            nosleep.stop().map_err(|err| err.to_string())?;
         }
 
         Ok(())

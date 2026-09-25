@@ -107,14 +107,14 @@ pub async fn load_and_fetch_models() -> Result<Vec<FrontendProviderModels>, Stri
         // adding a model, not entries pushed into the user's model list.
         if provider.auto_discover {
             let url = format!("{}/models", provider.base_url.trim_end_matches('/'));
-            if let Ok(resp) = client.get(&url).send().await {
-                if let Ok(remote_data) = resp.json::<RemoteModelResponse>().await {
-                    for model in remote_data.data {
-                        frontend_models.push(FrontendModel {
-                            id: model.id,
-                            context_length: None,
-                        });
-                    }
+            if let Ok(resp) = client.get(&url).send().await
+                && let Ok(remote_data) = resp.json::<RemoteModelResponse>().await
+            {
+                for model in remote_data.data {
+                    frontend_models.push(FrontendModel {
+                        id: model.id,
+                        context_length: None,
+                    });
                 }
             }
         }

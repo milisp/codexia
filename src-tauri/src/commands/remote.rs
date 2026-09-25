@@ -73,11 +73,11 @@ fn set_remote_enabled(enabled: bool) {
 
     settings["remote"] = serde_json::json!({ "enabled": enabled });
 
-    if let Some(parent) = path.parent() {
-        if let Err(err) = std::fs::create_dir_all(parent) {
-            log::warn!("[remote] could not create {}: {err}", parent.display());
-            return;
-        }
+    if let Some(parent) = path.parent()
+        && let Err(err) = std::fs::create_dir_all(parent)
+    {
+        log::warn!("[remote] could not create {}: {err}", parent.display());
+        return;
     }
     match serde_json::to_string_pretty(&settings) {
         Ok(contents) => {

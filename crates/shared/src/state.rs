@@ -8,8 +8,11 @@ pub enum WatcherKind {
     Debouncer(Debouncer<RecommendedWatcher, FileIdMap>),
 }
 
+/// A watcher plus the number of subscribers sharing it.
+type WatcherEntry = (Mutex<WatcherKind>, usize);
+
 pub struct WatchState {
-    pub watchers: Arc<Mutex<HashMap<String, (Mutex<WatcherKind>, usize)>>>,
+    pub watchers: Arc<Mutex<HashMap<String, WatcherEntry>>>,
 }
 
 impl WatchState {

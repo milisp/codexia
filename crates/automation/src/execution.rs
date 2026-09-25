@@ -279,10 +279,10 @@ mod tests {
                 release.notified().await;
             }
 
-            if let Some(cwd) = spec.cwd.as_ref() {
-                if self.fail_for.contains(cwd) {
-                    return Err("boom".to_string());
-                }
+            if let Some(cwd) = spec.cwd.as_ref()
+                && self.fail_for.contains(cwd)
+            {
+                return Err("boom".to_string());
             }
             Ok((self.outcome)())
         }

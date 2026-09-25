@@ -55,11 +55,15 @@ fn apply_filters(
     let cutoff = range.as_deref().and_then(range_to_cutoff);
     records
         .into_iter()
-        .filter(|r| cutoff.map_or(true, |c| r.created_at.date_naive() >= c))
-        .filter(|r| cwd.as_ref().map_or(true, |f| r.cwd.as_deref() == Some(f)))
-        .filter(|r| session_id.as_ref().map_or(true, |f| r.session_id.as_deref() == Some(f)))
+        .filter(|r| cutoff.is_none_or(|c| r.created_at.date_naive() >= c))
+        .filter(|r| cwd.as_ref().is_none_or(|f| r.cwd.as_deref() == Some(f)))
         .filter(|r| {
-            agent.as_ref().map_or(true, |f| match f.as_str() {
+            session_id
+                .as_ref()
+                .is_none_or(|f| r.session_id.as_deref() == Some(f))
+        })
+        .filter(|r| {
+            agent.as_ref().is_none_or(|f| match f.as_str() {
                 "Claude" => matches!(r.agent_type, AgentType::Claude),
                 "Codex"  => matches!(r.agent_type, AgentType::Codex),
                 "Gemini" => matches!(r.agent_type, AgentType::Gemini),
@@ -126,7 +130,7 @@ where
         })
         .collect();
 
-    items.sort_by(|a, b| b.total_tokens.cmp(&a.total_tokens));
+    items.sort_by_key(|item| std::cmp::Reverse(item.total_tokens));
     items.truncate(top);
     items
 }

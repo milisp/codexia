@@ -113,7 +113,7 @@ pub async fn fetch_leaderboard(_board: &str) -> Result<Vec<MarketSkill>> {
     }
 
     let mut results: Vec<MarketSkill> = seen.into_values().collect();
-    results.sort_by(|a, b| b.installs.cmp(&a.installs));
+    results.sort_by_key(|skill| std::cmp::Reverse(skill.installs));
     Ok(results)
 }
 
@@ -200,12 +200,11 @@ fn find_skill_dir(repo_root: &std::path::Path, skill_id: &str) -> Result<PathBuf
             }
             if name_match.is_none() {
                 let skill_md = entry.path().join("SKILL.md");
-                if skill_md.exists() {
-                    if let Ok(fm) = crate::skills::parse_skill_front_matter(&skill_md) {
-                        if fm.name.as_deref() == Some(skill_id) {
-                            name_match = Some(entry.path().to_path_buf());
-                        }
-                    }
+                if skill_md.exists()
+                    && let Ok(fm) = crate::skills::parse_skill_front_matter(&skill_md)
+                    && fm.name.as_deref() == Some(skill_id)
+                {
+                    name_match = Some(entry.path().to_path_buf());
                 }
             }
         }

@@ -43,17 +43,15 @@ pub async fn cc_mcp_list(working_dir: String) -> Result<Vec<ClaudeCodeMcpServer>
 
     // Extract disabled_servers set from ~/.claude.json.projects[working_dir].disabledMcpServers
     let mut disabled_servers = HashSet::new();
-    if let Some(projects) = config.get("projects") {
-        if let Some(project_config) = projects.get(&working_dir) {
-            if let Some(disabled) = project_config
-                .get("disabledMcpServers")
-                .and_then(|v| v.as_array())
-            {
-                for v in disabled {
-                    if let Some(name) = v.as_str() {
-                        disabled_servers.insert(name.to_string());
-                    }
-                }
+    if let Some(projects) = config.get("projects")
+        && let Some(project_config) = projects.get(&working_dir)
+        && let Some(disabled) = project_config
+            .get("disabledMcpServers")
+            .and_then(|v| v.as_array())
+    {
+        for v in disabled {
+            if let Some(name) = v.as_str() {
+                disabled_servers.insert(name.to_string());
             }
         }
     }
@@ -94,19 +92,17 @@ pub async fn cc_mcp_list(working_dir: String) -> Result<Vec<ClaudeCodeMcpServer>
     }
 
     // 3) Load local per-project MCP servers from ~/.claude.json.projects[working_dir].mcpServers
-    if let Some(projects) = config.get("projects") {
-        if let Some(project_config) = projects.get(&working_dir) {
-            if let Some(local_mcp_servers) =
-                project_config.get("mcpServers").and_then(|v| v.as_object())
-            {
-                for (name, server_config) in local_mcp_servers {
-                    if let Ok(mut server) = parse_server_config(name, server_config) {
-                        server.scope = "local".to_string();
-                        server.enabled = !disabled_servers.contains(name);
-                        // local overrides project and global
-                        servers_map.insert(name.clone(), server);
-                    }
-                }
+    if let Some(projects) = config.get("projects")
+        && let Some(project_config) = projects.get(&working_dir)
+        && let Some(local_mcp_servers) =
+            project_config.get("mcpServers").and_then(|v| v.as_object())
+    {
+        for (name, server_config) in local_mcp_servers {
+            if let Ok(mut server) = parse_server_config(name, server_config) {
+                server.scope = "local".to_string();
+                server.enabled = !disabled_servers.contains(name);
+                // local overrides project and global
+                servers_map.insert(name.clone(), server);
             }
         }
     }
@@ -391,11 +387,11 @@ pub async fn cc_list_projects() -> Result<Vec<String>, String> {
 
     let mut projects = Vec::new();
 
-    if let Some(projects_obj) = config.get("projects") {
-        if let Some(projects_map) = projects_obj.as_object() {
-            for project_name in projects_map.keys() {
-                projects.push(project_name.clone());
-            }
+    if let Some(projects_obj) = config.get("projects")
+        && let Some(projects_map) = projects_obj.as_object()
+    {
+        for project_name in projects_map.keys() {
+            projects.push(project_name.clone());
         }
     }
 

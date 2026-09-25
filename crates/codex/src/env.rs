@@ -8,22 +8,22 @@ pub fn get_env(key: String) -> Result<String, String> {
     #[cfg(target_os = "windows")]
     {
         let root = RegKey::predef(HKEY_CURRENT_USER);
-        if let Ok(env_key) = root.open_subkey("Environment") {
-            if let Ok(value) = env_key.get_value::<String, _>(&key) {
-                return Ok(value);
-            }
+        if let Ok(env_key) = root.open_subkey("Environment")
+            && let Ok(value) = env_key.get_value::<String, _>(&key)
+        {
+            return Ok(value);
         }
     }
 
     #[cfg(target_os = "macos")]
     {
         let cmd = format!("source ~/.zshrc && echo ${}", key);
-        if let Ok(output) = Command::new("zsh").args(["-c", &cmd]).output() {
-            if output.status.success() {
-                let value = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                if !value.is_empty() {
-                    return Ok(value);
-                }
+        if let Ok(output) = Command::new("zsh").args(["-c", &cmd]).output()
+            && output.status.success()
+        {
+            let value = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            if !value.is_empty() {
+                return Ok(value);
             }
         }
     }

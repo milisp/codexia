@@ -103,17 +103,16 @@ impl AgentRunner for CcAgentRunner {
         .await;
 
         let alias = real_session_id.lock().unwrap().clone();
-        if let Some(alias) = alias {
-            if alias != session_id {
-                if let Err(err) = session_service::disconnect(alias.as_str(), &self.cc_state).await {
-                    log::warn!(
-                        "failed to disconnect cc session {} for automation '{}': {}",
-                        alias,
-                        spec.task_id,
-                        err
-                    );
-                }
-            }
+        if let Some(alias) = alias
+            && alias != session_id
+            && let Err(err) = session_service::disconnect(alias.as_str(), &self.cc_state).await
+        {
+            log::warn!(
+                "failed to disconnect cc session {} for automation '{}': {}",
+                alias,
+                spec.task_id,
+                err
+            );
         }
 
         if let Err(err) = session_service::disconnect(session_id.as_str(), &self.cc_state).await {

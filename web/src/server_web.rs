@@ -40,12 +40,11 @@ pub async fn start_web_server_with_events(
         automation_sink,
     )
     .await
-    .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
+    .map_err(std::io::Error::other)?;
 
     codexia_cc::scan::start_session_scanner();
 
-    let device_token = DeviceToken::load_or_create()
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+    let device_token = DeviceToken::load_or_create().map_err(std::io::Error::other)?;
 
     let state = WebServerState::new(
         codex_state,
@@ -174,6 +173,7 @@ fn log_remote_access(host: &str, port: u16) {
 /// would double-fire their work.
 ///
 /// Returns once `shutdown` resolves, releasing the port.
+#[allow(clippy::too_many_arguments)]
 pub async fn serve_api<F>(
     codex_state: Option<Arc<AppState>>,
     automation: Option<codexia_automation::AutomationHandle>,
