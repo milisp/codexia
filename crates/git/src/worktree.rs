@@ -194,10 +194,9 @@ fn copy_env_files(src: &Path, dst: &Path) -> Vec<String> {
     for name in ENV_FILES {
         let src_file = src.join(name);
         let dst_file = dst.join(name);
-        if src_file.exists() && !dst_file.exists()
-            && std::fs::copy(&src_file, &dst_file).is_ok() {
-                copied.push(name.to_string());
-            }
+        if src_file.exists() && !dst_file.exists() && std::fs::copy(&src_file, &dst_file).is_ok() {
+            copied.push(name.to_string());
+        }
     }
     copied
 }

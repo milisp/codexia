@@ -90,9 +90,10 @@ fn index_to_tree(repo: &gix::Repository) -> Result<gix::ObjectId, String> {
 
     // Fast path: use the cached tree root from the TREE extension when present
     if let Some(cached) = worktree_index.tree()
-        && cached.num_entries.is_some() {
-            return Ok(cached.id);
-        }
+        && cached.num_entries.is_some()
+    {
+        return Ok(cached.id);
+    }
 
     // Slow path: reconstruct the tree hierarchy from index entries
     let backing = worktree_index.path_backing();

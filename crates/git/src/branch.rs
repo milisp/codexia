@@ -46,9 +46,10 @@ fn extract_owner_repo(repo: &gix::Repository) -> (String, String) {
         });
 
     if let Some(url) = url_str
-        && let Some(pair) = parse_remote_url_owner_repo(&url) {
-            return pair;
-        }
+        && let Some(pair) = parse_remote_url_owner_repo(&url)
+    {
+        return pair;
+    }
 
     // Fall back to directory name as repo name
     let repo_name = repo
