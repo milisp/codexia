@@ -67,7 +67,7 @@ pub struct TerminalStopParams {
 pub fn get_default_shell() -> String {
     #[cfg(target_os = "windows")]
     {
-        return "powershell.exe".to_string();
+        "powershell.exe".to_string()
     }
 
     #[cfg(target_os = "macos")]
@@ -77,7 +77,7 @@ pub fn get_default_shell() -> String {
 
     #[cfg(all(unix, not(target_os = "macos")))]
     {
-        return std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".to_string());
+        std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".to_string())
     }
 }
 

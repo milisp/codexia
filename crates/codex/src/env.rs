@@ -8,10 +8,10 @@ pub fn get_env(key: String) -> Result<String, String> {
     #[cfg(target_os = "windows")]
     {
         let root = RegKey::predef(HKEY_CURRENT_USER);
-        if let Ok(env_key) = root.open_subkey("Environment") {
-            if let Ok(value) = env_key.get_value::<String, _>(&key) {
-                return Ok(value);
-            }
+        if let Ok(env_key) = root.open_subkey("Environment")
+            && let Ok(value) = env_key.get_value::<String, _>(&key)
+        {
+            return Ok(value);
         }
     }
 
