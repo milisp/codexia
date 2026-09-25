@@ -1,18 +1,12 @@
 import { Check, ChevronDown, Monitor, Split } from 'lucide-react';
-import { useState } from 'react';
 import type { ThreadCwdMode } from '@/components/codex/stores';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAgentSettingsStore } from '@/stores';
-import { useRateLimits } from '../codex/hooks/useRateLimits';
-import { RateLimitContent, RateLimitTrigger } from '../codex/widget/RateLimitWidget';
 
 interface AgentWorkspaceSelectProps {
   value: ThreadCwdMode;
@@ -30,12 +24,6 @@ const MODE_LABELS: Record<ThreadCwdMode, string> = {
 };
 
 export function AgentWorkspaceSelect({ value, onValueChange }: AgentWorkspaceSelectProps) {
-  const { selectedAgent } = useAgentSettingsStore();
-  const [rateLimitOpen, setRateLimitOpen] = useState(false);
-  // Fetch eagerly so data is ready when user expands
-  const rateLimits = useRateLimits();
-  const primaryWindow = rateLimits?.rateLimits.primary ?? null;
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -63,25 +51,6 @@ export function AgentWorkspaceSelect({ value, onValueChange }: AgentWorkspaceSel
           </span>
           {value === 'worktree' && <Check />}
         </DropdownMenuItem>
-        {selectedAgent === 'codex' && (
-          <>
-            <DropdownMenuSeparator />
-            {/* Rate limit toggle — participates in ↑↓ navigation */}
-            <DropdownMenuItem
-              onSelect={(e) => {
-                e.preventDefault(); // prevent menu close
-                setRateLimitOpen((o) => !o);
-              }}
-            >
-              <RateLimitTrigger isOpen={rateLimitOpen} />
-            </DropdownMenuItem>
-            {rateLimitOpen && (
-              <DropdownMenuLabel className="font-normal p-0">
-                <RateLimitContent primaryWindow={primaryWindow} />
-              </DropdownMenuLabel>
-            )}
-          </>
-        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
