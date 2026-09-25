@@ -5,7 +5,15 @@ import { persist } from 'zustand/middleware';
 export type Theme = 'light' | 'dark' | 'system';
 
 // Accent color theme
-export type Accent = 'ghibli' | 'black' | 'pink' | 'blue' | 'green' | 'purple' | 'orange';
+export type Accent =
+  | 'default'
+  | 'ghibli'
+  | 'black'
+  | 'pink'
+  | 'blue'
+  | 'green'
+  | 'purple'
+  | 'orange';
 
 interface ThemeState {
   theme: Theme;
@@ -23,8 +31,8 @@ export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
       theme: 'system',
-      accent: 'ghibli',
-      starfield: true,
+      accent: 'default',
+      starfield: false,
       backgroundImage: null,
       setTheme: (theme: Theme) => set({ theme }),
       toggleTheme: () =>
@@ -41,6 +49,16 @@ export const useThemeStore = create<ThemeState>()(
     }),
     {
       name: 'theme-storage',
+      version: 1,
+      migrate: (persistedState, version) => {
+        const state = persistedState as Partial<ThemeState>;
+        // v0 shipped the Ghibli scene as the default; most users never picked it,
+        // so move them to the plain default. It stays one click away in Settings.
+        if (version < 1 && state.accent === 'ghibli') {
+          return { ...state, accent: 'default' } as ThemeState;
+        }
+        return state as ThemeState;
+      },
     }
   )
 );
