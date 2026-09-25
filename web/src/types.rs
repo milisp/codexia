@@ -41,6 +41,7 @@ pub struct WebServerState {
 }
 
 impl WebServerState {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         codex_state: Option<Arc<AppState>>,
         automation: Option<AutomationHandle>,

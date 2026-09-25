@@ -162,14 +162,13 @@ pub fn sync_automation_run_status(payload: &serde_json::Value) {
                 .get("params")
                 .and_then(|p| p.get("threadId"))
                 .and_then(serde_json::Value::as_str)
+                && let Err(err) = mark_run_status_by_thread(thread_id, mapped_status)
             {
-                if let Err(err) = mark_run_status_by_thread(thread_id, mapped_status) {
-                    log::warn!(
-                        "failed to sync automation run status from codex turn/completed for thread {}: {}",
-                        thread_id,
-                        err
-                    );
-                }
+                log::warn!(
+                    "failed to sync automation run status from codex turn/completed for thread {}: {}",
+                    thread_id,
+                    err
+                );
             }
         }
         Some("error") => {
@@ -177,14 +176,13 @@ pub fn sync_automation_run_status(payload: &serde_json::Value) {
                 .get("params")
                 .and_then(|p| p.get("threadId"))
                 .and_then(serde_json::Value::as_str)
+                && let Err(err) = mark_run_status_by_thread(thread_id, "failed")
             {
-                if let Err(err) = mark_run_status_by_thread(thread_id, "failed") {
-                    log::warn!(
-                        "failed to sync automation run status from codex error for thread {}: {}",
-                        thread_id,
-                        err
-                    );
-                }
+                log::warn!(
+                    "failed to sync automation run status from codex error for thread {}: {}",
+                    thread_id,
+                    err
+                );
             }
         }
         _ => {}

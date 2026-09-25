@@ -44,14 +44,16 @@ pub(super) fn staged_diff_stats(repo: &gix::Repository) -> Result<GitDiffStatsCo
             gix::worktree::stack::state::attributes::Source::IdMapping,
         )
         .map_err(|err| format!("Failed to prepare pathspec: {err}"))?;
-    let mut rewrites = gix::diff::Rewrites::default();
-    rewrites.limit = 0;
+    let rewrites = gix::diff::Rewrites {
+        limit: 0,
+        ..Default::default()
+    };
 
     let mut total = GitDiffStatsCounts::default();
     let mut callback_err: Option<String> = None;
     repo.tree_index_status(
         head_tree_id.as_ref(),
-        &*index,
+        &index,
         Some(&mut pathspec),
         gix::status::tree_index::TrackRenames::Given(rewrites),
         |change, _, _| {

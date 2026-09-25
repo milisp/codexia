@@ -28,10 +28,10 @@ fn scan_commands_dir(dir: &Path, out: &mut Vec<String>) {
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.filter_map(|e| e.ok()) {
             let path = entry.path();
-            if path.extension().and_then(|e| e.to_str()) == Some("md") {
-                if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
-                    out.push(stem.to_string());
-                }
+            if path.extension().and_then(|e| e.to_str()) == Some("md")
+                && let Some(stem) = path.file_stem().and_then(|s| s.to_str())
+            {
+                out.push(stem.to_string());
             }
         }
     }
@@ -52,13 +52,13 @@ pub fn get_slash_commands(cwd: Option<&str>) -> Result<Vec<String>, String> {
     }
 
     // Project-level custom commands
-    if let Some(cwd_str) = cwd {
-        if !cwd_str.is_empty() {
-            scan_commands_dir(
-                &Path::new(cwd_str).join(".claude").join("commands"),
-                &mut commands,
-            );
-        }
+    if let Some(cwd_str) = cwd
+        && !cwd_str.is_empty()
+    {
+        scan_commands_dir(
+            &Path::new(cwd_str).join(".claude").join("commands"),
+            &mut commands,
+        );
     }
 
     commands.sort();
@@ -84,10 +84,10 @@ pub fn get_installed_skills() -> Result<Vec<String>, String> {
 
         if path.is_dir() {
             // Check if SKILL.md exists
-            if path.join("SKILL.md").exists() {
-                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                    skills.push(name.to_string());
-                }
+            if path.join("SKILL.md").exists()
+                && let Some(name) = path.file_name().and_then(|n| n.to_str())
+            {
+                skills.push(name.to_string());
             }
         }
     }

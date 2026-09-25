@@ -26,12 +26,14 @@ pub fn git_status(cwd: String) -> Result<GitStatusResult, String> {
             gix::worktree::stack::state::attributes::Source::IdMapping,
         )
         .map_err(|err| format!("Failed to prepare full-repo pathspec: {err}"))?;
-    let mut rename_tracking = gix::diff::Rewrites::default();
-    rename_tracking.limit = 0;
+    let rename_tracking = gix::diff::Rewrites {
+        limit: 0,
+        ..Default::default()
+    };
 
     repo.tree_index_status(
         head_tree_id.as_ref(),
-        &*index,
+        &index,
         Some(&mut full_repo_pathspec),
         gix::status::tree_index::TrackRenames::Given(rename_tracking),
         |change, _, _| {

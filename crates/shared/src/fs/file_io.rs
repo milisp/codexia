@@ -3,9 +3,9 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 
 pub async fn read_text_file(file_path: String) -> Result<String, String> {
-    let expanded_path = if file_path.starts_with("~/") {
+    let expanded_path = if let Some(rest) = file_path.strip_prefix("~/") {
         let home = dirs::home_dir().ok_or_else(|| "Cannot find home directory".to_string())?;
-        home.join(&file_path[2..])
+        home.join(rest)
     } else {
         Path::new(&file_path).to_path_buf()
     };
@@ -15,11 +15,11 @@ pub async fn read_text_file(file_path: String) -> Result<String, String> {
     }
 
     // Check file size to prevent reading very large files
-    if let Ok(metadata) = fs::metadata(&expanded_path) {
-        if metadata.len() > 1024 * 1024 {
-            // 1MB limit
-            return Err("File is too large to display".to_string());
-        }
+    if let Ok(metadata) = fs::metadata(&expanded_path)
+        && metadata.len() > 1024 * 1024
+    {
+        // 1MB limit
+        return Err("File is too large to display".to_string());
     }
 
     match fs::read_to_string(&expanded_path) {
@@ -29,9 +29,9 @@ pub async fn read_text_file(file_path: String) -> Result<String, String> {
 }
 
 pub async fn write_file(file_path: String, content: String) -> Result<(), String> {
-    let expanded_path = if file_path.starts_with("~/") {
+    let expanded_path = if let Some(rest) = file_path.strip_prefix("~/") {
         let home = dirs::home_dir().ok_or_else(|| "Cannot find home directory".to_string())?;
-        home.join(&file_path[2..])
+        home.join(rest)
     } else {
         Path::new(&file_path).to_path_buf()
     };
@@ -42,24 +42,43 @@ pub async fn write_file(file_path: String, content: String) -> Result<(), String
         .and_then(|ext| ext.to_str())
         .map(|s| s.to_lowercase());
 
-    let is_text_file = match extension.as_deref() {
-        Some("txt") | Some("md") | Some("json") | Some("xml") | Some("yaml") | Some("yml")
-        | Some("js") | Some("jsx") | Some("ts") | Some("tsx") | Some("rs") | Some("py")
-        | Some("java") | Some("cpp") | Some("c") | Some("h") | Some("css") | Some("html")
-        | Some("toml") | Some("cfg") | Some("ini") | Some("sh") | Some("log") => true,
-        _ => false,
-    };
+    let is_text_file = matches!(
+        extension.as_deref(),
+        Some("txt")
+            | Some("md")
+            | Some("json")
+            | Some("xml")
+            | Some("yaml")
+            | Some("yml")
+            | Some("js")
+            | Some("jsx")
+            | Some("ts")
+            | Some("tsx")
+            | Some("rs")
+            | Some("py")
+            | Some("java")
+            | Some("cpp")
+            | Some("c")
+            | Some("h")
+            | Some("css")
+            | Some("html")
+            | Some("toml")
+            | Some("cfg")
+            | Some("ini")
+            | Some("sh")
+            | Some("log")
+    );
 
     if !is_text_file {
         return Err("Only text files can be edited".to_string());
     }
 
     // Create parent directory if it doesn't exist
-    if let Some(parent) = expanded_path.parent() {
-        if !parent.exists() {
-            fs::create_dir_all(parent)
-                .map_err(|e| format!("Failed to create parent directory: {}", e))?;
-        }
+    if let Some(parent) = expanded_path.parent()
+        && !parent.exists()
+    {
+        fs::create_dir_all(parent)
+            .map_err(|e| format!("Failed to create parent directory: {}", e))?;
     }
 
     match fs::write(&expanded_path, content) {
@@ -69,9 +88,9 @@ pub async fn write_file(file_path: String, content: String) -> Result<(), String
 }
 
 pub async fn delete_file(file_path: String) -> Result<(), String> {
-    let expanded_path = if file_path.starts_with("~/") {
+    let expanded_path = if let Some(rest) = file_path.strip_prefix("~/") {
         let home = dirs::home_dir().ok_or_else(|| "Cannot find home directory".to_string())?;
-        home.join(&file_path[2..])
+        home.join(rest)
     } else {
         Path::new(&file_path).to_path_buf()
     };
@@ -91,9 +110,9 @@ pub async fn delete_file(file_path: String) -> Result<(), String> {
 }
 
 pub async fn read_text_file_lines(file_path: String) -> Result<Vec<String>, String> {
-    let expanded_path = if file_path.starts_with("~/") {
+    let expanded_path = if let Some(rest) = file_path.strip_prefix("~/") {
         let home = dirs::home_dir().ok_or_else(|| "Cannot find home directory".to_string())?;
-        home.join(&file_path[2..])
+        home.join(rest)
     } else {
         Path::new(&file_path).to_path_buf()
     };
@@ -103,11 +122,11 @@ pub async fn read_text_file_lines(file_path: String) -> Result<Vec<String>, Stri
     }
 
     // Check file size to prevent reading very large files
-    if let Ok(metadata) = fs::metadata(&expanded_path) {
-        if metadata.len() > 5 * 1024 * 1024 {
-            // 1MB limit
-            return Err("File is too large to read".to_string());
-        }
+    if let Ok(metadata) = fs::metadata(&expanded_path)
+        && metadata.len() > 5 * 1024 * 1024
+    {
+        // 1MB limit
+        return Err("File is too large to read".to_string());
     }
 
     match fs::File::open(&expanded_path) {
@@ -128,9 +147,9 @@ pub async fn read_text_file_lines(file_path: String) -> Result<Vec<String>, Stri
 pub async fn read_file(file_path: String) -> Result<String, String> {
     use base64::{Engine as _, engine::general_purpose::STANDARD};
 
-    let expanded_path = if file_path.starts_with("~/") {
+    let expanded_path = if let Some(rest) = file_path.strip_prefix("~/") {
         let home = dirs::home_dir().ok_or_else(|| "Cannot find home directory".to_string())?;
-        home.join(&file_path[2..])
+        home.join(rest)
     } else {
         Path::new(&file_path).to_path_buf()
     };
@@ -139,10 +158,10 @@ pub async fn read_file(file_path: String) -> Result<String, String> {
         return Err("File does not exist or is a directory".to_string());
     }
 
-    if let Ok(metadata) = fs::metadata(&expanded_path) {
-        if metadata.len() > 50 * 1024 * 1024 {
-            return Err("File is too large to read".to_string());
-        }
+    if let Ok(metadata) = fs::metadata(&expanded_path)
+        && metadata.len() > 50 * 1024 * 1024
+    {
+        return Err("File is too large to read".to_string());
     }
 
     match fs::read(&expanded_path) {

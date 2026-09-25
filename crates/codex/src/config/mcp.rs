@@ -16,14 +16,14 @@ fn is_enabled_true(enabled: &bool) -> bool {
 }
 
 fn inline_env_table(table: &mut Table) {
-    if let Some(env_entry) = table.get_mut("env") {
-        if env_entry.is_table() {
-            let env_item = std::mem::take(env_entry);
-            if let Item::Table(env_table) = env_item {
-                *env_entry = Item::Value(Value::InlineTable(env_table.into_inline_table()));
-            } else {
-                *env_entry = env_item;
-            }
+    if let Some(env_entry) = table.get_mut("env")
+        && env_entry.is_table()
+    {
+        let env_item = std::mem::take(env_entry);
+        if let Item::Table(env_table) = env_item {
+            *env_entry = Item::Value(Value::InlineTable(env_table.into_inline_table()));
+        } else {
+            *env_entry = env_item;
         }
     }
 }

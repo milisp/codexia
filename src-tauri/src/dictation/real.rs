@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{mpsc, Arc, Mutex as StdMutex};
 use std::time::{Duration, Instant};
@@ -47,7 +47,8 @@ async fn request_microphone_permission(app: &AppHandle) -> Result<bool, String> 
             }
             request_microphone_permission_with_completion(app).await
         }
-        AVAuthorizationStatus::NotDetermined | _ => {
+        // NotDetermined, plus any status added by future SDKs.
+        _ => {
             MIC_PERMISSION_REQUESTED.store(true, Ordering::SeqCst);
             request_microphone_permission_with_completion(app).await
         }
@@ -70,10 +71,10 @@ fn trigger_microphone_permission_request(tx: oneshot::Sender<Result<bool, String
     let tx = Arc::new(StdMutex::new(Some(tx)));
     let tx_clone = Arc::clone(&tx);
     let block = RcBlock::new(move |granted: Bool| {
-        if let Ok(mut guard) = tx_clone.lock() {
-            if let Some(sender) = guard.take() {
-                let _ = sender.send(Ok(granted.as_bool()));
-            }
+        if let Ok(mut guard) = tx_clone.lock()
+            && let Some(sender) = guard.take()
+        {
+            let _ = sender.send(Ok(granted.as_bool()));
         }
     });
 
@@ -296,7 +297,7 @@ fn missing_status(model_id: &str) -> DictationModelStatus {
     }
 }
 
-fn ready_status(model_id: &str, path: &PathBuf) -> DictationModelStatus {
+fn ready_status(model_id: &str, path: &Path) -> DictationModelStatus {
     DictationModelStatus {
         state: DictationModelState::Ready,
         model_id: model_id.to_string(),
@@ -319,7 +320,7 @@ async fn clear_processing_cancel(state: &DictationState, cancel_flag: &Arc<Atomi
     if inner
         .processing_cancel
         .as_ref()
-        .map_or(false, |flag| Arc::ptr_eq(flag, cancel_flag))
+        .is_some_and(|flag| Arc::ptr_eq(flag, cancel_flag))
     {
         inner.processing_cancel = None;
         return true;
@@ -1341,13 +1342,13 @@ where
                 if frames == 0 {
                     return;
                 }
-                if let Ok(mut buffer) = audio.lock() {
-                    if buffer.len() < max_samples {
-                        let remaining = max_samples.saturating_sub(buffer.len());
-                        let slice_len = remaining.min(mono_buffer.len());
-                        if slice_len > 0 {
-                            buffer.extend_from_slice(&mono_buffer[..slice_len]);
-                        }
+                if let Ok(mut buffer) = audio.lock()
+                    && buffer.len() < max_samples
+                {
+                    let remaining = max_samples.saturating_sub(buffer.len());
+                    let slice_len = remaining.min(mono_buffer.len());
+                    if slice_len > 0 {
+                        buffer.extend_from_slice(&mono_buffer[..slice_len]);
                     }
                 }
                 let rms = (sum / frames as f32).sqrt();
@@ -1427,21 +1428,19 @@ fn transcribe_audio(
     params.set_no_context(true);
     params.set_single_segment(false);
     let mut forced_language: Option<String> = None;
-    if let Some(preferred) = preferred_language.clone() {
-        if let Some(pref_id) = get_lang_id(&preferred) {
-            if state.pcm_to_mel(&audio, threads).is_ok() {
-                if let Ok((_detected, probs)) = state.lang_detect(0, threads) {
-                    let pref_index = pref_id.max(0) as usize;
-                    let pref_prob = probs.get(pref_index).copied().unwrap_or(0.0);
-                    let best_prob = probs
-                        .iter()
-                        .copied()
-                        .fold(0.0_f32, |acc, value| acc.max(value));
-                    if best_prob > 0.0 && (best_prob - pref_prob) <= 0.30 {
-                        forced_language = Some(preferred);
-                    }
-                }
-            }
+    if let Some(preferred) = preferred_language.clone()
+        && let Some(pref_id) = get_lang_id(&preferred)
+        && state.pcm_to_mel(&audio, threads).is_ok()
+        && let Ok((_detected, probs)) = state.lang_detect(0, threads)
+    {
+        let pref_index = pref_id.max(0) as usize;
+        let pref_prob = probs.get(pref_index).copied().unwrap_or(0.0);
+        let best_prob = probs
+            .iter()
+            .copied()
+            .fold(0.0_f32, |acc, value| acc.max(value));
+        if best_prob > 0.0 && (best_prob - pref_prob) <= 0.30 {
+            forced_language = Some(preferred);
         }
     }
 

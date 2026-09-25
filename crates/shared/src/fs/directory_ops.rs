@@ -14,9 +14,9 @@ fn is_dot_git(name: &str) -> bool {
 }
 
 pub async fn read_directory(path: String) -> Result<Vec<FileEntry>, String> {
-    let expanded_path = if path.starts_with("~/") {
+    let expanded_path = if let Some(rest) = path.strip_prefix("~/") {
         let home = dirs::home_dir().ok_or_else(|| "Cannot find home directory".to_string())?;
-        home.join(&path[2..])
+        home.join(rest)
     } else {
         Path::new(&path).to_path_buf()
     };
@@ -91,9 +91,9 @@ pub async fn search_files(
     // Optional cap to avoid returning an extremely large result set
     max_results: Option<usize>,
 ) -> Result<Vec<FileEntry>, String> {
-    let expanded_root: PathBuf = if root.starts_with("~/") {
+    let expanded_root: PathBuf = if let Some(rest) = root.strip_prefix("~/") {
         let home = dirs::home_dir().ok_or_else(|| "Cannot find home directory".to_string())?;
-        home.join(&root[2..])
+        home.join(rest)
     } else {
         Path::new(&root).to_path_buf()
     };
@@ -171,7 +171,7 @@ pub async fn search_files(
     }
 
     if query.is_empty() {
-        all_entries.sort_by(|a, b| a.path.to_lowercase().cmp(&b.path.to_lowercase()));
+        all_entries.sort_by_key(|a| a.path.to_lowercase());
         all_entries.truncate(limit);
         return Ok(all_entries);
     }
@@ -218,9 +218,9 @@ pub async fn search_files_by_name(
     exclude_folders: Vec<String>,
     max_results: Option<usize>,
 ) -> Result<Vec<FileEntry>, String> {
-    let expanded_root: PathBuf = if root.starts_with("~/") {
+    let expanded_root: PathBuf = if let Some(rest) = root.strip_prefix("~/") {
         let home = dirs::home_dir().ok_or_else(|| "Cannot find home directory".to_string())?;
-        home.join(&root[2..])
+        home.join(rest)
     } else {
         Path::new(&root).to_path_buf()
     };
@@ -298,7 +298,7 @@ pub async fn search_files_by_name(
     }
 
     if query.is_empty() {
-        all_entries.sort_by(|a, b| a.path.to_lowercase().cmp(&b.path.to_lowercase()));
+        all_entries.sort_by_key(|a| a.path.to_lowercase());
         all_entries.truncate(limit);
         return Ok(all_entries);
     }
@@ -328,9 +328,9 @@ pub async fn search_files_by_name(
 }
 
 pub async fn canonicalize_path(path: String) -> Result<String, String> {
-    let expanded = if path.starts_with("~/") {
+    let expanded = if let Some(rest) = path.strip_prefix("~/") {
         let home = dirs::home_dir().ok_or_else(|| "Cannot find home directory".to_string())?;
-        home.join(&path[2..])
+        home.join(rest)
     } else {
         Path::new(&path).to_path_buf()
     };

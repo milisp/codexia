@@ -22,17 +22,17 @@ fn parse_web_options() -> (String, u16, Vec<String>) {
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--port" | "--web-port" => {
-                if let Some(v) = args.next() {
-                    if let Ok(p) = v.parse::<u16>() {
-                        port = p;
-                    }
+                if let Some(v) = args.next()
+                    && let Ok(p) = v.parse::<u16>()
+                {
+                    port = p;
                 }
             }
             _ if arg.starts_with("--web-port=") => {
-                if let Some(v) = arg.split('=').nth(1) {
-                    if let Ok(p) = v.parse::<u16>() {
-                        port = p;
-                    }
+                if let Some(v) = arg.split('=').nth(1)
+                    && let Ok(p) = v.parse::<u16>()
+                {
+                    port = p;
                 }
             }
             "--remote" => remote = true,

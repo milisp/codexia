@@ -81,15 +81,15 @@ fn find_app_bundle_macos(app_name: &str) -> Option<PathBuf> {
     }
     if let Ok(home) = std::env::var("HOME") {
         let home_apps = PathBuf::from(home).join("Applications");
-        if home_apps.exists() {
-            if let Ok(entries) = std::fs::read_dir(&home_apps) {
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.is_dir() {
-                        let file_name = path.file_name()?.to_string_lossy().to_string();
-                        if file_name.to_lowercase() == normalized_lower {
-                            return Some(path);
-                        }
+        if home_apps.exists()
+            && let Ok(entries) = std::fs::read_dir(&home_apps)
+        {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    let file_name = path.file_name()?.to_string_lossy().to_string();
+                    if file_name.to_lowercase() == normalized_lower {
+                        return Some(path);
                     }
                 }
             }

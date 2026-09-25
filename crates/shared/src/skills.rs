@@ -174,23 +174,23 @@ pub(crate) fn parse_skill_front_matter(path: &std::path::Path) -> Result<SkillFr
         .map_err(|err| format!("Failed to read {}: {}", path.display(), err))?;
     let mut front_matter = SkillFrontMatter::default();
     for line in content.lines().take(5) {
-        if front_matter.name.is_none() {
-            if let Some(value) = parse_field(line, "name") {
-                front_matter.name = value;
-                continue;
-            }
+        if front_matter.name.is_none()
+            && let Some(value) = parse_field(line, "name")
+        {
+            front_matter.name = value;
+            continue;
         }
-        if front_matter.description.is_none() {
-            if let Some(value) = parse_field(line, "description") {
-                front_matter.description = value;
-                continue;
-            }
+        if front_matter.description.is_none()
+            && let Some(value) = parse_field(line, "description")
+        {
+            front_matter.description = value;
+            continue;
         }
-        if front_matter.license.is_none() {
-            if let Some(value) = parse_field(line, "license") {
-                front_matter.license = value;
-                continue;
-            }
+        if front_matter.license.is_none()
+            && let Some(value) = parse_field(line, "license")
+        {
+            front_matter.license = value;
+            continue;
         }
     }
     Ok(front_matter)
@@ -272,7 +272,7 @@ fn scan_marketplace_skills() -> Result<Vec<MarketplaceSkill>, String> {
         });
     }
 
-    skills.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    skills.sort_by_key(|a| a.name.to_lowercase());
     Ok(skills)
 }
 
@@ -280,7 +280,7 @@ fn scan_installed_skills(install_root: &Path) -> Result<Vec<InstalledSkill>, Str
     if !install_root.exists() {
         return Ok(Vec::new());
     }
-    let entries = std::fs::read_dir(&install_root).map_err(|err| {
+    let entries = std::fs::read_dir(install_root).map_err(|err| {
         format!(
             "Failed to read directory {}: {}",
             install_root.display(),
@@ -319,7 +319,7 @@ fn scan_installed_skills(install_root: &Path) -> Result<Vec<InstalledSkill>, Str
             description,
         });
     }
-    skills.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    skills.sort_by_key(|a| a.name.to_lowercase());
     Ok(skills)
 }
 
@@ -544,7 +544,7 @@ pub async fn list_central_skills(
                 linked_cc: cc_link.exists() || cc_link.is_symlink(),
             });
         }
-        skills.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+        skills.sort_by_key(|a| a.name.to_lowercase());
         Ok(skills)
     })
     .await
@@ -697,9 +697,13 @@ pub async fn clone_skills_repo(url: String) -> Result<String, String> {
     };
 
     let open_path = actual_path.clone();
-    let verify_result = tokio::task::spawn_blocking(move || gix::open(&open_path))
-        .await
-        .map_err(|err| format!("Repository verification task failed: {}", err))?;
+    let verify_result = tokio::task::spawn_blocking(move || {
+        gix::open(&open_path)
+            .map(drop)
+            .map_err(|err| err.to_string())
+    })
+    .await
+    .map_err(|err| format!("Repository verification task failed: {}", err))?;
     if let Err(err) = verify_result {
         let message = format!(
             "Clone finished but gix could not open repository at {}: {}",

@@ -11,9 +11,9 @@ pub struct WebWatchState {
 }
 
 fn expand_path(input: &str) -> Result<PathBuf, String> {
-    if input.starts_with("~/") {
+    if let Some(rest) = input.strip_prefix("~/") {
         let home = dirs::home_dir().ok_or_else(|| "Cannot find home directory".to_string())?;
-        Ok(home.join(&input[2..]))
+        Ok(home.join(rest))
     } else {
         Ok(Path::new(input).to_path_buf())
     }
@@ -95,11 +95,11 @@ pub(crate) async fn unwatch_path(state: &WebWatchState, path: String) -> Result<
     };
 
     let mut watchers = state.watchers.lock().await;
-    if let Some((_, count)) = watchers.get_mut(&key) {
-        if *count > 1 {
-            *count -= 1;
-            return Ok(());
-        }
+    if let Some((_, count)) = watchers.get_mut(&key)
+        && *count > 1
+    {
+        *count -= 1;
+        return Ok(());
     }
     if let Some((mut watcher, _)) = watchers.remove(&key) {
         let _ = watcher.unwatch(&abs);

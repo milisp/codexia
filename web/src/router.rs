@@ -87,26 +87,24 @@ fn resolve_dist_dir() -> PathBuf {
         add_candidate(project_root.join("dist"));
     }
 
-    if let Ok(exe_path) = std::env::current_exe() {
-        if let Some(exe_dir) = exe_path.parent() {
-            add_candidate(exe_dir.join("dist"));
-            add_candidate(exe_dir.join("../dist"));
-            add_candidate(exe_dir.join("../../dist"));
-            add_candidate(exe_dir.join("resources/dist"));
-            add_candidate(exe_dir.join("../resources/dist"));
-            add_candidate(exe_dir.join("../Resources/dist"));
-            add_candidate(exe_dir.join("../../Resources/dist"));
-        }
+    if let Ok(exe_path) = std::env::current_exe()
+        && let Some(exe_dir) = exe_path.parent()
+    {
+        add_candidate(exe_dir.join("dist"));
+        add_candidate(exe_dir.join("../dist"));
+        add_candidate(exe_dir.join("../../dist"));
+        add_candidate(exe_dir.join("resources/dist"));
+        add_candidate(exe_dir.join("../resources/dist"));
+        add_candidate(exe_dir.join("../Resources/dist"));
+        add_candidate(exe_dir.join("../../Resources/dist"));
     }
 
     add_candidate(PathBuf::from("dist"));
 
-    let selected = candidates
+    candidates
         .into_iter()
         .find(|path| path.join("index.html").exists())
-        .unwrap_or_else(|| PathBuf::from("dist"));
-
-    selected
+        .unwrap_or_else(|| PathBuf::from("dist"))
 }
 
 static EXTRA_ALLOWED_ORIGINS: std::sync::OnceLock<Vec<String>> = std::sync::OnceLock::new();
@@ -132,12 +130,11 @@ pub fn set_extra_allowed_origins(origins: Vec<String>) {
 /// layer exempts loopback requests from presenting a token. Operators can
 /// add more origins via `set_extra_allowed_origins`.
 fn origin_is_allowed(origin: &str) -> bool {
-    if let Some(extra) = EXTRA_ALLOWED_ORIGINS.get() {
-        if extra.iter().any(|allowed| allowed == origin) {
-            return true;
-        }
+    if let Some(extra) = EXTRA_ALLOWED_ORIGINS.get()
+        && extra.iter().any(|allowed| allowed == origin)
+    {
+        return true;
     }
-
 
     // Tauri mobile webviews use their own scheme for the bundled app itself:
     // `tauri://localhost` on iOS, `http://tauri.localhost` on Android.
