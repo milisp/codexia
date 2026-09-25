@@ -78,11 +78,12 @@ export function McpServerCard({ server, workingDir, onServerUpdated }: McpServer
         request.url = editUrl;
       }
 
+      // Write the new entry before dropping the old name, so a failed add never loses the server.
+      await ccMcpAdd(request, workingDir);
+
       if (server.name !== editName) {
         await ccMcpRemove(server.name, workingDir, server.scope);
       }
-
-      await ccMcpAdd(request, workingDir);
 
       setIsEditing(false);
       onServerUpdated();

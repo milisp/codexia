@@ -22,7 +22,13 @@ pub async fn unified_add_mcp_server(
             codex::add_mcp_server(server_name, config).await
         }
         "cc" => {
-            let working_dir = path.ok_or("CC requires a project path")?;
+            let scope = scope.unwrap_or_else(|| "local".to_string());
+            // Global servers live in ~/.claude.json, so no project path is needed.
+            let working_dir = match path {
+                Some(path) => path,
+                None if scope == "global" => String::new(),
+                None => return Err("CC requires a project path".to_string()),
+            };
 
             let cc_server = ClaudeCodeMcpServer {
                 name: server_name.clone(),
@@ -54,7 +60,7 @@ pub async fn unified_add_mcp_server(
                             .collect()
                     })
                 }),
-                scope: scope.unwrap_or_else(|| "local".to_string()),
+                scope,
                 enabled: true,
             };
 
@@ -147,10 +153,10 @@ pub async fn unified_read_mcp_config(
                     server_json["command"] = JsonValue::String(command);
                 }
                 if let Some(args) = server.args {
-                    server_json["args"] = serde_json::to_value(args).unwrap();
+                    server_json["args"] = serde_json::json!(args);
                 }
                 if let Some(env) = server.env {
-                    server_json["env"] = serde_json::to_value(env).unwrap();
+                    server_json["env"] = serde_json::json!(env);
                 }
 
                 servers_map.insert(server.name, server_json);

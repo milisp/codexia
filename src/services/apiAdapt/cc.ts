@@ -69,6 +69,20 @@ export async function ccUpdateSettings(settings: unknown) {
   await postNoContent('/api/cc/settings', { settings });
 }
 
+export type CcConsentStatus = {
+  accepted: boolean;
+  version: number;
+  acceptedAt: number | null;
+};
+
+export async function ccGetConsent() {
+  return await getJson<CcConsentStatus>('/api/cc/consent');
+}
+
+export async function ccAcceptConsent() {
+  return await postJson<CcConsentStatus>('/api/cc/consent');
+}
+
 export async function ccMcpAdd(request: unknown, workingDir: string) {
   await postJson('/api/cc/mcp/add', {
     request,

@@ -11,6 +11,7 @@ import { useCCStore } from '@/stores/cc';
 import { CCAttachmentButton } from './CCAttachmentButton';
 import { CCSkillsPopover } from './CCSkillsPopover';
 import { CCSlashCommandPopover } from './CCSlashCommandPopover';
+import { CCUsageConsent } from './CCUsageConsent';
 import { ModelSelector } from './ModelSelector';
 
 const CC_INPUT_FOCUS_EVENT = 'cc-input-focus-request';
@@ -148,7 +149,7 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps = {}) {
   );
 
   return (
-    <>
+    <CCUsageConsent>
       <div className="shrink-0">
         <div className="relative group">
           <div
@@ -240,6 +241,6 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps = {}) {
         editorRef={textareaRef}
         triggerElement={triggerEl}
       />
-    </>
+    </CCUsageConsent>
   );
 }

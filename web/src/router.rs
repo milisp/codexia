@@ -16,7 +16,7 @@ use super::{
         api_acp_set_mode, api_acp_set_model, api_acp_set_config_option,
         api_acp_load_session, api_acp_list_sessions, api_acp_get_session, api_acp_delete_session,
         api_list_bots, api_create_bot, api_update_bot, api_delete_bot, api_bot_sessions,
-        api_cc_list_projects, api_cc_mcp_add, api_cc_mcp_disable, api_cc_mcp_enable,
+        api_cc_accept_consent, api_cc_get_consent, api_cc_list_projects, api_cc_mcp_add, api_cc_mcp_disable, api_cc_mcp_enable,
         api_cc_mcp_get, api_cc_mcp_list, api_cc_mcp_remove,
         api_cc_connect, api_cc_disconnect, api_cc_get_installed_skills,
         api_cc_delete_session, api_cc_get_session_messages, api_cc_list_sessions, api_cc_get_settings, api_cc_get_slash_commands,
@@ -400,6 +400,7 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/cc/installed-skills", get(api_cc_get_installed_skills))
         .route("/api/cc/slash-commands", get(api_cc_get_slash_commands))
         .route("/api/cc/settings", get(api_cc_get_settings).post(api_cc_update_settings))
+        .route("/api/cc/consent", get(api_cc_get_consent).post(api_cc_accept_consent))
         .route("/api/cc/sessions", get(api_cc_list_sessions))
         .route("/api/cc/session-messages", post(api_cc_get_session_messages))
         .route("/api/cc/delete-session", post(api_cc_delete_session))

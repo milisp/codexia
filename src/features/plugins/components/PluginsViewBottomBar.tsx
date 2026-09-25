@@ -36,7 +36,7 @@ export function PluginsViewBottomBar() {
         </div>
       )}
 
-      {overlay === 'manage' && manageTab === 'MCPs' && selectedAgent === 'cc' && (
+      {overlay === 'manage' && manageTab === 'Connectors' && selectedAgent === 'cc' && (
         <div className="px-3 py-2 border-t">
           <McpConfigScopeSelector onProjectChange={() => setManageRefreshKey((k) => k + 1)} />
         </div>

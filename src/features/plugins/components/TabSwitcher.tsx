@@ -23,7 +23,7 @@ export function TabSwitcher<T extends string>({
           onClick={() => onChange(t)}
           className={`h-7 ${active === t ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'}`}
         >
-          {t.startsWith('MCP') ? (
+          {t.startsWith('Connector') ? (
             <MCP className="h-3.5 w-3.5" />
           ) : t === 'Tools' ? (
             <Blocks className="h-4 w-4" />

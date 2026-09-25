@@ -3,14 +3,16 @@ import { toast } from 'sonner';
 import type { McpServerConfig } from '@/components/codex/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { unifiedAddMcpServer } from '@/services';
+import { type UnifiedMcpClientName, unifiedAddMcpServer } from '@/services';
 
 interface DefaultMcpServersProps {
+  agent: UnifiedMcpClientName;
+  cwd?: string;
   servers: Record<string, McpServerConfig>;
   onServerAdded: () => void;
 }
 
-export function DefaultMcpServers({ servers, onServerAdded }: DefaultMcpServersProps) {
+export function DefaultMcpServers({ agent, cwd, servers, onServerAdded }: DefaultMcpServersProps) {
   const defaultServers = [
     {
       name: 'desktop-commander',
@@ -53,9 +55,12 @@ export function DefaultMcpServers({ servers, onServerAdded }: DefaultMcpServersP
   const handleAddDefaultServer = async (defaultServer: (typeof defaultServers)[0]) => {
     try {
       await unifiedAddMcpServer({
-        clientName: 'codex',
+        clientName: agent,
+        path: cwd,
         serverName: defaultServer.name,
         serverConfig: defaultServer.config,
+        // Claude user scope (~/.claude.json) mirrors Codex's global config.toml.
+        scope: agent === 'cc' ? 'global' : undefined,
       });
       onServerAdded();
     } catch (error) {
@@ -66,7 +71,10 @@ export function DefaultMcpServers({ servers, onServerAdded }: DefaultMcpServersP
 
   return (
     <div>
-      <h3 className="text-lg font-semibold mb-3">Quick Add Servers</h3>
+      <h3 className="text-lg font-semibold">Quick Add Connectors</h3>
+      <p className="text-sm text-muted-foreground mb-3">
+        Connect agents to external services through MCP servers.
+      </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {defaultServers.map((defaultServer) => {
           const isAlreadyAdded = defaultServer.name in servers;
