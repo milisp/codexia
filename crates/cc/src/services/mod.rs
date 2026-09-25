@@ -1,3 +1,4 @@
+pub mod consent_service;
 pub mod message_service;
 pub mod permission_storage;
 pub mod session_service;

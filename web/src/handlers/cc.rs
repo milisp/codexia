@@ -10,6 +10,7 @@ use serde_json::Value;
 use crate::types::{ErrorResponse, WebServerState};
 
 use codexia_cc::mcp::{self as cc_mcp_commands, ClaudeCodeMcpServer, ClaudeCodeResponse};
+use codexia_cc::services::consent_service::{self as cc_consent_service, ConsentStatus};
 use codexia_cc::services::{
     message_service as cc_message_service, session_service as cc_session_service, settings_service as cc_settings_service,
     skill_service as cc_skill_service,
@@ -130,6 +131,16 @@ pub(crate) async fn api_cc_update_settings(
 ) -> Result<StatusCode, ErrorResponse> {
     cc_settings_service::update_settings(params.settings).map_err(to_error_response)?;
     Ok(StatusCode::OK)
+}
+
+pub(crate) async fn api_cc_get_consent() -> Result<Json<ConsentStatus>, ErrorResponse> {
+    let status = cc_consent_service::get_consent().map_err(to_error_response)?;
+    Ok(Json(status))
+}
+
+pub(crate) async fn api_cc_accept_consent() -> Result<Json<ConsentStatus>, ErrorResponse> {
+    let status = cc_consent_service::accept_consent().map_err(to_error_response)?;
+    Ok(Json(status))
 }
 
 pub(crate) async fn api_cc_list_sessions(
