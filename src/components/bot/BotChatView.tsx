@@ -30,8 +30,20 @@ export default function BotChatView() {
 
   if (!bot) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-        Pick a bot, or make a new one.
+      <div className="flex h-full min-h-0 flex-col">
+        <header
+          className="flex h-11 shrink-0 items-center border-b border-white/10"
+          data-tauri-drag-region
+        >
+          {showTrigger && (
+            <div className={`flex items-center ${needsTrafficLightOffset ? 'pl-20' : 'pl-2'}`}>
+              <SidebarTrigger />
+            </div>
+          )}
+        </header>
+        <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+          Pick a bot, or make a new one.
+        </div>
       </div>
     );
   }
