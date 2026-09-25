@@ -68,7 +68,7 @@ claude-agent-sdk-rs = { git = "https://github.com/milisp/claude-agent-sdk-rs", t
 codex-finder = { git = "https://github.com/milisp/codex-finder.git" }
 codexia-git = { path = "crates/git" }
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls-native-roots"] }
-gix = { version = "0.80.0", features = ["blocking-network-client", "blocking-http-transport-curl"] }
+gix = { version = "0.88.0", features = ["blocking-network-client", "blocking-http-transport-curl"] }
 walkdir = "2.3"
 nucleo = "0.5.0"
 ignore = "0.4.25"
@@ -83,3 +83,11 @@ codexia-shared = { path = "crates/shared" }
 codexia-web = { path = "web" } 
 
 rusqlite = { version = "0.38.0", features = ["bundled"] }
+
+# Keep dev builds small: line tables for workspace crates (usable backtraces),
+# no debug info for dependencies.
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false

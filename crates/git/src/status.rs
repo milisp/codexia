@@ -43,7 +43,7 @@ pub fn git_status(cwd: String) -> Result<GitStatusResult, String> {
             }
             let entry = table.entry(path).or_insert((' ', ' '));
             entry.0 = stage_code_from_tree_index_change(&change);
-            Ok::<_, std::convert::Infallible>(ControlFlow::Continue(()))
+            Ok(ControlFlow::Continue(()))
         },
     )
     .map_err(|err| format!("Failed to collect staged status: {err}"))?;
