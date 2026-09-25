@@ -6,6 +6,24 @@
 > changelog. The release workflow reads the top `## [version]` section of this
 > file matching the tag being published.
 
+## [0.51.0] - 2026-09-25
+
+[Compare with v0.50.2](https://github.com/milisp/codexia/compare/v0.50.2...v0.51.0)
+
+### 🚀 Features & Improvements
+- **Connectors**: the Plugins view has a new Connectors tab for connecting agents to external services through MCP servers. Quick Add installs to whichever agent is selected, Codex or Claude Agent.
+- **Parallel Search** joins Quick Add, next to You.com search, DeepWiki and Desktop Commander.
+- **Simpler default theme**: a plain neutral theme is now the default. Users on the previous Ghibli default are moved to it automatically; Ghibli, Noir and the other accents are still in Settings.
+- **Claude Agent usage notice**: before the first Claude Agent prompt, Codexia explains that subscription usage counts against your plan's Agent SDK credit. Your answer is shared across desktop, web and phone. See the README section "Claude Agent usage and billing".
+
+### 🐛 Fixes
+- Editing an MCP server no longer deletes it if saving the new config fails (Codex and Claude Agent).
+- Claude Agent servers can be added at user scope without opening a project.
+
+### 🧹 Cleanups
+- The Claude integration is labeled "Claude Agent" in the app and README.
+- Removed a duplicate, unused MCP module; dev frontend now proxies API and WebSocket calls through Vite.
+
 ## [0.50.2] - 2026-09-09
 
 [Compare with v0.50.1](https://github.com/milisp/codexia/compare/v0.50.1...v0.50.2)
