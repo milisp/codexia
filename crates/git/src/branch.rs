@@ -246,12 +246,11 @@ fn parse_remote_url_owner_repo(url: &str) -> Option<(String, String)> {
     // Normalize SSH colon separator to slash so both formats share the same split logic
     let normalized = if url.contains("://") {
         url.to_string()
-    } else if let Some(pos) = url.find(':') {
+    } else {
+        let pos = url.find(':')?;
         let mut s = url.to_string();
         s.replace_range(pos..=pos, "/");
         s
-    } else {
-        return None;
     };
 
     // Take the last two non-empty path segments: owner and repo
