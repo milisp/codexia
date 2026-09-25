@@ -8,6 +8,8 @@ pub mod dictation;
 mod event_sink;
 #[cfg(target_os = "macos")]
 mod menu;
+#[cfg(target_os = "macos")]
+mod usage_tray;
 #[cfg(any(windows, target_os = "linux"))]
 mod window;
 
@@ -233,6 +235,9 @@ pub fn run() {
                         }
                     });
                 }
+
+                #[cfg(target_os = "macos")]
+                usage_tray::setup(app.handle())?;
 
                 #[cfg(any(windows, target_os = "linux"))]
                 {

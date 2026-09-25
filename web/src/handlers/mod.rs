@@ -8,6 +8,7 @@ use super::types::{ErrorResponse, WebServerState};
 
 mod acp;
 mod cc;
+mod claude_usage;
 mod codex;
 mod file;
 mod git;
@@ -24,6 +25,7 @@ mod types;
 pub(super) use acp::*;
 pub(super) use bots::*;
 pub(super) use cc::*;
+pub(super) use claude_usage::*;
 pub(super) use codex::*;
 pub(super) use file::*;
 pub(super) use git::*;

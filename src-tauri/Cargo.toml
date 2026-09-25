@@ -25,7 +25,7 @@ tauri-build = { version = "2", features = [] }
 # Mobile is a remote control for a paired desktop: the frontend routes every
 # call over HTTP (see src/services/apiAdapt), so the app there is a webview
 # shell and needs only the plugins granted by capabilities/default.json.
-tauri = { version = "2", features = ["macos-private-api", "protocol-asset", "devtools"] }
+tauri = { version = "2", features = ["macos-private-api", "protocol-asset", "devtools", "tray-icon"] }
 fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs" }
 tauri-plugin-os = "2"
 tauri-plugin-opener = { version = "2" }

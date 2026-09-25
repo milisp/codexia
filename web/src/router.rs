@@ -19,6 +19,7 @@ use super::{
         api_cc_accept_consent, api_cc_get_consent, api_cc_list_projects, api_cc_mcp_add, api_cc_mcp_disable, api_cc_mcp_enable,
         api_cc_mcp_get, api_cc_mcp_list, api_cc_mcp_remove,
         api_cc_connect, api_cc_disconnect, api_cc_get_installed_skills,
+        api_claude_usage,
         api_cc_delete_session, api_cc_get_session_messages, api_cc_list_sessions, api_cc_get_settings, api_cc_get_slash_commands,
         api_cc_interrupt,
         api_cc_new_session, api_cc_resolve_permission, api_cc_resume_session,
@@ -241,6 +242,7 @@ pub fn create_router(state: WebServerState) -> Router {
             "/api/codex/account/rate-limits",
             get(api_account_rate_limits),
         )
+        .route("/api/claude/usage", get(api_claude_usage))
         .route("/api/codex/account/get", post(api_get_account))
         .route("/api/codex/account/login", post(api_login_account))
         .route(

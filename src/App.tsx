@@ -27,6 +27,7 @@ import { usePairingStore } from '@/stores/usePairingStore';
 import type { InitializeResponse } from './bindings';
 
 const AboutView = lazy(() => import('@/views/AboutView'));
+const UsagePanel = lazy(() => import('@/views/UsagePanel'));
 
 function AppShell() {
   const [quitDialogOpen, setQuitDialogOpen] = useState(false);
@@ -68,11 +69,11 @@ function AppShell() {
 
     // Cmd+Q quits immediately when nothing is running, otherwise confirms first
     const unlistenQuit = listen('quit-requested', () => {
-      void hasActiveWork().then((active) => {
+      hasActiveWork().then((active) => {
         if (active) {
           setQuitDialogOpen(true);
         } else {
-          void invoke('quit_app');
+          invoke('quit_app');
         }
       });
     });
@@ -124,12 +125,17 @@ function AppEntry() {
 
 export default function App() {
   const isAboutWindow = window.location.pathname === '/about';
+  const isUsageWindow = window.location.pathname === '/usage';
 
   return (
     <ThemeProvider>
       <I18nextProvider i18n={i18n}>
         <TooltipProvider>
-          {isAboutWindow ? (
+          {isUsageWindow ? (
+            <Suspense>
+              <UsagePanel />
+            </Suspense>
+          ) : isAboutWindow ? (
             <Suspense>
               <AboutView />
             </Suspense>
