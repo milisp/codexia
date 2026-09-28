@@ -47,6 +47,8 @@ use super::{
         api_prevent_sleep,
         api_login_account, api_model_list, api_model_list_post, api_read_directory, api_read_file,
         api_check_app_installed, api_open_workspace_in,
+        api_publish_connect_poll, api_publish_connect_start, api_publish_disconnect, api_publish_game,
+        api_publish_whoami,
         api_read_text_file, api_read_text_file_lines,
         api_respond_command_execution_approval,
         api_respond_file_change_approval, api_respond_mcp_elicitation,
@@ -290,6 +292,11 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/filesystem/read-directory", post(api_read_directory))
         .route("/api/openapp/check-app-installed", post(api_check_app_installed))
         .route("/api/openapp/open-workspace-in", post(api_open_workspace_in))
+        .route("/api/publish/connect/start", post(api_publish_connect_start))
+        .route("/api/publish/connect/poll", post(api_publish_connect_poll))
+        .route("/api/publish/disconnect", post(api_publish_disconnect))
+        .route("/api/publish/whoami", get(api_publish_whoami))
+        .route("/api/publish/game", post(api_publish_game))
         .route("/api/filesystem/home-directory", get(api_get_home_directory))
         .route("/api/filesystem/canonicalize-path", post(api_canonicalize_path))
         .route("/api/filesystem/search-files", post(api_search_files))

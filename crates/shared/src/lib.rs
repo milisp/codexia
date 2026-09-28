@@ -1,6 +1,7 @@
 pub mod fs;
 pub mod insights;
 pub mod openapp;
+pub mod publish;
 pub mod skills;
 pub mod skillssh;
 pub mod sleep;
