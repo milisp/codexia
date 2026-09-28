@@ -3,6 +3,7 @@ import { getJsonWithOptions, postJson, postJsonWithOptions } from './shared';
 export type ConnectStart = { code: string; confirmCode: string; url: string };
 
 export type PublishedGame = {
+  username: string;
   slug: string;
   title: string;
   tagline: string | null;
@@ -14,7 +15,14 @@ export type PublishedGame = {
 };
 
 export type ProductshipAccount = {
-  user: { id: string; name: string | null; avatarUrl: string | null };
+  user: {
+    id: string;
+    /** Null for connections made before usernames existed; reconnect to pick one. */
+    username: string | null;
+    usernameLocked: boolean;
+    name: string | null;
+    avatarUrl: string | null;
+  };
   games: PublishedGame[];
 };
 

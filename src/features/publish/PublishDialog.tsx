@@ -80,7 +80,13 @@ function LinkRow({ label, url }: { label: string; url: string }) {
   );
 }
 
-function ConnectPanel({ onConnected }: { onConnected: () => void }) {
+function ConnectPanel({
+  onConnected,
+  needsUsername = false,
+}: {
+  onConnected: () => void;
+  needsUsername?: boolean;
+}) {
   const { openExternalUrl } = useExternalUrl();
   const [pending, setPending] = useState<ConnectStart | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -120,10 +126,14 @@ function ConnectPanel({ onConnected }: { onConnected: () => void }) {
     <div className="flex flex-col items-center gap-4 py-4 text-center">
       <Rocket className="size-10 text-orange-500" />
       <div>
-        <p className="font-medium">Connect your ProductShip account</p>
+        <p className="font-medium">
+          {needsUsername ? 'Choose your username' : 'Connect your ProductShip account'}
+        </p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Games are hosted free at <span className="font-mono">name.productship.lol</span> with an
-          itch-style page and cover.
+          {needsUsername
+            ? 'Games now live under your own name. Reconnect once to pick it.'
+            : 'Games are hosted free with an itch-style page and cover:'}{' '}
+          <span className="font-mono">username.productship.lol/game</span>
         </p>
       </div>
       {pending ? (
@@ -225,7 +235,11 @@ function PublishForm({
   const lastPublish = usePublishStore((state) => state.lastPublish[cwd]);
   const progress = usePublishProgress(form.slug, publishing);
   const ownsSlug = account.games.some((game) => game.slug === form.slug);
-  const slugValid = SLUG_RE.test(form.slug) && !form.slug.includes('--');
+  const username = account.user.username ?? '';
+  // The game's own host is <slug>--<username>, and a DNS label is at most 63 chars.
+  const maxSlugLength = Math.min(40, 61 - username.length);
+  const slugValid =
+    SLUG_RE.test(form.slug) && !form.slug.includes('--') && form.slug.length <= maxSlugLength;
   const canPublish = slugValid && form.title.trim().length > 0 && !publishing;
 
   let progressValue: number | undefined;
@@ -238,7 +252,10 @@ function PublishForm({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>Publishing as {account.user.name ?? 'your ProductShip account'}</span>
+        <span>
+          Publishing as <span className="font-mono">@{username}</span>
+          {account.user.name && account.user.name !== username ? ` (${account.user.name})` : ''}
+        </span>
         <Button
           variant="link"
           size="sm"
@@ -270,23 +287,23 @@ function PublishForm({
           <div className="grid gap-1">
             <Label htmlFor="publish-slug">Link</Label>
             <div className="flex items-center gap-1">
+              <span className="max-w-[45%] shrink-0 truncate font-mono text-xs text-muted-foreground">
+                {username}.productship.lol/
+              </span>
               <Input
                 id="publish-slug"
                 value={form.slug}
-                maxLength={40}
+                maxLength={maxSlugLength}
                 className="font-mono"
                 onChange={(event) => set({ slug: event.target.value.toLowerCase() })}
               />
-              <span className="shrink-0 font-mono text-xs text-muted-foreground">
-                .productship.lol
-              </span>
             </div>
           </div>
         </div>
       </div>
       {!slugValid && (
         <p className="-mt-2 text-xs text-destructive">
-          3-40 chars: lowercase letters, digits and single dashes.
+          3-{maxSlugLength} chars: lowercase letters, digits and single dashes.
         </p>
       )}
       {ownsSlug && (
@@ -430,6 +447,8 @@ function PublishPanel({ cwd, defaults, publishing, setPublishing, onClose }: Pub
     );
   }
   if (account === null) return <ConnectPanel onConnected={loadAccount} />;
+  // Connected before usernames existed: reconnect once to claim one.
+  if (!account.user.username) return <ConnectPanel onConnected={loadAccount} needsUsername />;
 
   if (justPublished && lastPublish) {
     return (
