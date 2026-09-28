@@ -6,6 +6,24 @@
 > changelog. The release workflow reads the top `## [version]` section of this
 > file matching the tag being published.
 
+## [0.52.0] - 2026-09-28
+
+[Compare with v0.51.0](https://github.com/milisp/codexia/compare/v0.51.0...v0.52.0)
+
+### 🚀 Features & Improvements
+- **Publish games in one click**: the new 🚀 Publish button builds your project and hosts it on productship.lol, itch-style. You get a game link (`<game>--<you>.productship.lol`) and a project page with cover, Play button and description (`<you>.productship.lol/<game>`). Pick a cover, genre and 2D/3D (pre-filled from three.js, Phaser, etc.); progress shows live. Game projects that were never published get a highlighted button.
+- **Connect ProductShip once**: approve Codexia on productship.lol with GitHub or Google and choose your username; no separate Codexia login.
+- **Run menu**: Dev / Test / Build / Preview in the header, detected from `package.json` scripts (bun, pnpm, yarn or npm) or `Cargo.toml`, editable per project, run in the built-in terminal.
+- **Claude usage panel** with a tray entry, to keep an eye on Claude Agent usage.
+- **Unified model picker**: Codex, Claude Agent and bots share the same model selection UI.
+
+### 🐛 Fixes
+- The sidebar trigger shows in the empty Bot view.
+
+### 🧹 Cleanups
+- Removed the "usage remaining" menu item (replaced by the usage panel).
+- Upgraded gix to 0.88; CI now runs clippy and the Rust tests.
+
 ## [0.51.0] - 2026-09-25
 
 [Compare with v0.50.2](https://github.com/milisp/codexia/compare/v0.50.2...v0.51.0)
