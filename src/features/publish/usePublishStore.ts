@@ -7,6 +7,10 @@ export type PublishSettings = {
   title: string;
   tagline: string;
   description: string;
+  /** productship.lol genre value, '' when not chosen. */
+  genre: string;
+  /** '2d' | '3d' | '' */
+  dimension: string;
   buildCommand: string;
   outputDir: string;
   coverPath: string;

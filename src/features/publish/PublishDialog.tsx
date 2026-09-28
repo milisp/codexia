@@ -12,6 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { SelectComponent } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useExternalUrl } from '@/features/plugins/hooks/useExternalUrl';
 import { fileSrc, isTauri } from '@/hooks/runtime';
@@ -25,6 +26,7 @@ import {
   publishWhoami,
 } from '@/services';
 import type { PublishDefaults } from './detectPublishDefaults';
+import { DIMENSION_OPTIONS, GENRE_OPTIONS } from './gameTaxonomy';
 import { usePublishProgress } from './usePublishProgress';
 import { type PublishSettings, usePublishStore } from './usePublishStore';
 
@@ -320,6 +322,28 @@ function PublishForm({
           onChange={(event) => set({ tagline: event.target.value })}
         />
       </div>
+      <div className="grid grid-cols-[1fr_8rem] gap-2">
+        <div className="grid gap-1">
+          <Label>Genre</Label>
+          <SelectComponent
+            value={form.genre}
+            onValueChange={(genre) => set({ genre })}
+            options={GENRE_OPTIONS}
+            placeholder="Pick a genre"
+            disabled={publishing}
+          />
+        </div>
+        <div className="grid gap-1">
+          <Label>Style</Label>
+          <SelectComponent
+            value={form.dimension}
+            onValueChange={(dimension) => set({ dimension })}
+            options={DIMENSION_OPTIONS}
+            placeholder="2D / 3D"
+            disabled={publishing}
+          />
+        </div>
+      </div>
       <div className="grid gap-1">
         <Label htmlFor="publish-description">Description</Label>
         <Textarea
@@ -426,6 +450,8 @@ function PublishPanel({ cwd, defaults, publishing, setPublishing, onClose }: Pub
         title: form.title.trim(),
         tagline: form.tagline.trim() || null,
         description: form.description.trim() || null,
+        genre: form.genre || null,
+        dimension: form.dimension || null,
         buildCommand: form.buildCommand.trim() || null,
         outputDir: form.outputDir.trim() || '.',
         coverPath: form.coverPath || null,

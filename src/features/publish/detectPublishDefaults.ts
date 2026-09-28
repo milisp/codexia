@@ -1,5 +1,6 @@
 import { detectProjectCommands } from '@/features/project-run/detectProjectCommands';
 import { readDirectory, readTextFile } from '@/services';
+import { guessDimension } from './gameTaxonomy';
 import type { PublishSettings } from './usePublishStore';
 
 export type PublishDefaults = PublishSettings & {
@@ -72,6 +73,8 @@ export async function detectPublishDefaults(cwd: string): Promise<PublishDefault
     title: toTitle(folder),
     tagline: '',
     description: '',
+    genre: '',
+    dimension: '',
     buildCommand: '',
     outputDir: 'dist',
     coverPath: '',
@@ -87,6 +90,7 @@ export async function detectPublishDefaults(cwd: string): Promise<PublishDefault
       const pkg = JSON.parse(await readTextFile(`${cwd}/package.json`, { suppressToast: true }));
       const deps = { ...pkg.dependencies, ...pkg.devDependencies };
       defaults.looksLikeGame = GAME_DEPENDENCIES.some((dep) => dep in deps);
+      defaults.dimension = guessDimension(deps);
       defaults.buildCommand = (await detectProjectCommands(cwd)).build ?? '';
       defaults.outputDir = defaults.buildCommand ? guessOutputDir(deps) : '.';
       if (typeof pkg.description === 'string') defaults.tagline = pkg.description.slice(0, 140);

@@ -179,6 +179,10 @@ pub struct PublishGameParams {
     pub title: String,
     pub tagline: Option<String>,
     pub description: Option<String>,
+    /// One of the fixed genres on productship.lol (e.g. "puzzle").
+    pub genre: Option<String>,
+    /// "2d" or "3d".
+    pub dimension: Option<String>,
     pub cover_path: Option<String>,
 }
 
@@ -361,6 +365,8 @@ where
     let optional = [
         ("tagline", params.tagline.as_deref().filter(|s| !s.is_empty()).map(Value::from)),
         ("description", params.description.as_deref().filter(|s| !s.is_empty()).map(Value::from)),
+        ("genre", params.genre.as_deref().filter(|s| !s.is_empty()).map(Value::from)),
+        ("dimension", params.dimension.as_deref().filter(|s| !s.is_empty()).map(Value::from)),
         ("cover", cover.as_ref().map(|(_, ext, size)| json!({ "ext": ext, "size": size }))),
     ];
     for (key, value) in optional {

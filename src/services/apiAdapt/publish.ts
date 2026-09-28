@@ -9,6 +9,8 @@ export type PublishedGame = {
   tagline: string | null;
   description: string | null;
   cover_key: string | null;
+  genre: string | null;
+  dimension: string | null;
   current_version: number;
   plays: number;
   updated_at: string;
@@ -34,6 +36,8 @@ export type PublishGameParams = {
   title: string;
   tagline?: string | null;
   description?: string | null;
+  genre?: string | null;
+  dimension?: string | null;
   coverPath?: string | null;
 };
 
