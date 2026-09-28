@@ -35,9 +35,11 @@ if (typeof window !== 'undefined') {
 interface TerminalPaneProps {
   active: boolean;
   panelOpen: boolean;
+  /** Command auto-run once, right after the pty session for this pane starts. */
+  command?: string;
 }
 
-export function TerminalPane({ active, panelOpen }: TerminalPaneProps) {
+export function TerminalPane({ active, panelOpen, command }: TerminalPaneProps) {
   const { cwd } = useWorkspaceStore();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -46,6 +48,8 @@ export function TerminalPane({ active, panelOpen }: TerminalPaneProps) {
   const sessionIdRef = useRef<string | null>(null);
   const isStartingRef = useRef(false);
   const isAttachedRef = useRef(false);
+  // Guards the one-time auto-run so it never re-fires on reconnect or re-activation.
+  const hasRunCommandRef = useRef(false);
 
   const setSession = useCallback((sid: string | null) => {
     sessionIdRef.current = sid;
@@ -121,12 +125,16 @@ export function TerminalPane({ active, panelOpen }: TerminalPaneProps) {
         Math.max(term.rows, 2)
       );
       setSession(session_id);
+      if (command && !hasRunCommandRef.current) {
+        hasRunCommandRef.current = true;
+        void terminalWrite(session_id, `${command}\r`);
+      }
     } catch (err) {
       terminalRef.current?.writeln(`\r\n[session start failed] ${String(err)}`);
     } finally {
       isStartingRef.current = false;
     }
-  }, [cwd, setSession]);
+  }, [cwd, command, setSession]);
 
   useEffect(() => {
     if (!active || !panelOpen) return;

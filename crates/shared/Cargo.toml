@@ -22,6 +22,7 @@ thiserror = { workspace = true }
 regex = { workspace = true }
 chrono = { workspace = true }
 uuid = { workspace = true }
+sha2 = { workspace = true }
 dirs = { workspace = true }
 dashmap = { workspace = true }
 glob = { workspace = true }

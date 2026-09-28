@@ -95,6 +95,7 @@ export function TerminalPanel({ isActive }: TerminalPanelProps) {
             key={tab.id}
             active={panelVisible && tab.id === activeTerminalId}
             panelOpen={panelVisible}
+            command={tab.command}
           />
         ))}
       </div>

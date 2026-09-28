@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { GitActions } from '@/features/git';
+import { ProjectRunMenu } from '@/features/project-run/ProjectRunMenu';
+import { PublishButton } from '@/features/publish/PublishButton';
 import { useTrafficLightConfig } from '@/hooks';
 import { isPhone } from '@/hooks/runtime';
 import { useCCStore, useLayoutStore, useWorkspaceStore } from '@/stores';
@@ -57,6 +59,8 @@ export function AgentViewHeader() {
         {!hasActiveSession && <Badge variant="secondary">{getFilename(cwd)}</Badge>}
       </div>
       <span className="flex items-center gap-1 pr-2">
+        {cwd && <ProjectRunMenu />}
+        {cwd && <PublishButton />}
         {cwd && <OpenAppMenu path={cwd} />}
         <span className="flex items-center gap-0.5 border rounded-md p-0.5">
           {CARDS_VIEW_MODES.map(({ mode, icon: Icon, title }) => (

@@ -41,4 +41,5 @@ export async function writeSessionMetaFile(content: string): Promise<void> {
   }
   window.localStorage.setItem(SESSION_META_STORAGE_KEY, content);
 }
+export * from './publish';
 export * from './remote';
