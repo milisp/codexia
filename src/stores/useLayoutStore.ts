@@ -7,6 +7,8 @@ let terminalCounter = 1;
 export interface TerminalTab {
   id: string;
   label: string;
+  /** Command to auto-run once the pty session for this tab has started. */
+  command?: string;
 }
 
 export type viewType =
@@ -54,7 +56,7 @@ interface LayoutStore {
   // Terminal tabs (sessions shown inside the right panel's Terminal tab)
   terminals: TerminalTab[];
   activeTerminalId: string | null;
-  addTerminal: () => void;
+  addTerminal: (opts?: { label?: string; command?: string }) => void;
   removeTerminal: (id: string) => void;
   setActiveTerminalId: (id: string) => void;
   diffWordWrap: boolean;
@@ -118,11 +120,11 @@ export const useLayoutStore = create<LayoutStore>()(
       // Terminal tabs
       terminals: [],
       activeTerminalId: null,
-      addTerminal: () =>
+      addTerminal: (opts) =>
         set((state) => {
           const id = `term-${terminalCounter++}`;
-          const label = `Terminal ${terminalCounter - 1}`;
-          const tab: TerminalTab = { id, label };
+          const label = opts?.label ?? `Terminal ${terminalCounter - 1}`;
+          const tab: TerminalTab = { id, label, command: opts?.command };
           return {
             terminals: [...state.terminals, tab],
             activeTerminalId: id,
