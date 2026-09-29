@@ -32,6 +32,7 @@ export default function AgentsMdView() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+  const [leaveError, setLeaveError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { theme } = useThemeContext();
@@ -107,9 +108,10 @@ export default function AgentsMdView() {
     };
   }, [filePath]);
 
-  const handleSave = async (): Promise<boolean> => {
+  const handleSave = async (showErrorInLeaveDialog = false): Promise<boolean> => {
     setSaving(true);
     setError(null);
+    setLeaveError(null);
     setStatusMessage(null);
     try {
       await writeFile(filePath, content);
@@ -117,7 +119,11 @@ export default function AgentsMdView() {
       setStatusMessage('Changes saved.');
       return true;
     } catch (err) {
-      setError(getErrorMessage(err));
+      const errorMessage = getErrorMessage(err);
+      setError(errorMessage);
+      if (showErrorInLeaveDialog) {
+        setLeaveError(errorMessage);
+      }
       return false;
     } finally {
       setSaving(false);
@@ -130,6 +136,7 @@ export default function AgentsMdView() {
 
   const handleLeaveRequest = () => {
     if (content !== savedContent) {
+      setLeaveError(null);
       setShowLeaveConfirmation(true);
       return;
     }
@@ -137,13 +144,19 @@ export default function AgentsMdView() {
   };
 
   const handleSaveAndLeave = async () => {
-    if (await handleSave()) {
+    if (await handleSave(true)) {
       setShowLeaveConfirmation(false);
       leaveEditor();
     }
   };
 
+  const handleKeepEditing = () => {
+    setLeaveError(null);
+    setShowLeaveConfirmation(false);
+  };
+
   const handleDiscardAndLeave = () => {
+    setLeaveError(null);
     setShowLeaveConfirmation(false);
     leaveEditor();
   };
@@ -190,7 +203,7 @@ export default function AgentsMdView() {
         {/* File path and Save button */}
         <div className="flex items-center justify-between px-2">
           <p className="text-xs font-semibold tracking-wider text-muted-foreground">{filePath}</p>
-          <Button onClick={handleSave} disabled={loading || saving} variant="secondary">
+          <Button onClick={() => handleSave()} disabled={loading || saving} variant="secondary">
             {saving ? 'Saving…' : 'Save'}
           </Button>
         </div>
@@ -221,7 +234,15 @@ export default function AgentsMdView() {
         </div>
       </div>
 
-      <AlertDialog open={showLeaveConfirmation} onOpenChange={setShowLeaveConfirmation}>
+      <AlertDialog
+        open={showLeaveConfirmation}
+        onOpenChange={(open) => {
+          setShowLeaveConfirmation(open);
+          if (!open) {
+            setLeaveError(null);
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Save changes before leaving?</AlertDialogTitle>
@@ -229,12 +250,13 @@ export default function AgentsMdView() {
               You have unsaved changes to {filePath}. Save them before returning to chats?
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {leaveError ? (
+            <div className="rounded border border-destructive/70 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+              {leaveError}
+            </div>
+          ) : null}
           <AlertDialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowLeaveConfirmation(false)}
-              disabled={saving}
-            >
+            <Button variant="outline" onClick={handleKeepEditing} disabled={saving}>
               Keep editing
             </Button>
             <Button variant="destructive" onClick={handleDiscardAndLeave} disabled={saving}>
