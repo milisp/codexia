@@ -1,12 +1,22 @@
+import { ArrowLeft } from 'lucide-react';
 import MarkdownIt from 'markdown-it';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import MdEditor from 'react-markdown-editor-lite';
 import 'react-markdown-editor-lite/lib/index.css';
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { readTextFile, writeFile } from '@/services';
-import { useAgentSettingsStore, useWorkspaceStore } from '@/stores';
+import { useAgentSettingsStore, useLayoutStore, useWorkspaceStore } from '@/stores';
 import { getErrorMessage } from '@/utils/errorUtils';
 
 const CODEX_INSTRUCTIONS_FILE_NAME = 'AGENTS.md';
@@ -16,10 +26,13 @@ export default function AgentsMdView() {
   const { selectedAgent, setSelectedAgent, instructionType, setInstructionType } =
     useAgentSettingsStore();
   const { cwd } = useWorkspaceStore();
+  const { setView } = useLayoutStore();
 
   const [content, setContent] = useState('');
+  const savedContentRef = useRef('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [confirmLeaveOpen, setConfirmLeaveOpen] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { theme } = useThemeContext();
@@ -68,6 +81,7 @@ export default function AgentsMdView() {
         const instructions = await readTextFile(filePath);
         if (active) {
           setContent(instructions);
+          savedContentRef.current = instructions;
         }
       } catch (err) {
         // If file doesn't exist, start with empty content (for new files)
@@ -75,6 +89,7 @@ export default function AgentsMdView() {
         if (errorMsg.includes('does not exist')) {
           if (active) {
             setContent('');
+            savedContentRef.current = '';
           }
         } else {
           if (active) {
@@ -93,17 +108,27 @@ export default function AgentsMdView() {
     };
   }, [filePath]);
 
-  const handleSave = async () => {
+  const saveContent = async () => {
+    const contentToSave = content;
     setSaving(true);
     setError(null);
     setStatusMessage(null);
     try {
-      await writeFile(filePath, content);
+      await writeFile(filePath, contentToSave);
+      savedContentRef.current = contentToSave;
       setStatusMessage('Changes saved.');
+      return true;
     } catch (err) {
       setError(getErrorMessage(err));
+      return false;
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveAndLeave = async () => {
+    if (await saveContent()) {
+      setView('agent');
     }
   };
 
@@ -115,35 +140,58 @@ export default function AgentsMdView() {
     setInstructionType(type as 'system' | 'project');
   };
 
+  const handleBackToChats = () => {
+    if (content !== savedContentRef.current) {
+      setConfirmLeaveOpen(true);
+      return;
+    }
+    setView('agent');
+  };
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex flex-col border-b">
         {/* Tabs for Agent and Instruction Type */}
         <div className="p-2">
-          <div className="flex items-center gap-4">
-            <Tabs value={currentAgent} onValueChange={handleAgentChange} className="w-auto">
-              <TabsList>
-                <TabsTrigger value="codex">Codex</TabsTrigger>
-                <TabsTrigger value="cc">Claude Agent</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <Tabs
-              value={currentInstructionType}
-              onValueChange={handleInstructionTypeChange}
-              className="w-auto"
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              onClick={handleBackToChats}
+              disabled={loading || saving}
+              variant="ghost"
+              size="sm"
             >
-              <TabsList>
-                <TabsTrigger value="system">System</TabsTrigger>
-                <TabsTrigger value="project">Project</TabsTrigger>
-              </TabsList>
-            </Tabs>
+              <ArrowLeft data-icon="inline-start" />
+              Back to chats
+            </Button>
+            <div className="flex items-center gap-4">
+              <Tabs value={currentAgent} onValueChange={handleAgentChange} className="w-auto">
+                <TabsList>
+                  <TabsTrigger value="codex">Codex</TabsTrigger>
+                  <TabsTrigger value="cc">Claude Agent</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <Tabs
+                value={currentInstructionType}
+                onValueChange={handleInstructionTypeChange}
+                className="w-auto"
+              >
+                <TabsList>
+                  <TabsTrigger value="system">System</TabsTrigger>
+                  <TabsTrigger value="project">Project</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
           </div>
         </div>
 
         {/* File path and Save button */}
         <div className="flex items-center justify-between px-2">
           <p className="text-xs font-semibold tracking-wider text-muted-foreground">{filePath}</p>
-          <Button onClick={handleSave} disabled={loading || saving} variant="secondary">
+          <Button
+            onClick={() => void saveContent()}
+            disabled={loading || saving}
+            variant="secondary"
+          >
             {saving ? 'Saving…' : 'Save'}
           </Button>
         </div>
@@ -173,6 +221,35 @@ export default function AgentsMdView() {
           />
         </div>
       </div>
+      <AlertDialog
+        open={confirmLeaveOpen}
+        onOpenChange={(open) => {
+          if (!saving) setConfirmLeaveOpen(open);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your changes to {filePath} have not been saved.
+            </AlertDialogDescription>
+            {error && (
+              <p className="text-sm text-destructive" role="alert">
+                {error}
+              </p>
+            )}
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>Keep editing</AlertDialogCancel>
+            <Button variant="destructive" disabled={saving} onClick={() => setView('agent')}>
+              Discard and leave
+            </Button>
+            <Button disabled={saving} onClick={() => void handleSaveAndLeave()}>
+              {saving ? 'Saving…' : 'Save and leave'}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
