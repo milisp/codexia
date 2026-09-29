@@ -1,12 +1,13 @@
+import { ArrowLeft } from 'lucide-react';
 import MarkdownIt from 'markdown-it';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import MdEditor from 'react-markdown-editor-lite';
 import 'react-markdown-editor-lite/lib/index.css';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { readTextFile, writeFile } from '@/services';
-import { useAgentSettingsStore, useWorkspaceStore } from '@/stores';
+import { useAgentSettingsStore, useLayoutStore, useWorkspaceStore } from '@/stores';
 import { getErrorMessage } from '@/utils/errorUtils';
 
 const CODEX_INSTRUCTIONS_FILE_NAME = 'AGENTS.md';
@@ -16,6 +17,7 @@ export default function AgentsMdView() {
   const { selectedAgent, setSelectedAgent, instructionType, setInstructionType } =
     useAgentSettingsStore();
   const { cwd } = useWorkspaceStore();
+  const { setView, setSidebarOpen } = useLayoutStore();
 
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
@@ -115,28 +117,55 @@ export default function AgentsMdView() {
     setInstructionType(type as 'system' | 'project');
   };
 
+  const handleBackToChats = useCallback(() => {
+    setSidebarOpen(true);
+    setView('agent');
+  }, [setSidebarOpen, setView]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isEditing =
+        target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable;
+
+      if (event.key === 'Escape' && !isEditing) {
+        event.preventDefault();
+        handleBackToChats();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleBackToChats]);
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex flex-col border-b">
         {/* Tabs for Agent and Instruction Type */}
         <div className="p-2">
-          <div className="flex items-center gap-4">
-            <Tabs value={currentAgent} onValueChange={handleAgentChange} className="w-auto">
-              <TabsList>
-                <TabsTrigger value="codex">Codex</TabsTrigger>
-                <TabsTrigger value="cc">Claude Agent</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <Tabs
-              value={currentInstructionType}
-              onValueChange={handleInstructionTypeChange}
-              className="w-auto"
-            >
-              <TabsList>
-                <TabsTrigger value="system">System</TabsTrigger>
-                <TabsTrigger value="project">Project</TabsTrigger>
-              </TabsList>
-            </Tabs>
+          <div className="flex items-center justify-between gap-2">
+            <Button onClick={handleBackToChats} variant="ghost" size="sm">
+              <ArrowLeft />
+              Back to chats
+            </Button>
+            <div className="flex items-center gap-4">
+              <Tabs value={currentAgent} onValueChange={handleAgentChange} className="w-auto">
+                <TabsList>
+                  <TabsTrigger value="codex">Codex</TabsTrigger>
+                  <TabsTrigger value="cc">Claude Agent</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <Tabs
+                value={currentInstructionType}
+                onValueChange={handleInstructionTypeChange}
+                className="w-auto"
+              >
+                <TabsList>
+                  <TabsTrigger value="system">System</TabsTrigger>
+                  <TabsTrigger value="project">Project</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
           </div>
         </div>
 
