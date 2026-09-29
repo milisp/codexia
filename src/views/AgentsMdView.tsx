@@ -3,6 +3,14 @@ import MarkdownIt from 'markdown-it';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import MdEditor from 'react-markdown-editor-lite';
 import 'react-markdown-editor-lite/lib/index.css';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useThemeContext } from '@/contexts/ThemeContext';
@@ -17,11 +25,13 @@ export default function AgentsMdView() {
   const { selectedAgent, setSelectedAgent, instructionType, setInstructionType } =
     useAgentSettingsStore();
   const { cwd } = useWorkspaceStore();
-  const { setView, setSidebarOpen } = useLayoutStore();
+  const { setView } = useLayoutStore();
 
   const [content, setContent] = useState('');
+  const [savedContent, setSavedContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { theme } = useThemeContext();
@@ -70,6 +80,7 @@ export default function AgentsMdView() {
         const instructions = await readTextFile(filePath);
         if (active) {
           setContent(instructions);
+          setSavedContent(instructions);
         }
       } catch (err) {
         // If file doesn't exist, start with empty content (for new files)
@@ -77,6 +88,7 @@ export default function AgentsMdView() {
         if (errorMsg.includes('does not exist')) {
           if (active) {
             setContent('');
+            setSavedContent('');
           }
         } else {
           if (active) {
@@ -95,18 +107,45 @@ export default function AgentsMdView() {
     };
   }, [filePath]);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<boolean> => {
     setSaving(true);
     setError(null);
     setStatusMessage(null);
     try {
       await writeFile(filePath, content);
+      setSavedContent(content);
       setStatusMessage('Changes saved.');
+      return true;
     } catch (err) {
       setError(getErrorMessage(err));
+      return false;
     } finally {
       setSaving(false);
     }
+  };
+
+  const leaveEditor = useCallback(() => {
+    setView('agent');
+  }, [setView]);
+
+  const handleLeaveRequest = () => {
+    if (content !== savedContent) {
+      setShowLeaveConfirmation(true);
+      return;
+    }
+    leaveEditor();
+  };
+
+  const handleSaveAndLeave = async () => {
+    if (await handleSave()) {
+      setShowLeaveConfirmation(false);
+      leaveEditor();
+    }
+  };
+
+  const handleDiscardAndLeave = () => {
+    setShowLeaveConfirmation(false);
+    leaveEditor();
   };
 
   const handleAgentChange = (agent: string) => {
@@ -117,34 +156,13 @@ export default function AgentsMdView() {
     setInstructionType(type as 'system' | 'project');
   };
 
-  const handleBackToChats = useCallback(() => {
-    setSidebarOpen(true);
-    setView('agent');
-  }, [setSidebarOpen, setView]);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      const isEditing =
-        target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable;
-
-      if (event.key === 'Escape' && !isEditing) {
-        event.preventDefault();
-        handleBackToChats();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleBackToChats]);
-
   return (
     <div className="flex h-full flex-col">
       <div className="flex flex-col border-b">
         {/* Tabs for Agent and Instruction Type */}
         <div className="p-2">
           <div className="flex items-center justify-between gap-2">
-            <Button onClick={handleBackToChats} variant="ghost" size="sm">
+            <Button onClick={handleLeaveRequest} variant="ghost" size="sm">
               <ArrowLeft />
               Back to chats
             </Button>
@@ -202,6 +220,32 @@ export default function AgentsMdView() {
           />
         </div>
       </div>
+
+      <AlertDialog open={showLeaveConfirmation} onOpenChange={setShowLeaveConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Save changes before leaving?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes to {filePath}. Save them before returning to chats?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowLeaveConfirmation(false)}
+              disabled={saving}
+            >
+              Keep editing
+            </Button>
+            <Button variant="destructive" onClick={handleDiscardAndLeave} disabled={saving}>
+              Discard and leave
+            </Button>
+            <Button onClick={handleSaveAndLeave} disabled={saving}>
+              {saving ? 'Saving…' : 'Save and leave'}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
