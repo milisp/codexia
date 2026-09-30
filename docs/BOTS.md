@@ -85,8 +85,9 @@ Notifications can be turned off per bot in its settings.
 Bots need `keke` **0.1.32 or newer** (older versions reject MCP tool names
 containing `:`). Codexia looks for it in this order:
 
-1. your own `keke` on `PATH`
-2. the `keke` binary bundled with Codexia release builds
+1. the `keke` binary bundled with Codexia release builds (the version this
+   Codexia was tested with, so an older keke on `PATH` cannot get in the way)
+2. your own `keke` on `PATH` (used when running Codexia from source)
 3. `npx @milisp/keke`
 
 Release builds ship keke as a sidecar, so no separate install is needed. If

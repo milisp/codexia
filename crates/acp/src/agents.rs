@@ -90,10 +90,12 @@ const PRESETS: &[Preset] = &[
         id: "keke",
         name: "Keke",
         launchers: &[
-            // The user's own keke wins so a newer developer build is used, then
-            // the sidecar shipped in the bundle, then a download.
-            l("keke", &["agent", "stdio"]),
+            // The sidecar shipped in the bundle wins: it is the version this
+            // Codexia was built and tested against, so an old keke left on
+            // PATH cannot silently break bots. PATH only matters where there
+            // is no bundle (`bun tauri dev`), then a download.
             bundled("keke", &["agent", "stdio"]),
+            l("keke", &["agent", "stdio"]),
             l("npx", &["-y", "@milisp/keke@latest", "agent", "stdio"]),
         ],
         env: &[],
@@ -285,13 +287,16 @@ mod tests {
     }
 
     #[test]
-    fn keke_prefers_path_then_bundled_then_npx() {
+    fn keke_prefers_bundled_then_path_then_npx() {
         let on_path = |l: &Launcher| (l.source == Source::Path && l.command == "keke").then(|| "keke".to_string());
         let bundled_only = |l: &Launcher| (l.source == Source::NextToExe).then(|| "/app/keke".to_string());
         let npx_only = |l: &Launcher| (l.command == "npx").then(|| "npx".to_string());
         let both = |l: &Launcher| on_path(l).or_else(|| bundled_only(l));
 
         let def = keke().resolve_with(both);
+        assert_eq!((def.command.as_str(), def.local, def.available), ("/app/keke", true, true));
+
+        let def = keke().resolve_with(on_path);
         assert_eq!((def.command.as_str(), def.local, def.available), ("keke", true, true));
 
         let def = keke().resolve_with(bundled_only);

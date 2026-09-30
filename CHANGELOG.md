@@ -16,7 +16,7 @@
 - **Unattended runs**: routines run in the background, answering permission requests from the bot's trust level and the tools you approved with "Always allow". A run that had a step refused is marked **blocked** instead of finished. Runs land in the bot's history with an unread badge, and the sidebar shows a status dot per bot.
 - **Notifications**: a system notification when a bot finishes in the background (an in-app toast while the window is focused), switchable per bot.
 - **Bots can ask each other**: a built-in `codexia-bots` MCP server (`list_bots`, `ask_bot`) lets a bot hand work to another one, one hop deep. See [docs/BOTS.md](./docs/BOTS.md).
-- **keke bundled**: release builds ship the `keke` binary, so Bots work without installing anything. Codexia uses your own `keke` on PATH first, then the bundled one, then `npx @milisp/keke`. MCP tools in bots need keke 0.1.32 or newer.
+- **keke bundled**: release builds ship the `keke` binary, so Bots work without installing anything. The bundled keke is always preferred, so an older keke on PATH cannot break bots; PATH and then `npx @milisp/keke` are used only when there is no bundle (e.g. running from source). MCP tools in bots need keke 0.1.32 or newer.
 - **Optional anonymous usage stats**: Codexia asks once whether to share anonymous usage counts; nothing is preselected and you can change it in Settings. At most one ping per event per day with the app version, OS and CPU arch — no ID, code, prompts, paths or names. See [docs/PRIVACY.md](./docs/PRIVACY.md).
 
 ### 🧹 Cleanups
