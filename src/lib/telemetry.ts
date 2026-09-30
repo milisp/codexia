@@ -67,8 +67,10 @@ async function describeDevice(): Promise<{
   platform: Platform;
   arch: Arch;
 }> {
-  if (!isTauri()) return { version: 'web', platform: 'web', arch: 'unknown' };
-  let version = 'unknown';
+  // The collector only counts `x.y.z` versions, so the web build reports the
+  // version it was built from rather than a label.
+  if (!isTauri()) return { version: __APP_VERSION__, platform: 'web', arch: 'unknown' };
+  let version = __APP_VERSION__;
   try {
     version = await getVersion();
   } catch {}

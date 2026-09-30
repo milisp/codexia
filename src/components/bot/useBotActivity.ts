@@ -6,6 +6,7 @@ import { notifyDesktop } from '@/lib/notify';
 import { track } from '@/lib/telemetry';
 import { listBots } from '@/services/apiAdapt/bots';
 import { type BotActivityStatus, useBotUiStore } from '@/stores/useBotUiStore';
+import { markBotRead } from './markBotRead';
 
 type BotActivityPayload = { botId: string; sessionId?: string; status: BotActivityStatus };
 
@@ -27,9 +28,14 @@ function handleActivity({ botId, status }: BotActivityPayload) {
   ui.setBotStatus(botId, status);
   track(`bot_run_${status}`);
 
-  // The backend already bumped `unreadCount`; re-read so the badge shows it.
+  // The backend already bumped `unreadCount`; re-read so the badge shows it —
+  // unless the bot is open, in which case the reply has already been seen.
   listBots()
-    .then((bots) => useBotUiStore.getState().setBots(bots))
+    .then((bots) => {
+      useBotUiStore.getState().setBots(bots);
+      const bot = bots.find((b) => b.id === botId);
+      if (bot && useBotUiStore.getState().selectedBotId === botId) void markBotRead(bot);
+    })
     .catch((e) => console.error('bots: failed to refresh after activity', e));
 
   // The user can already see the bot they are looking at.

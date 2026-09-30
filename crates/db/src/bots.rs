@@ -223,12 +223,17 @@ pub fn update_bot(id: &str, patch: &BotPatch) -> Result<BotRecord, String> {
     set!(pinned, "pinned");
     set!(archived, "archived");
     set!(notifications_enabled, "notifications_enabled");
+    // Reading a bot is not activity: marking it read must not move it up the
+    // sidebar, which is ordered by `updated_at`.
+    let edited = !sets.is_empty();
     set!(unread_count, "unread_count");
     set!(last_viewed_at, "last_viewed_at");
 
     if !sets.is_empty() {
-        sets.push("updated_at = ?");
-        values.push(Box::new(Utc::now().to_rfc3339()));
+        if edited {
+            sets.push("updated_at = ?");
+            values.push(Box::new(Utc::now().to_rfc3339()));
+        }
         values.push(Box::new(id.to_string()));
 
         let sql = format!("UPDATE bots SET {} WHERE id = ?", sets.join(", "));

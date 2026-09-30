@@ -12,6 +12,7 @@ import { BotAvatar } from './BotAvatar';
 import { BotSessionList } from './BotSessionList';
 import { BotSettingsDialog } from './BotSettingsDialog';
 import { defaultLook, newBotId } from './botDefaults';
+import { markBotRead } from './markBotRead';
 import { useBotActivity } from './useBotActivity';
 import { useBotSession } from './useBotSession';
 
@@ -73,6 +74,7 @@ export function SideBarBotPane() {
       if (status === 'blocked' || status === 'failed') {
         useBotUiStore.getState().setBotStatus(bot.id, null);
       }
+      void markBotRead(bot);
       void open(bot);
     },
     [open, setView]
