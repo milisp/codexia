@@ -1040,6 +1040,7 @@ dependencies = [
  "codexia-codex",
  "codexia-db",
  "codexia-shared",
+ "codexia-telemetry",
  "dashmap",
  "dirs",
  "log",
@@ -1183,6 +1184,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "codexia-telemetry"
+version = "0.52.0"
+dependencies = [
+ "chrono",
+ "codexia-db",
+ "dirs",
+ "log",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "codexia-web"
 version = "0.52.0"
 dependencies = [
@@ -1200,6 +1215,7 @@ dependencies = [
  "codexia-db",
  "codexia-git",
  "codexia-shared",
+ "codexia-telemetry",
  "dashmap",
  "dirs",
  "env_logger",

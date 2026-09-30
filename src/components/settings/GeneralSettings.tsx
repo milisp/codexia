@@ -1,15 +1,14 @@
 import { Github, Monitor, Moon, Sun, Twitter, X } from 'lucide-react';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { isTelemetryAvailable, track } from '@/lib/telemetry';
+import { getTelemetryStatus, setTelemetryConsent, type TelemetryStatus } from '@/lib/telemetry';
 import { cn } from '@/lib/utils';
 import { type Accent, type Theme, useThemeStore } from '@/stores/settings';
-import { useSettingsStore } from '@/stores/settings/useSettingsStore';
 import { LanguageSelector } from './LanguageSelector';
 
 const ACCENT_OPTIONS: Array<{ value: Accent; label: string; colorClass: string }> = [
@@ -42,8 +41,12 @@ export function GeneralSettings() {
   } = useThemeStore();
   const handleThemeChange = (value: string) => setTheme(value as Theme);
   const { t } = useTranslation('settings');
-  const telemetryConsent = useSettingsStore((s) => s.telemetryConsent);
-  const setTelemetryConsent = useSettingsStore((s) => s.setTelemetryConsent);
+  const [telemetry, setTelemetry] = useState<TelemetryStatus | null>(null);
+  useEffect(() => {
+    getTelemetryStatus()
+      .then(setTelemetry)
+      .catch(() => {});
+  }, []);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAccentSelect = (value: Accent) => {
@@ -184,7 +187,7 @@ export function GeneralSettings() {
           </CardContent>
         </Card>
       </section>
-      {isTelemetryAvailable() && (
+      {telemetry?.available && (
         <section className="space-y-3">
           <h3 className="text-sm font-medium px-1">{t('telemetrySection')}</h3>
           <Card>
@@ -197,10 +200,11 @@ export function GeneralSettings() {
                   </div>
                 </div>
                 <Switch
-                  checked={telemetryConsent === 'granted'}
+                  checked={telemetry?.consent === 'granted'}
                   onCheckedChange={(on) => {
-                    setTelemetryConsent(on ? 'granted' : 'denied');
-                    if (on) track('app_active');
+                    setTelemetryConsent(on ? 'granted' : 'denied')
+                      .then(setTelemetry)
+                      .catch(() => {});
                   }}
                 />
               </div>

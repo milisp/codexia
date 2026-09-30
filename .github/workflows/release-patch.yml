@@ -118,6 +118,8 @@ jobs:
 
       - uses: tauri-apps/tauri-action@v1
         env:
+          # Repo variable; empty or unset builds without telemetry.
+          CODEXIA_TELEMETRY_URL: ${{ vars.CODEXIA_TELEMETRY_URL }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ inputs.tag_name }}

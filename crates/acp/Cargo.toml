@@ -15,6 +15,7 @@ dashmap = { workspace = true }
 uuid = { workspace = true }
 codexia-shared = { workspace = true }
 codexia-db = { workspace = true }
+codexia-telemetry = { workspace = true }
 codexia-codex = { workspace = true }
 async-trait = { workspace = true }
 which = "6.0"

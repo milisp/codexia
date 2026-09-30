@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export type TaskDetail = 'steps' | 'stepsWithCommand' | 'stepsWithOutput';
-export type TelemetryConsent = 'unset' | 'granted' | 'denied';
 export type TaskCompleteBeepMode = 'never' | 'unfocused' | 'always';
 
 // --- Agents config ---
@@ -37,8 +36,6 @@ export interface SettingState extends AgentsSettings {
   setEnabledQuoteCategories: (categories: string[]) => void;
   customStunServers: string[];
   setCustomStunServers: (servers: string[]) => void;
-  telemetryConsent: TelemetryConsent;
-  setTelemetryConsent: (consent: TelemetryConsent) => void;
   p2pAutoStart: boolean;
   setP2pAutoStart: (enabled: boolean) => void;
 }
@@ -86,8 +83,6 @@ export const useSettingsStore = create<SettingState>()(
         set({ enabledQuoteCategories: categories }),
       customStunServers: [],
       setCustomStunServers: (servers: string[]) => set({ customStunServers: servers }),
-      telemetryConsent: 'unset',
-      setTelemetryConsent: (telemetryConsent: TelemetryConsent) => set({ telemetryConsent }),
       p2pAutoStart: false,
       setP2pAutoStart: (enabled: boolean) => set({ p2pAutoStart: enabled }),
       // Agents defaults: max_threads=6 (upstream Codex default), max_depth=1 (product default)
@@ -100,13 +95,13 @@ export const useSettingsStore = create<SettingState>()(
     }),
     {
       name: 'settings-storage',
-      version: 12,
+      version: 13,
       migrate: (persistedState: any) => {
         if (persistedState) {
           delete persistedState.analyticsEnabled;
           delete persistedState.analyticsConsentShown;
-          // v12: telemetry is opt-in; existing users are asked once.
-          persistedState.telemetryConsent ??= 'unset';
+          // v13: telemetry consent moved to the backend (~/.codexia/telemetry.json).
+          delete persistedState.telemetryConsent;
         }
         return persistedState;
       },

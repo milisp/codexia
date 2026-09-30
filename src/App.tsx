@@ -23,7 +23,7 @@ import { useUrlParamThread } from '@/hooks/useUrlParamThread';
 import { hasActiveWork } from '@/lib/hasActiveWork';
 import { i18n } from '@/lib/i18n';
 import { initSettingsSync, loadRemoteSettings, loadSettings } from '@/lib/settings';
-import { track } from '@/lib/telemetry';
+import { reportAppActive } from '@/lib/telemetry';
 import { initializeCodexAsync } from '@/services/apiAdapt';
 import { usePairingStore } from '@/stores/usePairingStore';
 import type { InitializeResponse } from './bindings';
@@ -47,7 +47,7 @@ function AppShell() {
       : loadSettings();
     load.finally(() => {
       setSettingsReady(true);
-      track('app_active');
+      reportAppActive();
     });
   }, []);
   useEffect(() => {

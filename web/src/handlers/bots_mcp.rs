@@ -148,6 +148,7 @@ async fn call_tool(state: &WebServerState, from: &str, params: &Value) -> Value 
                 .map(|bot| bot.name)
                 .unwrap_or_else(|| "another bot".to_string());
             let prompt = format!("{asker} asks:\n\n{message}");
+            codexia_telemetry::track(codexia_telemetry::Event::BotAsk);
 
             match state
                 .acp_state

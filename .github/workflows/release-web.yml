@@ -49,6 +49,9 @@ jobs:
         run: bun install
 
       - name: Package web
+        env:
+          # Repo variable; empty or unset builds without telemetry.
+          CODEXIA_TELEMETRY_URL: ${{ vars.CODEXIA_TELEMETRY_URL }}
         run: |
           WEB_TARGET_TRIPLE="${{ matrix.target }}" \
           WEB_ARCH="${{ matrix.arch }}" \
@@ -117,6 +120,9 @@ jobs:
         run: bun install
 
       - name: Package web
+        env:
+          # Repo variable; empty or unset builds without telemetry.
+          CODEXIA_TELEMETRY_URL: ${{ vars.CODEXIA_TELEMETRY_URL }}
         run: |
           WEB_TARGET_TRIPLE="aarch64-apple-darwin" \
           WEB_ARCH="aarch64" \

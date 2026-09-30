@@ -1,0 +1,14 @@
+[package]
+name = "codexia-telemetry"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+chrono = { workspace = true }
+dirs = { workspace = true }
+log = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+codexia-db = { workspace = true }

@@ -1,62 +1,38 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useSettingsStore } from '@/stores/settings/useSettingsStore';
-import { track } from './telemetry';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { getTelemetryStatus, reportAppActive, setTelemetryConsent } from './telemetry';
 
-const URL = 'https://t.example/v1/events';
-
-describe('telemetry', () => {
-  const fetchMock = vi.fn().mockResolvedValue({});
-  beforeEach(() => {
-    vi.useFakeTimers();
-    localStorage.clear();
-    fetchMock.mockClear();
-    vi.stubGlobal('fetch', fetchMock);
-    vi.stubEnv('VITE_TELEMETRY_URL', URL);
-    useSettingsStore.setState({ telemetryConsent: 'granted' });
+function mockFetch(body: unknown, ok = true) {
+  const fn = vi.fn().mockResolvedValue({
+    ok,
+    status: ok ? 200 : 500,
+    json: async () => body,
+    text: async () => JSON.stringify(body),
   });
-  afterEach(() => {
-    vi.useRealTimers();
-    vi.unstubAllEnvs();
-    vi.unstubAllGlobals();
-  });
+  vi.stubGlobal('fetch', fn);
+  return fn;
+}
 
-  it('is a no-op without consent', async () => {
-    useSettingsStore.setState({ telemetryConsent: 'unset' });
-    track('app_active');
-    await vi.advanceTimersByTimeAsync(6000);
-    expect(fetchMock).not.toHaveBeenCalled();
+describe('telemetry client', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('reads the status from the backend', async () => {
+    const fetchMock = mockFetch({ available: true, consent: 'unset', eligible: false });
+    const status = await getTelemetryStatus();
+    expect(status).toEqual({ available: true, consent: 'unset', eligible: false });
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/api/telemetry/status');
   });
 
-  it('is a no-op without an endpoint', async () => {
-    vi.stubEnv('VITE_TELEMETRY_URL', '');
-    track('app_active');
-    await vi.advanceTimersByTimeAsync(6000);
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it('sends each event once per day, with only the allowed fields', async () => {
-    track('app_active');
-    track('app_active');
-    track('bot_created');
-    await vi.advanceTimersByTimeAsync(6000);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+  it('posts the consent choice', async () => {
+    const fetchMock = mockFetch({ available: true, consent: 'granted', eligible: true });
+    await setTelemetryConsent('granted');
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe(URL);
-    expect(init.keepalive).toBe(true);
-    const body = JSON.parse(init.body);
-    expect(Object.keys(body)).toEqual(['events']);
-    expect(body.events.map((e: { name: string }) => e.name)).toEqual(['app_active', 'bot_created']);
-    for (const e of body.events) {
-      expect(Object.keys(e).sort()).toEqual(['arch', 'name', 'platform', 'version']);
-    }
+    expect(String(url)).toContain('/api/telemetry/consent');
+    expect(JSON.parse(init.body)).toEqual({ consent: 'granted' });
+  });
 
-    track('app_active');
-    await vi.advanceTimersByTimeAsync(6000);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-
-    vi.setSystemTime(Date.now() + 86_400_000);
-    track('app_active');
-    await vi.advanceTimersByTimeAsync(6000);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+  it('never throws when reporting app start fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+    expect(() => reportAppActive()).not.toThrow();
+    await Promise.resolve();
   });
 });

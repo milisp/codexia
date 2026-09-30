@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { buildEventUrl, isDesktopTauri } from '@/hooks/runtime';
 import { notifyDesktop } from '@/lib/notify';
-import { track } from '@/lib/telemetry';
 import { listBots } from '@/services/apiAdapt/bots';
 import { type BotActivityStatus, useBotUiStore } from '@/stores/useBotUiStore';
 import { markBotRead } from './markBotRead';
@@ -26,7 +25,6 @@ function handleActivity({ botId, status }: BotActivityPayload) {
   if (!(status in MESSAGES)) return;
   ui.setBotRunning(botId, false);
   ui.setBotStatus(botId, status);
-  track(`bot_run_${status}`);
 
   // The backend already bumped `unreadCount`; re-read so the badge shows it —
   // unless the bot is open, in which case the reply has already been seen.

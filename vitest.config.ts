@@ -5,9 +5,6 @@ import { defineConfig } from 'vitest/config';
 // Kept separate from vite.config.ts so the app build stays free of test config.
 export default defineConfig({
   plugins: [react()],
-  define: {
-    __APP_VERSION__: JSON.stringify('0.0.0-test'),
-  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

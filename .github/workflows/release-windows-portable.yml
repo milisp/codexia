@@ -77,6 +77,9 @@ jobs:
 
       # No --bundles: the portable build only needs the raw executable.
       - name: Build Tauri App
+        env:
+          # Repo variable; empty or unset builds without telemetry.
+          CODEXIA_TELEMETRY_URL: ${{ vars.CODEXIA_TELEMETRY_URL }}
         run: bun tauri build --no-bundle --config src-tauri/tauri.keke.conf.json
 
       - name: Package portable archive

@@ -22,6 +22,7 @@ export type {
   UnifiedMcpClientName,
   UnifiedMcpConfig,
 } from './shared';
+export * from './telemetry';
 export * from './terminal';
 export * from './threadOps';
 

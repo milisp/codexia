@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
-import { track } from '@/lib/telemetry';
 import {
   type AutomationTask,
   createAutomation,
@@ -64,7 +63,6 @@ export function useBotRoutines(botId: string, open: boolean) {
           bot_id: botId,
           projects: [],
         });
-        track('bot_routine_created');
         setRoutines((prev) => [...prev, created]);
       }
       return true;

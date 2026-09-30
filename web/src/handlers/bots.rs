@@ -64,7 +64,7 @@ pub(crate) async fn api_list_bots(
 pub(crate) async fn api_create_bot(
     Json(params): Json<CreateBotParams>,
 ) -> Result<Json<BotRecord>, ErrorResponse> {
-    codexia_db::bots::create_bot(
+    let bot = codexia_db::bots::create_bot(
         &params.id,
         &params.name,
         &params.avatar,
@@ -73,8 +73,9 @@ pub(crate) async fn api_create_bot(
         &params.cwd,
         params.trust_level.as_deref().unwrap_or("ask"),
     )
-    .map(Json)
-    .map_err(err)
+    .map_err(err)?;
+    codexia_telemetry::track(codexia_telemetry::Event::BotCreated);
+    Ok(Json(bot))
 }
 
 pub(crate) async fn api_update_bot(
