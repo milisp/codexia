@@ -7,8 +7,7 @@
     {
       "binding": "DB",
       "database_name": "codexia-telemetry",
-      // REPLACE with the id printed by `wrangler d1 create codexia-telemetry`.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "22ce5de7-19b6-4461-940b-ae8d174d1e1e",
       "migrations_dir": "migrations"
     }
   ],
