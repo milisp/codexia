@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
+import { track } from '@/lib/telemetry';
 import { type Bot, createBot, listBots } from '@/services/apiAdapt/bots';
 import { useLayoutStore } from '@/stores';
 import { useBotUiStore } from '@/stores/useBotUiStore';
@@ -54,6 +55,7 @@ export function SideBarBotPane() {
         color: look.color,
         cwd: cwd ?? '',
       });
+      track('bot_created');
       upsertBot(bot);
       openBlank(bot);
       setView('bot');

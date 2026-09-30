@@ -6,8 +6,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { isTelemetryAvailable, track } from '@/lib/telemetry';
 import { cn } from '@/lib/utils';
 import { type Accent, type Theme, useThemeStore } from '@/stores/settings';
+import { useSettingsStore } from '@/stores/settings/useSettingsStore';
 import { LanguageSelector } from './LanguageSelector';
 
 const ACCENT_OPTIONS: Array<{ value: Accent; label: string; colorClass: string }> = [
@@ -40,6 +42,8 @@ export function GeneralSettings() {
   } = useThemeStore();
   const handleThemeChange = (value: string) => setTheme(value as Theme);
   const { t } = useTranslation('settings');
+  const telemetryConsent = useSettingsStore((s) => s.telemetryConsent);
+  const setTelemetryConsent = useSettingsStore((s) => s.setTelemetryConsent);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAccentSelect = (value: Accent) => {
@@ -180,6 +184,30 @@ export function GeneralSettings() {
           </CardContent>
         </Card>
       </section>
+      {isTelemetryAvailable() && (
+        <section className="space-y-3">
+          <h3 className="text-sm font-medium px-1">{t('telemetrySection')}</h3>
+          <Card>
+            <CardContent className="px-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <div className="text-sm font-medium">{t('telemetryToggle')}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {t('telemetryToggleDescription')}
+                  </div>
+                </div>
+                <Switch
+                  checked={telemetryConsent === 'granted'}
+                  onCheckedChange={(on) => {
+                    setTelemetryConsent(on ? 'granted' : 'denied');
+                    if (on) track('app_active');
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      )}
       <section className="space-y-3">
         <h3 className="text-sm font-medium px-1">{t('keepInTouch')}</h3>
         <div className="flex flex-wrap gap-2 text-balance">

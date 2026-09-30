@@ -50,6 +50,16 @@ export const fr = {
     uploadImage: 'Téléverser',
     clearBackgroundImage: "Effacer l'image d'arrière-plan",
     keepInTouch: 'Restez en contact et rejoignez la communauté',
+    telemetrySection: 'Confidentialité',
+    telemetryToggle: "Statistiques d'usage anonymes",
+    telemetryToggleDescription:
+      "Envoie les noms d'événements, la version, l'OS et l'architecture CPU, au plus une fois par jour. Aucun identifiant, code, prompt, chemin ni nom.",
+    telemetryDialogTitle: 'Aider à améliorer Codexia ?',
+    telemetryDialogBody:
+      "Codexia peut envoyer des compteurs d'usage anonymes au serveur du mainteneur. Envoyé : noms d'événements (par ex. « bot créé »), version, OS et architecture CPU, au plus une fois par jour. Jamais envoyé : identifiant, code, prompts, chemins ou noms. Le serveur ne conserve que des totaux quotidiens.",
+    telemetryLearnMore: 'Lire les détails de confidentialité',
+    telemetryAccept: "Partager l'usage anonyme",
+    telemetryDecline: 'Ne pas partager',
     dictationModel: 'Modèle de dictée',
     dictationModelDescription:
       "Sélectionnez le modèle Whisper pour la reconnaissance vocale sur l'appareil. Les modèles plus grands sont plus précis mais nécessitent plus d'espace disque et de mémoire.",

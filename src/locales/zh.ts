@@ -48,6 +48,16 @@ export const zh = {
     uploadImage: '上传',
     clearBackgroundImage: '清除背景图片',
     keepInTouch: '保持联系和社区',
+    telemetrySection: '隐私',
+    telemetryToggle: '匿名使用统计',
+    telemetryToggleDescription:
+      '最多每天一次发送事件名称、应用版本、操作系统和 CPU 架构。不包含 ID、代码、提示词、路径或名称。',
+    telemetryDialogTitle: '帮助改进 Codexia？',
+    telemetryDialogBody:
+      'Codexia 可以向维护者自己的服务器发送匿名使用计数。会发送：事件名称（如“创建机器人”）、应用版本、操作系统和 CPU 架构，每天最多一次。绝不发送：任何 ID、代码、提示词、文件路径或名称。服务器只保存每日总数。',
+    telemetryLearnMore: '查看隐私详情',
+    telemetryAccept: '分享匿名使用数据',
+    telemetryDecline: '不分享',
     dictationModel: '语音输入模型',
     dictationModelDescription:
       '选择用于设备端语音识别的 Whisper 模型。更大的模型更准确，但需要更多磁盘空间和内存。',
