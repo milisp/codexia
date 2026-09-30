@@ -1,5 +1,7 @@
 import { CircleStop, Send, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AgentModelPanel } from '@/components/agent/AgentModelPanel';
+import { AgentModelTrigger } from '@/components/agent/AgentModelTrigger';
 import { CCPermissionModeSelect } from '@/components/cc/composer';
 import { FileMentionPopover } from '@/components/common';
 import { Button } from '@/components/ui/button';
@@ -8,12 +10,9 @@ import { useCCSessionManager } from '@/hooks/useCCSessionManager';
 import { ccInterrupt, ccSendMessage } from '@/services';
 import { useAgentCenterStore, useCCInputStore } from '@/stores';
 import { useCCStore } from '@/stores/cc';
-import { AgentModelPanel } from '@/components/agent/AgentModelPanel';
-import { AgentModelTrigger } from '@/components/agent/AgentModelTrigger';
 import { CCAttachmentButton } from './CCAttachmentButton';
 import { CCSkillsPopover } from './CCSkillsPopover';
 import { CCSlashCommandPopover } from './CCSlashCommandPopover';
-import { CCUsageConsent } from './CCUsageConsent';
 
 const CC_INPUT_FOCUS_EVENT = 'cc-input-focus-request';
 
@@ -150,7 +149,7 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps = {}) {
   );
 
   return (
-    <CCUsageConsent>
+    <>
       <div className="shrink-0">
         <div className="relative group">
           <div
@@ -186,6 +185,7 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps = {}) {
                     className="h-10 w-10 object-cover rounded border border-border"
                   />
                   <button
+                    type="button"
                     onClick={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
                     className="absolute -top-1 -right-1 hidden group-hover/img:flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
                   >
@@ -242,6 +242,6 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps = {}) {
         editorRef={textareaRef}
         triggerElement={triggerEl}
       />
-    </CCUsageConsent>
+    </>
   );
 }

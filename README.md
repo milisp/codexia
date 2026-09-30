@@ -4,7 +4,7 @@
   <h1>Codexia</h1>
 
   <p>
-    <strong>Lightweight Agent command center for Codex + Claude Agent + ACP agents</strong>
+    <strong>A lightweight agent workstation for Claude Code and Codex</strong>
   </p>
 
   <p>
@@ -16,12 +16,13 @@
 
 </div>
 
-Lightweight Agent Workstation for Codex CLI + Claude Agent + any Agent Client Protocol (ACP) agent — with **Bots** (long-lived AI coworkers), task scheduler, git worktree & remote control, skills management, and a prompt notepad in one workspace
+Use your existing Claude subscription or ChatGPT plan — no API key required.
 
-> 💡 **Maintained by [@milisp](https://github.com/milisp)** · **[Follow me on 𝕏](https://x.com/lisp_mi)** for agentic workflows, building in public, and project updates
-> Sponsorship or custom work: [milisp@proton.me](mailto:milisp@proton.me)
+Build your team of **Bots** — long-lived AI coworkers with memory and scheduled routines. Manage Claude Code, Codex, and Agent Client Protocol (ACP) agents in one workspace, with git worktrees and remote control.
 
 ![Codexia Home](https://github.com/user-attachments/assets/5be5e429-8524-4032-ba59-61ac6578cb0d)
+
+**Your brand here.** [Sponsor Codexia](mailto:milisp@proton.me).
 
 ## 🤖 Bots: AI coworkers that keep working
 
@@ -38,6 +39,7 @@ See [docs/BOTS.md](docs/BOTS.md).
 
 ## Features
 
+- **Use your existing subscription**: sign in with your Claude account or ChatGPT account and work within your plan's usage limits
 - **Bots**: long-lived AI coworkers with memory, routines, enforced trust levels and bot-to-bot help (see above)
 - **Agent Client Protocol (ACP)**: Connect any external ACP agent — sessions persist across restarts, tool calls render live in the thread
 - **Agent workflows**: Task Scheduler for recurring jobs, remote control via headless web server (including iOS)
@@ -49,7 +51,7 @@ See [docs/BOTS.md](docs/BOTS.md).
 ## Requirements
 
 - [Codex CLI](https://github.com/openai/codex)
-- [Claude Code CLI](https://claude.ai/code), which powers Claude Agent (see [usage and billing](#claude-agent-usage-and-billing))
+- [Claude Code CLI](https://claude.ai/code), which powers Claude Agent
 - Optional: any agent that speaks the [Agent Client Protocol](https://agentclientprotocol.com)
 
 ## Installation
@@ -74,29 +76,10 @@ runs without installing.
 ## Quick Start
 
 1. Launch Codexia.
-2. Add your project directory.
-3. Enter a prompt and start your agent session.
-4. Create an Agent Task Scheduler job for recurring workflows.
-
-## Claude Agent usage and billing
-
-Claude Agent in Codexia runs your own locally installed Claude CLI through the
-Claude Agent SDK. Codexia never signs in to claude.ai on your behalf; it uses
-whatever authentication your CLI already has.
-
-- **Claude subscription (Pro / Max / Team / Enterprise):** usage from Codexia is
-  programmatic, so it counts against your plan's monthly **Agent SDK credit**,
-  billed at API rates. It does not draw from your regular interactive Claude
-  Code limits, and the credit does not roll over.
-- **API key (`ANTHROPIC_API_KEY`):** usage is billed to your Anthropic Console
-  account. Recommended for heavy use.
-
-Codexia asks you to acknowledge this once before the first Claude Agent prompt;
-the answer is stored in `~/.codexia/cc-consent.json`. Plan limits and terms are
-set by Anthropic and may change, so check
-[Anthropic's documentation](https://code.claude.com/docs/en/agent-sdk/overview)
-for the current details. Codexia is an independent project and is not
-affiliated with Anthropic.
+2. Sign in with your Claude account or ChatGPT account.
+3. Add your project directory.
+4. Enter a prompt and start your agent session.
+5. Create an Agent Task Scheduler job for recurring workflows.
 
 ## Also by me
 
@@ -169,6 +152,10 @@ Related:
 
 - [GitHub Discussions](https://github.com/milisp/codexia/discussions)
 - [Report Bug / Request Feature](https://github.com/milisp/codexia/issues)
+
+## Support & Contact
+
+For custom work, contact [milisp@proton.me](mailto:milisp@proton.me).
 
 ## License
 
