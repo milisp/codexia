@@ -9,6 +9,7 @@ on:
         default: 'v0.34.0'
 
 env:
+  KEKE_VERSION: v0.1.32
   VITE_REDIRECT_URL: ${{ secrets.VITE_REDIRECT_URL }}
   VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
   VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
@@ -32,10 +33,10 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
@@ -47,6 +48,51 @@ jobs:
 
       - name: install frontend dependencies
         run: bun install
+
+      # keke ships as a Tauri sidecar. Built from source (not downloaded from
+      # keke's releases) so this CI does not inflate keke's download counts.
+      - name: Resolve keke target triple
+        id: keke
+        shell: bash
+        env:
+          MATRIX_ARGS: ${{ matrix.args }}
+        run: |
+          TRIPLE=$(echo "$MATRIX_ARGS" | sed -n 's/.*--target[= ]\([^ ]*\).*/\1/p')
+          if [[ -z "$TRIPLE" ]]; then
+            TRIPLE=$(rustc -vV | sed -n 's/host: //p')
+          fi
+          echo "triple=$TRIPLE" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout keke
+        uses: actions/checkout@v7
+        with:
+          repository: milisp/keke-agent
+          ref: ${{ env.KEKE_VERSION }}
+          path: keke-agent
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            .
+            keke-agent
+          key: keke-${{ steps.keke.outputs.triple }}
+
+      - name: Build keke sidecar
+        shell: bash
+        env:
+          KEKE_TRIPLE: ${{ steps.keke.outputs.triple }}
+        run: |
+          cd keke-agent
+          # rust-toolchain.toml pins the toolchain; install it and the target for it.
+          rustup toolchain install --profile minimal
+          rustup target add "$KEKE_TRIPLE"
+          cargo build --release --locked -p keke-cli --target "$KEKE_TRIPLE"
+          cd ..
+          EXT=""
+          if [[ "$KEKE_TRIPLE" == *windows* ]]; then EXT=".exe"; fi
+          mkdir -p src-tauri/binaries
+          cp "keke-agent/target/${KEKE_TRIPLE}/release/keke${EXT}" "src-tauri/binaries/keke-${KEKE_TRIPLE}${EXT}"
 
       - name: Read Release Notes
         id: notes
@@ -70,7 +116,7 @@ jobs:
             echo "body=🚀 Release ${{ inputs.tag_name }}" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: tauri-apps/tauri-action@v0
+      - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -79,4 +125,4 @@ jobs:
           releaseBody: ${{ steps.notes.outputs.body }}
           releaseDraft: false
           prerelease: false
-          args: ${{ matrix.args }}
+          args: ${{ matrix.args }} --config src-tauri/tauri.keke.conf.json

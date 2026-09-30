@@ -12,6 +12,7 @@ on:
         type: string
 
 env:
+  KEKE_VERSION: v0.1.32
   VITE_REDIRECT_URL: ${{ secrets.VITE_REDIRECT_URL }}
   VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
   VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
@@ -32,20 +33,41 @@ jobs:
         run: echo "tag=${{ inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ steps.target.outputs.tag }}
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Checkout keke
+        uses: actions/checkout@v7
+        with:
+          repository: milisp/keke-agent
+          ref: ${{ env.KEKE_VERSION }}
+          path: keke-agent
+
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri
+          workspaces: |
+            src-tauri
+            keke-agent
+
+      # Built from source so this CI does not inflate keke's download counts.
+      - name: Build keke sidecar
+        shell: bash
+        run: |
+          cd keke-agent
+          rustup toolchain install --profile minimal
+          rustup target add x86_64-pc-windows-msvc
+          cargo build --release --locked -p keke-cli --target x86_64-pc-windows-msvc
+          cd ..
+          mkdir -p src-tauri/binaries
+          cp keke-agent/target/x86_64-pc-windows-msvc/release/keke.exe src-tauri/binaries/keke-x86_64-pc-windows-msvc.exe
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
@@ -55,7 +77,7 @@ jobs:
 
       # No --bundles: the portable build only needs the raw executable.
       - name: Build Tauri App
-        run: bun tauri build --no-bundle
+        run: bun tauri build --no-bundle --config src-tauri/tauri.keke.conf.json
 
       - name: Package portable archive
         id: package
@@ -65,6 +87,8 @@ jobs:
           $name = "codexia_${version}_x64_portable"
           New-Item -ItemType Directory -Force -Path dist-portable | Out-Null
           Copy-Item target/release/codexia.exe dist-portable/
+          # Sidecar sits next to the app exe, where the ACP resolver looks for it.
+          Copy-Item src-tauri/binaries/keke-x86_64-pc-windows-msvc.exe dist-portable/keke.exe
           Compress-Archive -Path dist-portable/* -DestinationPath "$name.zip"
           $hash = (Get-FileHash "$name.zip" -Algorithm SHA256).Hash.ToLower()
           "$hash" | Out-File -Encoding ascii -NoNewline "$name.zip.sha256"

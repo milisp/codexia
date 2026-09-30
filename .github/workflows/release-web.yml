@@ -27,10 +27,10 @@ jobs:
     runs-on: ubuntu-24.04
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
@@ -80,7 +80,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Upload web package to release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: ${{ env.WEB_PACKAGE_PATH }}
           tag_name: ${{ github.ref_name }}
@@ -95,10 +95,10 @@ jobs:
     runs-on: macos-latest
     if: false # Temporarily disabled
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
@@ -145,7 +145,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Upload web package to release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: ${{ env.WEB_PACKAGE_PATH }}
           tag_name: ${{ github.ref_name }}
@@ -159,10 +159,10 @@ jobs:
       contents: write
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
@@ -207,7 +207,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Upload web package to release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: ${{ env.WEB_PACKAGE_PATH }}
           tag_name: ${{ github.ref_name }}
