@@ -13,7 +13,7 @@ use codexia_codex::AppState;
 /// only when the user turns remote access on, this one is always up on
 /// `127.0.0.1` so the frontend can call the same HTTP handlers the web build
 /// uses instead of a parallel `#[tauri::command]` per endpoint.
-pub const LOCAL_PORT: u16 = 7419;
+pub const LOCAL_PORT: u16 = codexia_acp::bots::LOCAL_PORT;
 
 /// Starts the loopback API server for the app's own lifetime.
 ///

@@ -255,3 +255,16 @@ pub fn delete_bot(id: &str) -> Result<(), String> {
         .map_err(|e| format!("Failed to delete bot: {}", e))?;
     Ok(())
 }
+
+/// Count one more unseen reply on a bot, from work that finished while nobody
+/// was looking at it (a routine, or a bot another bot asked). `updated_at`
+/// moves too, so the bot rises in the sidebar the way a new message would.
+pub fn increment_unread(id: &str) -> Result<BotRecord, String> {
+    let conn = get_connection()?;
+    conn.execute(
+        "UPDATE bots SET unread_count = unread_count + 1, updated_at = ?1 WHERE id = ?2",
+        params![Utc::now().to_rfc3339(), id],
+    )
+    .map_err(|e| format!("Failed to count bot reply: {}", e))?;
+    get_bot(id)?.ok_or_else(|| format!("No bot with id `{id}`"))
+}

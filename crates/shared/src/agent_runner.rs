@@ -13,6 +13,8 @@ pub struct AgentRunSpec {
     pub model: String,
     pub model_provider: String,
     pub cwd: Option<String>,
+    /// The bot to run as, for the `bot` agent. Other agents ignore it.
+    pub bot_id: Option<String>,
     pub on_started: RunStartedHook,
 }
 

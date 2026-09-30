@@ -265,6 +265,8 @@ pub(crate) struct CreateAutomationParams {
   #[serde(default)]
   #[serde(rename = "cwd_mode", alias = "cwdMode")]
   pub(crate) cwd_mode: Option<CwdMode>,
+  #[serde(default, rename = "bot_id", alias = "botId")]
+  pub(crate) bot_id: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -293,6 +295,8 @@ pub(crate) struct UpdateAutomationParams {
     #[serde(default)]
     #[serde(rename = "cwd_mode", alias = "cwdMode")]
     pub(crate) cwd_mode: Option<CwdMode>,
+    #[serde(default, rename = "bot_id", alias = "botId")]
+    pub(crate) bot_id: Option<String>,
 }
 
 #[derive(Deserialize)]

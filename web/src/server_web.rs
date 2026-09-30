@@ -29,6 +29,10 @@ pub async fn start_web_server_with_events(
     }
     log::info!("[web] requested port: {}", port);
 
+    let acp_state = codexia_acp::AcpState::new(Arc::new(WebSocketEventSink::new(event_tx.clone())));
+    // A bot calls back into this server, not the desktop's loopback one.
+    acp_state.set_api_port(port);
+
     let automation_sink: Arc<dyn EventSink> = Arc::new(WebSocketEventSink::new(event_tx.clone()));
     let automation = codexia_automation::AutomationHandle::start(
         vec![
@@ -36,6 +40,7 @@ pub async fn start_web_server_with_events(
                 codex_state.as_ref().map(|s| s.codex.clone()),
             )),
             Arc::new(codexia_cc::CcAgentRunner::new(cc_state.as_ref().clone())),
+            Arc::new(codexia_acp::BotAgentRunner::new(acp_state.clone())),
         ],
         automation_sink,
     )
@@ -50,9 +55,7 @@ pub async fn start_web_server_with_events(
         codex_state,
         Some(automation),
         cc_state,
-        Arc::new(codexia_acp::AcpState::new(Arc::new(WebSocketEventSink::new(
-            event_tx.clone(),
-        )))),
+        Arc::new(acp_state),
         Arc::new(SleepState::default()),
         Arc::new(super::terminal::WebTerminalState::default()),
         Arc::new(WebWatchState::default()),

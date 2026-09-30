@@ -213,6 +213,7 @@ async fn run_one_target(
         model: model.to_string(),
         model_provider: model_provider.to_string(),
         cwd: target_cwd.map(str::to_string),
+        bot_id: task.bot_id.clone(),
         on_started,
     };
 
@@ -370,6 +371,7 @@ mod tests {
             cron_expression: "0 0 9 * * *".to_string(),
             created_at: "2026-01-01T00:00:00Z".to_string(),
             paused: false,
+            bot_id: None,
             cwd_mode: CwdMode::Cwd,
         }
     }

@@ -1035,6 +1035,8 @@ name = "codexia-acp"
 version = "0.52.0"
 dependencies = [
  "anyhow",
+ "async-trait",
+ "codexia-codex",
  "codexia-db",
  "codexia-shared",
  "dashmap",

@@ -1,6 +1,6 @@
 use std::process::Stdio;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicI64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 
 use codexia_shared::event_sink::EventSink;
 use dashmap::DashMap;
@@ -18,6 +18,67 @@ pub const ACP_EVENT: &str = "acp-message";
 /// The ACP protocol version we speak.
 const PROTOCOL_VERSION: i64 = 1;
 
+/// How a connection behaves beyond plain JSON-RPC plumbing. The default is an
+/// interactive session with no extra servers, which is what every non-bot
+/// connection gets.
+#[derive(Clone, Default)]
+pub struct ConnectionPolicy {
+    /// ACP `McpServer` entries handed to every `session/new` and `session/load`.
+    pub mcp_servers: Vec<Value>,
+    /// Refuse the agent's `fs/write_text_file` requests. The agent's own
+    /// sandbox only covers what it writes itself; a write it routes through
+    /// the client would otherwise bypass a read-only bot's sandbox entirely.
+    pub read_only: bool,
+    /// Answer permission requests here instead of asking a person. Set for
+    /// runs nobody is watching, where an unanswered request would hang the
+    /// turn until it timed out.
+    pub unattended: Option<UnattendedApprovals>,
+}
+
+/// The standing answer for permission requests on an unattended connection.
+#[derive(Clone, Default)]
+pub struct UnattendedApprovals {
+    /// Allow everything — an autonomous bot.
+    pub allow_all: bool,
+    /// Tool keys (`toolCall.kind`, else its title) a person approved for good.
+    pub approved_tools: Vec<String>,
+    /// Set once any request had to be refused, so the run can report that it
+    /// was blocked rather than claim it finished its job.
+    pub blocked: Arc<AtomicBool>,
+}
+
+impl UnattendedApprovals {
+    /// Pick the option to answer `params` with: an allow-once when the tool is
+    /// approved, otherwise a reject-once (or a cancel when none is offered).
+    fn answer(&self, params: &Value) -> Value {
+        let tool = params.get("toolCall");
+        let key = tool
+            .and_then(|t| t.get("kind"))
+            .and_then(Value::as_str)
+            .or_else(|| tool.and_then(|t| t.get("title")).and_then(Value::as_str))
+            .unwrap_or_default();
+        let allowed = self.allow_all || self.approved_tools.iter().any(|t| t == key);
+        if !allowed {
+            self.blocked.store(true, Ordering::Relaxed);
+        }
+        let wanted = if allowed { "allow_once" } else { "reject_once" };
+        let option = params
+            .get("options")
+            .and_then(Value::as_array)
+            .and_then(|options| {
+                options
+                    .iter()
+                    .find(|o| o.get("kind").and_then(Value::as_str) == Some(wanted))
+            })
+            .and_then(|o| o.get("optionId"))
+            .cloned();
+        match option {
+            Some(id) => json!({ "outcome": { "outcome": "selected", "optionId": id } }),
+            None => json!({ "outcome": { "outcome": "cancelled" } }),
+        }
+    }
+}
+
 type Pending = Arc<DashMap<i64, oneshot::Sender<Result<Value, String>>>>;
 
 pub struct AcpClient {
@@ -29,6 +90,7 @@ pub struct AcpClient {
     /// tab. Every session it opens is tagged with it, which is what keeps a
     /// bot's conversations out of the per-project session lists.
     pub bot_id: Option<String>,
+    policy: ConnectionPolicy,
     /// Sessions opened on this connection, keyed by ACP session id. One agent
     /// process can host several sessions at once.
     sessions: Arc<DashMap<String, ()>>,
@@ -55,6 +117,7 @@ impl AcpClient {
         agent: &AcpAgentDef,
         cwd: Option<&str>,
         bot_id: Option<String>,
+        policy: ConnectionPolicy,
         sink: Arc<dyn EventSink>,
     ) -> Result<(Arc<Self>, Value), String> {
         let mut cmd = Command::new(&agent.command);
@@ -80,6 +143,7 @@ impl AcpClient {
             agent_id: agent.id.clone(),
             agent_name: agent.name.clone(),
             bot_id,
+            policy,
             sessions: Arc::new(DashMap::new()),
             last_session: Mutex::new(None),
             replaying: Arc::new(DashMap::new()),
@@ -153,7 +217,7 @@ impl AcpClient {
         let res = self
             .request(
                 "session/new",
-                json!({ "cwd": cwd, "mcpServers": [] }),
+                json!({ "cwd": cwd, "mcpServers": self.policy.mcp_servers }),
             )
             .await?;
         let session_id = res
@@ -184,7 +248,7 @@ impl AcpClient {
         let res = self
             .request(
                 "session/load",
-                json!({ "sessionId": session_id, "cwd": cwd, "mcpServers": [] }),
+                json!({ "sessionId": session_id, "cwd": cwd, "mcpServers": self.policy.mcp_servers }),
             )
             .await;
         self.replaying.remove(session_id);
@@ -507,6 +571,9 @@ impl AcpClient {
                 Ok(Some(json!({ "content": content })))
             }
             "fs/write_text_file" => {
+                if self.policy.read_only {
+                    return Err("this agent is read-only: writing files is not allowed".to_string());
+                }
                 let path = params
                     .get("path")
                     .and_then(Value::as_str)
@@ -524,6 +591,9 @@ impl AcpClient {
                 Ok(Some(Value::Null))
             }
             "session/request_permission" => {
+                if let Some(unattended) = &self.policy.unattended {
+                    return Ok(Some(unattended.answer(&params)));
+                }
                 let request_id = format!("{}-{}", self.connection_id, id);
                 let (tx, rx) = oneshot::channel();
                 self.pending_permissions.insert(request_id.clone(), tx);
@@ -549,5 +619,51 @@ impl AcpClient {
             }
             other => Err(format!("unsupported client method: {other}")),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn request(kind: &str) -> Value {
+        json!({
+            "toolCall": { "kind": kind, "title": "Run a command" },
+            "options": [
+                { "optionId": "allow", "kind": "allow_once" },
+                { "optionId": "deny", "kind": "reject_once" },
+            ],
+        })
+    }
+
+    fn picked(answer: &Value) -> Option<&str> {
+        answer["outcome"]["optionId"].as_str()
+    }
+
+    #[test]
+    fn unattended_allows_approved_tools_only() {
+        let approvals = UnattendedApprovals {
+            approved_tools: vec!["read".into()],
+            ..Default::default()
+        };
+        assert_eq!(picked(&approvals.answer(&request("read"))), Some("allow"));
+        assert!(!approvals.blocked.load(Ordering::Relaxed));
+
+        assert_eq!(picked(&approvals.answer(&request("execute"))), Some("deny"));
+        assert!(approvals.blocked.load(Ordering::Relaxed));
+    }
+
+    #[test]
+    fn unattended_allow_all_never_blocks() {
+        let approvals = UnattendedApprovals { allow_all: true, ..Default::default() };
+        assert_eq!(picked(&approvals.answer(&request("execute"))), Some("allow"));
+        assert!(!approvals.blocked.load(Ordering::Relaxed));
+    }
+
+    #[test]
+    fn unattended_cancels_when_no_reject_option() {
+        let approvals = UnattendedApprovals::default();
+        let answer = approvals.answer(&json!({ "toolCall": { "title": "x" }, "options": [] }));
+        assert_eq!(answer["outcome"]["outcome"], "cancelled");
     }
 }

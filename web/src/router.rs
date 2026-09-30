@@ -15,7 +15,7 @@ use super::{
         api_acp_authenticate, api_acp_new_session, api_acp_respond_permission, api_acp_stop,
         api_acp_set_mode, api_acp_set_model, api_acp_set_config_option,
         api_acp_load_session, api_acp_list_sessions, api_acp_get_session, api_acp_delete_session,
-        api_list_bots, api_create_bot, api_update_bot, api_delete_bot, api_bot_sessions,
+        api_list_bots, api_create_bot, api_update_bot, api_delete_bot, api_bot_sessions, api_bots_mcp,
         api_cc_accept_consent, api_cc_get_consent, api_cc_list_projects, api_cc_mcp_add, api_cc_mcp_disable, api_cc_mcp_enable,
         api_cc_mcp_get, api_cc_mcp_list, api_cc_mcp_remove,
         api_cc_connect, api_cc_disconnect, api_cc_get_installed_skills,
@@ -395,6 +395,8 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/bots/update", post(api_update_bot))
         .route("/api/bots/delete", post(api_delete_bot))
         .route("/api/bots/sessions", post(api_bot_sessions))
+        // Called by bots' own agent processes, over loopback — see `bots_mcp`.
+        .route("/mcp/bots", post(api_bots_mcp))
         .route("/api/cc/connect", post(api_cc_connect))
         .route("/api/cc/send-message", post(api_cc_send_message))
         .route("/api/cc/disconnect", post(api_cc_disconnect))

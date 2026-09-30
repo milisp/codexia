@@ -51,6 +51,10 @@ pub struct AutomationTask {
     pub paused: bool,
     #[serde(default)]
     pub cwd_mode: CwdMode,
+    /// The bot that runs this task — a bot's routine. Set exactly when
+    /// `agent` is `bot`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bot_id: Option<String>,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
