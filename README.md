@@ -129,6 +129,7 @@ Contributor note:
 ## Documentation
 
 - [Usage](docs/USAGE.md)
+- [Bots](docs/BOTS.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Web Server](docs/WEB_SERVER.md)
 
