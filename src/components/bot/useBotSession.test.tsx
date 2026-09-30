@@ -7,11 +7,16 @@ import { useBotUiStore } from '@/stores/useBotUiStore';
 const acpStart = vi.fn();
 const acpGetSession = vi.fn();
 const listBotSessions = vi.fn();
+const acpSetConfigOption = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('@/services/apiAdapt/acp', () => ({
   acpStart: (...args: unknown[]) => acpStart(...args),
   acpGetSession: (...args: unknown[]) => acpGetSession(...args),
-  acpSetConfigOption: vi.fn().mockResolvedValue(undefined),
+  acpSetConfigOption: (...args: unknown[]) => acpSetConfigOption(...args),
+}));
+
+vi.mock('@/services/apiAdapt', () => ({
+  getHomeDirectory: async () => '/home/tester',
 }));
 
 vi.mock('@/services/apiAdapt/bots', () => ({
@@ -119,6 +124,25 @@ describe('useBotSession.open', () => {
     await open(bot('bot1'));
 
     expect(texts()).toEqual(['from before the restart']);
+  });
+
+  it('sends sandbox_mode and gives the bot its own memory dir', async () => {
+    acpStart.mockResolvedValue({
+      connectionId: 'c-new',
+      sessionId: 's-new',
+      initialize: {},
+      session: { sessionId: 's-new' },
+      sessionError: null,
+    });
+    listBotSessions.mockResolvedValue([sessionRecord('s-new', 'bot1')]);
+    acpGetSession.mockResolvedValue([]);
+
+    const open = openBot();
+    await open(bot('bot1'));
+
+    const def = acpStart.mock.calls[0][2];
+    expect(def.env.KEKE_MEMORY_DIR).toBe('/home/tester/.codexia/bots/bot1/memory');
+    expect(acpSetConfigOption).toHaveBeenCalledWith('c-new', 's-new', 'sandbox_mode', 'workspace_write');
   });
 
   it('does not pour a slow bot\'s history into the bot the user switched to', async () => {

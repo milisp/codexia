@@ -26,26 +26,40 @@ export const TRUST_LEVELS: Array<{ id: BotTrustLevel; label: string; description
   },
 ];
 
+/** Where one bot keeps its memory: under `~/.codexia`, alongside codexia's other per-user state. */
+export function botMemoryDir(home: string, botId: string) {
+  return `${home}/.codexia/bots/${botId}/memory`;
+}
+
 /**
  * The process definition for one bot.
  *
  * keke has no notion of a named agent, so a bot's identity is handed over the
- * two seams keke does have: spawn arguments, and `KEKE_INSTRUCTIONS`, which
- * keke joins into the system prompt after its own identity and before the
- * project's `AGENTS.md`.
+ * three seams keke does have: spawn arguments, `KEKE_INSTRUCTIONS` (which keke
+ * joins into the system prompt after its own identity and before the
+ * project's `AGENTS.md`), and `KEKE_MEMORY_DIR` (the bot's own persistent
+ * memory, kept apart from every other bot's).
+ *
+ * Memory goes in through the env var rather than the `--memory-dir` flag: an
+ * older installed keke rejects an unknown flag with clap and the bot would fail
+ * to spawn, whereas it simply ignores an unknown env var. `memoryDir` must be
+ * absolute — a relative path would resolve against the process cwd, which is
+ * the bot's project.
  *
  * `keke` is the resolved `keke` preset from `acpListAgents` — its launcher
  * (local binary, or the `npx` fallback) is reused as-is so a bot without a
  * local install still runs, the same way the ACP composer's "Download & run"
  * does.
  */
-export function botAgentDef(bot: Bot, keke: AcpAgentDef): AcpAgentDef {
+export function botAgentDef(bot: Bot, keke: AcpAgentDef, memoryDir?: string): AcpAgentDef {
   const args = [...keke.args];
   if (bot.cwd) args.push('-C', bot.cwd);
   if (bot.provider) args.push('--provider', bot.provider);
 
   const env: Record<string, string> = { ...keke.env };
   if (bot.systemPrompt?.trim()) env.KEKE_INSTRUCTIONS = bot.systemPrompt;
+
+  if (memoryDir) env.KEKE_MEMORY_DIR = memoryDir;
 
   return {
     id: `keke-bot-${bot.id}`,

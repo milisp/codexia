@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { toast } from '@/components/ui/use-toast';
+import { getHomeDirectory } from '@/services/apiAdapt';
 import {
   type AcpSessionRecord,
   acpGetSession,
@@ -16,7 +17,7 @@ import { useBotUiStore } from '@/stores/useBotUiStore';
 import { applyAcpUpdate } from '../acp/applyUpdate';
 import { acpFreshSession } from '../acp/newSession';
 import { loadAcpAgents } from '../acp/useAcpAgents';
-import { botAgentDef, trustFor } from './botAgentDef';
+import { botAgentDef, botMemoryDir, trustFor } from './botAgentDef';
 
 /**
  * Everything a bot's pane should show: the last conversation it had before
@@ -73,7 +74,10 @@ export function useBotSession() {
   /** Apply the bot's own settings to a session keke has just opened. */
   const applySettings = useCallback(async (bot: Bot, connectionId: string, sessionId: string) => {
     const trust = trustFor(bot);
-    const options: Array<[string, string]> = [['approval_policy', trust.approvalPolicy]];
+    const options: Array<[string, string]> = [
+      ['approval_policy', trust.approvalPolicy],
+      ['sandbox_mode', trust.sandboxMode],
+    ];
     if (bot.model) options.push(['model', bot.model]);
     if (bot.reasoningEffort) options.push(['reasoning_effort', bot.reasoningEffort]);
 
@@ -162,7 +166,10 @@ export function useBotSession() {
       store.setConnecting(true);
       store.setEntries([]);
       try {
-        const res = await acpStart(bot.agentId, bot.cwd, botAgentDef(bot, keke), bot.id);
+        // Memory is a nicety: if the home dir cannot be resolved, spawn without it.
+        const home = await getHomeDirectory().catch(() => undefined);
+        const memoryDir = home ? botMemoryDir(home, bot.id) : undefined;
+        const res = await acpStart(bot.agentId, bot.cwd, botAgentDef(bot, keke, memoryDir), bot.id);
         if (res.connectionId) ui.setBotConnection(bot.id, res.connectionId);
         if (res.sessionId) ui.setBotSession(bot.id, res.sessionId);
         if (stale()) {
