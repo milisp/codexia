@@ -16,15 +16,29 @@
 
 </div>
 
-Lightweight Agent Workstation for Codex CLI + Claude Agent + any Agent Client Protocol (ACP) agent — with task scheduler, git worktree & remote control, skills management, and a prompt notepad in one workspace
+Lightweight Agent Workstation for Codex CLI + Claude Agent + any Agent Client Protocol (ACP) agent — with **Bots** (long-lived AI coworkers), task scheduler, git worktree & remote control, skills management, and a prompt notepad in one workspace
 
 > 💡 **Maintained by [@milisp](https://github.com/milisp)** · **[Follow me on 𝕏](https://x.com/lisp_mi)** for agentic workflows, building in public, and project updates
 > Sponsorship or custom work: [milisp@proton.me](mailto:milisp@proton.me)
 
 ![Codexia Home](https://github.com/user-attachments/assets/5be5e429-8524-4032-ba59-61ac6578cb0d)
 
+## 🤖 Bots: AI coworkers that keep working
+
+A bot is a named agent with its own project, persona, memory and permissions — you message it like a colleague, and it keeps working while you look elsewhere.
+
+- **Trust levels that are enforced**: Read-only, Ask before writing, or Autonomous — backed by the agent's OS sandbox, not just a prompt
+- **Persistent memory**: each bot remembers across conversations and restarts
+- **Routines**: schedule prompts a bot runs on its own (daily, weekdays, every N hours); results land in its history with an unread badge and a system notification
+- **Bots help each other**: a bot can hand a job to another bot and use its answer
+- **Your MCP servers**: pick which ones each bot can use
+- **Nothing to install**: the [keke](https://github.com/milisp/keke-agent) agent ships inside Codexia
+
+See [docs/BOTS.md](docs/BOTS.md).
+
 ## Features
 
+- **Bots**: long-lived AI coworkers with memory, routines, enforced trust levels and bot-to-bot help (see above)
 - **Agent Client Protocol (ACP)**: Connect any external ACP agent — sessions persist across restarts, tool calls render live in the thread
 - **Agent workflows**: Task Scheduler for recurring jobs, remote control via headless web server (including iOS)
 - **Workspace**: Git worktree management, project file tree, IDE-like editor, prompt notepad, local web preview
@@ -137,7 +151,7 @@ Contributor note:
 
 - **Process isolation**: Agents run in separate processes
 - **Permission control**: Configure file and network access per agent
-- **Local storage**: All data stays on your machine
+- **Local storage**: Your projects, conversations and bot memory stay on your machine. Optional anonymous usage counts are off until you say yes ([details](docs/PRIVACY.md))
 - **Open source**: Full transparency through open source code
 
 ## Contributing

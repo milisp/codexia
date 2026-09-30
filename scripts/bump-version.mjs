@@ -34,6 +34,7 @@ const members = [
 	"codexia-db",
 	"codexia-git",
 	"codexia-shared",
+	"codexia-telemetry",
 	"codexia-web",
 ];
 let lock = read("../Cargo.lock");
