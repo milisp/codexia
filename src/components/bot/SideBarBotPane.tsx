@@ -12,7 +12,6 @@ import { BotSessionList } from './BotSessionList';
 import { BotSettingsDialog } from './BotSettingsDialog';
 import { defaultLook, newBotId } from './botDefaults';
 import { markBotRead } from './markBotRead';
-import { useBotActivity } from './useBotActivity';
 import { useBotSession } from './useBotSession';
 
 /** "3m", "4h", "2d" — enough to place a conversation without a full date. */
@@ -33,7 +32,6 @@ export function SideBarBotPane() {
   const { t } = useTranslation('sidebar');
   const { bots, setBots, upsertBot, selectedBotId, connectionByBot, runningByBot, statusByBot } =
     useBotUiStore();
-  useBotActivity();
   const setView = useLayoutStore((s) => s.setView);
   const cwd = useWorkspaceStore((s) => s.cwd);
   const { open, openBlank, startNew } = useBotSession();

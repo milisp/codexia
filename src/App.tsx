@@ -5,6 +5,7 @@ import { I18nextProvider } from 'react-i18next';
 
 import './App.css';
 
+import { useBotActivity } from '@/components/bot/useBotActivity';
 import { useCodexEvents } from '@/components/codex/hooks';
 import { QuitDialog } from '@/components/dialogs';
 import { AppLayout } from '@/components/layout';
@@ -98,6 +99,10 @@ function AppShell() {
 
   // Web-mode deep link: ?agent=codex&thread=<id>&cwd=<path> (or agent=cc&session=<id>)
   useUrlParamThread(codexReady);
+
+  // Bots finish routines and other bots' requests in the background; follow
+  // them app-wide, not only while the Bot sidebar is showing.
+  useBotActivity();
 
   // Wait for settings load before rendering
   if (!settingsReady) return null;
