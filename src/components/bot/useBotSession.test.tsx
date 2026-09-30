@@ -95,6 +95,7 @@ beforeEach(() => {
     selectedBotId: null,
     connectionByBot: {},
     sessionByBot: {},
+    statusByBot: {},
     runningByBot: {},
     kekeSpawnFailed: false,
   });
@@ -126,7 +127,7 @@ describe('useBotSession.open', () => {
     expect(texts()).toEqual(['from before the restart']);
   });
 
-  it('sends sandbox_mode and gives the bot its own memory dir', async () => {
+  it("lets the backend build the bot's process and apply its settings", async () => {
     acpStart.mockResolvedValue({
       connectionId: 'c-new',
       sessionId: 's-new',
@@ -140,9 +141,8 @@ describe('useBotSession.open', () => {
     const open = openBot();
     await open(bot('bot1'));
 
-    const def = acpStart.mock.calls[0][2];
-    expect(def.env.KEKE_MEMORY_DIR).toBe('/home/tester/.codexia/bots/bot1/memory');
-    expect(acpSetConfigOption).toHaveBeenCalledWith('c-new', 's-new', 'sandbox_mode', 'workspace_write');
+    expect(acpStart.mock.calls[0][2]).toBeUndefined();
+    expect(acpStart.mock.calls[0][3]).toBe('bot1');
   });
 
   it('does not pour a slow bot\'s history into the bot the user switched to', async () => {

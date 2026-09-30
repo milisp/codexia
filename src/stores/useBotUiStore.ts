@@ -6,6 +6,8 @@ import type { Bot } from '@/services/apiAdapt/bots';
  * nothing here is persisted: this is the cache the sidebar renders from, plus
  * the live connections that must survive switching between bots.
  */
+export type BotActivityStatus = 'working' | 'done' | 'blocked' | 'failed';
+
 interface BotUiStore {
   bots: Bot[];
   setBots: (bots: Bot[]) => void;
@@ -28,6 +30,12 @@ interface BotUiStore {
    */
   runningByBot: Record<string, boolean>;
   setBotRunning: (botId: string, running: boolean) => void;
+  /**
+   * The latest unattended-run status the backend reported for each bot, so the
+   * sidebar can flag one that is blocked or failed until the user opens it.
+   */
+  statusByBot: Record<string, BotActivityStatus>;
+  setBotStatus: (botId: string, status: BotActivityStatus | null) => void;
   /** The ACP session currently open for each bot, so a return restores it. */
   sessionByBot: Record<string, string>;
   setBotSession: (botId: string, sessionId: string) => void;
@@ -74,6 +82,12 @@ export const useBotUiStore = create<BotUiStore>((set) => ({
   runningByBot: {},
   setBotRunning: (botId, running) =>
     set((state) => ({ runningByBot: { ...state.runningByBot, [botId]: running } })),
+  statusByBot: {},
+  setBotStatus: (botId, status) =>
+    set((state) => {
+      const { [botId]: _removed, ...rest } = state.statusByBot;
+      return { statusByBot: status ? { ...rest, [botId]: status } : rest };
+    }),
   sessionByBot: {},
   setBotSession: (botId, sessionId) =>
     set((state) => ({ sessionByBot: { ...state.sessionByBot, [botId]: sessionId } })),

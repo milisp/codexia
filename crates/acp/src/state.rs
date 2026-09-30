@@ -151,7 +151,23 @@ impl AcpState {
 
     /// Open a session on a connection that had to authenticate first.
     pub async fn new_session(&self, connection_id: &str, cwd: &str) -> Result<Value, String> {
-        self.get(connection_id)?.new_session(cwd).await
+        let client = self.get(connection_id)?;
+        let session = client.new_session(cwd).await?;
+        if let Some(session_id) = session.get("sessionId").and_then(Value::as_str) {
+            self.apply_bot_settings(&client, session_id).await;
+        }
+        Ok(session)
+    }
+
+    /// A bot's settings belong on every session its process opens or resumes,
+    /// not only the first one.
+    async fn apply_bot_settings(&self, client: &AcpClient, session_id: &str) {
+        let Some(bot_id) = client.bot_id.as_deref() else { return };
+        match codexia_db::bots::get_bot(bot_id) {
+            Ok(Some(bot)) => crate::bots::apply_settings(client, session_id, &bot).await,
+            Ok(None) => {}
+            Err(e) => log::warn!("acp: could not read bot {bot_id}: {e}"),
+        }
     }
 
     /// Resume a stored session on a live connection. Fails for agents that do
@@ -162,7 +178,10 @@ impl AcpState {
         session_id: &str,
         cwd: &str,
     ) -> Result<Value, String> {
-        self.get(connection_id)?.load_session(session_id, cwd).await
+        let client = self.get(connection_id)?;
+        let session = client.load_session(session_id, cwd).await?;
+        self.apply_bot_settings(&client, session_id).await;
+        Ok(session)
     }
 
     pub async fn set_mode(

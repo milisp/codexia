@@ -19,6 +19,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('./BotSettingsDialog', () => ({ BotSettingsDialog: () => null }));
+vi.mock('./useBotActivity', () => ({ useBotActivity: () => undefined }));
 
 import { SideBarBotPane } from './SideBarBotPane';
 

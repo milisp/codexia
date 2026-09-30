@@ -19,7 +19,9 @@ export type AutomationTask = {
   name: string;
   projects: string[];
   prompt: string;
-  agent: 'codex' | 'cc';
+  /** `bot` tasks run as the bot named by `bot_id`, with that bot's own model, cwd and trust. */
+  agent: 'codex' | 'cc' | 'bot';
+  bot_id?: string | null;
   model_provider: Provider;
   model: string;
   schedule: AutomationSchedule;
@@ -55,7 +57,8 @@ export async function createAutomation(payload: {
   projects: string[];
   prompt: string;
   schedule: AutomationSchedule;
-  agent?: 'codex' | 'cc';
+  agent?: 'codex' | 'cc' | 'bot';
+  bot_id?: string;
   model_provider?: string;
   model?: string;
   cwd_mode?: AutomationCwdMode;
@@ -69,7 +72,8 @@ export async function updateAutomation(payload: {
   projects: string[];
   prompt: string;
   schedule: AutomationSchedule;
-  agent?: 'codex' | 'cc';
+  agent?: 'codex' | 'cc' | 'bot';
+  bot_id?: string;
   model_provider?: string;
   model?: string;
   cwd_mode?: AutomationCwdMode;
