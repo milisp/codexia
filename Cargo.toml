@@ -7,6 +7,7 @@ members = [
   "crates/codex",
   "crates/db",
   "crates/shared",
+  "crates/telemetry",
   "crates/git",
   "src-tauri",
   "web",
@@ -81,6 +82,7 @@ codexia-cc = { path = "crates/cc" }
 codexia-codex = { path = "crates/codex" }
 codexia-db = { path = "crates/db" }
 codexia-shared = { path = "crates/shared" } 
+codexia-telemetry = { path = "crates/telemetry" }
 codexia-web = { path = "web" } 
 
 rusqlite = { version = "0.38.0", features = ["bundled"] }

@@ -10,10 +10,12 @@ import { getFilename } from '@/utils/getFilename';
 import { formatStartsIn, getNextRunAt } from './utils';
 
 type SortKey = 'name' | 'newest';
-type AgentFilter = 'codex' | 'cc';
+type AgentFilter = 'codex' | 'cc' | 'bot';
 
 type AutomationTaskListProps = {
   tasks: AutomationTask[];
+  /** Bot names by id, for tasks that run as a bot. */
+  botNames: Record<string, string>;
   isLoading: boolean;
   now: Date;
   selectedTaskId: string | null;
@@ -26,6 +28,7 @@ type AutomationTaskListProps = {
 
 export function AutomationTaskList({
   tasks,
+  botNames,
   isLoading,
   now,
   selectedTaskId,
@@ -46,6 +49,7 @@ export function AutomationTaskList({
   );
   const codexCount = useMemo(() => tasks.filter((task) => task.agent === 'codex').length, [tasks]);
   const ccCount = useMemo(() => tasks.filter((task) => task.agent === 'cc').length, [tasks]);
+  const botCount = useMemo(() => tasks.filter((task) => task.agent === 'bot').length, [tasks]);
 
   const filteredTasks = useMemo(() => {
     const query = taskQuery.trim().toLowerCase();
@@ -75,6 +79,7 @@ export function AutomationTaskList({
             <TabsList>
               <TabsTrigger value="codex">Codex ({codexCount})</TabsTrigger>
               <TabsTrigger value="cc">Claude ({ccCount})</TabsTrigger>
+              <TabsTrigger value="bot">Bots ({botCount})</TabsTrigger>
             </TabsList>
           </Tabs>
           <div className="flex items-center gap-2">
@@ -167,11 +172,17 @@ export function AutomationTaskList({
                     <p className="truncate text-sm font-medium">{task.name}</p>
                   </div>
                   <div className="mt-1 flex min-w-0 items-center gap-1">
-                    {visibleProjects.map((project) => (
-                      <Badge key={project} variant="secondary" className="max-w-[120px] truncate">
-                        {getFilename(project) || project}
+                    {task.agent === 'bot' ? (
+                      <Badge variant="secondary" className="max-w-[160px] truncate">
+                        {(task.bot_id && botNames[task.bot_id]) || 'Bot'}
                       </Badge>
-                    ))}
+                    ) : (
+                      visibleProjects.map((project) => (
+                        <Badge key={project} variant="secondary" className="max-w-[120px] truncate">
+                          {getFilename(project) || project}
+                        </Badge>
+                      ))
+                    )}
                     {hiddenCount > 0 && <Badge variant="outline">+{hiddenCount}</Badge>}
                   </div>
                 </Button>

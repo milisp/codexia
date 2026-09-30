@@ -1,5 +1,7 @@
 # Codexia Multi-Client Roadmap
 
+> Note: the Telegram/Discord "bots" here are chat clients for remote control, not the agent Bots described in [BOTS.md](./BOTS.md).
+
 Let users control their local Codexia from iOS, Telegram, and Discord.
 The server (milisp.dev) only handles auth and desktop URL registration —
 all actual traffic goes directly from the client to the user's desktop.

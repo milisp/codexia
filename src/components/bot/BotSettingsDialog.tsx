@@ -9,12 +9,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { type Bot, deleteBot, updateBot } from '@/services/apiAdapt/bots';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 import { BotIdentityFields } from './BotIdentityFields';
+import { BotMcpFields } from './BotMcpFields';
 import { BotModelFields } from './BotModelFields';
+import { BotRoutines } from './BotRoutines';
 import { BotTrustFields } from './BotTrustFields';
 import { useBotSettingsForm } from './useBotSettingsForm';
 
@@ -61,51 +64,68 @@ export function BotSettingsDialog({ bot, open, onOpenChange }: BotSettingsDialog
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <BotIdentityFields
-            name={form.name}
-            onNameChange={form.setName}
-            title={form.title}
-            onTitleChange={form.setTitle}
-            avatar={form.avatar}
-            onAvatarChange={form.setAvatar}
-            color={form.color}
-            onColorChange={form.setColor}
-            cwd={form.cwd}
-            onCwdChange={form.setCwd}
-          />
+        <Tabs defaultValue="settings">
+          <TabsList className="w-full">
+            <TabsTrigger value="settings" className="flex-1">
+              Settings
+            </TabsTrigger>
+            <TabsTrigger value="routines" className="flex-1">
+              Routines
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="settings" className="mt-4">
+            <div className="space-y-4">
+              <BotIdentityFields
+                name={form.name}
+                onNameChange={form.setName}
+                title={form.title}
+                onTitleChange={form.setTitle}
+                avatar={form.avatar}
+                onAvatarChange={form.setAvatar}
+                color={form.color}
+                onColorChange={form.setColor}
+                cwd={form.cwd}
+                onCwdChange={form.setCwd}
+              />
 
-          <BotModelFields
-            provider={form.provider}
-            onProviderChange={form.setProvider}
-            model={form.model}
-            onModelChange={form.setModel}
-            reasoningEffort={form.reasoningEffort}
-            onReasoningEffortChange={form.setReasoningEffort}
-          />
+              <BotModelFields
+                provider={form.provider}
+                onProviderChange={form.setProvider}
+                model={form.model}
+                onModelChange={form.setModel}
+                reasoningEffort={form.reasoningEffort}
+                onReasoningEffortChange={form.setReasoningEffort}
+              />
 
-          <div className="space-y-1">
-            <Label htmlFor="bot-prompt">Persona</Label>
-            <Textarea
-              id="bot-prompt"
-              rows={4}
-              value={form.systemPrompt}
-              placeholder="Who this bot is, and how it should work."
-              onChange={(e) => form.setSystemPrompt(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Read after keke's own identity and before the project's AGENTS.md, so the repository
-              still has the last word.
-            </p>
-          </div>
+              <div className="space-y-1">
+                <Label htmlFor="bot-prompt">Persona</Label>
+                <Textarea
+                  id="bot-prompt"
+                  rows={4}
+                  value={form.systemPrompt}
+                  placeholder="Who this bot is, and how it should work."
+                  onChange={(e) => form.setSystemPrompt(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Read after keke's own identity and before the project's AGENTS.md, so the
+                  repository still has the last word.
+                </p>
+              </div>
 
-          <BotTrustFields
-            trustLevel={form.trustLevel}
-            onTrustLevelChange={form.setTrustLevel}
-            approvedTools={form.approvedTools}
-            onApprovedToolsChange={form.setApprovedTools}
-          />
-        </div>
+              <BotTrustFields
+                trustLevel={form.trustLevel}
+                onTrustLevelChange={form.setTrustLevel}
+                approvedTools={form.approvedTools}
+                onApprovedToolsChange={form.setApprovedTools}
+              />
+
+              <BotMcpFields mcpServers={form.mcpServers} onMcpServersChange={form.setMcpServers} />
+            </div>
+          </TabsContent>
+          <TabsContent value="routines" className="mt-4">
+            <BotRoutines botId={bot.id} open={open} />
+          </TabsContent>
+        </Tabs>
 
         <DialogFooter className="justify-between sm:justify-between">
           <Button variant="ghost" className="text-destructive" onClick={remove}>

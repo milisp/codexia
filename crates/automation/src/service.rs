@@ -22,6 +22,7 @@ pub struct AutomationInput {
     pub model_provider: Option<String>,
     pub model: Option<String>,
     pub cwd_mode: Option<CwdMode>,
+    pub bot_id: Option<String>,
 }
 
 struct NormalizedInput {
@@ -34,6 +35,7 @@ struct NormalizedInput {
     model_provider: String,
     model: String,
     cwd_mode: CwdMode,
+    bot_id: Option<String>,
 }
 
 fn normalize(input: AutomationInput, known_agents: &[String]) -> Result<NormalizedInput, String> {
@@ -49,6 +51,19 @@ fn normalize(input: AutomationInput, known_agents: &[String]) -> Result<Normaliz
 
     let cron_expression = schedule_to_cron(&input.schedule)?;
 
+    let agent = normalize_agent(input.agent, known_agents)?;
+    // A bot runs as itself, with its own model and project; the task only
+    // says which bot. Any other agent must not carry a bot id.
+    let bot_id = input
+        .bot_id
+        .map(|id| id.trim().to_string())
+        .filter(|id| !id.is_empty());
+    let bot_id = match (agent.as_str(), bot_id) {
+        ("bot", Some(id)) => Some(id),
+        ("bot", None) => return Err("a bot routine needs a bot".to_string()),
+        (_, _) => None,
+    };
+
     Ok(NormalizedInput {
         name,
         projects: input
@@ -60,10 +75,11 @@ fn normalize(input: AutomationInput, known_agents: &[String]) -> Result<Normaliz
         prompt,
         schedule: input.schedule,
         cron_expression,
-        agent: normalize_agent(input.agent, known_agents)?,
+        agent,
         model_provider: or_default(input.model_provider, default_model_provider),
         model: or_default(input.model, default_model),
         cwd_mode: input.cwd_mode.unwrap_or_default(),
+        bot_id,
     })
 }
 
@@ -119,6 +135,7 @@ pub async fn create_automation(
         created_at: Utc::now().to_rfc3339(),
         paused: false,
         cwd_mode: input.cwd_mode,
+        bot_id: input.bot_id,
     };
 
     let job_id = schedule_task(&runtime.scheduler, runtime.ctx.clone(), &task).await?;
@@ -165,6 +182,7 @@ pub async fn update_automation(
         created_at: existing.created_at,
         paused: existing.paused,
         cwd_mode: input.cwd_mode,
+        bot_id: input.bot_id,
     };
 
     if !updated.paused {

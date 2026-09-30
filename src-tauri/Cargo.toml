@@ -42,6 +42,7 @@ tauri-plugin-dialog = { version = "2" }
 tauri-plugin-process = { version = "2" }
 tauri-plugin-fs = { version = "2", features = ["watch"] }
 tauri-plugin-updater = { version = "2" }
+tauri-plugin-notification = "2"
 tauri-plugin-screenshots = { version = "2.2.0" }
 
 reqwest = { workspace = true }

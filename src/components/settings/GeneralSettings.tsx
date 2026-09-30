@@ -1,11 +1,12 @@
 import { Github, Monitor, Moon, Sun, Twitter, X } from 'lucide-react';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getTelemetryStatus, setTelemetryConsent, type TelemetryStatus } from '@/lib/telemetry';
 import { cn } from '@/lib/utils';
 import { type Accent, type Theme, useThemeStore } from '@/stores/settings';
 import { LanguageSelector } from './LanguageSelector';
@@ -40,6 +41,12 @@ export function GeneralSettings() {
   } = useThemeStore();
   const handleThemeChange = (value: string) => setTheme(value as Theme);
   const { t } = useTranslation('settings');
+  const [telemetry, setTelemetry] = useState<TelemetryStatus | null>(null);
+  useEffect(() => {
+    getTelemetryStatus()
+      .then(setTelemetry)
+      .catch(() => {});
+  }, []);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAccentSelect = (value: Accent) => {
@@ -180,6 +187,31 @@ export function GeneralSettings() {
           </CardContent>
         </Card>
       </section>
+      {telemetry?.available && (
+        <section className="space-y-3">
+          <h3 className="text-sm font-medium px-1">{t('telemetrySection')}</h3>
+          <Card>
+            <CardContent className="px-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <div className="text-sm font-medium">{t('telemetryToggle')}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {t('telemetryToggleDescription')}
+                  </div>
+                </div>
+                <Switch
+                  checked={telemetry?.consent === 'granted'}
+                  onCheckedChange={(on) => {
+                    setTelemetryConsent(on ? 'granted' : 'denied')
+                      .then(setTelemetry)
+                      .catch(() => {});
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      )}
       <section className="space-y-3">
         <h3 className="text-sm font-medium px-1">{t('keepInTouch')}</h3>
         <div className="flex flex-wrap gap-2 text-balance">

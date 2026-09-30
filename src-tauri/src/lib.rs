@@ -56,6 +56,7 @@ pub fn run() {
             .plugin(tauri_plugin_process::init())
             .plugin(tauri_plugin_shell::init())
             .plugin(tauri_plugin_dialog::init())
+            .plugin(tauri_plugin_notification::init())
             .plugin(tauri_plugin_screenshots::init())
             .plugin(tauri_plugin_updater::Builder::new().build());
 
@@ -161,9 +162,12 @@ pub fn run() {
                     app.state::<CCState>().inner().clone(),
                 ));
                 let codex_runner = Arc::new(codex::CodexAgentRunner::new(codex_runner_client));
+                let bot_runner = Arc::new(codexia_acp::BotAgentRunner::new(
+                    app.state::<codexia_acp::AcpState>().inner().clone(),
+                ));
                 let automation = match tauri::async_runtime::block_on(
                     codexia_automation::AutomationHandle::start(
-                        vec![codex_runner, cc_runner],
+                        vec![codex_runner, cc_runner, bot_runner],
                         Arc::clone(&event_sink),
                     ),
                 ) {

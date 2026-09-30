@@ -45,3 +45,7 @@ docs/DELTA_MERGE_FIX.md
 ios/Codexia.xcodeproj/
 ios/Codexia/Info.plist
 ios/build/
+
+# keke sidecar binaries built in CI (see tauri.keke.conf.json)
+src-tauri/binaries/
+keke-agent/

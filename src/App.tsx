@@ -5,11 +5,13 @@ import { I18nextProvider } from 'react-i18next';
 
 import './App.css';
 
+import { useBotActivity } from '@/components/bot/useBotActivity';
 import { useCodexEvents } from '@/components/codex/hooks';
 import { QuitDialog } from '@/components/dialogs';
 import { AppLayout } from '@/components/layout';
 import { MobileShell } from '@/components/mobile/MobileShell';
 import { PairingView } from '@/components/pairing/PairingView';
+import { TelemetryConsentDialog } from '@/components/settings/TelemetryConsentDialog';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from '@/contexts/ThemeContext';
@@ -22,6 +24,7 @@ import { useUrlParamThread } from '@/hooks/useUrlParamThread';
 import { hasActiveWork } from '@/lib/hasActiveWork';
 import { i18n } from '@/lib/i18n';
 import { initSettingsSync, loadRemoteSettings, loadSettings } from '@/lib/settings';
+import { reportAppActive } from '@/lib/telemetry';
 import { initializeCodexAsync } from '@/services/apiAdapt';
 import { usePairingStore } from '@/stores/usePairingStore';
 import type { InitializeResponse } from './bindings';
@@ -43,7 +46,10 @@ function AppShell() {
     const load = isPhone()
       ? loadRemoteSettings().then((ok) => (ok ? undefined : loadSettings()))
       : loadSettings();
-    load.finally(() => setSettingsReady(true));
+    load.finally(() => {
+      setSettingsReady(true);
+      reportAppActive();
+    });
   }, []);
   useEffect(() => {
     // Only the machine that owns the settings file writes it back — a phone
@@ -94,6 +100,10 @@ function AppShell() {
   // Web-mode deep link: ?agent=codex&thread=<id>&cwd=<path> (or agent=cc&session=<id>)
   useUrlParamThread(codexReady);
 
+  // Bots finish routines and other bots' requests in the background; follow
+  // them app-wide, not only while the Bot sidebar is showing.
+  useBotActivity();
+
   // Wait for settings load before rendering
   if (!settingsReady) return null;
 
@@ -107,6 +117,7 @@ function AppShell() {
       <AppLayout />
       <TodoCaptureHint />
       <HistoryProjectsDialog />
+      <TelemetryConsentDialog />
       <QuitDialog open={quitDialogOpen} onOpenChange={setQuitDialogOpen} />
     </>
   );

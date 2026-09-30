@@ -38,6 +38,7 @@ export function formFromTask(task: AutomationTask): FormState {
   return {
     name: task.name,
     agent: task.agent,
+    botId: task.bot_id ?? undefined,
     modelProvider: task.model_provider ?? 'openai',
     model: task.model ?? '',
     selectedProjects: task.projects,
@@ -47,6 +48,28 @@ export function formFromTask(task: AutomationTask): FormState {
     intervalHours: task.schedule.interval_hours ?? 6,
     weekdays: normalizeWeekdays(task.schedule.weekdays),
     cwdMode: task.cwd_mode ?? 'cwd',
+  };
+}
+
+export function scheduleFromForm(form: FormState): AutomationSchedule {
+  if (form.scheduleMode === 'daily') {
+    const [hourPart, minutePart] = form.dailyTime.split(':');
+    const hour = Number(hourPart);
+    const minute = Number(minutePart);
+    return {
+      mode: 'daily',
+      hour: Number.isFinite(hour) ? hour : 9,
+      minute: Number.isFinite(minute) ? minute : 0,
+      interval_hours: null,
+      weekdays: form.weekdays,
+    };
+  }
+  return {
+    mode: 'interval',
+    hour: null,
+    minute: null,
+    interval_hours: form.intervalHours,
+    weekdays: form.weekdays,
   };
 }
 

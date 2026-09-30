@@ -13,6 +13,7 @@ import { ManageDialog } from './ManageDialog';
 import { TaskDetailPanel } from './TaskDetailPanel';
 import type { DialogMode, TemplateTask } from './types';
 import { useAutomationRuns } from './useAutomationRuns';
+import { useBotNames } from './useBotNames';
 import { formFromTemplate } from './utils';
 
 export function AutoMationsView() {
@@ -25,6 +26,7 @@ export function AutoMationsView() {
   // Unified dialog state: null = closed, { type: 'create' } = new, { type: 'edit', task } = edit
   const [dialogMode, setDialogMode] = useState<DialogMode>(null);
   const { getRunsForTask } = useAutomationRuns();
+  const botNames = useBotNames();
   const [togglingPauseTaskId, setTogglingPauseTaskId] = useState<string | null>(null);
 
   const loadAutomations = async () => {
@@ -141,6 +143,7 @@ export function AutoMationsView() {
               {/* Left: task list */}
               <AutomationTaskList
                 tasks={tasks}
+                botNames={botNames}
                 isLoading={isLoading}
                 now={now}
                 selectedTaskId={selectedTask?.id ?? null}

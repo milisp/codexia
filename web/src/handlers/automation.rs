@@ -40,6 +40,7 @@ pub(crate) async fn api_create_automation(
     AxumState(state): AxumState<WebServerState>,
     Json(params): Json<CreateAutomationParams>,
 ) -> Result<Json<AutomationTask>, ErrorResponse> {
+    let is_bot = params.agent.as_deref() == Some("bot");
     let task = create_automation(
         handle(&state)?,
         AutomationInput {
@@ -51,10 +52,14 @@ pub(crate) async fn api_create_automation(
             model_provider: params.model_provider,
             model: params.model,
             cwd_mode: params.cwd_mode,
+            bot_id: params.bot_id,
         },
     )
     .await
     .map_err(to_error_response)?;
+    if is_bot {
+        codexia_telemetry::track(codexia_telemetry::Event::BotRoutineCreated);
+    }
     Ok(Json(task))
 }
 
@@ -84,6 +89,7 @@ pub(crate) async fn api_update_automation(
             model_provider: params.model_provider,
             model: params.model,
             cwd_mode: params.cwd_mode,
+            bot_id: params.bot_id,
         },
     )
     .await

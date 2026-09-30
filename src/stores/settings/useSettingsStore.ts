@@ -95,11 +95,13 @@ export const useSettingsStore = create<SettingState>()(
     }),
     {
       name: 'settings-storage',
-      version: 11,
+      version: 13,
       migrate: (persistedState: any) => {
         if (persistedState) {
           delete persistedState.analyticsEnabled;
           delete persistedState.analyticsConsentShown;
+          // v13: telemetry consent moved to the backend (~/.codexia/telemetry.json).
+          delete persistedState.telemetryConsent;
         }
         return persistedState;
       },

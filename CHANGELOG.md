@@ -6,6 +6,23 @@
 > changelog. The release workflow reads the top `## [version]` section of this
 > file matching the tag being published.
 
+## [Unreleased]
+
+### 🚀 Features & Improvements
+- **Bots keep their word**: a bot's trust level is now enforced. Read-only bots really cannot write (file writes routed through Codexia are refused too), and Autonomous bots never stop to ask.
+- **Bot memory**: every bot has its own persistent memory in `~/.codexia/bots/<id>/memory`; delete the folder to reset it.
+- **Bot MCP servers**: pick which of your Codex-configured MCP servers each bot can use.
+- **Routines**: schedule prompts that run as a bot, managed in the bot's settings. They also show up in Automations.
+- **Unattended runs**: routines run in the background, answering permission requests from the bot's trust level and the tools you approved with "Always allow". A run that had a step refused is marked **blocked** instead of finished. Runs land in the bot's history with an unread badge, and the sidebar shows a status dot per bot.
+- **Notifications**: a system notification when a bot finishes in the background (an in-app toast while the window is focused), switchable per bot.
+- **Bots can ask each other**: a built-in `codexia-bots` MCP server (`list_bots`, `ask_bot`) lets a bot hand work to another one, one hop deep. See [docs/BOTS.md](./docs/BOTS.md).
+- **keke bundled**: release builds ship the `keke` binary, so Bots work without installing anything. The bundled keke is always preferred, so an older keke on PATH cannot break bots; PATH and then `npx @milisp/keke` are used only when there is no bundle (e.g. running from source). MCP tools in bots need keke 0.1.32 or newer.
+- **Optional anonymous usage stats**: once you have created a bot, Codexia asks once whether to share anonymous usage counts (the answer is stored per machine and shared by desktop, web and phone; with no bots nothing is asked or sent); nothing is preselected and you can change it in Settings. At most one ping per event per day with the app version, OS and CPU arch — no ID, code, prompts, paths or names. See [docs/PRIVACY.md](./docs/PRIVACY.md).
+
+### 🧹 Cleanups
+- The bot's keke process is now built by the Rust backend from its stored settings.
+- CI: release builds compile keke from source; GitHub Actions bumped (checkout, setup-node, upload-artifact v7, action-gh-release v3, tauri-action v1).
+
 ## [0.52.0] - 2026-09-28
 
 [Compare with v0.51.0](https://github.com/milisp/codexia/compare/v0.51.0...v0.52.0)

@@ -39,6 +39,18 @@ pub struct AcpAgentDef {
 struct Launcher {
     command: &'static str,
     args: &'static [&'static str],
+    /// Where `command` is looked up.
+    source: Source,
+}
+
+/// Where a launcher's executable is found.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Source {
+    /// On PATH.
+    Path,
+    /// Next to the running executable: where Tauri puts `externalBin`
+    /// sidecars (`Codexia.app/Contents/MacOS/keke`, `keke.exe` beside the app).
+    NextToExe,
 }
 
 struct Preset {
@@ -49,7 +61,28 @@ struct Preset {
 }
 
 const fn l(command: &'static str, args: &'static [&'static str]) -> Launcher {
-    Launcher { command, args }
+    Launcher { command, args, source: Source::Path }
+}
+
+/// A launcher for a binary bundled next to the app executable.
+const fn bundled(command: &'static str, args: &'static [&'static str]) -> Launcher {
+    Launcher { command, args, source: Source::NextToExe }
+}
+
+/// Full path of a sidecar sitting next to the running executable, if present.
+fn bundled_path(command: &str) -> Option<PathBuf> {
+    let dir = std::env::current_exe().ok()?.parent()?.to_path_buf();
+    let file = if cfg!(windows) { format!("{command}.exe") } else { command.to_string() };
+    let path = dir.join(file);
+    path.is_file().then_some(path)
+}
+
+/// The command to spawn for `launcher`, or `None` when it is not present.
+fn probe(launcher: &Launcher) -> Option<String> {
+    match launcher.source {
+        Source::Path => which::which(launcher.command).ok().map(|_| launcher.command.to_string()),
+        Source::NextToExe => bundled_path(launcher.command).map(|p| p.to_string_lossy().into_owned()),
+    }
 }
 
 const PRESETS: &[Preset] = &[
@@ -57,6 +90,11 @@ const PRESETS: &[Preset] = &[
         id: "keke",
         name: "Keke",
         launchers: &[
+            // The sidecar shipped in the bundle wins: it is the version this
+            // Codexia was built and tested against, so an old keke left on
+            // PATH cannot silently break bots. PATH only matters where there
+            // is no bundle (`bun tauri dev`), then a download.
+            bundled("keke", &["agent", "stdio"]),
             l("keke", &["agent", "stdio"]),
             l("npx", &["-y", "@milisp/keke@latest", "agent", "stdio"]),
         ],
@@ -74,21 +112,29 @@ const PRESETS: &[Preset] = &[
 ];
 
 impl Preset {
-    /// Pick the first launcher whose command is on PATH; fall back to the last
-    /// one (marked unavailable) so the UI can still show what it would run.
     fn resolve(&self) -> AcpAgentDef {
+        self.resolve_with(probe)
+    }
+
+    /// Pick the first launcher `probe` can locate; fall back to the last one
+    /// (marked unavailable) so the UI can still show what it would run.
+    /// `probe` returns the command to spawn, so tests can fake the filesystem.
+    fn resolve_with(&self, probe: impl Fn(&Launcher) -> Option<String>) -> AcpAgentDef {
         let found = self
             .launchers
             .iter()
-            .find(|launcher| which::which(launcher.command).is_ok());
+            .find_map(|launcher| probe(launcher).map(|command| (launcher, command)));
         let available = found.is_some();
-        let launcher = found.unwrap_or_else(|| self.launchers.last().expect("preset launcher"));
+        let (launcher, command) = found.unwrap_or_else(|| {
+            let last = self.launchers.last().expect("preset launcher");
+            (last, last.command.to_string())
+        });
         let local = available && launcher.command != "npx";
 
         AcpAgentDef {
             id: self.id.to_string(),
             name: self.name.to_string(),
-            command: launcher.command.to_string(),
+            command,
             args: launcher.args.iter().map(|a| a.to_string()).collect(),
             env: self
                 .env
@@ -234,6 +280,33 @@ mod tests {
         // No npx launcher, so nothing to install for us.
         assert_eq!(npm_package("kiro"), None);
         assert_eq!(npm_package("nope"), None);
+    }
+
+    fn keke() -> &'static Preset {
+        PRESETS.iter().find(|p| p.id == "keke").unwrap()
+    }
+
+    #[test]
+    fn keke_prefers_bundled_then_path_then_npx() {
+        let on_path = |l: &Launcher| (l.source == Source::Path && l.command == "keke").then(|| "keke".to_string());
+        let bundled_only = |l: &Launcher| (l.source == Source::NextToExe).then(|| "/app/keke".to_string());
+        let npx_only = |l: &Launcher| (l.command == "npx").then(|| "npx".to_string());
+        let both = |l: &Launcher| on_path(l).or_else(|| bundled_only(l));
+
+        let def = keke().resolve_with(both);
+        assert_eq!((def.command.as_str(), def.local, def.available), ("/app/keke", true, true));
+
+        let def = keke().resolve_with(on_path);
+        assert_eq!((def.command.as_str(), def.local, def.available), ("keke", true, true));
+
+        let def = keke().resolve_with(bundled_only);
+        assert_eq!((def.command.as_str(), def.local, def.available), ("/app/keke", true, true));
+
+        let def = keke().resolve_with(npx_only);
+        assert_eq!((def.command.as_str(), def.local, def.available), ("npx", false, true));
+
+        let def = keke().resolve_with(|_| None);
+        assert_eq!((def.command.as_str(), def.local, def.available), ("npx", false, false));
     }
 
     #[test]

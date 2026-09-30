@@ -223,12 +223,17 @@ pub fn update_bot(id: &str, patch: &BotPatch) -> Result<BotRecord, String> {
     set!(pinned, "pinned");
     set!(archived, "archived");
     set!(notifications_enabled, "notifications_enabled");
+    // Reading a bot is not activity: marking it read must not move it up the
+    // sidebar, which is ordered by `updated_at`.
+    let edited = !sets.is_empty();
     set!(unread_count, "unread_count");
     set!(last_viewed_at, "last_viewed_at");
 
     if !sets.is_empty() {
-        sets.push("updated_at = ?");
-        values.push(Box::new(Utc::now().to_rfc3339()));
+        if edited {
+            sets.push("updated_at = ?");
+            values.push(Box::new(Utc::now().to_rfc3339()));
+        }
         values.push(Box::new(id.to_string()));
 
         let sql = format!("UPDATE bots SET {} WHERE id = ?", sets.join(", "));
@@ -254,4 +259,17 @@ pub fn delete_bot(id: &str) -> Result<(), String> {
     conn.execute("DELETE FROM bots WHERE id = ?1", params![id])
         .map_err(|e| format!("Failed to delete bot: {}", e))?;
     Ok(())
+}
+
+/// Count one more unseen reply on a bot, from work that finished while nobody
+/// was looking at it (a routine, or a bot another bot asked). `updated_at`
+/// moves too, so the bot rises in the sidebar the way a new message would.
+pub fn increment_unread(id: &str) -> Result<BotRecord, String> {
+    let conn = get_connection()?;
+    conn.execute(
+        "UPDATE bots SET unread_count = unread_count + 1, updated_at = ?1 WHERE id = ?2",
+        params![Utc::now().to_rfc3339(), id],
+    )
+    .map_err(|e| format!("Failed to count bot reply: {}", e))?;
+    get_bot(id)?.ok_or_else(|| format!("No bot with id `{id}`"))
 }

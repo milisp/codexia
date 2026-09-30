@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU16, Ordering};
 
 use codexia_shared::event_sink::EventSink;
 use dashmap::DashMap;
@@ -6,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::agents::{AcpAgentDef, find_preset};
-use crate::client::AcpClient;
+use crate::client::{AcpClient, ConnectionPolicy};
 
 /// Result of starting an agent: everything the UI needs to render the session.
 #[derive(Debug, Serialize, Deserialize)]
@@ -26,6 +27,10 @@ pub struct AcpStartResult {
 pub struct AcpState {
     connections: Arc<DashMap<String, Arc<AcpClient>>>,
     sink: Arc<dyn EventSink>,
+    /// Port of the Codexia API a bot's agent calls back into (the bots MCP
+    /// server). The desktop's loopback server by default; a standalone web
+    /// server sets its own.
+    api_port: Arc<AtomicU16>,
 }
 
 impl AcpState {
@@ -33,7 +38,24 @@ impl AcpState {
         Self {
             connections: Arc::new(DashMap::new()),
             sink,
+            api_port: Arc::new(AtomicU16::new(crate::bots::LOCAL_PORT)),
         }
+    }
+
+    pub fn set_api_port(&self, port: u16) {
+        self.api_port.store(port, Ordering::Relaxed);
+    }
+
+    pub fn api_port(&self) -> u16 {
+        self.api_port.load(Ordering::Relaxed)
+    }
+
+    pub(crate) fn sink(&self) -> Arc<dyn EventSink> {
+        self.sink.clone()
+    }
+
+    pub(crate) fn insert(&self, connection_id: String, client: Arc<AcpClient>) {
+        self.connections.insert(connection_id, client);
     }
 
     /// Spawn `agent_id` (a preset id, or a custom definition) and open a session in `cwd`.
@@ -44,15 +66,36 @@ impl AcpState {
         custom: Option<AcpAgentDef>,
         bot_id: Option<String>,
     ) -> Result<AcpStartResult, String> {
-        let agent = match custom {
-            Some(a) => a,
-            None => find_preset(agent_id).ok_or_else(|| format!("unknown ACP agent: {agent_id}"))?,
+        // A bot is always built from its stored settings, so what the Bot tab
+        // runs and what a routine runs cannot drift apart.
+        let bot = match &bot_id {
+            Some(id) => Some(
+                codexia_db::bots::get_bot(id)?.ok_or_else(|| format!("No bot with id `{id}`"))?,
+            ),
+            None => None,
+        };
+        let (agent, policy) = match (&bot, custom) {
+            (Some(bot), _) => (
+                crate::bots::agent_def(bot)?,
+                crate::bots::policy(bot, self.api_port(), false, true).await,
+            ),
+            (None, Some(a)) => (a, ConnectionPolicy::default()),
+            (None, None) => (
+                find_preset(agent_id).ok_or_else(|| format!("unknown ACP agent: {agent_id}"))?,
+                ConnectionPolicy::default(),
+            ),
         };
 
         let connection_id = uuid::Uuid::new_v4().to_string();
-        let (client, initialize) =
-            AcpClient::spawn(connection_id.clone(), &agent, Some(cwd), bot_id, self.sink.clone())
-                .await?;
+        let (client, initialize) = AcpClient::spawn(
+            connection_id.clone(),
+            &agent,
+            Some(cwd),
+            bot_id,
+            policy,
+            self.sink.clone(),
+        )
+        .await?;
         self.connections.insert(connection_id.clone(), client.clone());
 
         let (session, session_error) = match client.new_session(cwd).await {
@@ -64,6 +107,9 @@ impl AcpState {
             .and_then(|s| s.get("sessionId"))
             .and_then(Value::as_str)
             .map(str::to_string);
+        if let (Some(bot), Some(session_id)) = (&bot, &session_id) {
+            crate::bots::apply_settings(&client, session_id, bot).await;
+        }
 
         Ok(AcpStartResult {
             connection_id,
@@ -105,7 +151,23 @@ impl AcpState {
 
     /// Open a session on a connection that had to authenticate first.
     pub async fn new_session(&self, connection_id: &str, cwd: &str) -> Result<Value, String> {
-        self.get(connection_id)?.new_session(cwd).await
+        let client = self.get(connection_id)?;
+        let session = client.new_session(cwd).await?;
+        if let Some(session_id) = session.get("sessionId").and_then(Value::as_str) {
+            self.apply_bot_settings(&client, session_id).await;
+        }
+        Ok(session)
+    }
+
+    /// A bot's settings belong on every session its process opens or resumes,
+    /// not only the first one.
+    async fn apply_bot_settings(&self, client: &AcpClient, session_id: &str) {
+        let Some(bot_id) = client.bot_id.as_deref() else { return };
+        match codexia_db::bots::get_bot(bot_id) {
+            Ok(Some(bot)) => crate::bots::apply_settings(client, session_id, &bot).await,
+            Ok(None) => {}
+            Err(e) => log::warn!("acp: could not read bot {bot_id}: {e}"),
+        }
     }
 
     /// Resume a stored session on a live connection. Fails for agents that do
@@ -116,7 +178,10 @@ impl AcpState {
         session_id: &str,
         cwd: &str,
     ) -> Result<Value, String> {
-        self.get(connection_id)?.load_session(session_id, cwd).await
+        let client = self.get(connection_id)?;
+        let session = client.load_session(session_id, cwd).await?;
+        self.apply_bot_settings(&client, session_id).await;
+        Ok(session)
     }
 
     pub async fn set_mode(

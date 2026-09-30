@@ -49,6 +49,16 @@ export const ja = {
     uploadImage: 'アップロード',
     clearBackgroundImage: '背景画像をクリア',
     keepInTouch: 'コミュニケーションとコミュニティ',
+    telemetrySection: 'プライバシー',
+    telemetryToggle: '匿名の利用統計',
+    telemetryToggleDescription:
+      'イベント名、アプリのバージョン、OS、CPU アーキテクチャを 1 日 1 回まで送信します。ID、コード、プロンプト、パス、名前は送信しません。',
+    telemetryDialogTitle: 'Codexia の改善にご協力いただけますか？',
+    telemetryDialogBody:
+      'Codexia は匿名の利用回数を開発者自身のサーバーに送信できます。送信する内容: イベント名（例「ボット作成」）、アプリのバージョン、OS、CPU アーキテクチャ（1 日 1 回まで）。送信しない内容: ID、コード、プロンプト、ファイルパス、名前。サーバーは日次の合計のみ保存します。',
+    telemetryLearnMore: 'プライバシーの詳細',
+    telemetryAccept: '匿名の利用データを共有',
+    telemetryDecline: '共有しない',
     dictationModel: 'ディクテーション モデル',
     dictationModelDescription:
       'オンデバイス音声認識用の Whisper モデルを選択します。より大きなモデルは精度が高いですが、より多くのディスク容量とメモリを必要とします。',

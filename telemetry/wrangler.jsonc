@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "codexia-telemetry",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-29",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "codexia-telemetry",
+      "database_id": "22ce5de7-19b6-4461-940b-ae8d174d1e1e",
+      "migrations_dir": "migrations"
+    }
+  ],
+  // Logs only contain what the code logs (errors, never bodies, IPs or headers).
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": { "invocation_logs": false }
+  }
+}

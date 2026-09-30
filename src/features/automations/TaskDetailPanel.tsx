@@ -31,6 +31,7 @@ import { getErrorMessage } from '@/utils/errorUtils';
 import { getFilename } from '@/utils/getFilename';
 import type { RunMeta } from './useAutomationRuns';
 import { useRunEvents } from './useAutomationRuns';
+import { useBotNames } from './useBotNames';
 import { describeSchedule, formatStartsIn, getNextRunAt } from './utils';
 
 type TaskDetailPanelProps = {
@@ -56,6 +57,7 @@ async function listOllamaModels(): Promise<OllamaModel[]> {
 }
 
 function agentLabel(agent: AutomationTask['agent']) {
+  if (agent === 'bot') return 'Bot';
   return agent === 'cc' ? 'Claude Agent' : 'Codex';
 }
 
@@ -255,10 +257,16 @@ export function TaskDetailPanel({ task, now, runs, togglingPauseTaskId }: TaskDe
   const { setSelectedAgent } = useAgentSettingsStore();
   const { setActiveSessionId, activeSessionIds, switchToSession } = useCCStore();
   const { handleSessionSelect } = useCCSessionManager();
+  const botNames = useBotNames();
   const resolvedModelProvider = task ? resolveModelProvider(task) : 'openai';
 
   const handleOpenRun = async (run: RunMeta) => {
     if (!task) return;
+    if (task.agent === 'bot') {
+      // Bot runs live in the bot's own conversation list, not in the Claude session store.
+      toast({ title: 'Bot run', description: "Open this run from the bot's conversations." });
+      return;
+    }
     if (task.agent === 'codex') {
       console.info('[TaskDetailPanel] Open codex run', { threadId: run.threadId, taskId: task.id });
       setSelectedAgent('codex');
@@ -485,13 +493,17 @@ export function TaskDetailPanel({ task, now, runs, togglingPauseTaskId }: TaskDe
                   <Badge variant="secondary">{providerLabel(resolvedModelProvider)}</Badge>
                 )}
                 <Badge variant="secondary" className="max-w-[260px] truncate">
-                  {displayModel}
+                  {task.agent === 'bot'
+                    ? (task.bot_id && botNames[task.bot_id]) || 'Unknown bot'
+                    : displayModel}
                 </Badge>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                {task.projects.length === 0
-                  ? 'Runs in default workspace cwd.'
-                  : `Runs once per selected project (${task.projects.length}).`}
+                {task.agent === 'bot'
+                  ? 'Runs as the bot, with its own model, project and trust.'
+                  : task.projects.length === 0
+                    ? 'Runs in default workspace cwd.'
+                    : `Runs once per selected project (${task.projects.length}).`}
               </p>
             </div>
 

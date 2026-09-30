@@ -16,7 +16,7 @@ import { useBotUiStore } from '@/stores/useBotUiStore';
 import { applyAcpUpdate } from '../acp/applyUpdate';
 import { acpFreshSession } from '../acp/newSession';
 import { loadAcpAgents } from '../acp/useAcpAgents';
-import { botAgentDef, trustFor } from './botAgentDef';
+import { trustFor } from './botAgentDef';
 
 /**
  * Everything a bot's pane should show: the last conversation it had before
@@ -73,7 +73,10 @@ export function useBotSession() {
   /** Apply the bot's own settings to a session keke has just opened. */
   const applySettings = useCallback(async (bot: Bot, connectionId: string, sessionId: string) => {
     const trust = trustFor(bot);
-    const options: Array<[string, string]> = [['approval_policy', trust.approvalPolicy]];
+    const options: Array<[string, string]> = [
+      ['approval_policy', trust.approvalPolicy],
+      ['sandbox_mode', trust.sandboxMode],
+    ];
     if (bot.model) options.push(['model', bot.model]);
     if (bot.reasoningEffort) options.push(['reasoning_effort', bot.reasoningEffort]);
 
@@ -92,192 +95,188 @@ export function useBotSession() {
    * Show a bot's conversation, starting its process if it has none. Returns the
    * live ids, or null when the bot could not be opened.
    */
-  const open = useCallback(
-    async (bot: Bot, requestedSession?: AcpSessionRecord) => {
-      const ui = useBotUiStore.getState();
-      const store = useAcpStore.getState();
+  const open = useCallback(async (bot: Bot, requestedSession?: AcpSessionRecord) => {
+    const ui = useBotUiStore.getState();
+    const store = useAcpStore.getState();
 
-      ui.setSelectedBotId(bot.id);
-      store.setAgentId(bot.agentId);
+    ui.setSelectedBotId(bot.id);
+    store.setAgentId(bot.agentId);
 
-      // Opening is async and the ACP store holds exactly one conversation, so
-      // every write to it after an await has to check that this bot is still
-      // the one on screen — otherwise a slow bot lands in a faster one's pane.
-      const stale = () => useBotUiStore.getState().selectedBotId !== bot.id;
+    // Opening is async and the ACP store holds exactly one conversation, so
+    // every write to it after an await has to check that this bot is still
+    // the one on screen — otherwise a slow bot lands in a faster one's pane.
+    const stale = () => useBotUiStore.getState().selectedBotId !== bot.id;
 
-      const existing = ui.connectionByBot[bot.id];
-      const existingSession = ui.sessionByBot[bot.id];
-      if (existing && existingSession) {
-        // The process is still ours; only the pane has to catch up. Selecting a
-        // session from the bot's history either resumes it or replays it into a
-        // fresh agent-side session when the agent cannot load sessions.
-        let activeSessionId = existingSession;
-        store.setConnection({
-          connectionId: existing,
-          sessionId: activeSessionId,
-          agentTitle: bot.name,
-          authMethods: [],
-          canLoadSession: store.canLoadSession,
-        });
-        store.setEntries([]);
-        if (requestedSession && requestedSession.sessionId !== existingSession) {
-          if (store.canLoadSession) {
-            store.setSessionId(requestedSession.sessionId);
-            store.applySession({
-              ...(await acpLoadSession(existing, requestedSession.sessionId, requestedSession.cwd)),
-              sessionId: requestedSession.sessionId,
-            });
-            activeSessionId = requestedSession.sessionId;
-            // `session/load` makes the agent stream the whole transcript back
-            // as live updates, which `applySession` has already put on screen.
-            // Replaying the stored copy on top would show every message twice.
-            ui.setBotSession(bot.id, activeSessionId);
-          } else {
-            const session = await acpNewSession(existing, bot.cwd);
-            store.applySession(session);
-            activeSessionId = session.sessionId;
-            ui.setBotSession(bot.id, activeSessionId);
-            replayInto(bot.id, {
-              history: [],
-              current: await acpGetSession(requestedSession.sessionId).catch(() => []),
-            });
-          }
-        } else {
-          replayInto(bot.id, await loadTranscript(bot.id, activeSessionId));
-        }
-        return { connectionId: existing, sessionId: activeSessionId };
-      }
-
-      // Neither a local `keke` nor `npx` resolved: there is nothing to spawn.
-      // The composer shows an install prompt for this instead of a toast.
-      // Awaited fresh rather than read off `useAcpAgents`' hook state, which
-      // can still be the pre-fetch empty array on a component's first render.
-      const keke = (await loadAcpAgents()).find((a) => a.id === 'keke');
-      console.log('bot: opening', bot.name, 'with keke', keke);
-      if (!keke || !keke.local) {
-        store.setEntries([]);
-        return null;
-      }
-
-      store.setConnecting(true);
+    const existing = ui.connectionByBot[bot.id];
+    const existingSession = ui.sessionByBot[bot.id];
+    if (existing && existingSession) {
+      // The process is still ours; only the pane has to catch up. Selecting a
+      // session from the bot's history either resumes it or replays it into a
+      // fresh agent-side session when the agent cannot load sessions.
+      let activeSessionId = existingSession;
+      store.setConnection({
+        connectionId: existing,
+        sessionId: activeSessionId,
+        agentTitle: bot.name,
+        authMethods: [],
+        canLoadSession: store.canLoadSession,
+      });
       store.setEntries([]);
-      try {
-        const res = await acpStart(bot.agentId, bot.cwd, botAgentDef(bot, keke), bot.id);
-        if (res.connectionId) ui.setBotConnection(bot.id, res.connectionId);
-        if (res.sessionId) ui.setBotSession(bot.id, res.sessionId);
-        if (stale()) {
-          if (res.sessionId) await applySettings(bot, res.connectionId, res.sessionId);
-          return res.sessionId
-            ? { connectionId: res.connectionId, sessionId: res.sessionId }
-            : null;
-        }
-        const canLoadSession = res.initialize.agentCapabilities?.loadSession === true;
-        const sessionToRestore =
-          requestedSession ?? (await listBotSessions(bot.id).catch(() => []))[0];
-        let restoreStoredSession = Boolean(sessionToRestore && canLoadSession);
-        let activeSessionId = restoreStoredSession
-          ? (sessionToRestore as AcpSessionRecord).sessionId
-          : res.sessionId;
-
-        // The store's connection/session must be set — and entries cleared —
-        // before `session/load` is awaited below: the agent streams the
-        // replayed transcript as live `session/update` events the moment it
-        // starts, and those need this bot's (now-empty) entries to land in,
-        // not whatever was on screen before or a later `applySession` that
-        // would otherwise double them up.
-        store.setConnection({
-          connectionId: res.connectionId,
-          sessionId: activeSessionId,
-          agentTitle: bot.name,
-          authMethods: res.initialize.authMethods ?? [],
-          canLoadSession,
-        });
-        if (restoreStoredSession && sessionToRestore) {
-          store.setEntries([]);
-          try {
-            store.applySession({
-              ...(await acpLoadSession(
-                res.connectionId,
-                sessionToRestore.sessionId,
-                sessionToRestore.cwd
-              )),
-              sessionId: sessionToRestore.sessionId,
-            });
-            ui.setBotSession(bot.id, sessionToRestore.sessionId);
-          } catch (e) {
-            // The agent may claim `loadSession` support yet still fail to
-            // resume a session from a previous process (e.g. it only kept it
-            // in memory) — fall back to the fresh session rather than let the
-            // whole bot fail to open over a stale session id.
-            console.warn(`bot: ${bot.name} could not resume session, starting fresh`, e);
-            restoreStoredSession = false;
-            activeSessionId = res.sessionId;
-            store.setConnection({
-              connectionId: res.connectionId,
-              sessionId: res.sessionId,
-              agentTitle: bot.name,
-              authMethods: res.initialize.authMethods ?? [],
-              canLoadSession,
-            });
-            store.applySession(res.session);
-          }
-        } else {
-          store.applySession(res.session);
-        }
-        // Remember what keke offers, so a bot that has never run can still be
-        // configured from a list rather than typed-in provider/model strings.
-        captureBotOptions(res.initialize, res.session);
-
-        if (res.sessionError || !res.sessionId) {
-          store.addEntry({
-            id: `start-${Date.now()}`,
-            role: 'error',
-            text: res.sessionError ?? 'keke opened no session.',
+      if (requestedSession && requestedSession.sessionId !== existingSession) {
+        if (store.canLoadSession) {
+          store.setSessionId(requestedSession.sessionId);
+          store.applySession({
+            ...(await acpLoadSession(existing, requestedSession.sessionId, requestedSession.cwd)),
+            sessionId: requestedSession.sessionId,
           });
-          return null;
-        }
-        ui.setKekeSpawnFailed(false);
-        await applySettings(bot, res.connectionId, res.sessionId);
-
-        // Agents that support `session/load` resume the exact selected thread.
-        // For other agents, the stored transcript remains read-only history and
-        // prompts go to the fresh session this process opened.
-        if (requestedSession && !restoreStoredSession) {
+          activeSessionId = requestedSession.sessionId;
+          // `session/load` makes the agent stream the whole transcript back
+          // as live updates, which `applySession` has already put on screen.
+          // Replaying the stored copy on top would show every message twice.
+          ui.setBotSession(bot.id, activeSessionId);
+        } else {
+          const session = await acpNewSession(existing, bot.cwd);
+          store.applySession(session);
+          activeSessionId = session.sessionId;
+          ui.setBotSession(bot.id, activeSessionId);
           replayInto(bot.id, {
             history: [],
             current: await acpGetSession(requestedSession.sessionId).catch(() => []),
           });
-        } else {
-          replayInto(
-            bot.id,
-            await loadTranscript(bot.id, activeSessionId ?? undefined, !restoreStoredSession)
-          );
         }
-
-        return activeSessionId
-          ? { connectionId: res.connectionId, sessionId: activeSessionId }
-          : null;
-      } catch (e) {
-        // `available` said keke would run — a packaged app's PATH not
-        // matching the shell's is the usual reason it didn't anyway. Once
-        // that happens, show the install prompt instead of retrying and
-        // toasting on every message.
-        if (/failed to spawn|no such file|not found|enoent/i.test(String(e))) {
-          ui.setKekeSpawnFailed(true);
-        } else {
-          toast({
-            title: `Could not start ${bot.name}`,
-            description: String(e),
-            variant: 'destructive',
-          });
-        }
-        return null;
-      } finally {
-        if (!stale()) store.setConnecting(false);
+      } else {
+        replayInto(bot.id, await loadTranscript(bot.id, activeSessionId));
       }
-    },
-    [applySettings]
-  );
+      return { connectionId: existing, sessionId: activeSessionId };
+    }
+
+    // Neither a local `keke` nor `npx` resolved: there is nothing to spawn.
+    // The composer shows an install prompt for this instead of a toast.
+    // Awaited fresh rather than read off `useAcpAgents`' hook state, which
+    // can still be the pre-fetch empty array on a component's first render.
+    const keke = (await loadAcpAgents()).find((a) => a.id === 'keke');
+    console.log('bot: opening', bot.name, 'with keke', keke);
+    if (!keke || !keke.local) {
+      store.setEntries([]);
+      return null;
+    }
+
+    store.setConnecting(true);
+    store.setEntries([]);
+    try {
+      // The backend builds the bot's process itself from the stored bot
+      // (args, instructions, memory, MCP servers) and applies its session
+      // settings to the first session, so no definition is passed here.
+      const res = await acpStart(bot.agentId, bot.cwd, undefined, bot.id);
+      if (res.connectionId) ui.setBotConnection(bot.id, res.connectionId);
+      if (res.sessionId) ui.setBotSession(bot.id, res.sessionId);
+      if (stale()) {
+        return res.sessionId ? { connectionId: res.connectionId, sessionId: res.sessionId } : null;
+      }
+      const canLoadSession = res.initialize.agentCapabilities?.loadSession === true;
+      const sessionToRestore =
+        requestedSession ?? (await listBotSessions(bot.id).catch(() => []))[0];
+      let restoreStoredSession = Boolean(sessionToRestore && canLoadSession);
+      let activeSessionId = restoreStoredSession
+        ? (sessionToRestore as AcpSessionRecord).sessionId
+        : res.sessionId;
+
+      // The store's connection/session must be set — and entries cleared —
+      // before `session/load` is awaited below: the agent streams the
+      // replayed transcript as live `session/update` events the moment it
+      // starts, and those need this bot's (now-empty) entries to land in,
+      // not whatever was on screen before or a later `applySession` that
+      // would otherwise double them up.
+      store.setConnection({
+        connectionId: res.connectionId,
+        sessionId: activeSessionId,
+        agentTitle: bot.name,
+        authMethods: res.initialize.authMethods ?? [],
+        canLoadSession,
+      });
+      if (restoreStoredSession && sessionToRestore) {
+        store.setEntries([]);
+        try {
+          store.applySession({
+            ...(await acpLoadSession(
+              res.connectionId,
+              sessionToRestore.sessionId,
+              sessionToRestore.cwd
+            )),
+            sessionId: sessionToRestore.sessionId,
+          });
+          ui.setBotSession(bot.id, sessionToRestore.sessionId);
+        } catch (e) {
+          // The agent may claim `loadSession` support yet still fail to
+          // resume a session from a previous process (e.g. it only kept it
+          // in memory) — fall back to the fresh session rather than let the
+          // whole bot fail to open over a stale session id.
+          console.warn(`bot: ${bot.name} could not resume session, starting fresh`, e);
+          restoreStoredSession = false;
+          activeSessionId = res.sessionId;
+          store.setConnection({
+            connectionId: res.connectionId,
+            sessionId: res.sessionId,
+            agentTitle: bot.name,
+            authMethods: res.initialize.authMethods ?? [],
+            canLoadSession,
+          });
+          store.applySession(res.session);
+        }
+      } else {
+        store.applySession(res.session);
+      }
+      // Remember what keke offers, so a bot that has never run can still be
+      // configured from a list rather than typed-in provider/model strings.
+      captureBotOptions(res.initialize, res.session);
+
+      if (res.sessionError || !res.sessionId) {
+        store.addEntry({
+          id: `start-${Date.now()}`,
+          role: 'error',
+          text: res.sessionError ?? 'keke opened no session.',
+        });
+        return null;
+      }
+      ui.setKekeSpawnFailed(false);
+
+      // Agents that support `session/load` resume the exact selected thread.
+      // For other agents, the stored transcript remains read-only history and
+      // prompts go to the fresh session this process opened.
+      if (requestedSession && !restoreStoredSession) {
+        replayInto(bot.id, {
+          history: [],
+          current: await acpGetSession(requestedSession.sessionId).catch(() => []),
+        });
+      } else {
+        replayInto(
+          bot.id,
+          await loadTranscript(bot.id, activeSessionId ?? undefined, !restoreStoredSession)
+        );
+      }
+
+      return activeSessionId
+        ? { connectionId: res.connectionId, sessionId: activeSessionId }
+        : null;
+    } catch (e) {
+      // `available` said keke would run — a packaged app's PATH not
+      // matching the shell's is the usual reason it didn't anyway. Once
+      // that happens, show the install prompt instead of retrying and
+      // toasting on every message.
+      if (/failed to spawn|no such file|not found|enoent/i.test(String(e))) {
+        ui.setKekeSpawnFailed(true);
+      } else {
+        toast({
+          title: `Could not start ${bot.name}`,
+          description: String(e),
+          variant: 'destructive',
+        });
+      }
+      return null;
+    } finally {
+      if (!stale()) store.setConnecting(false);
+    }
+  }, []);
 
   /**
    * Show a bot that has nothing to show yet — a freshly created one. Creating a

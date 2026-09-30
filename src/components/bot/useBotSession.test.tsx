@@ -7,11 +7,16 @@ import { useBotUiStore } from '@/stores/useBotUiStore';
 const acpStart = vi.fn();
 const acpGetSession = vi.fn();
 const listBotSessions = vi.fn();
+const acpSetConfigOption = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('@/services/apiAdapt/acp', () => ({
   acpStart: (...args: unknown[]) => acpStart(...args),
   acpGetSession: (...args: unknown[]) => acpGetSession(...args),
-  acpSetConfigOption: vi.fn().mockResolvedValue(undefined),
+  acpSetConfigOption: (...args: unknown[]) => acpSetConfigOption(...args),
+}));
+
+vi.mock('@/services/apiAdapt', () => ({
+  getHomeDirectory: async () => '/home/tester',
 }));
 
 vi.mock('@/services/apiAdapt/bots', () => ({
@@ -90,6 +95,7 @@ beforeEach(() => {
     selectedBotId: null,
     connectionByBot: {},
     sessionByBot: {},
+    statusByBot: {},
     runningByBot: {},
     kekeSpawnFailed: false,
   });
@@ -119,6 +125,24 @@ describe('useBotSession.open', () => {
     await open(bot('bot1'));
 
     expect(texts()).toEqual(['from before the restart']);
+  });
+
+  it("lets the backend build the bot's process and apply its settings", async () => {
+    acpStart.mockResolvedValue({
+      connectionId: 'c-new',
+      sessionId: 's-new',
+      initialize: {},
+      session: { sessionId: 's-new' },
+      sessionError: null,
+    });
+    listBotSessions.mockResolvedValue([sessionRecord('s-new', 'bot1')]);
+    acpGetSession.mockResolvedValue([]);
+
+    const open = openBot();
+    await open(bot('bot1'));
+
+    expect(acpStart.mock.calls[0][2]).toBeUndefined();
+    expect(acpStart.mock.calls[0][3]).toBe('bot1');
   });
 
   it('does not pour a slow bot\'s history into the bot the user switched to', async () => {

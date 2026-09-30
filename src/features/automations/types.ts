@@ -8,7 +8,9 @@ import type { Provider } from '@/stores/settings';
 
 export type FormState = {
   name: string;
-  agent: 'codex' | 'cc';
+  agent: 'codex' | 'cc' | 'bot';
+  /** Set when `agent` is `bot`; carried through edits untouched. */
+  botId?: string;
   modelProvider: Provider;
   model: string;
   selectedProjects: string[];

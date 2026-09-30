@@ -11,6 +11,7 @@ import { BotAvatar } from './BotAvatar';
 import { BotSessionList } from './BotSessionList';
 import { BotSettingsDialog } from './BotSettingsDialog';
 import { defaultLook, newBotId } from './botDefaults';
+import { markBotRead } from './markBotRead';
 import { useBotSession } from './useBotSession';
 
 /** "3m", "4h", "2d" — enough to place a conversation without a full date. */
@@ -29,7 +30,8 @@ function since(iso: string) {
  */
 export function SideBarBotPane() {
   const { t } = useTranslation('sidebar');
-  const { bots, setBots, upsertBot, selectedBotId, connectionByBot } = useBotUiStore();
+  const { bots, setBots, upsertBot, selectedBotId, connectionByBot, runningByBot, statusByBot } =
+    useBotUiStore();
   const setView = useLayoutStore((s) => s.setView);
   const cwd = useWorkspaceStore((s) => s.cwd);
   const { open, openBlank, startNew } = useBotSession();
@@ -63,6 +65,12 @@ export function SideBarBotPane() {
   const select = useCallback(
     (bot: Bot) => {
       setView('bot');
+      // Opening the bot is how blocked/failed gets acknowledged.
+      const status = useBotUiStore.getState().statusByBot[bot.id];
+      if (status === 'blocked' || status === 'failed') {
+        useBotUiStore.getState().setBotStatus(bot.id, null);
+      }
+      void markBotRead(bot);
       void open(bot);
     },
     [open, setView]
@@ -103,6 +111,21 @@ export function SideBarBotPane() {
                     {bot.title || bot.model || bot.cwd || 'keke'}
                   </span>
                 </span>
+                {(runningByBot[bot.id] ||
+                  statusByBot[bot.id] === 'blocked' ||
+                  statusByBot[bot.id] === 'failed') && (
+                  <span
+                    role="img"
+                    aria-label={runningByBot[bot.id] ? 'working' : statusByBot[bot.id]}
+                    className={`h-2 w-2 shrink-0 rounded-full ${
+                      runningByBot[bot.id]
+                        ? 'animate-pulse bg-primary'
+                        : statusByBot[bot.id] === 'failed'
+                          ? 'bg-destructive'
+                          : 'bg-amber-500'
+                    }`}
+                  />
+                )}
                 {bot.unreadCount > 0 && (
                   <span className="shrink-0 rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground">
                     {bot.unreadCount}

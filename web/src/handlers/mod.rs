@@ -16,6 +16,8 @@ mod openapp;
 mod publish;
 mod automation;
 mod bots;
+mod bots_mcp;
+mod telemetry;
 mod insights;
 mod skills;
 mod settings;
@@ -25,6 +27,8 @@ mod types;
 
 pub(super) use acp::*;
 pub(super) use bots::*;
+pub(super) use bots_mcp::*;
+pub(super) use telemetry::*;
 pub(super) use cc::*;
 pub(super) use claude_usage::*;
 pub(super) use codex::*;

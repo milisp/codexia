@@ -48,6 +48,16 @@ export const en = {
     uploadImage: 'Upload',
     clearBackgroundImage: 'Clear background image',
     keepInTouch: 'Keep in touch and community',
+    telemetrySection: 'Privacy',
+    telemetryToggle: 'Anonymous usage statistics',
+    telemetryToggleDescription:
+      'Share event names, app version, OS and CPU architecture, at most once a day. No ID, code, prompts, paths or names.',
+    telemetryDialogTitle: 'Help improve Codexia?',
+    telemetryDialogBody:
+      'Codexia can send anonymous usage counts to the maintainer\'s own server. Sent: event names (such as "bot created"), app version, OS and CPU architecture, at most once a day. Never sent: any ID, code, prompts, file paths or names. The server stores only daily totals.',
+    telemetryLearnMore: 'Read the privacy details',
+    telemetryAccept: 'Share anonymous usage',
+    telemetryDecline: "Don't share",
     dictationModel: 'Dictation Model',
     dictationModelDescription:
       'Select the Whisper model for on-device speech recognition. Larger models are more accurate but require more disk space and memory.',

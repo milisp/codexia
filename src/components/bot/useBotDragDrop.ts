@@ -1,6 +1,7 @@
 import { getCurrentWebview } from '@tauri-apps/api/webview';
 import { stat } from '@tauri-apps/plugin-fs';
 import { useEffect } from 'react';
+import { isDesktopTauri } from '@/hooks/runtime';
 import { type Bot, updateBot } from '@/services/apiAdapt/bots';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 
@@ -11,7 +12,9 @@ export function useBotDragDrop(bot: Bot | undefined) {
   const botCwd = bot?.cwd;
 
   useEffect(() => {
-    if (!botId) return;
+    // Only the desktop webview delivers native file drops; elsewhere (web,
+    // phone) there is no Tauri window and asking for one throws.
+    if (!botId || !isDesktopTauri()) return;
     let cancelled = false;
     const unlisten = getCurrentWebview().onDragDropEvent(async (event) => {
       if (event.payload.type !== 'drop' || cancelled) return;
