@@ -2,6 +2,7 @@ import { listen } from '@tauri-apps/api/event';
 import { useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { buildEventUrl, isDesktopTauri } from '@/hooks/runtime';
+import { notifyDesktop } from '@/lib/notify';
 import { listBots } from '@/services/apiAdapt/bots';
 import { type BotActivityStatus, useBotUiStore } from '@/stores/useBotUiStore';
 
@@ -33,10 +34,12 @@ function handleActivity({ botId, status }: BotActivityPayload) {
   if (ui.selectedBotId === botId) return;
   const bot = ui.bots.find((b) => b.id === botId);
   if (!bot?.notificationsEnabled) return;
-  toast({
-    title: MESSAGES[status](bot.name),
-    variant: status === 'failed' ? 'destructive' : undefined,
-  });
+  const title = MESSAGES[status](bot.name);
+  const showToast = () =>
+    toast({ title, variant: status === 'failed' ? 'destructive' : undefined });
+  // Focused window: in-app toast. Otherwise a system notification (toast as fallback).
+  if (document.hasFocus()) showToast();
+  else void notifyDesktop(title, undefined, showToast);
 }
 
 /**

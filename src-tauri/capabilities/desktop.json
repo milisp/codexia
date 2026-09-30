@@ -55,6 +55,7 @@
     },
     "shell:allow-stdin-write",
     "shell:allow-kill",
+    "notification:default",
     "screenshots:default",
     "updater:default"
   ]
