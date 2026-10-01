@@ -237,6 +237,9 @@ export default function AgentsMdView() {
       <AlertDialog
         open={showLeaveConfirmation}
         onOpenChange={(open) => {
+          if (!open && saving) {
+            return;
+          }
           setShowLeaveConfirmation(open);
           if (!open) {
             setLeaveError(null);
