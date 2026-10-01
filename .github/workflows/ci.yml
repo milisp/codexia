@@ -71,6 +71,9 @@ jobs:
 
   build-linux:
     needs: rust-checks
+    # Skip full Tauri build for fork PRs — secrets are unavailable and signing would fail.
+    # rust-checks above already covers cargo check / clippy / tests.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     name: Build Linux x86_64
 
