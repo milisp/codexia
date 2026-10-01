@@ -6,6 +6,17 @@
 > changelog. The release workflow reads the top `## [version]` section of this
 > file matching the tag being published.
 
+## [0.53.1] - 2026-10-01
+
+[Compare with v0.53.0](https://github.com/milisp/codexia/compare/v0.53.0...v0.53.1)
+
+- chore: bump codexia to 0.53.1 (`b449c21d`)
+- chore: tweak CI build flow for fork PRs (`cc77dcdd`)
+- fix: support adding projects in web sidebar (`356a1c01`)
+- ci: update Rust cache key and toolchain selection (`3e823287`)
+- fix: add return navigation to instructions editor with leave-guard (`044eb01f`)
+- Remove Claude usage consent flow (`d5ddf7c9`)
+
 ## [0.53.0] - 2026-09-29
 
 [Compare with v0.52.0](https://github.com/milisp/codexia/compare/v0.52.0...v0.53.0)
