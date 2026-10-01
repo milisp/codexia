@@ -56,6 +56,8 @@ jobs:
 
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "codexia"
 
       # tauri::generate_context! expects frontendDist to exist; the Rust checks don't need real assets.
       - name: Create placeholder frontend dist
@@ -83,10 +85,14 @@ jobs:
           sudo apt install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf pkg-config libasound2-dev
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.98.0
 
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "codexia"
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
