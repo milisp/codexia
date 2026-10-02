@@ -6,6 +6,15 @@
 > changelog. The release workflow reads the top `## [version]` section of this
 > file matching the tag being published.
 
+## [0.53.2] - 2026-10-02
+
+[Compare with v0.53.1](https://github.com/milisp/codexia/compare/v0.53.1...v0.53.2)
+
+- chore: bump codexia to 0.53.2 (`9220b196`)
+- chore: update keke to v0.1.34 (`9ab36c68`)
+- style: biome formatting (`c0363f62`)
+- refactor: per-provider model catalogues and provider probing (`9f1a5bd6`)
+
 ## [0.53.1] - 2026-10-01
 
 [Compare with v0.53.0](https://github.com/milisp/codexia/compare/v0.53.0...v0.53.1)
