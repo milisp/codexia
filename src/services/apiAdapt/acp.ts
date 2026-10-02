@@ -20,6 +20,8 @@ export type AcpAuthMethod = {
   id: string;
   name: string;
   description?: string | null;
+  /** keke reports whether a usable credential is already stored for the route. */
+  _meta?: { signedIn?: boolean; credentialSource?: string };
 };
 
 export type AcpInitializeResult = {

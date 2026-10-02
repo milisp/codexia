@@ -56,7 +56,7 @@ export function AcpComposer() {
       applySession(res.session);
       // keke's own catalogue also configures bots, which are keke processes —
       // so a bot can be set up from this session without opening its chat.
-      if (agentId === 'keke') captureBotOptions(res.initialize, res.session);
+      if (agentId === 'keke') captureBotOptions('', res.initialize, res.session);
       if (res.sessionError) {
         addEntry({ id: `start-${Date.now()}`, role: 'error', text: res.sessionError });
         return null;
@@ -78,7 +78,7 @@ export function AcpComposer() {
     }
     if (connectionId || connecting || !cwd || !agent?.available) return;
     if (attempted.current === agentId) return;
-    void connect();
+    connect();
   }, [agentId, cwd, connectionId, connecting, agent?.available, restartNonce, connect]);
 
   const send = async () => {
@@ -116,7 +116,7 @@ export function AcpComposer() {
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
-              void send();
+              send();
             }
           }}
           placeholder="Do anything..."

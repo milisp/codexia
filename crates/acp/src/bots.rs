@@ -62,9 +62,6 @@ pub fn agent_def(bot: &BotRecord) -> Result<AcpAgentDef, String> {
     if !bot.cwd.is_empty() {
         args.extend(["-C".to_string(), bot.cwd.clone()]);
     }
-    if let Some(provider) = bot.provider.as_deref().filter(|p| !p.is_empty()) {
-        args.extend(["--provider".to_string(), provider.to_string()]);
-    }
 
     let mut env = keke.env.clone();
     if let Some(prompt) = bot.system_prompt.as_deref().filter(|p| !p.trim().is_empty()) {
@@ -168,6 +165,21 @@ pub async fn policy(
             approved_tools: parse_list(&bot.approved_tools),
             ..Default::default()
         }),
+    }
+}
+
+/// Point a freshly spawned keke at the bot's provider.
+///
+/// keke picks its route per process through `authenticate`, and the models a
+/// session offers belong to that route, so this must run before `session/new`.
+/// A bot with no provider keeps keke's own default. A route that cannot be
+/// signed in to is reported, not fatal: the bot still opens on the default.
+pub async fn select_provider(client: &AcpClient, bot: &BotRecord) {
+    let Some(provider) = bot.provider.as_deref().filter(|p| !p.is_empty()) else {
+        return;
+    };
+    if let Err(e) = client.authenticate(provider).await {
+        log::warn!("bot {}: could not use provider {provider}: {e}", bot.name);
     }
 }
 
@@ -292,11 +304,13 @@ impl crate::AcpState {
 
     fn emit_bot(&self, bot_id: &str, session_id: &str, status: &str) {
         // Anonymous usage count (opt-in, backend-gated); "working" is not an outcome.
-        match status {
-            "done" => codexia_telemetry::track(codexia_telemetry::Event::BotRunDone),
-            "blocked" => codexia_telemetry::track(codexia_telemetry::Event::BotRunBlocked),
-            "failed" => codexia_telemetry::track(codexia_telemetry::Event::BotRunFailed),
-            _ => {}
+        if matches!(status, "done" | "blocked" | "failed") {
+            match status {
+                "done" => codexia_telemetry::track(codexia_telemetry::Event::BotRunDone),
+                "blocked" => codexia_telemetry::track(codexia_telemetry::Event::BotRunBlocked),
+                "failed" => codexia_telemetry::track(codexia_telemetry::Event::BotRunFailed),
+                _ => unreachable!(),
+            }
         }
         self.sink().emit(
             BOT_EVENT,

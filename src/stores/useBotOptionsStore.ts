@@ -8,6 +8,13 @@ import type {
   AcpSessionResult,
 } from '@/services/apiAdapt/acp';
 
+/** Models and efforts one provider offered; keke reports them per provider. */
+export interface ProviderCatalogue {
+  /** Model / effort options only; `currentValue` here is meaningless. */
+  configOptions: AcpConfigOption[];
+  models: AcpModelState | null;
+}
+
 /**
  * The accounts, models and reasoning efforts keke last advertised.
  *
@@ -20,40 +27,56 @@ import type {
  */
 interface BotOptionsStore {
   authMethods: AcpAuthMethod[];
-  /** Model / effort options only; `currentValue` here is meaningless. */
-  configOptions: AcpConfigOption[];
-  models: AcpModelState | null;
-  setCatalogue: (catalogue: {
-    authMethods: AcpAuthMethod[];
-    configOptions: AcpConfigOption[];
-    models: AcpModelState | null;
-  }) => void;
+  /**
+   * Keyed by provider id (`''` for keke's default). A bot's process is spawned
+   * with `--provider`, so the models it advertises belong to that provider
+   * only and must not be shown for another one.
+   */
+  byProvider: Record<string, ProviderCatalogue>;
+  setCatalogue: (
+    provider: string,
+    catalogue: {
+      authMethods: AcpAuthMethod[];
+      configOptions: AcpConfigOption[];
+      models: AcpModelState | null;
+    }
+  ) => void;
 }
 
 export const useBotOptionsStore = create<BotOptionsStore>()(
   persist(
     (set) => ({
       authMethods: [],
-      configOptions: [],
-      models: null,
-      setCatalogue: ({ authMethods, configOptions, models }) =>
-        set((state) => ({
-          // A connection that advertises nothing must not wipe what we know.
-          authMethods: authMethods.length ? authMethods : state.authMethods,
-          configOptions: configOptions.length ? configOptions : state.configOptions,
-          models: models?.availableModels.length ? models : state.models,
-        })),
+      byProvider: {},
+      setCatalogue: (provider, { authMethods, configOptions, models }) =>
+        set((state) => {
+          const previous = state.byProvider[provider];
+          return {
+            // A connection that advertises nothing must not wipe what we know.
+            authMethods: authMethods.length ? authMethods : state.authMethods,
+            byProvider: {
+              ...state.byProvider,
+              [provider]: {
+                configOptions: configOptions.length
+                  ? configOptions
+                  : (previous?.configOptions ?? []),
+                models: models?.availableModels.length ? models : (previous?.models ?? null),
+              },
+            },
+          };
+        }),
     }),
-    { name: 'bot-options-storage', version: 2, migrate: () => ({}) as Partial<BotOptionsStore> }
+    { name: 'bot-options-storage', version: 3, migrate: () => ({}) as Partial<BotOptionsStore> }
   )
 );
 
-/** Record what a freshly opened keke session offers. */
+/** Record what a freshly opened keke session offers for the provider it runs on. */
 export function captureBotOptions(
+  provider: string | null | undefined,
   initialize: AcpInitializeResult | null,
   session: AcpSessionResult | null
 ) {
-  useBotOptionsStore.getState().setCatalogue({
+  useBotOptionsStore.getState().setCatalogue(provider ?? '', {
     authMethods: initialize?.authMethods ?? [],
     // `mode` is per-conversation, not a bot setting; trust level covers it.
     configOptions: (session?.configOptions ?? []).filter(
