@@ -1,7 +1,6 @@
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { ChevronDown, Folder, FolderPlus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { BrowserProjects, WorkspaceProjects } from '@/features/ProjectSelector';
 import { Button } from '@/components/ui/button';
 import { Command } from '@/components/ui/command';
 import {
@@ -9,6 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { BrowserProjects, WorkspaceProjects } from '@/features/ProjectSelector';
 import { isDesktopTauri } from '@/hooks/runtime';
 import { cn } from '@/lib/utils';
 import { codexService } from '@/services/codexService';

@@ -1,4 +1,4 @@
-import { useCallback, type RefObject } from 'react';
+import { type RefObject, useCallback } from 'react';
 import type { ServerNotification } from '@/bindings/ServerNotification';
 import type { AccountLoginCompletedNotification } from '@/bindings/v2';
 import { useCodexStore } from '@/components/codex/stores';

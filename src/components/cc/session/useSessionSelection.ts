@@ -4,8 +4,8 @@ import { fromSdkMessages } from '@/components/cc/utils/fromSdkMessages';
 import type { SdkSessionInfo } from '@/lib/sessions';
 import { ccGetSessionMessages } from '@/services/apiAdapt/cc';
 import { useAgentCenterStore, useLayoutStore } from '@/stores';
-import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useCCStore } from '@/stores/cc';
+import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
 interface UseSessionSelectionArgs {

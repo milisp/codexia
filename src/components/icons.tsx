@@ -4,11 +4,11 @@ import CodexIcon from '@/assets/codex-color.svg';
 import GeminiIcon from '@/assets/gemini-color.svg';
 import GithubIcon from '@/assets/github.svg';
 import MCPIcon from '@/assets/mcp.svg';
+import MiniMaxIcon from '@/assets/minimax-color.svg';
 import NvidiaIcon from '@/assets/nvidia-color.svg';
 import OllamaIcon from '@/assets/ollama.svg';
 import OpenAIIcon from '@/assets/openai.svg';
 import OpenRouterIcon from '@/assets/openrouter.svg';
-import MiniMaxIcon from '@/assets/minimax-color.svg';
 
 type IconSize = 'sm' | 'md' | 'lg';
 
