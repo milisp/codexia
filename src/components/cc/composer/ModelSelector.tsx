@@ -32,59 +32,76 @@ export function ModelSelector({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <Popover open={embedded ? true : open} onOpenChange={setOpen}>
-      {!embedded && <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 gap-2 px-2 border border-transparent transition-all hover:border-input hover:bg-accent/50"
-        >
-          <div className="flex items-center gap-1.5 text-xs text-foreground">
-            <span className="font-medium">{activeLabel}</span>
-            <span className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono capitalize text-muted-foreground border">
-              {effort}
-            </span>
-          </div>
-          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-        </Button>
-      </PopoverTrigger>}
+      {!embedded && (
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-2 px-2 border border-transparent transition-all hover:border-input hover:bg-accent/50"
+          >
+            <div className="flex items-center gap-1.5 text-xs text-foreground">
+              <span className="font-medium">{activeLabel}</span>
+              <span className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono capitalize text-muted-foreground border">
+                {effort}
+              </span>
+            </div>
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          </Button>
+        </PopoverTrigger>
+      )}
 
-      {embedded ? <div className="w-full rounded-md border bg-popover p-0">
-        {/* No input: the Command root itself takes focus so arrow keys / Enter work. */}
-        <Command loop tabIndex={0} className="outline-none">
-          <CommandList>
-            <CommandGroup>
-              {MODELS.map((item) => (
-                <CommandItem
-                  key={item.id}
-                  value={item.label}
-                  onSelect={() => handleModelChange(item.id)}
-                >
-                  <span className="flex-1">{item.label}</span>
-                  {model === item.id && <Check className="h-3.5 w-3.5 shrink-0" />}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-        <EffortSlider
-          label="Effort"
-          options={CC_EFFORT_LEVELS}
-          value={effort}
-          onChange={handleEffortChange}
-        />
-      </div> : <PopoverContent className="w-56 p-0" align="end">
-        <Command loop tabIndex={0} className="outline-none">
-          <CommandList>
-            <CommandGroup>{MODELS.map((item) => (
-              <CommandItem key={item.id} value={item.label} onSelect={() => handleModelChange(item.id)}>
-                <span className="flex-1">{item.label}</span>
-                {model === item.id && <Check className="h-3.5 w-3.5 shrink-0" />}
-              </CommandItem>
-            ))}</CommandGroup>
-          </CommandList>
-          <EffortSlider label="Effort" options={CC_EFFORT_LEVELS} value={effort} onChange={handleEffortChange} />
-        </Command>
-      </PopoverContent>}
+      {embedded ? (
+        <div className="w-full rounded-md border bg-popover p-0">
+          {/* No input: the Command root itself takes focus so arrow keys / Enter work. */}
+          <Command loop tabIndex={0} className="outline-none">
+            <CommandList>
+              <CommandGroup>
+                {MODELS.map((item) => (
+                  <CommandItem
+                    key={item.id}
+                    value={item.label}
+                    onSelect={() => handleModelChange(item.id)}
+                  >
+                    <span className="flex-1">{item.label}</span>
+                    {model === item.id && <Check className="h-3.5 w-3.5 shrink-0" />}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+          <EffortSlider
+            label="Effort"
+            options={CC_EFFORT_LEVELS}
+            value={effort}
+            onChange={handleEffortChange}
+          />
+        </div>
+      ) : (
+        <PopoverContent className="w-56 p-0" align="end">
+          <Command loop tabIndex={0} className="outline-none">
+            <CommandList>
+              <CommandGroup>
+                {MODELS.map((item) => (
+                  <CommandItem
+                    key={item.id}
+                    value={item.label}
+                    onSelect={() => handleModelChange(item.id)}
+                  >
+                    <span className="flex-1">{item.label}</span>
+                    {model === item.id && <Check className="h-3.5 w-3.5 shrink-0" />}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+            <EffortSlider
+              label="Effort"
+              options={CC_EFFORT_LEVELS}
+              value={effort}
+              onChange={handleEffortChange}
+            />
+          </Command>
+        </PopoverContent>
+      )}
     </Popover>
   );
 }

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { createThreadsSlice } from './threadsSlice';
 import { createEventsSlice } from './eventsSlice';
 import { createQueueSlice } from './queueSlice';
+import { createThreadsSlice } from './threadsSlice';
 import type { CodexStore } from './types';
 
 export type { CodexStore, TurnTiming } from './types';

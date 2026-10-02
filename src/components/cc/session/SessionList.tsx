@@ -1,10 +1,10 @@
 import { DeleteSessionDialog } from '@/components/cc/session/DeleteSessionDialog';
 import { SessionListItem } from '@/components/cc/session/SessionListItem';
+import { useSessionActions } from '@/components/cc/session/useSessionActions';
 import {
   DEFAULT_VISIBLE,
   useSessionPagination,
 } from '@/components/cc/session/useSessionPagination';
-import { useSessionActions } from '@/components/cc/session/useSessionActions';
 import { useSessionSelection } from '@/components/cc/session/useSessionSelection';
 import type { SdkSessionInfo } from '@/lib/sessions';
 import { useCCStore } from '@/stores/cc';

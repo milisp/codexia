@@ -1,11 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import {
-  useDictationStore,
   DICTATION_MODELS,
   type DictationModel,
+  useDictationStore,
 } from '@/stores/settings/useDictationStore';
-import { cn } from '@/lib/utils';
 
 export function DictationSettings() {
   const { t } = useTranslation('settings');

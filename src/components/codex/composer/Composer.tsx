@@ -1,6 +1,8 @@
 import { ArrowUp, Pause, Play, Square, Target, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ThreadGoal } from '@/bindings/v2';
+import { AgentModelPanel } from '@/components/agent/AgentModelPanel';
+import { AgentModelTrigger } from '@/components/agent/AgentModelTrigger';
 import { useThreadGoal, useThreadStatus } from '@/components/codex/hooks';
 import { useCodexStore } from '@/components/codex/stores';
 import { ContextWindowWidget } from '@/components/codex/widget';
@@ -11,8 +13,6 @@ import { codexService } from '@/services/codexService';
 import { useAgentCenterStore } from '@/stores';
 import { useInputStore } from '@/stores/useInputStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { AgentModelPanel } from '@/components/agent/AgentModelPanel';
-import { AgentModelTrigger } from '@/components/agent/AgentModelTrigger';
 import { AccessModePopover } from './AccessModePopover';
 import { ComposerMenu } from './ComposerMenu';
 import { ComposerToolbarProvider } from './ComposerToolbarContext';

@@ -1,7 +1,7 @@
 import { AcpSessionList } from '@/components/acp/AcpSessionList';
+import { SessionList } from '@/components/cc/session';
 import { ThreadList } from '@/components/codex/thread/ThreadList';
 import { useCCSessionManager } from '@/hooks/useCCSessionManager';
-import { SessionList } from '@/components/cc/session';
 import { SideBarProjectList } from './SideBarProjectList';
 
 type SideBarClaudeTabProps = {

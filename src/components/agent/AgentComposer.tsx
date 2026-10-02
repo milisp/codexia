@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { Composer as CCComposer } from '@/components/cc/composer';
 import { AcpComposer } from '@/components/acp/AcpComposer';
+import { Composer as CCComposer } from '@/components/cc/composer';
 import { Composer as CodexComposer } from '@/components/codex/composer';
 import { useAgentCenterStore } from '@/stores';
 import { useAcpStore } from '@/stores/useAcpStore';

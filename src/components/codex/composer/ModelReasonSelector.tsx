@@ -2,9 +2,9 @@ import { Check, ChevronDown, ChevronRight, Plus, Search, Settings, X } from 'luc
 import { useCallback, useEffect, useState } from 'react';
 import type { ReasoningEffort } from '@/bindings';
 import type { Model } from '@/bindings/v2';
-import { AgentIcon } from '@/components/common/AgentIcon';
 import { useCodexStore, useConfigStore } from '@/components/codex/stores';
 import type { ModelListItem } from '@/components/codex/types';
+import { AgentIcon } from '@/components/common/AgentIcon';
 import { ProviderIcons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import {
@@ -219,144 +219,42 @@ function BaseModelSelector({
               <span className="truncate">{provider}</span>
               <ChevronDown className="h-3.5 w-3.5 shrink-0" />
             </button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Search models" onClick={() => setShowSearch((v) => !v)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              aria-label="Search models"
+              onClick={() => setShowSearch((v) => !v)}
+            >
               <Search className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Providers and API keys" onClick={() => setEnvKeysOpen(true)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              aria-label="Providers and API keys"
+              onClick={() => setEnvKeysOpen(true)}
+            >
               <Settings className="h-4 w-4" />
             </Button>
           </div>
-          {showSearch && <CommandInput placeholder="Search or type a model id..." value={searchQuery} onValueChange={setSearchQuery} />}
+          {showSearch && (
+            <CommandInput
+              placeholder="Search or type a model id..."
+              value={searchQuery}
+              onValueChange={setSearchQuery}
+            />
+          )}
           <Command loop>
             <CommandList className="max-h-[min(55vh,400px)]">
-              <CommandEmpty className="py-4 text-xs text-muted-foreground">No results found</CommandEmpty>
-              {pickingProvider ? (
-                <CommandGroup>{allProviders.map((p) => <CommandItem key={p} value={p} onSelect={() => handlePickProvider(p)}>{p}</CommandItem>)}</CommandGroup>
-              ) : (
-                <CommandGroup>{visibleItems.map((item) => <ModelItem key={item.id} provider={provider} item={item} selected={item.id === value} showProvider={false} onSelect={() => handleSelect(provider, item.id)} />)}</CommandGroup>
-              )}
-            </CommandList>
-          </Command>
-          {reasoningEffort !== undefined && onReasoningEffortChange && (
-            <ReasoningEffortSelector provider={provider} openAiModel={selectedOpenAiModel} value={reasoningEffort} onChange={onReasoningEffortChange} disabled={disabled || !value} />
-          )}
-        </div>
-      ) : <Popover
-        open={open}
-        onOpenChange={(io) => {
-          setOpen(io);
-          if (!io) {
-            setSearchQuery('');
-            setExpandedProviders(new Set());
-            setPickingProvider(false);
-            setShowSearch(false);
-          }
-        }}
-      >
-        <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 gap-2 px-2 border border-transparent transition-all hover:border-input hover:bg-accent/50"
-            disabled={disabled}
-          >
-            <AgentIcon agent={selectedAgent} />
-            <div className="flex items-center gap-1.5 text-xs text-foreground">
-              <span className="font-medium max-w-[120px] truncate">{activeLabel}</span>
-              {reasoningEffort !== undefined && reasoningEffort !== 'none' && (
-                <span className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono capitalize text-muted-foreground border">
-                  {reasoningEffort}
-                </span>
-              )}
-            </div>
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          </Button>
-        </PopoverTrigger>
-
-        <PopoverContent className="w-72 p-0 flex flex-col" align="start">
-          <Command
-            loop
-            onKeyDown={(e) => {
-              // Escape backs out of provider picking / search before closing.
-              if (e.key === 'Escape' && (pickingProvider || showSearch)) {
-                e.preventDefault();
-                e.stopPropagation();
-                setPickingProvider(false);
-                setShowSearch(false);
-                setSearchQuery('');
-              }
-            }}
-          >
-            {/* Header: provider dropdown on the left, then search and settings. */}
-            <div className="flex items-center gap-1 border-b px-1 py-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setPickingProvider((prev) => !prev);
-                  setSearchQuery('');
-                }}
-                className="flex min-w-0 flex-1 items-center gap-1.5 rounded-sm px-1.5 py-1 text-xs hover:bg-accent/50"
-              >
-                <ProviderIcons providerId={provider} size="sm" />
-                <span className="truncate">{provider}</span>
-                <ChevronDown
-                  className={cn(
-                    'h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform',
-                    pickingProvider && 'rotate-180'
-                  )}
-                />
-              </button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 shrink-0"
-                title="Search"
-                onClick={() => {
-                  setShowSearch((prev) => !prev);
-                  setSearchQuery('');
-                }}
-              >
-                <Search className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 shrink-0"
-                title="Providers & API keys"
-                onClick={() => setEnvKeysOpen(true)}
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <div className={cn(!showSearch && 'hidden')}>
-              <CommandInput
-                placeholder={
-                  pickingProvider ? 'Search provider...' : 'Search or type a model id...'
-                }
-                value={searchQuery}
-                onValueChange={setSearchQuery}
-                className="text-xs"
-              />
-            </div>
-
-            <CommandList className="max-h-64">
               <CommandEmpty className="py-4 text-xs text-muted-foreground">
                 No results found
               </CommandEmpty>
-
               {pickingProvider ? (
                 <CommandGroup>
                   {allProviders.map((p) => (
-                    <CommandItem
-                      key={p}
-                      value={`provider ${p}`}
-                      onSelect={() => handlePickProvider(p)}
-                      className="gap-1.5 text-xs"
-                    >
-                      <ProviderIcons providerId={p} size="sm" />
-                      <span className="truncate">{p}</span>
-                      {p === provider && <Check className="ml-auto h-3.5 w-3.5 shrink-0" />}
+                    <CommandItem key={p} value={p} onSelect={() => handlePickProvider(p)}>
+                      {p}
                     </CommandItem>
                   ))}
                 </CommandGroup>
@@ -370,96 +268,243 @@ function BaseModelSelector({
                       selected={item.id === value}
                       showProvider={false}
                       onSelect={() => handleSelect(provider, item.id)}
-                      onRemove={
-                        // Only user-added models can be removed; the rest come
-                        // from the provider itself.
-                        (storedModels[provider] ?? []).some((m) => m.id === item.id)
-                          ? () => removeCustomModel(provider, item.id)
-                          : undefined
-                      }
                     />
-                  ))}
-                  {canUseTyped && (
-                    <CommandItem
-                      value={`use-${query}`}
-                      onSelect={handleUseTyped}
-                      className="gap-1.5 pl-7 text-xs text-muted-foreground"
-                      forceMount
-                    >
-                      Use "{query}"
-                    </CommandItem>
-                  )}
-                  {!expanded && !query && currentItems.length > visibleItems.length && (
-                    <CommandItem
-                      value={`${provider} show all models`}
-                      onSelect={() => setExpandedProviders((prev) => new Set(prev).add(provider))}
-                      className="gap-1.5 pl-7 text-xs text-muted-foreground"
-                    >
-                      Show all {currentItems.length} models
-                      <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0" />
-                    </CommandItem>
-                  )}
-                  {/* llms.json models are offered for the user to add, never
-                      listed as if they were already configured. */}
-                  {suggestions.map((item) => (
-                    <CommandItem
-                      key={`suggested-${item.id}`}
-                      value={`add ${provider} ${item.id}`}
-                      onSelect={() => handleAddSuggested(item.id)}
-                      className="gap-1.5 pl-7 text-xs text-muted-foreground"
-                    >
-                      <Plus className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate">{item.label}</span>
-                    </CommandItem>
                   ))}
                 </CommandGroup>
               )}
             </CommandList>
-
-            {/* Manual model entry: providers other than openai/ollama have no
-                model list of their own to pick from. */}
-            {!pickingProvider && provider !== 'openai' && provider !== 'ollama' && (
-              <div className="flex items-center gap-1 border-t p-1">
-                <Input
-                  className="h-7 text-xs"
-                  placeholder="Add model id..."
-                  value={newModelId}
-                  onChange={(e) => setNewModelId(e.target.value)}
-                  onKeyDown={(e) => {
-                    // cmdk owns Enter/arrows for the list; keep them local here.
-                    e.stopPropagation();
-                    if (e.key === 'Enter') handleAddTyped();
-                  }}
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 shrink-0"
-                  title="Add model"
-                  disabled={!newModelId.trim()}
-                  onClick={handleAddTyped}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
           </Command>
-
           {reasoningEffort !== undefined && onReasoningEffortChange && (
             <ReasoningEffortSelector
               provider={provider}
               openAiModel={selectedOpenAiModel}
               value={reasoningEffort}
-              onChange={(option) => {
-                onReasoningEffortChange(option);
-                setOpen(false);
-                onClose?.();
-              }}
+              onChange={onReasoningEffortChange}
               disabled={disabled || !value}
             />
           )}
-        </PopoverContent>
-      </Popover>}
+        </div>
+      ) : (
+        <Popover
+          open={open}
+          onOpenChange={(io) => {
+            setOpen(io);
+            if (!io) {
+              setSearchQuery('');
+              setExpandedProviders(new Set());
+              setPickingProvider(false);
+              setShowSearch(false);
+            }
+          }}
+        >
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-2 px-2 border border-transparent transition-all hover:border-input hover:bg-accent/50"
+              disabled={disabled}
+            >
+              <AgentIcon agent={selectedAgent} />
+              <div className="flex items-center gap-1.5 text-xs text-foreground">
+                <span className="font-medium max-w-[120px] truncate">{activeLabel}</span>
+                {reasoningEffort !== undefined && reasoningEffort !== 'none' && (
+                  <span className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono capitalize text-muted-foreground border">
+                    {reasoningEffort}
+                  </span>
+                )}
+              </div>
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            </Button>
+          </PopoverTrigger>
+
+          <PopoverContent className="w-72 p-0 flex flex-col" align="start">
+            <Command
+              loop
+              onKeyDown={(e) => {
+                // Escape backs out of provider picking / search before closing.
+                if (e.key === 'Escape' && (pickingProvider || showSearch)) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setPickingProvider(false);
+                  setShowSearch(false);
+                  setSearchQuery('');
+                }
+              }}
+            >
+              {/* Header: provider dropdown on the left, then search and settings. */}
+              <div className="flex items-center gap-1 border-b px-1 py-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPickingProvider((prev) => !prev);
+                    setSearchQuery('');
+                  }}
+                  className="flex min-w-0 flex-1 items-center gap-1.5 rounded-sm px-1.5 py-1 text-xs hover:bg-accent/50"
+                >
+                  <ProviderIcons providerId={provider} size="sm" />
+                  <span className="truncate">{provider}</span>
+                  <ChevronDown
+                    className={cn(
+                      'h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform',
+                      pickingProvider && 'rotate-180'
+                    )}
+                  />
+                </button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  title="Search"
+                  onClick={() => {
+                    setShowSearch((prev) => !prev);
+                    setSearchQuery('');
+                  }}
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  title="Providers & API keys"
+                  onClick={() => setEnvKeysOpen(true)}
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className={cn(!showSearch && 'hidden')}>
+                <CommandInput
+                  placeholder={
+                    pickingProvider ? 'Search provider...' : 'Search or type a model id...'
+                  }
+                  value={searchQuery}
+                  onValueChange={setSearchQuery}
+                  className="text-xs"
+                />
+              </div>
+
+              <CommandList className="max-h-64">
+                <CommandEmpty className="py-4 text-xs text-muted-foreground">
+                  No results found
+                </CommandEmpty>
+
+                {pickingProvider ? (
+                  <CommandGroup>
+                    {allProviders.map((p) => (
+                      <CommandItem
+                        key={p}
+                        value={`provider ${p}`}
+                        onSelect={() => handlePickProvider(p)}
+                        className="gap-1.5 text-xs"
+                      >
+                        <ProviderIcons providerId={p} size="sm" />
+                        <span className="truncate">{p}</span>
+                        {p === provider && <Check className="ml-auto h-3.5 w-3.5 shrink-0" />}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                ) : (
+                  <CommandGroup>
+                    {visibleItems.map((item) => (
+                      <ModelItem
+                        key={item.id}
+                        provider={provider}
+                        item={item}
+                        selected={item.id === value}
+                        showProvider={false}
+                        onSelect={() => handleSelect(provider, item.id)}
+                        onRemove={
+                          // Only user-added models can be removed; the rest come
+                          // from the provider itself.
+                          (storedModels[provider] ?? []).some((m) => m.id === item.id)
+                            ? () => removeCustomModel(provider, item.id)
+                            : undefined
+                        }
+                      />
+                    ))}
+                    {canUseTyped && (
+                      <CommandItem
+                        value={`use-${query}`}
+                        onSelect={handleUseTyped}
+                        className="gap-1.5 pl-7 text-xs text-muted-foreground"
+                        forceMount
+                      >
+                        Use "{query}"
+                      </CommandItem>
+                    )}
+                    {!expanded && !query && currentItems.length > visibleItems.length && (
+                      <CommandItem
+                        value={`${provider} show all models`}
+                        onSelect={() => setExpandedProviders((prev) => new Set(prev).add(provider))}
+                        className="gap-1.5 pl-7 text-xs text-muted-foreground"
+                      >
+                        Show all {currentItems.length} models
+                        <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0" />
+                      </CommandItem>
+                    )}
+                    {/* llms.json models are offered for the user to add, never
+                      listed as if they were already configured. */}
+                    {suggestions.map((item) => (
+                      <CommandItem
+                        key={`suggested-${item.id}`}
+                        value={`add ${provider} ${item.id}`}
+                        onSelect={() => handleAddSuggested(item.id)}
+                        className="gap-1.5 pl-7 text-xs text-muted-foreground"
+                      >
+                        <Plus className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+              </CommandList>
+
+              {/* Manual model entry: providers other than openai/ollama have no
+                model list of their own to pick from. */}
+              {!pickingProvider && provider !== 'openai' && provider !== 'ollama' && (
+                <div className="flex items-center gap-1 border-t p-1">
+                  <Input
+                    className="h-7 text-xs"
+                    placeholder="Add model id..."
+                    value={newModelId}
+                    onChange={(e) => setNewModelId(e.target.value)}
+                    onKeyDown={(e) => {
+                      // cmdk owns Enter/arrows for the list; keep them local here.
+                      e.stopPropagation();
+                      if (e.key === 'Enter') handleAddTyped();
+                    }}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0"
+                    title="Add model"
+                    disabled={!newModelId.trim()}
+                    onClick={handleAddTyped}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </Command>
+
+            {reasoningEffort !== undefined && onReasoningEffortChange && (
+              <ReasoningEffortSelector
+                provider={provider}
+                openAiModel={selectedOpenAiModel}
+                value={reasoningEffort}
+                onChange={(option) => {
+                  onReasoningEffortChange(option);
+                  setOpen(false);
+                  onClose?.();
+                }}
+                disabled={disabled || !value}
+              />
+            )}
+          </PopoverContent>
+        </Popover>
+      )}
       <EnvKeysDialog
         open={envKeysOpen}
         onOpenChange={setEnvKeysOpen}

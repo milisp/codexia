@@ -88,7 +88,9 @@ export function AcpChoiceMenu({
     : undefined;
 
   if (nonModeOptions.length === 0 && modelChoices.length === 0 && authMethods.length === 0)
-    return embedded ? <p className="px-2 py-3 text-xs text-muted-foreground">No model options available.</p> : null;
+    return embedded ? (
+      <p className="px-2 py-3 text-xs text-muted-foreground">No model options available.</p>
+    ) : null;
 
   const modelCategoryOption = nonModeOptions.find(
     (o) => o.category === 'model' || o.category === 'model_config'
@@ -122,11 +124,12 @@ export function AcpChoiceMenu({
     const selectedOption = nonModeOptions.find((option) => `config:${option.id}` === page);
     const isAccountPage = page === 'account';
     const isModelPage = page === 'legacy-model';
-    const detailTitle = isAccountPage && authMethods.length
-      ? accountLabelText
-      : isModelPage && modelChoices.length
-        ? 'Model'
-        : selectedOption?.name;
+    const detailTitle =
+      isAccountPage && authMethods.length
+        ? accountLabelText
+        : isModelPage && modelChoices.length
+          ? 'Model'
+          : selectedOption?.name;
 
     return (
       <Command
@@ -136,12 +139,17 @@ export function AcpChoiceMenu({
         tabIndex={0}
         className="min-w-56 outline-none"
         onKeyDown={(event) => {
-          if (detailTitle && (event.key === 'ArrowLeft' || event.key === 'Escape' || event.key === 'Backspace')) {
+          if (
+            detailTitle &&
+            (event.key === 'ArrowLeft' || event.key === 'Escape' || event.key === 'Backspace')
+          ) {
             event.preventDefault();
             event.stopPropagation();
             setPage(null);
           } else if (!detailTitle && event.key === 'ArrowRight') {
-            const selected = commandRef.current?.querySelector<HTMLElement>('[cmdk-item][data-selected="true"]');
+            const selected = commandRef.current?.querySelector<HTMLElement>(
+              '[cmdk-item][data-selected="true"]'
+            );
             if (selected?.dataset.page) {
               event.preventDefault();
               overviewValue.current = selected.getAttribute('data-value') ?? '';
@@ -152,7 +160,13 @@ export function AcpChoiceMenu({
         defaultValue={detailTitle ? undefined : overviewValue.current || undefined}
       >
         {detailTitle && (
-          <Button type="button" variant="ghost" size="sm" className="h-8 justify-start gap-1 border-b px-2 text-xs" onClick={() => setPage(null)}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 justify-start gap-1 border-b px-2 text-xs"
+            onClick={() => setPage(null)}
+          >
             <ChevronLeft className="size-3.5" /> {detailTitle}
           </Button>
         )}
@@ -171,12 +185,26 @@ export function AcpChoiceMenu({
                       onSelect={() => onSelectAuthMethod(method.id)}
                     >
                       <span className="min-w-0 flex-1 truncate">{method.name}</span>
-                      {authenticating === method.id ? <span>Signing in…</span> : selectedAuthMethod === method.id ? <Check className="size-3.5" /> : null}
+                      {authenticating === method.id ? (
+                        <span>Signing in…</span>
+                      ) : selectedAuthMethod === method.id ? (
+                        <Check className="size-3.5" />
+                      ) : null}
                     </CommandItem>
                   ))}
                   {authenticating && authNotice && (
                     <div className="px-2 py-1 break-words text-muted-foreground">
-                      {noticeUrl ? <button type="button" className="underline" onClick={() => openExternalUrl(noticeUrl)}>Open this link to sign in</button> : authNotice}
+                      {noticeUrl ? (
+                        <button
+                          type="button"
+                          className="underline"
+                          onClick={() => openExternalUrl(noticeUrl)}
+                        >
+                          Open this link to sign in
+                        </button>
+                      ) : (
+                        authNotice
+                      )}
                     </div>
                   )}
                 </>
@@ -216,10 +244,15 @@ export function AcpChoiceMenu({
             ) : (
               <>
                 {authMethods.length > 0 && (
-                  <CommandItem value="account" data-page="account" className="min-h-9 text-xs" onSelect={() => {
-                    overviewValue.current = 'account';
-                    setPage('account');
-                  }}>
+                  <CommandItem
+                    value="account"
+                    data-page="account"
+                    className="min-h-9 text-xs"
+                    onSelect={() => {
+                      overviewValue.current = 'account';
+                      setPage('account');
+                    }}
+                  >
                     <span className="flex-1">{accountLabelText}</span>
                     <span className="max-w-32 truncate text-muted-foreground">{accountLabel}</span>
                     <ChevronRight className="size-3.5" />
@@ -244,25 +277,40 @@ export function AcpChoiceMenu({
                       />
                     </CommandItem>
                   ) : (
-                    <CommandItem key={option.id} value={option.id} data-page={`config:${option.id}`} title={option.description} className="min-h-9 text-xs" onSelect={() => {
-                      overviewValue.current = option.id;
-                      setPage(`config:${option.id}`);
-                    }}>
+                    <CommandItem
+                      key={option.id}
+                      value={option.id}
+                      data-page={`config:${option.id}`}
+                      title={option.description}
+                      className="min-h-9 text-xs"
+                      onSelect={() => {
+                        overviewValue.current = option.id;
+                        setPage(`config:${option.id}`);
+                      }}
+                    >
                       <span className="flex-1">{option.name}</span>
                       <span className="max-w-32 truncate text-muted-foreground">
-                        {option.options?.find((choice) => choice.value === option.currentValue)?.name ?? String(option.currentValue ?? '')}
+                        {option.options?.find((choice) => choice.value === option.currentValue)
+                          ?.name ?? String(option.currentValue ?? '')}
                       </span>
                       <ChevronRight className="size-3.5" />
                     </CommandItem>
                   )
                 )}
                 {configOptions.length === 0 && modelChoices.length > 0 && (
-                  <CommandItem value="model" data-page="legacy-model" className="min-h-9 text-xs" onSelect={() => {
-                    overviewValue.current = 'model';
-                    setPage('legacy-model');
-                  }}>
+                  <CommandItem
+                    value="model"
+                    data-page="legacy-model"
+                    className="min-h-9 text-xs"
+                    onSelect={() => {
+                      overviewValue.current = 'model';
+                      setPage('legacy-model');
+                    }}
+                  >
                     <span className="flex-1">Model</span>
-                    <span className="max-w-32 truncate text-muted-foreground">{currentModelChoice?.name ?? models?.currentModelId}</span>
+                    <span className="max-w-32 truncate text-muted-foreground">
+                      {currentModelChoice?.name ?? models?.currentModelId}
+                    </span>
                     <ChevronRight className="size-3.5" />
                   </CommandItem>
                 )}

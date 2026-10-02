@@ -44,7 +44,9 @@ export function AcpModelMenu({ embedded = false }: { embedded?: boolean }) {
   const cwd = useWorkspaceStore((s) => s.cwd);
 
   if (!connectionId || !sessionId)
-    return embedded ? <p className="px-2 py-3 text-xs text-muted-foreground">Connecting to agent…</p> : null;
+    return embedded ? (
+      <p className="px-2 py-3 text-xs text-muted-foreground">Connecting to agent…</p>
+    ) : null;
 
   const apply = async (revert: () => void, request: () => Promise<void>) => {
     try {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useDirWatch, type FsChangeEvent } from '@/hooks/useDirWatch';
+import { type FsChangeEvent, useDirWatch } from '@/hooks/useDirWatch';
 import { isGitRepo } from '@/services/apiAdapt/git';
 
 /**
