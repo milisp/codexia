@@ -349,9 +349,12 @@ impl AcpClient {
     }
 
     pub async fn authenticate(&self, method_id: &str) -> Result<(), String> {
-        self.request("authenticate", json!({ "methodId": method_id }))
-            .await
-            .map(|_| ())
+        self.request(
+            "authenticate",
+            json!({ "methodId": method_id, "_meta": { "persist": false } }),
+        )
+        .await
+        .map(|_| ())
     }
 
     /// Send a user turn. Resolves when the agent finishes the turn; streamed

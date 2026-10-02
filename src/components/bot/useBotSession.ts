@@ -30,7 +30,7 @@ import { trustFor } from './botAgentDef';
  */
 async function loadTranscript(botId: string, currentSessionId?: string, includeCurrent = true) {
   const stored = await listBotSessions(botId).catch(() => []);
-  let history: unknown[] = [];
+    let history: any[] = [];
   for (const record of stored) {
     if (record.sessionId === currentSessionId) continue;
     const updates = await acpGetSession(record.sessionId).catch(() => []);
@@ -39,8 +39,8 @@ async function loadTranscript(botId: string, currentSessionId?: string, includeC
       break;
     }
   }
-  const current =
-    includeCurrent && currentSessionId ? await acpGetSession(currentSessionId).catch(() => []) : [];
+    const current: any[] =
+      includeCurrent && currentSessionId ? await acpGetSession(currentSessionId).catch(() => []) : [];
   return { history, current };
 }
 
@@ -228,7 +228,7 @@ export function useBotSession() {
       }
       // Remember what keke offers, so a bot that has never run can still be
       // configured from a list rather than typed-in provider/model strings.
-      captureBotOptions(res.initialize, res.session);
+      captureBotOptions(bot.provider, res.initialize, res.session);
 
       if (res.sessionError || !res.sessionId) {
         store.addEntry({

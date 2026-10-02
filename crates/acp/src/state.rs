@@ -98,6 +98,9 @@ impl AcpState {
         .await?;
         self.connections.insert(connection_id.clone(), client.clone());
 
+        if let Some(bot) = &bot {
+            crate::bots::select_provider(&client, bot).await;
+        }
         let (session, session_error) = match client.new_session(cwd).await {
             Ok(session) => (Some(session), None),
             Err(e) => (None, Some(e)),

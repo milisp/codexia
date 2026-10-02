@@ -97,11 +97,10 @@ fn init_acp_sessions_tables(conn: &Connection) -> Result<(), String> {
     .map_err(|e| format!("Failed to create acp_session_updates table: {}", e))?;
 
     // Added after the table shipped, so an existing database gets it here.
-    if let Err(err) = conn.execute("ALTER TABLE acp_sessions ADD COLUMN bot_id TEXT", []) {
-        let message = err.to_string();
-        if !message.contains("duplicate column name") {
-            return Err(format!("Failed to add acp_sessions.bot_id column: {message}"));
-        }
+    if let Err(err) = conn.execute("ALTER TABLE acp_sessions ADD COLUMN bot_id TEXT", [])
+        && !err.to_string().contains("duplicate column name")
+    {
+        return Err(format!("Failed to add acp_sessions.bot_id column: {err}"));
     }
 
     conn.execute(
@@ -186,11 +185,10 @@ fn init_automation_runs_tables(conn: &Connection) -> Result<(), String> {
     // Databases created before runs recorded their working directory. SQLite has no
     // "ADD COLUMN IF NOT EXISTS", so a duplicate-column error here means it is
     // already present.
-    if let Err(err) = conn.execute("ALTER TABLE automation_runs ADD COLUMN cwd TEXT", []) {
-        let message = err.to_string();
-        if !message.contains("duplicate column name") {
-            return Err(format!("Failed to add automation_runs.cwd column: {message}"));
-        }
+    if let Err(err) = conn.execute("ALTER TABLE automation_runs ADD COLUMN cwd TEXT", [])
+        && !err.to_string().contains("duplicate column name")
+    {
+        return Err(format!("Failed to add automation_runs.cwd column: {err}"));
     }
 
     conn.execute(

@@ -89,6 +89,7 @@ export function BotSettingsDialog({ bot, open, onOpenChange }: BotSettingsDialog
               />
 
               <BotModelFields
+                cwd={form.cwd}
                 provider={form.provider}
                 onProviderChange={form.setProvider}
                 model={form.model}
