@@ -48,10 +48,6 @@ jobs:
             {
               echo "## [${VERSION}] - ${DATE}"
               echo
-              if [[ -n "${PREV_TAG}" ]]; then
-                echo "[Compare with ${PREV_TAG}](https://github.com/${GITHUB_REPOSITORY}/compare/${PREV_TAG}...${GITHUB_REF_NAME})"
-                echo
-              fi
               git log "${RANGE}" --pretty=format:'- %s (`%h`)' --no-merges
               echo
               echo
