@@ -12,6 +12,47 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const port = Number(env.VITE_PORT || 1420);
 
+  const vendorChunks: Record<string, string[]> = {
+    // Ace editor + all language modes (loaded only when file editor opens)
+    'vendor-ace': ['ace-builds', 'react-ace'],
+    // Markdown editors + rendering (merged to avoid circular chunk)
+    'vendor-markdown': ['react-markdown', 'remark-gfm', 'streamdown'],
+    'vendor-md': ['react-markdown-editor-lite', 'markdown-it'],
+    // Charts (Insights view)
+    'vendor-recharts': ['recharts'],
+    // Animation (Insights / git stats)
+    'vendor-framer': ['framer-motion'],
+    // All Radix primitives bundled together
+    'vendor-radix': [
+      '@radix-ui/react-accordion',
+      '@radix-ui/react-alert-dialog',
+      '@radix-ui/react-checkbox',
+      '@radix-ui/react-collapsible',
+      '@radix-ui/react-context-menu',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-label',
+      '@radix-ui/react-popover',
+      '@radix-ui/react-progress',
+      '@radix-ui/react-radio-group',
+      '@radix-ui/react-scroll-area',
+      '@radix-ui/react-select',
+      '@radix-ui/react-separator',
+      '@radix-ui/react-slot',
+      '@radix-ui/react-switch',
+      '@radix-ui/react-tabs',
+      '@radix-ui/react-toast',
+      '@radix-ui/react-tooltip',
+      'radix-ui',
+    ],
+    // i18n
+    'vendor-i18n': ['i18next', 'react-i18next'],
+    // Git diff
+    'vendor-diff': ['@git-diff-view/react', 'diff'],
+    // Terminal
+    'vendor-xterm': ['xterm', 'xterm-addon-fit'],
+  };
+
   return {
     plugins: [
       react(),
@@ -29,45 +70,13 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 1500,
       rollupOptions: {
         output: {
-          manualChunks: {
-            // Ace editor + all language modes (loaded only when file editor opens)
-            'vendor-ace': ['ace-builds', 'react-ace'],
-            // Markdown editors + rendering (merged to avoid circular chunk)
-            'vendor-markdown': ['react-markdown', 'remark-gfm', 'streamdown'],
-            'vendor-md': ['react-markdown-editor-lite', 'markdown-it'],
-            // Charts (Insights view)
-            'vendor-recharts': ['recharts'],
-            // Animation (Insights / git stats)
-            'vendor-framer': ['framer-motion'],
-            // All Radix primitives bundled together
-            'vendor-radix': [
-              '@radix-ui/react-accordion',
-              '@radix-ui/react-alert-dialog',
-              '@radix-ui/react-checkbox',
-              '@radix-ui/react-collapsible',
-              '@radix-ui/react-context-menu',
-              '@radix-ui/react-dialog',
-              '@radix-ui/react-dropdown-menu',
-              '@radix-ui/react-label',
-              '@radix-ui/react-popover',
-              '@radix-ui/react-progress',
-              '@radix-ui/react-radio-group',
-              '@radix-ui/react-scroll-area',
-              '@radix-ui/react-select',
-              '@radix-ui/react-separator',
-              '@radix-ui/react-slot',
-              '@radix-ui/react-switch',
-              '@radix-ui/react-tabs',
-              '@radix-ui/react-toast',
-              '@radix-ui/react-tooltip',
-              'radix-ui',
-            ],
-            // i18n
-            'vendor-i18n': ['i18next', 'react-i18next'],
-            // Git diff
-            'vendor-diff': ['@git-diff-view/react', 'diff'],
-            // Terminal
-            'vendor-xterm': ['xterm', 'xterm-addon-fit'],
+          manualChunks(id: string) {
+            const normalizedId = id.replace(/\\/g, "/");
+            for (const [chunk, packages] of Object.entries(vendorChunks)) {
+              if (packages.some((pkg) => normalizedId.includes(`/node_modules/${pkg}/`))) {
+                return chunk;
+              }
+            }
           },
         },
       },
