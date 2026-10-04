@@ -1,6 +1,8 @@
-import { Github, Monitor, Moon, Sun, Twitter, X } from 'lucide-react';
+import { Monitor, Moon, Sun, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import githubIcon from '@/assets/github.svg';
+import xIcon from '@/assets/x.svg';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -221,7 +223,7 @@ export function GeneralSettings() {
             rel="noopener noreferrer"
             className={cn(buttonClassName, 'flex-1 min-w-[100px]')}
           >
-            <Github className="h-4 w-4" />
+            <img src={githubIcon} alt="" className="h-4 w-4" />
             <span>Github</span>
           </a>
           <a
@@ -239,7 +241,7 @@ export function GeneralSettings() {
             rel="noopener noreferrer"
             className={cn(buttonClassName, 'flex-1 min-w-[100px]')}
           >
-            <Twitter className="h-4 w-4" />
+            <img src={xIcon} alt="" className="h-4 w-4" />
             <span>lisp_mi</span>
           </a>
         </div>

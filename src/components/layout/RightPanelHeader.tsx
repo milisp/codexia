@@ -1,7 +1,7 @@
 import {
-  Chrome,
   Diff,
   Files,
+  Globe,
   Kanban,
   ListTodo,
   type LucideIcon,
@@ -39,7 +39,7 @@ const TAB_BUTTONS: TabConfig[] = [
   { tab: 'diff', icon: Diff, label: 'Review' },
   { tab: 'todo', icon: ListTodo, label: 'Todos' },
   { tab: 'terminal', icon: SquareTerminal, label: 'Terminal' },
-  { tab: 'webpreview', icon: Chrome, label: 'Browser' },
+  { tab: 'webpreview', icon: Globe, label: 'Browser' },
   { tab: 'files', icon: Files, label: 'Files' },
   { tab: 'tasks', icon: Kanban, label: 'Kanban' },
 ];
