@@ -28,20 +28,30 @@ share or modify Codex configuration. Custom MCP is an advanced option.
 
 Adding the GitHub or Slack preset adds a server definition, not a working account
 connection. Codex OAuth credentials are not reused. Configured local stdio
-servers can use their configured environment.
+servers can use their configured environment; HTTP/SSE servers receive their
+configured headers. keke retains the original server name and URL for its own
+native authentication. Verify provider authorization with a real connection;
+a saved definition does not show that authentication succeeded.
 
 Use the explicit Codex import action only for definitions you want to copy to
 keke. Existing names are not overwritten. Review legacy selections rather than
 assuming that a same-named keke server is the old Codex server. Compatible
 computer-use MCP definitions can be copied this way, but Codex-specific plugin
-discovery and authorization do not transfer with the definition.
+discovery and authorization do not transfer with the definition. A computer-use
+definition does not grant desktop access or system permissions. Its handshake
+and operating-system permissions have not been verified by this integration.
 
-**Important:** keke also discovers globally trusted native MCP tools itself.
-The bot selection controls additional tools sent by Codexia, not an exclusive
-allowlist. Unchecking a tool does not guarantee that keke cannot discover it.
-Review native trust, account scopes and operation approvals before running
-unattended tasks. Legacy bare server selections require explicit reselection as
-keke tools; they are not silently switched to a same-named server.
+Bots require strict MCP isolation. Only selected external MCP servers are
+installed, using their original names, plus separately authorized bot
+collaboration. Global, workspace and plugin MCP servers are excluded even if
+trusted. No selection means no external MCP servers. This also applies to
+resumed chats, scheduled tasks, delegated runs and built-in subagents. A keke
+runtime that does not confirm isolation cannot start a bot.
+
+This controls external MCP selection; built-in agent tools and sandbox,
+approval and provider permissions remain relevant. Legacy bare server
+selections are retained and require explicit reselection as keke tools; they
+are not silently switched to a same-named server or removed.
 
 - **GitHub:** connect with credentials that have access only to the repositories
   you need. Start with read-only access where supported. Test with a request to
@@ -136,6 +146,9 @@ toasts; desktop system notifications require operating-system permission.
   whether the target is archived.
 - **Bot cannot start:** check the keke installation prompt and model/provider
   configuration. Release builds include keke; source development may use PATH
-  or the documented fallback.
+  or the documented fallback. Bots require confirmed ACP client-only MCP
+  isolation support. An older runtime fails explicitly; update the bundled,
+  PATH or `npx @milisp/keke` runtime actually in use. Codexia does not infer
+  support from a version number or retry without isolation.
 
 For architecture and enforcement details, see [BOTS.md](BOTS.md).

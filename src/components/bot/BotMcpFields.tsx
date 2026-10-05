@@ -142,9 +142,11 @@ export function BotMcpFields({ mcpServers, onMcpServersChange }: BotMcpFieldsPro
         Presets require provider authorization. Codex OAuth credentials are not transferred. A
         definition is not a connection test or a permission grant.
       </p>
-      <p className="text-xs text-amber-600 dark:text-amber-400">
-        keke also discovers globally trusted native servers. These selections are not an exclusive
-        tool allowlist: unchecking a server does not guarantee that keke cannot use it.
+      <p className="text-xs text-muted-foreground">
+        Bots require strict MCP isolation: only selected external servers are installed, plus
+        separately authorized bot collaboration. Global, workspace and plugin MCP servers are
+        excluded. An unsupported keke runtime cannot start the bot. Tool approvals and provider
+        permissions still apply.
       </p>
       {error && (
         <p role="alert" className="text-xs text-destructive">

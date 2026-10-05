@@ -88,7 +88,7 @@ pub fn agent_def(bot: &BotRecord) -> Result<AcpAgentDef, String> {
 /// The built-in `codexia-bots` server is added when `delegate` is set, so
 /// the bot can hand work to the others.
 pub async fn mcp_servers(bot: &BotRecord, api_port: u16, delegate: bool) -> Vec<Value> {
-    use crate::mcp::{acp_entry, read_mcp_servers};
+    use crate::mcp::read_mcp_servers;
 
     let mut servers = Vec::new();
     if delegate {
@@ -105,22 +105,29 @@ pub async fn mcp_servers(bot: &BotRecord, api_port: u16, delegate: bool) -> Vec<
             return servers;
         }
     };
+    servers.extend(selected_servers(&bot.id, wanted, &configured));
+    servers
+}
+
+fn selected_servers(bot_id: &str, wanted: Vec<String>, configured: &crate::mcp::McpServers) -> Vec<Value> {
+    use crate::mcp::acp_entry;
+    let mut servers = Vec::new();
     for name in wanted {
         let Some(name) = name.strip_prefix("keke:") else {
-            log::warn!("bot {}: legacy MCP selection `{name}` needs explicit keke migration", bot.id);
+            log::warn!("bot {bot_id}: legacy MCP selection `{name}` needs explicit keke migration");
             continue;
         };
         if name == "codexia-bots" { continue; }
         let Some(config) = configured.get(name) else {
-            log::warn!("bot {}: MCP server `{name}` is not configured", bot.id);
+            log::warn!("bot {bot_id}: MCP server `{name}` is not configured");
             continue;
         };
         if config.get("disabled").and_then(Value::as_bool) == Some(true) { continue; }
-        // keke also discovers this native file itself and refuses same-name
-        // ACP entries. Keep the selected client copy in a separate namespace.
-        match acp_entry(&format!("codexia-keke:{name}"), config) {
+        // Strict composition excludes native discovery. Keep the identity
+        // used by keke's own name-and-URL-scoped authentication store.
+        match acp_entry(name, config) {
             Ok(server) => servers.push(server),
-            Err(e) => log::warn!("bot {}: invalid MCP server `{name}`: {e}", bot.id),
+            Err(e) => log::warn!("bot {bot_id}: invalid MCP server `{name}`: {e}"),
         }
     }
     servers
@@ -152,6 +159,7 @@ pub async fn policy(
     delegate: bool,
 ) -> ConnectionPolicy {
     ConnectionPolicy {
+        strict_mcp: true,
         mcp_servers: mcp_servers(bot, api_port, delegate).await,
         read_only: bot.trust_level == "read_only",
         unattended: unattended.then(|| UnattendedApprovals {
@@ -317,6 +325,22 @@ impl crate::AcpState {
 mod tests {
     use super::*;
 
+    #[test]
+    fn selections_keep_native_identity_and_do_not_remap_legacy_names() {
+        let configured = [("native".into(), json!({"command":"fixture"})),
+            ("other".into(), json!({"command":"unselected"})),
+            ("disabled".into(), json!({"command":"disabled","disabled":true})),
+            ("codexia-bots".into(), json!({"command":"must-not-delegate"}))].into();
+        let wanted = vec!["native", "keke:native", "keke:disabled", "keke:codexia-bots"]
+            .into_iter().map(str::to_string).collect();
+        let servers = selected_servers("caller", wanted, &configured);
+        assert_eq!(servers.len(), 1);
+        assert_eq!(servers[0]["name"], "native");
+        assert_eq!(servers[0]["command"], "fixture");
+        assert!(selected_servers("caller", vec!["native".into()], &configured).is_empty());
+        assert!(selected_servers("caller", vec![], &configured).is_empty());
+    }
+
     #[tokio::test]
     async fn delegated_run_has_no_builtin_capability() {
         let bot: BotRecord = serde_json::from_value(json!({
@@ -329,6 +353,17 @@ mod tests {
             "lastViewedAt": null, "createdAt": "", "updatedAt": ""
         })).unwrap();
         assert!(mcp_servers(&bot, 9000, false).await.is_empty());
+        for unattended in [false, true] {
+            for delegate in [false, true] {
+                let policy = policy(&bot, 9000, unattended, delegate).await;
+                assert!(policy.strict_mcp);
+                assert_eq!(policy.mcp_servers.len(), usize::from(delegate));
+                assert_eq!(policy.unattended.is_some(), unattended);
+                for server in policy.mcp_servers {
+                    crate::delegation::revoke(server["headers"][0]["value"].as_str().unwrap());
+                }
+            }
+        }
         let servers = mcp_servers(&bot, 9000, true).await;
         let token = servers[0]["headers"][0]["value"].as_str().unwrap();
         assert!(crate::delegation::verify(token, &bot.id));

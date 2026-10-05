@@ -49,14 +49,30 @@ be imported as ordinary MCP definitions when compatible; Codex-specific plugin
 discovery and authorization are not transferred automatically.
 
 Selections are stored as `keke:<name>`; legacy bare Codex names are not silently
-rebound. Select/import them explicitly. HTTP/SSE native `headers` and stdio
-`env` are forwarded, without copying Codex OAuth state.
+rebound or deleted. Select/import them explicitly. HTTP/SSE native `headers` and
+stdio `env` are forwarded, without copying Codex OAuth state. The original
+server name and configured URL are retained so keke can use its own native
+authentication identity. Configuration presence does not prove authorization:
+verify the connection with keke and the provider before relying on a bot run.
 
-**Selection is not an exclusive tool security boundary:** keke independently
-discovers trusted native MCP definitions. A bot may therefore see globally
-trusted tools beyond its selected ACP entries. Selected entries are namespaced
-to avoid native-name collisions. Use keke trust/approval controls and provider
-scopes; do not interpret an unchecked box as guaranteed denial of that tool.
+Computer-use launcher, command, arguments and environment must be compatible
+with an ordinary stdio MCP server. Adding a definition does not enable desktop
+control or grant system permissions. The computer-use handshake and operating
+system permissions have not been verified by this integration.
+
+Bots use keke's client-only MCP policy. Only the session's explicitly supplied
+MCP servers are installed, using their original names; keke does not install
+global, workspace or plugin MCP servers, even if already trusted. Filtering
+happens before MCP tools are registered or server processes are started. An
+empty selection installs no external MCP servers. The separately authorized
+`codexia-bots` server is supplied only when collaboration is enabled, and is
+never supplied to a delegated session.
+
+The same rule applies to new and resumed conversations, unattended runs and
+keke's built-in subagents. Non-MCP plugin capabilities remain subject to
+keke's plugin trust checks. This isolates external MCP selection; it does not
+create a process security sandbox or remove built-in agent tools. Trust levels,
+operation approvals and provider scopes still apply.
 
 ## Routines
 
@@ -121,8 +137,17 @@ Notifications can be turned off per bot in its settings.
 
 ## keke requirement
 
-Bots need `keke` **0.1.32 or newer** (older versions reject MCP tool names
-containing `:`). Codexia looks for it in this order:
+Bots require keke's ACP client-only MCP isolation support. Codexia launches
+`keke agent stdio --mcp-policy client-only` and requires the initialize response's
+`_meta["keke.dev/mcp-policy"]` to equal `"client-only"`. This is a keke extension,
+not a standard ACP field. Codexia checks this confirmation rather than assuming
+support from a version number. A runtime that rejects the isolation launch
+option or does not confirm the active policy cannot start a bot; there is no
+fallback to global MCP discovery. This applies to interactive bots, scheduled
+runs and delegated runs, including their resumed conversations. Ordinary non-bot ACP sessions retain
+their existing MCP behavior.
+
+Codexia looks for keke in this order:
 
 1. the `keke` binary bundled with Codexia release builds (the version this
    Codexia was tested with, so an older keke on `PATH` cannot get in the way)
@@ -130,4 +155,6 @@ containing `:`). Codexia looks for it in this order:
 3. `npx @milisp/keke`
 
 Release builds ship keke as a sidecar, so no separate install is needed. If
-keke cannot be started, the bot interface shows an Install keke button.
+keke cannot be started, the bot interface shows an Install keke button. If the
+runtime lacks isolation support, update the runtime actually selected above;
+an older bundled binary is not replaced by a newer binary on `PATH`.

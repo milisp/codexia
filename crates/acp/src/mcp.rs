@@ -92,7 +92,16 @@ mod tests {
     use super::*;
     #[test]
     fn native_transports() {
-        assert_eq!(acp_entry("test", &json!({"type":"http","url":"https://example.com","headers":{"X-Test":"test"}})).unwrap()["headers"][0]["value"], "test");
+        for kind in ["http", "sse"] {
+            let entry = acp_entry("native", &json!({"type":kind,"url":"https://example.com","headers":{"X-Test":"${TEST_HEADER}"}})).unwrap();
+            assert_eq!(entry["name"], "native");
+            assert_eq!(entry["type"], kind);
+            assert_eq!(entry["headers"][0]["value"], "${TEST_HEADER}");
+        }
+        let stdio = acp_entry("native", &json!({"command":"fixture","args":["serve"],"env":{"TEST_ENV":"${TEST_VALUE}"}})).unwrap();
+        assert_eq!(stdio["name"], "native");
+        assert_eq!(stdio["args"], json!(["serve"]));
+        assert_eq!(stdio["env"][0]["value"], "${TEST_VALUE}");
         assert!(acp_entry("test", &json!({"command":"node","args":[1]})).is_err());
         assert!(acp_entry("test", &json!({})).is_err());
     }
