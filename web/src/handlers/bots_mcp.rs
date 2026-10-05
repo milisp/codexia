@@ -10,7 +10,7 @@
 //! unread mark, so the person can see what was asked of it and what it did.
 
 use axum::extract::{Query, State as AxumState};
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde::Deserialize;
@@ -34,8 +34,15 @@ const PROTOCOL_VERSION: &str = "2025-06-18";
 pub(crate) async fn api_bots_mcp(
     AxumState(state): AxumState<WebServerState>,
     Query(query): Query<BotsMcpQuery>,
+    headers: HeaderMap,
     Json(message): Json<Value>,
 ) -> Response {
+    let from = query.from.unwrap_or_default();
+    let token = headers.get("X-Codexia-Delegation")
+        .and_then(|value| value.to_str().ok()).unwrap_or_default();
+    if !codexia_acp::delegation::verify(token, &from) {
+        return StatusCode::UNAUTHORIZED.into_response();
+    }
     let Some(method) = message.get("method").and_then(Value::as_str) else {
         // A response or a malformed frame: nothing this server asked for.
         return StatusCode::ACCEPTED.into_response();
@@ -45,7 +52,6 @@ pub(crate) async fn api_bots_mcp(
         return StatusCode::ACCEPTED.into_response();
     };
     let params = message.get("params").cloned().unwrap_or(Value::Null);
-    let from = query.from.unwrap_or_default();
 
     let result = match method {
         "initialize" => Ok(json!({
@@ -105,11 +111,19 @@ fn text_result(text: impl Into<String>, is_error: bool) -> Value {
     json!({ "content": [{ "type": "text", "text": text.into() }], "isError": is_error })
 }
 
-/// Everyone the asking bot may hand work to: not itself, not archived.
+fn authorized_target(from: &str, allowed: &[String], target: &str, archived: bool) -> bool {
+    !archived && target != from && allowed.iter().any(|id| id == target)
+}
+
+/// Only explicitly authorized outgoing targets. Missing/archived callers fail closed.
 fn colleagues(from: &str) -> Result<Vec<BotRecord>, String> {
+    let caller = codexia_db::bots::get_bot(from)?
+        .filter(|bot| !bot.archived)
+        .ok_or_else(|| "collaboration requires an active caller bot".to_string())?;
+    let allowed = codexia_db::bots::parse_list(&caller.allowed_bot_ids);
     Ok(codexia_db::bots::list_bots(false)?
         .into_iter()
-        .filter(|bot| bot.id != from)
+        .filter(|bot| authorized_target(from, &allowed, &bot.id, bot.archived))
         .collect())
 }
 
@@ -139,7 +153,7 @@ async fn call_tool(state: &WebServerState, from: &str, params: &Value) -> Value 
                 .iter()
                 .find(|bot| bot.id == wanted || bot.name.eq_ignore_ascii_case(wanted))
             else {
-                return text_result(format!("no other bot named `{wanted}`"), true);
+                return text_result("target bot is unavailable or not authorized", true);
             };
 
             let asker = codexia_db::bots::get_bot(from)
@@ -169,5 +183,21 @@ async fn call_tool(state: &WebServerState, from: &str, params: &Value) -> Value 
             }
         }
         other => text_result(format!("unknown tool: {other}"), true),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn outgoing_allowlist_excludes_self_archived_and_unlisted_targets() {
+        let allowed = vec!["target".to_string(), "caller".to_string()];
+        assert!(authorized_target("caller", &allowed, "target", false));
+        assert!(!authorized_target("caller", &allowed, "caller", false));
+        assert!(!authorized_target("caller", &allowed, "target", true));
+        assert!(!authorized_target("caller", &allowed, "other", false));
+        assert!(!authorized_target("caller", &[], "target", false));
+        assert!(!authorized_target("caller", &codexia_db::bots::parse_list("invalid"), "target", false));
     }
 }

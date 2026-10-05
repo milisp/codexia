@@ -4,6 +4,7 @@ import type { McpServerConfig } from '@/components/codex/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { type UnifiedMcpClientName, unifiedAddMcpServer } from '@/services';
+import { appPresets } from './appPresets';
 
 interface DefaultMcpServersProps {
   agent: UnifiedMcpClientName;
@@ -14,6 +15,7 @@ interface DefaultMcpServersProps {
 
 export function DefaultMcpServers({ agent, cwd, servers, onServerAdded }: DefaultMcpServersProps) {
   const defaultServers = [
+    ...appPresets,
     {
       name: 'desktop-commander',
       description: 'Search, update, manage files and run terminal commands with AI',

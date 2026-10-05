@@ -59,6 +59,14 @@ fn init_bots_table(conn: &Connection) -> Result<(), String> {
     )
     .map_err(|e| format!("Failed to create bots table: {}", e))?;
 
+    // Existing bots opt in explicitly; never grant collaboration during migration.
+    if let Err(err) = conn.execute(
+        "ALTER TABLE bots ADD COLUMN allowed_bot_ids TEXT NOT NULL DEFAULT '[]'",
+        [],
+    ) && !err.to_string().contains("duplicate column name") {
+        return Err(format!("Failed to add bots.allowed_bot_ids column: {err}"));
+    }
+
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_bots_pinned_updated
          ON bots(pinned DESC, updated_at DESC)",
@@ -226,4 +234,27 @@ fn init_automation_runs_tables(conn: &Connection) -> Result<(), String> {
     .map_err(|e| format!("Failed to create automation_run_steps index: {}", e))?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod bot_migration_tests {
+    use super::*;
+
+    #[test]
+    fn collaboration_migration_is_idempotent_and_defaults_to_denied() {
+        let conn = Connection::open_in_memory().unwrap();
+        init_bots_table(&conn).unwrap();
+        conn.execute("ALTER TABLE bots DROP COLUMN allowed_bot_ids", []).unwrap();
+        conn.execute(
+            "INSERT INTO bots (id, name, avatar, color, agent_id, cwd, trust_level, created_at, updated_at)
+             VALUES ('old', 'Old', '', '', 'keke', '/', 'ask', '', '')",
+            [],
+        ).unwrap();
+        init_bots_table(&conn).unwrap();
+        init_bots_table(&conn).unwrap();
+        let allowed: String = conn.query_row(
+            "SELECT allowed_bot_ids FROM bots WHERE id = 'old'", [], |row| row.get(0),
+        ).unwrap();
+        assert_eq!(allowed, "[]");
+    }
 }

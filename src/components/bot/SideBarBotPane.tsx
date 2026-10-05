@@ -1,4 +1,4 @@
-import { Plus, SquarePen } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,6 @@ import { useLayoutStore } from '@/stores';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { BotAvatar } from './BotAvatar';
-import { BotSessionList } from './BotSessionList';
 import { BotSettingsDialog } from './BotSettingsDialog';
 import { defaultLook, newBotId } from './botDefaults';
 import { markBotRead } from './markBotRead';
@@ -34,7 +33,7 @@ export function SideBarBotPane() {
     useBotUiStore();
   const setView = useLayoutStore((s) => s.setView);
   const cwd = useWorkspaceStore((s) => s.cwd);
-  const { open, openBlank, startNew } = useBotSession();
+  const { open, openBlank } = useBotSession();
   const [newBot, setNewBot] = useState<Bot | null>(null);
 
   useEffect(() => {
@@ -133,26 +132,9 @@ export function SideBarBotPane() {
                 )}
               </button>
               <span className="relative flex h-6 w-6 shrink-0 items-center justify-center">
-                <span className="text-[10px] text-muted-foreground group-hover:hidden">
-                  {since(bot.updatedAt)}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-xs"
-                  title="New session"
-                  className="hidden group-hover:inline-flex"
-                  onClick={() => {
-                    setView('bot');
-                    void startNew(bot);
-                  }}
-                >
-                  <SquarePen />
-                </Button>
+                <span className="text-[10px] text-muted-foreground">{since(bot.updatedAt)}</span>
               </span>
             </div>
-
-            {selectedBotId === bot.id && <BotSessionList bot={bot} />}
           </div>
         ))}
       </div>

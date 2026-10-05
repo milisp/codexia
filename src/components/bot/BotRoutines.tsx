@@ -54,7 +54,7 @@ export function BotRoutines({ botId, open }: BotRoutinesProps) {
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="routine-prompt">Prompt</Label>
+          <Label htmlFor="routine-prompt">What should this bot do?</Label>
           <Textarea
             id="routine-prompt"
             rows={4}
@@ -64,12 +64,16 @@ export function BotRoutines({ botId, open }: BotRoutinesProps) {
           />
         </div>
         <ScheduleEditor form={form} onChange={setField} />
+        <p className="text-xs text-muted-foreground">
+          Uses the backend machine’s local timezone. Keep that backend running and awake. Test the
+          request in chat first; background runs cannot ask for new approvals.
+        </p>
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => setEditing(null)}>
             Cancel
           </Button>
           <Button disabled={!canSubmit || saving} onClick={() => void submit()}>
-            {task ? 'Save routine' : 'Add routine'}
+            {task ? 'Save task' : 'Create scheduled task'}
           </Button>
         </div>
       </div>
@@ -82,7 +86,9 @@ export function BotRoutines({ botId, open }: BotRoutinesProps) {
         <p className="text-xs text-muted-foreground">Loading...</p>
       ) : routines.length === 0 ? (
         <p className="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
-          No routines yet. A routine runs a prompt as this bot on a schedule.
+          No scheduled tasks yet. Schedule a prompt using this bot’s workspace and permissions. Try
+          a daily summary of recent repository changes, or a weekly review of TODOs. Results appear
+          in this bot’s history; tasks need the backend running and awake.
         </p>
       ) : (
         routines.map((task) => (
@@ -99,7 +105,8 @@ export function BotRoutines({ botId, open }: BotRoutinesProps) {
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Run now"
+              aria-label="Request run now"
+              title="Request a run now (results appear in the bot conversation)"
               onClick={() => void runNow(task)}
             >
               <Zap className="h-4 w-4" />
@@ -138,7 +145,7 @@ export function BotRoutines({ botId, open }: BotRoutinesProps) {
         onClick={() => setEditing({ form: { ...DEFAULT_FORM, agent: 'bot', botId } })}
       >
         <Plus className="mr-1 h-4 w-4" />
-        New routine
+        New scheduled task
       </Button>
     </div>
   );
