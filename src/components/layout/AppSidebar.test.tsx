@@ -18,9 +18,24 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-vi.mock('./BotSettingsDialog', () => ({ BotSettingsDialog: () => null }));
+vi.mock('@/components/bot/BotSettingsDialog', () => ({ BotSettingsDialog: () => null }));
+vi.mock('@/components/bot', () => ({ SideBarBotPane: () => null }));
+vi.mock('@/components/bot/BotNotifications', () => ({ BotNotifications: () => null }));
+vi.mock('@/components/pairing/DesktopDrawer', () => ({ DesktopDrawer: () => null }));
+vi.mock('@/hooks', () => ({ useTrafficLightConfig: () => ({ isMacos: false }) }));
+vi.mock('@/hooks/runtime', () => ({ isPhone: () => false }));
+vi.mock('@/features/UpdateIndicator', () => ({ UpdateIndicator: () => null }));
+vi.mock('../common/SessionManagerDialog', () => ({ SessionManagerDialog: () => null }));
+vi.mock('./SideBarAgentPane', () => ({
+  SideBarAgentHeader: () => null,
+  SideBarAgentList: () => null,
+  SideBarProjectActions: () => null,
+}));
+vi.mock('./SideBarPinnedList', () => ({ SideBarPinnedList: () => null }));
+vi.mock('./UserInfo', () => ({ UserInfo: () => null }));
 
-import { SideBarBotPane } from './SideBarBotPane';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { AppSideBar } from './AppSidebar';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -28,7 +43,7 @@ beforeEach(() => {
   useBotUiStore.setState({ bots: [], selectedBotId: null, connectionByBot: {}, sessionByBot: {} });
 });
 
-describe('SideBarBotPane', () => {
+describe('AppSideBar', () => {
   it('clears the pane when a bot is created, so the previous bot does not appear to be it', async () => {
     createBot.mockImplementation(async (bot: Record<string, unknown>) => ({
       ...bot,
@@ -52,8 +67,12 @@ describe('SideBarBotPane', () => {
     // What the previously open bot left in the shared ACP store.
     useAcpStore.getState().setEntries([{ id: 'a', role: 'agent', text: 'bot1 was talking' }]);
 
-    render(<SideBarBotPane />);
-    fireEvent.click(screen.getByText('newBot'));
+    render(
+      <SidebarProvider>
+        <AppSideBar />
+      </SidebarProvider>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'newBot' }));
 
     await waitFor(() => expect(useAcpStore.getState().entries).toEqual([]));
     expect(useBotUiStore.getState().selectedBotId).toBeTruthy();
