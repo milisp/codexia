@@ -4,8 +4,7 @@ import { useAcpStore } from '@/stores/useAcpStore';
  * Fold one `session/update` payload into the store. Shared by the live event
  * bridge and the replay of a stored transcript, so both render identically.
  */
-export function applyAcpUpdate(update: Record<string, any>) {
-  const store = useAcpStore.getState();
+export function applyAcpUpdate(update: Record<string, any>, store = useAcpStore.getState()) {
   switch (update.sessionUpdate) {
     case 'user_message_chunk':
       // Only stored transcripts carry this: live turns are added by the composer.

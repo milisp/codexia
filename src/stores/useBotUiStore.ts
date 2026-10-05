@@ -77,7 +77,8 @@ export const useBotUiStore = create<BotUiStore>((set) => ({
   clearBotConnection: (botId) =>
     set((state) => {
       const { [botId]: _removed, ...connectionByBot } = state.connectionByBot;
-      return { connectionByBot };
+      const { [botId]: _session, ...sessionByBot } = state.sessionByBot;
+      return { connectionByBot, sessionByBot };
     }),
   runningByBot: {},
   setBotRunning: (botId, running) =>

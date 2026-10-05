@@ -22,6 +22,15 @@
 - Present supported capabilities clearly. A few presets must not make a general integration feature look limited to those providers; keep adding custom integrations easy to discover.
 - Before finishing a UI change, review the default view: remove repeated explanations, move reference material into help, and check that the next action is clear without reading paragraphs.
 
+### Bot experience
+- Organize bots around ongoing responsibilities and outcomes. Make conversation, current work, scheduled work, and results easy to reach; keep runtime configuration secondary.
+- Keep bot settings focused on identity, connected tools, and permissions. Put raw MCP JSON, runtime options, configuration paths, and migration/import details behind advanced controls.
+- Separate app setup from per-bot access selection. Reuse configured integrations, show their actual connection state, and let users choose which tools each bot may access without repeating setup instructions.
+- Treat conversation as a natural entry point for assigning work and changing direction. Provide visible controls for reviewing activity, managing schedules, and stopping work where those capabilities exist.
+- Surface progress, results, and decisions that need the user. Keep protocol logs and diagnostic details available on demand instead of making users interpret them to understand task status.
+- Use product references as interaction inspiration, not as evidence that Codexia has the same capabilities. Never imply cloud execution, always-on availability, verified authentication, or permission enforcement unless the implementation supports it.
+- Reference: [OpenAI Dots introduction](https://openai.com/index/introducing-dots/) and [Dots setup and controls](https://help.openai.com/en/articles/20001530-getting-started-with-your-dot). These rules adapt the documented product structure to Codexia; they are not OpenAI design requirements.
+
 ## Common Commands
 - `bun tauri dev` - read the backend output
 - `bunx tsc --noEmit` - test frontend if frontend change

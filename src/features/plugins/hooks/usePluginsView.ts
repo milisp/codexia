@@ -11,6 +11,7 @@ import {
 } from '@/services';
 import { useAgentSettingsStore, useLayoutStore, usePluginStore } from '@/stores';
 import { useInputStore } from '@/stores/useInputStore';
+import { usePluginsNavigationStore } from '@/stores/usePluginsNavigationStore';
 import { pluginDetailRequestTarget, pluginUninstallId } from './pluginTargets';
 import { useExternalUrl } from './useExternalUrl';
 
@@ -28,7 +29,7 @@ export type SkillScope = 'user' | 'project';
  */
 export function usePluginsView() {
   const { openExternalUrl } = useExternalUrl();
-  const [mainTab, setMainTab] = useState<MainTab>('Plugins');
+  const { mainTab, setMainTab, connectorTarget, setConnectorTarget } = usePluginsNavigationStore();
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [manageTab, setManageTab] = useState<ManageTab>('Connectors');
   const [addTab, setAddTab] = useState<AddTab>('Connector');
@@ -184,6 +185,8 @@ export function usePluginsView() {
   return {
     mainTab,
     setMainTab,
+    connectorTarget,
+    setConnectorTarget,
     overlay,
     setOverlay,
     manageTab,

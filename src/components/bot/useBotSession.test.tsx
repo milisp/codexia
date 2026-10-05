@@ -102,7 +102,7 @@ beforeEach(() => {
 });
 
 describe('useBotSession.open', () => {
-  it('replays the last transcript that has messages, not the empty session a restart left behind', async () => {
+  it('keeps older messages out of the live runtime transcript', async () => {
     // What a restarted app sees: this run's fresh session, the empty session
     // the previous run opened, and before that the real conversation.
     acpStart.mockResolvedValue({
@@ -124,7 +124,7 @@ describe('useBotSession.open', () => {
     const open = openBot();
     await open(bot('bot1'));
 
-    expect(texts()).toEqual(['from before the restart']);
+    expect(texts()).toEqual([]);
   });
 
   it("lets the backend build the bot's process and apply its settings", async () => {
@@ -179,7 +179,7 @@ describe('useBotSession.open', () => {
     await first;
 
     expect(useBotUiStore.getState().selectedBotId).toBe('bot2');
-    expect(texts()).toEqual(['bot2 history']);
+    expect(texts()).toEqual([]);
     // bot1's process is still remembered, it just did not render.
     expect(useBotUiStore.getState().connectionByBot.bot1).toBe('c-bot1');
   });
@@ -199,7 +199,7 @@ describe('useBotSession.open', () => {
     expect(acpStart).not.toHaveBeenCalled();
     expect(texts()).toEqual(['still here']);
   });
-  it('keeps history and this run\'s messages when switching away and back', async () => {
+  it('restores the live transcript when switching away and back', async () => {
     acpStart.mockImplementation(async (_agentId, _cwd, _def, botId: string) => ({
       connectionId: `c-${botId}`,
       sessionId: `s-${botId}`,
@@ -227,7 +227,7 @@ describe('useBotSession.open', () => {
     await open(bot('bot2'));
     await open(bot('bot1'));
 
-    expect(texts()).toEqual(['before the restart', 'after the restart']);
+    expect(texts()).toEqual(['after the restart']);
   });
 
   it('shows an empty pane for a bot that was just created', async () => {
@@ -245,7 +245,7 @@ describe('useBotSession.open', () => {
 
     const { open, openBlank } = hook();
     await open(bot('bot1'));
-    expect(texts()).toEqual(['bot1 was talking']);
+    expect(texts()).toEqual([]);
 
     // Creating a bot does not start it, so nothing clears the pane but this.
     openBlank(bot('bot2'));

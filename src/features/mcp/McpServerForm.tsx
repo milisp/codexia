@@ -10,8 +10,8 @@ interface McpServerFormProps {
   onProtocolChange: (protocol: 'stdio' | 'http' | 'sse') => void;
   commandConfig: { command: string; args: string; env: string };
   onCommandConfigChange: (config: { command: string; args: string; env: string }) => void;
-  httpConfig: { url: string };
-  onHttpConfigChange: (config: { url: string }) => void;
+  httpConfig: { url: string; headers?: string };
+  onHttpConfigChange: (config: { url: string; headers?: string }) => void;
   isEditMode?: boolean;
 }
 
@@ -31,6 +31,7 @@ export const McpServerForm: React.FC<McpServerFormProps> = ({
       <div>
         <div className="text-sm font-medium mb-1">Server Name</div>
         <Input
+          aria-label="Server name"
           value={serverName}
           onChange={(e) => onServerNameChange(e.target.value)}
           placeholder="e.g., fetch, deepwiki"
@@ -52,6 +53,7 @@ export const McpServerForm: React.FC<McpServerFormProps> = ({
           <div>
             <div className="text-sm font-medium mb-1">Command</div>
             <Input
+              aria-label="Command"
               value={commandConfig.command}
               onChange={(e) => onCommandConfigChange({ ...commandConfig, command: e.target.value })}
               placeholder="e.g., uvx, npx"
@@ -60,6 +62,7 @@ export const McpServerForm: React.FC<McpServerFormProps> = ({
           <div>
             <div className="text-sm font-medium mb-1">Arguments</div>
             <Input
+              aria-label="Arguments"
               value={commandConfig.args}
               onChange={(e) => onCommandConfigChange({ ...commandConfig, args: e.target.value })}
               placeholder="e.g., -y mcp-server-fetch"
@@ -68,6 +71,7 @@ export const McpServerForm: React.FC<McpServerFormProps> = ({
           <div>
             <div className="text-sm font-medium mb-1">Environment Variables (JSON, optional)</div>
             <Textarea
+              aria-label="Environment variables (JSON)"
               value={commandConfig.env}
               onChange={(e) => onCommandConfigChange({ ...commandConfig, env: e.target.value })}
               placeholder='{"API_KEY": "value"} - Leave empty if not needed'
@@ -80,6 +84,7 @@ export const McpServerForm: React.FC<McpServerFormProps> = ({
           <div>
             <div className="text-sm font-medium mb-1">URL</div>
             <Input
+              aria-label="Server URL"
               value={httpConfig.url}
               onChange={(e) => onHttpConfigChange({ ...httpConfig, url: e.target.value })}
               placeholder="https://mcp.deepwiki.com/mcp"
@@ -90,6 +95,7 @@ export const McpServerForm: React.FC<McpServerFormProps> = ({
           <div>
             <div className="text-sm font-medium mb-1">URL</div>
             <Input
+              aria-label="Server URL"
               value={httpConfig.url}
               onChange={(e) => onHttpConfigChange({ ...httpConfig, url: e.target.value })}
               placeholder="https://mcp.deepwiki.com/sse"
@@ -97,6 +103,21 @@ export const McpServerForm: React.FC<McpServerFormProps> = ({
           </div>
         </TabsContent>
       </Tabs>
+      {protocol !== 'stdio' && httpConfig.headers !== undefined && (
+        <details>
+          <summary className="cursor-pointer text-xs text-muted-foreground">
+            Authentication headers
+          </summary>
+          <Textarea
+            aria-label="Authentication headers (JSON)"
+            value={httpConfig.headers ?? ''}
+            onChange={(event) => onHttpConfigChange({ ...httpConfig, headers: event.target.value })}
+            placeholder='{"Authorization": "Bearer token"}'
+            className="mt-2 font-mono text-xs"
+            rows={3}
+          />
+        </details>
+      )}
     </div>
   );
 };

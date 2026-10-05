@@ -1,14 +1,15 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import CCMcpView from '@/components/cc/mcp/CCMcpView';
-import type { McpServerConfig } from '@/components/codex/types';
 import { CodexMcpView } from '@/features/mcp/CodexMcpView';
 import { DefaultMcpServers } from '@/features/mcp/DefaultMcpServers';
+import { KekeMcpView } from '@/features/mcp/KekeMcpView';
 import { McpAddPanel } from '@/features/mcp/McpAddPanel';
 import { Clone } from '@/features/skills/Clone';
 import { InstalledTab } from '@/features/skills/InstalledTab';
 import SkillsViewContent from '@/features/skills/SkillsView';
 import { RecommendToolsView } from '@/features/tools/RecommendToolsView';
 import { unifiedReadMcpConfig } from '@/services';
+import { readKekeMcpServers } from '@/services/apiAdapt/kekeMcp';
 import { useAgentSettingsStore, useWorkspaceStore } from '@/stores';
 import { usePluginsViewContext } from '../hooks';
 import { PluginDetailView } from './PluginDetailView';
@@ -19,20 +20,30 @@ import { TabSwitcher } from './TabSwitcher';
 export function PluginsViewContent() {
   const { selectedAgent } = useAgentSettingsStore();
   const { cwd } = useWorkspaceStore();
-  const [quickAddServers, setQuickAddServers] = useState<Record<string, McpServerConfig>>({});
+  const { connectorTarget } = usePluginsViewContext();
+  const quickAddRequest = useRef(0);
+  const [quickAddState, setQuickAddState] = useState<{
+    key: string;
+    servers: Record<string, unknown>;
+    error: string;
+  }>({ key: '', servers: {}, error: '' });
+  const targetKey = connectorTarget === 'bots' ? 'bots' : `${selectedAgent}:${cwd ?? ''}`;
   const loadQuickAddServers = useCallback(async () => {
+    const request = ++quickAddRequest.current;
     try {
-      // Claude's server list is per project; without a cwd there is nothing to read.
-      if (selectedAgent === 'cc' && !cwd) {
-        setQuickAddServers({});
-        return;
-      }
-      const config = await unifiedReadMcpConfig(selectedAgent, cwd || undefined);
-      setQuickAddServers((config.mcpServers as Record<string, McpServerConfig> | undefined) ?? {});
+      const servers =
+        connectorTarget === 'bots'
+          ? await readKekeMcpServers()
+          : selectedAgent === 'cc' && !cwd
+            ? {}
+            : ((await unifiedReadMcpConfig(selectedAgent, cwd || undefined)).mcpServers ?? {});
+      if (request === quickAddRequest.current)
+        setQuickAddState({ key: targetKey, servers, error: '' });
     } catch (error) {
-      console.error('Failed to load MCP servers:', error);
+      if (request === quickAddRequest.current)
+        setQuickAddState({ key: targetKey, servers: {}, error: String(error) });
     }
-  }, [selectedAgent, cwd]);
+  }, [selectedAgent, cwd, connectorTarget, targetKey]);
   const {
     mainTab,
     overlay,
@@ -54,9 +65,10 @@ export function PluginsViewContent() {
     handleUsePlugin,
   } = usePluginsViewContext();
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: The shared refresh trigger intentionally reloads connector definitions.
   useEffect(() => {
     loadQuickAddServers();
-  }, [loadQuickAddServers]);
+  }, [loadQuickAddServers, refreshTrigger]);
 
   return (
     <div className="flex-1 min-h-0 overflow-hidden">
@@ -70,16 +82,23 @@ export function PluginsViewContent() {
       {!overlay && mainTab === 'Tools' && <RecommendToolsView />}
 
       {!overlay && mainTab === 'Connectors' && (
-        <div className="flex-1 overflow-y-auto p-4">
-          <DefaultMcpServers
-            agent={selectedAgent}
-            cwd={cwd || undefined}
-            servers={quickAddServers}
-            onServerAdded={() => {
-              loadQuickAddServers();
-              setRefreshTrigger((t: number) => t + 1);
-            }}
-          />
+        <div className="h-full overflow-y-auto p-4">
+          {quickAddState.key !== targetKey ? (
+            <p className="text-sm text-muted-foreground">Loading connectors…</p>
+          ) : quickAddState.error ? (
+            <p role="alert" className="text-sm text-destructive">
+              Could not load connectors: {quickAddState.error}
+            </p>
+          ) : (
+            <DefaultMcpServers
+              agent={connectorTarget === 'bots' ? 'keke' : selectedAgent}
+              cwd={cwd || undefined}
+              servers={quickAddState.servers}
+              onServerAdded={() => {
+                setRefreshTrigger((t: number) => t + 1);
+              }}
+            />
+          )}
         </div>
       )}
 
@@ -94,7 +113,9 @@ export function PluginsViewContent() {
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto py-3">
             {manageTab === 'Connectors' ? (
-              selectedAgent === 'codex' ? (
+              connectorTarget === 'bots' ? (
+                <KekeMcpView refreshKey={manageRefreshKey + refreshTrigger} />
+              ) : selectedAgent === 'codex' ? (
                 <CodexMcpView refreshKey={manageRefreshKey} />
               ) : (
                 <CCMcpView refreshKey={manageRefreshKey} />
@@ -116,8 +137,16 @@ export function PluginsViewContent() {
       )}
 
       {overlay === 'add' && (
-        <div className="flex-1 overflow-y-auto p-4">
-          {addTab === 'Connector' ? <McpAddPanel onAdded={handleMcpAdded} /> : <Clone />}
+        <div className="h-full overflow-y-auto p-4">
+          {addTab === 'Connector' ? (
+            <McpAddPanel
+              key={connectorTarget}
+              target={connectorTarget === 'bots' ? 'keke' : undefined}
+              onAdded={handleMcpAdded}
+            />
+          ) : (
+            <Clone />
+          )}
         </div>
       )}
 

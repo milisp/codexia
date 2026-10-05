@@ -88,7 +88,7 @@ export function BotRoutines({ botId, open }: BotRoutinesProps) {
         <p className="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
           No scheduled tasks yet. Schedule a prompt using this bot’s workspace and permissions. Try
           a daily summary of recent repository changes, or a weekly review of TODOs. Results appear
-          in this bot’s history; tasks need the backend running and awake.
+          in this bot’s conversation; tasks need the backend running and awake.
         </p>
       ) : (
         routines.map((task) => (

@@ -11,8 +11,12 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
+import { acpStop } from '@/services/apiAdapt/acp';
 import { type Bot, deleteBot, updateBot } from '@/services/apiAdapt/bots';
+import { useAcpStore } from '@/stores/useAcpStore';
 import { useBotUiStore } from '@/stores/useBotUiStore';
+import { useLayoutStore } from '@/stores/useLayoutStore';
+import { usePluginsNavigationStore } from '@/stores/usePluginsNavigationStore';
 import { BotCollaborationFields } from './BotCollaborationFields';
 import { BotIdentityFields } from './BotIdentityFields';
 import { BotMcpFields } from './BotMcpFields';
@@ -30,14 +34,27 @@ export function BotSettingsDialog({ bot, open, onOpenChange }: BotSettingsDialog
   const { upsertBot, removeBot } = useBotUiStore();
   const form = useBotSettingsForm(bot, open);
   const [saving, setSaving] = useState(false);
+  const running = useBotUiStore((state) => Boolean(state.runningByBot[bot.id]));
 
   const save = async () => {
+    if (saving || useBotUiStore.getState().runningByBot[bot.id]) return false;
     setSaving(true);
     try {
+      const connection = useBotUiStore.getState().connectionByBot[bot.id];
+      if (connection) {
+        await acpStop(connection);
+        useBotUiStore.getState().clearBotConnection(bot.id);
+        if (useAcpStore.getState().connectionId === connection) {
+          useAcpStore.getState().reset();
+          useAcpStore.getState().setAgentId(bot.agentId);
+        }
+      }
       upsertBot(await updateBot(bot.id, form.patch));
       onOpenChange(false);
+      return true;
     } catch (e) {
       toast({ title: 'Could not save', description: String(e), variant: 'destructive' });
+      return false;
     } finally {
       setSaving(false);
     }
@@ -58,9 +75,7 @@ export function BotSettingsDialog({ bot, open, onOpenChange }: BotSettingsDialog
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{bot.name}</DialogTitle>
-          <DialogDescription>
-            Settings take effect the next time this bot starts a conversation.
-          </DialogDescription>
+          <DialogDescription>Changes apply to the bot’s next task.</DialogDescription>
         </DialogHeader>
 
         <div className="mt-4">
@@ -97,10 +112,6 @@ export function BotSettingsDialog({ bot, open, onOpenChange }: BotSettingsDialog
                 placeholder="Who this bot is, and how it should work."
                 onChange={(e) => form.setSystemPrompt(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">
-                Read after keke's own identity and before the project's AGENTS.md, so the repository
-                still has the last word.
-              </p>
             </div>
 
             <BotTrustFields
@@ -110,7 +121,17 @@ export function BotSettingsDialog({ bot, open, onOpenChange }: BotSettingsDialog
               onApprovedToolsChange={form.setApprovedTools}
             />
 
-            <BotMcpFields mcpServers={form.mcpServers} onMcpServersChange={form.setMcpServers} />
+            <BotMcpFields
+              mcpServers={form.mcpServers}
+              onMcpServersChange={form.setMcpServers}
+              disabled={saving || running}
+              onManageTools={async () => {
+                if (await save()) {
+                  usePluginsNavigationStore.getState().openBotConnectors();
+                  useLayoutStore.getState().setView('plugins');
+                }
+              }}
+            />
             <BotCollaborationFields
               botId={bot.id}
               allowedBotIds={form.allowedBotIds}
@@ -119,6 +140,9 @@ export function BotSettingsDialog({ bot, open, onOpenChange }: BotSettingsDialog
           </div>
         </div>
 
+        {running && (
+          <p className="text-xs text-muted-foreground">Stop the current task to save settings.</p>
+        )}
         <DialogFooter className="justify-between sm:justify-between">
           <Button variant="ghost" className="text-destructive" onClick={remove}>
             Delete bot
@@ -127,7 +151,7 @@ export function BotSettingsDialog({ bot, open, onOpenChange }: BotSettingsDialog
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button disabled={saving} onClick={save}>
+            <Button disabled={saving || running} onClick={save}>
               Save
             </Button>
           </div>

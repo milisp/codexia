@@ -18,6 +18,8 @@ export function TabSwitcher<T extends string>({
       {tabs.map((t) => (
         <Button
           key={t}
+          aria-label={t}
+          title={t}
           variant="ghost"
           size="sm"
           onClick={() => onChange(t)}

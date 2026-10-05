@@ -32,8 +32,10 @@ Bots never share memory. To reset a bot's memory, delete that folder.
 
 ## Applications and MCP servers
 
-In bot settings, Apps and tools selects which MCP servers the bot may use. The
-primary definitions belong to keke in `~/.keke/.mcp.json`, not Codex. Disabled or
+In bot settings, Apps and tools selects which MCP servers the bot may use.
+Save & manage tools opens the existing Plugins → Connectors view with the Bots
+target selected. Featured connectors and custom additions use the same view as
+Codex and Claude, with separate runtime-owned definitions. The primary definitions belong to keke in `~/.keke/.mcp.json`, not Codex. Disabled or
 since-removed servers are skipped. A bot with none selected gets no MCP tools
 (other than the separately authorized `codexia-bots` collaboration tools, below).
 
@@ -99,7 +101,7 @@ If any step is refused, the run finishes with status **blocked** instead of
 success, so a half-done job is not reported as done. Open the bot, approve the
 tool with "Always allow" (or raise the trust level), and run again.
 
-Every unattended run is filed in the bot's history with an unread badge. The
+Every unattended run is filed in the bot's conversation with an unread badge. The
 sidebar shows a status dot per bot while it works or after it finishes.
 
 ## Bot-to-bot help
@@ -125,7 +127,7 @@ and new bots default to an empty collaborator allowlist until explicitly saved.
 
 Help is one hop deep: a bot that was asked by another bot does not get
 `codexia-bots`, so bots cannot bounce work back and forth. The request shows
-up in the target bot's history like a routine run.
+up in the target bot's conversation like a routine run.
 
 ## Notifications
 

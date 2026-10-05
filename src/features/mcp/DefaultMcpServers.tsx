@@ -1,104 +1,72 @@
-import { Plus } from 'lucide-react';
+import { Check, Plus } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
-import type { McpServerConfig } from '@/components/codex/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { type UnifiedMcpClientName, unifiedAddMcpServer } from '@/services';
+import { addKekeMcpServer } from '@/services/apiAdapt/kekeMcp';
 import { appPresets } from './appPresets';
+import { ConnectorIcon } from './ConnectorIcon';
 
 interface DefaultMcpServersProps {
-  agent: UnifiedMcpClientName;
+  agent: UnifiedMcpClientName | 'keke';
   cwd?: string;
-  servers: Record<string, McpServerConfig>;
+  servers: Record<string, unknown>;
   onServerAdded: () => void;
 }
 
 export function DefaultMcpServers({ agent, cwd, servers, onServerAdded }: DefaultMcpServersProps) {
-  const defaultServers = [
-    ...appPresets,
-    {
-      name: 'desktop-commander',
-      description: 'Search, update, manage files and run terminal commands with AI',
-      config: {
-        type: 'stdio' as const,
-        command: 'npx',
-        args: ['-y', '@wonderwhy-er/desktop-commander'],
-      },
-    },
-    {
-      name: 'deepwiki',
-      description:
-        'DeepWiki automatically generates architecture diagrams, documentation, and links to source code to help you understand unfamiliar codebases quickly.',
-      config: {
-        type: 'http' as const,
-        url: 'https://mcp.deepwiki.com/mcp',
-      },
-    },
-    {
-      name: 'you-search',
-      description:
-        'Web search for coding agents from You.com: current web results and URL content extraction with citations. No account or API key required.',
-      config: {
-        type: 'http' as const,
-        url: 'https://api.you.com/mcp?profile=free',
-      },
-    },
-    {
-      name: 'parallel-search',
-      description:
-        'Search the web and fetch requested URLs with no account or API key. When you use its tools, your search objectives, search queries, and requested URLs are sent to Parallel.',
-      config: {
-        type: 'http' as const,
-        url: 'https://search.parallel.ai/mcp',
-      },
-    },
-  ];
-
-  const handleAddDefaultServer = async (defaultServer: (typeof defaultServers)[0]) => {
+  const [adding, setAdding] = useState<string | null>(null);
+  const add = async (preset: (typeof appPresets)[number]) => {
+    setAdding(preset.name);
     try {
-      await unifiedAddMcpServer({
-        clientName: agent,
-        path: cwd,
-        serverName: defaultServer.name,
-        serverConfig: defaultServer.config,
-        // Claude user scope (~/.claude.json) mirrors Codex's global config.toml.
-        scope: agent === 'cc' ? 'global' : undefined,
-      });
+      if (agent === 'keke') await addKekeMcpServer(preset.name, preset.config);
+      else
+        await unifiedAddMcpServer({
+          clientName: agent,
+          path: cwd,
+          serverName: preset.name,
+          serverConfig: preset.config,
+          scope: agent === 'cc' ? 'global' : undefined,
+        });
+      toast.success(`${preset.label} configured. ${preset.access}.`);
       onServerAdded();
     } catch (error) {
-      console.error('Failed to add default MCP server:', error);
-      toast.error('Failed to add MCP server: ' + error);
+      toast.error(`Could not add ${preset.label}: ${error}`);
+    } finally {
+      setAdding(null);
     }
   };
 
   return (
-    <div>
-      <h3 className="text-lg font-semibold">Quick Add Connectors</h3>
-      <p className="text-sm text-muted-foreground mb-3">
-        Connect agents to external services through MCP servers.
-      </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {defaultServers.map((defaultServer) => {
-          const isAlreadyAdded = defaultServer.name in servers;
+    <div className="flex flex-col gap-4">
+      <div>
+        <h3 className="text-lg font-semibold">Featured connectors</h3>
+        <p className="text-sm text-muted-foreground">
+          Add tools for {agent === 'keke' ? 'your bots' : agent === 'cc' ? 'Claude' : 'Codex'}.
+        </p>
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {appPresets.map((preset) => {
+          const added = preset.name in servers;
           return (
-            <Card key={defaultServer.name} className={isAlreadyAdded ? 'opacity-50' : ''}>
-              <CardContent>
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="font-medium text-sm">{defaultServer.name}</div>
-                    <Button
-                      size="sm"
-                      onClick={() => handleAddDefaultServer(defaultServer)}
-                      disabled={isAlreadyAdded}
-                    >
-                      <Plus className="h-4 w-4" />
-                      {isAlreadyAdded ? 'Added' : 'Add'}
-                    </Button>
-                  </div>
-                  <div className="text-xs text-gray-500">{defaultServer.description}</div>
-                </div>
-              </CardContent>
-            </Card>
+            <div key={preset.name} className="flex items-start gap-3 rounded-lg border p-4">
+              <ConnectorIcon name={preset.name} />
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="text-sm font-medium">{preset.label}</span>
+                <p className="text-xs text-muted-foreground">{preset.description}</p>
+                <span className="text-xs text-muted-foreground">{preset.access}</span>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                aria-label={`${added ? 'Added' : 'Add'} ${preset.label}`}
+                disabled={added || adding !== null}
+                onClick={() => void add(preset)}
+              >
+                {added ? <Check data-icon="inline-start" /> : <Plus data-icon="inline-start" />}
+                {added ? 'Added' : adding === preset.name ? 'Adding…' : 'Add'}
+              </Button>
+            </div>
           );
         })}
       </div>

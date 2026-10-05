@@ -1,13 +1,23 @@
 import { useEffect, useRef } from 'react';
 import { AcpToolCall } from '@/components/acp/AcpToolCall';
+import { Button } from '@/components/ui/button';
 import type { Bot } from '@/services/apiAdapt/bots';
 import { useAcpStore } from '@/stores/useAcpStore';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 import { BotAvatar } from './BotAvatar';
+import { useBotTimeline } from './useBotTimeline';
 
 /** The conversation, as chat bubbles: you on the right, the bot on the left. */
 export function BotMessageList({ bot }: { bot: Bot }) {
-  const { entries, connecting } = useAcpStore();
+  const { entries: liveEntries, connecting } = useAcpStore();
+  const activeSessionId = useBotUiStore((state) => state.sessionByBot[bot.id]);
+  const { sections, error, retry } = useBotTimeline(bot.id, activeSessionId);
+  const entries = sections.flatMap((section) =>
+    section.sessionId === activeSessionId ? liveEntries : section.entries
+  );
+  if (!sections.some((section) => section.sessionId === activeSessionId)) {
+    entries.push(...liveEntries);
+  }
   // Per-bot, so a turn running in another conversation does not show this bot
   // as typing.
   const running = useBotUiStore((s) => Boolean(s.runningByBot[bot.id]));
@@ -20,6 +30,14 @@ export function BotMessageList({ bot }: { bot: Bot }) {
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2 text-sm">
+      {error && (
+        <div role="alert" className="flex items-center gap-2 text-xs text-destructive">
+          {error}
+          <Button size="sm" variant="ghost" onClick={retry}>
+            Retry
+          </Button>
+        </div>
+      )}
       {entries.length === 0 && !connecting && (
         <div className="py-10 text-center text-muted-foreground">
           <BotAvatar bot={bot} size="lg" className="mx-auto mb-2" />

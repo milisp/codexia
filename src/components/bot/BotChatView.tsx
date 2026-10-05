@@ -1,4 +1,4 @@
-import { CalendarClock, History, Settings2, SquarePen } from 'lucide-react';
+import { CalendarClock, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { useAcpEvents } from '@/components/acp/useAcpEvents';
 import { Button } from '@/components/ui/button';
@@ -12,20 +12,16 @@ import { BotComposer } from './BotComposer';
 import { BotMessageList } from './BotMessageList';
 import { BotPermissionGate } from './BotPermissionGate';
 import { BotRoutines } from './BotRoutines';
-import { BotSessionList } from './BotSessionList';
 import { BotSettingsDialog } from './BotSettingsDialog';
 import { TRUST_LEVELS } from './botAgentDef';
 import { useBotDragDrop } from './useBotDragDrop';
-import { useBotSession } from './useBotSession';
 
 /** The full-screen conversation with one bot. */
 export default function BotChatView() {
   const { bots, selectedBotId, connectionByBot } = useBotUiStore();
   const connectionId = useAcpStore((s) => s.connectionId);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [panel, setPanel] = useState<'history' | 'tasks' | null>(null);
-  const [starting, setStarting] = useState(false);
-  const { startNew } = useBotSession();
+  const [tasksOpen, setTasksOpen] = useState(false);
   const { open: isSidebarOpen, openMobile, isMobile } = useSidebar();
   const showTrigger = isMobile ? !openMobile : !isSidebarOpen;
   const { needsTrafficLightOffset } = useTrafficLightConfig(isSidebarOpen);
@@ -84,35 +80,9 @@ export default function BotChatView() {
         <Button
           variant="ghost"
           size="icon"
-          aria-label="Conversation history"
-          title="Conversation history"
-          onClick={() => setPanel('history')}
-        >
-          <History className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="New session"
-          title="New session"
-          disabled={starting}
-          onClick={async () => {
-            setStarting(true);
-            try {
-              await startNew(bot);
-            } finally {
-              setStarting(false);
-            }
-          }}
-        >
-          <SquarePen className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
           aria-label="Scheduled tasks"
           title="Scheduled tasks"
-          onClick={() => setPanel('tasks')}
+          onClick={() => setTasksOpen(true)}
         >
           <CalendarClock className="h-4 w-4" />
         </Button>
@@ -120,10 +90,11 @@ export default function BotChatView() {
           variant="ghost"
           size="icon"
           className="h-8 w-8"
+          aria-label="Bot settings"
           title="Bot settings"
           onClick={() => setSettingsOpen(true)}
         >
-          <Settings2 className="h-4 w-4" />
+          <Settings className="h-4 w-4" />
         </Button>
       </header>
 
@@ -132,20 +103,12 @@ export default function BotChatView() {
       <BotComposer bot={bot} />
 
       <BotSettingsDialog bot={bot} open={settingsOpen} onOpenChange={setSettingsOpen} />
-      <Dialog
-        open={panel !== null}
-        onOpenChange={(open) => {
-          if (!open) setPanel(null);
-        }}
-      >
+      <Dialog open={tasksOpen} onOpenChange={setTasksOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {panel === 'history' ? 'Conversation history' : 'Scheduled tasks'} · {bot.name}
-            </DialogTitle>
+            <DialogTitle>Scheduled tasks · {bot.name}</DialogTitle>
           </DialogHeader>
-          {panel === 'history' && <BotSessionList key={bot.id} bot={bot} />}
-          {panel === 'tasks' && <BotRoutines key={bot.id} botId={bot.id} open />}
+          <BotRoutines key={bot.id} botId={bot.id} open={tasksOpen} />
         </DialogContent>
       </Dialog>
     </div>

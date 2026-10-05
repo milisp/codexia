@@ -1,64 +1,19 @@
 import { useCallback } from 'react';
 import { toast } from '@/components/ui/use-toast';
-import {
-  type AcpSessionRecord,
-  acpGetSession,
-  acpLoadSession,
-  acpNewSession,
-  acpSetConfigOption,
-  acpStart,
-} from '@/services/apiAdapt/acp';
+import { acpGetSession, acpLoadSession, acpStart } from '@/services/apiAdapt/acp';
 import type { Bot } from '@/services/apiAdapt/bots';
 import { listBotSessions } from '@/services/apiAdapt/bots';
 import { useAcpStore } from '@/stores/useAcpStore';
 import { captureBotOptions } from '@/stores/useBotOptionsStore';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 import { applyAcpUpdate } from '../acp/applyUpdate';
-import { acpFreshSession } from '../acp/newSession';
 import { loadAcpAgents } from '../acp/useAcpAgents';
-import { trustFor } from './botAgentDef';
 
-/**
- * Everything a bot's pane should show: the last conversation it had before
- * `currentSessionId` was opened, followed by that session's own updates.
- *
- * A bot gets a fresh session on every app restart, so the newest stored record
- * is regularly an empty one — the history is the newest *other* session that
- * actually holds updates, and it stays on screen once the current session
- * starts filling up, which is what makes the thread read as continuous across
- * restarts and across switching bots.
- */
-async function loadTranscript(botId: string, currentSessionId?: string, includeCurrent = true) {
-  const stored = await listBotSessions(botId).catch(() => []);
-    let history: any[] = [];
-  for (const record of stored) {
-    if (record.sessionId === currentSessionId) continue;
-    const updates = await acpGetSession(record.sessionId).catch(() => []);
-    if (updates.length > 0) {
-      history = updates;
-      break;
-    }
-  }
-    const current: any[] =
-      includeCurrent && currentSessionId ? await acpGetSession(currentSessionId).catch(() => []) : [];
-  return { history, current };
-}
-
-/**
- * Replay a transcript into the ACP store, but only while `botId` is still the
- * open bot: these loads are async, and a bot switched away from mid-load must
- * not pour its history into the bot now on screen.
- */
-function replayInto(
-  botId: string,
-  { history, current }: Awaited<ReturnType<typeof loadTranscript>>
-) {
+/** Replay only the active runtime transcript; older work belongs to the Bot timeline. */
+async function replayCurrent(botId: string, sessionId: string) {
+  const updates = await acpGetSession(sessionId);
   if (useBotUiStore.getState().selectedBotId !== botId) return;
-  for (const update of history) applyAcpUpdate(update as Record<string, any>);
-  // The two transcripts are different turns, so the last message of one must
-  // not merge into the first of the other.
-  if (history.length > 0 && current.length > 0) useAcpStore.getState().sealChunk();
-  for (const update of current) applyAcpUpdate(update as Record<string, any>);
+  for (const update of updates) applyAcpUpdate(update as Record<string, any>);
 }
 
 /**
@@ -70,32 +25,11 @@ function replayInto(
  * lists bots — that read is deliberately cold.
  */
 export function useBotSession() {
-  /** Apply the bot's own settings to a session keke has just opened. */
-  const applySettings = useCallback(async (bot: Bot, connectionId: string, sessionId: string) => {
-    const trust = trustFor(bot);
-    const options: Array<[string, string]> = [
-      ['approval_policy', trust.approvalPolicy],
-      ['sandbox_mode', trust.sandboxMode],
-    ];
-    if (bot.model) options.push(['model', bot.model]);
-    if (bot.reasoningEffort) options.push(['reasoning_effort', bot.reasoningEffort]);
-
-    for (const [id, value] of options) {
-      // An agent that does not offer one of these says so per option; that is
-      // not a reason to abandon the rest of the bot's settings.
-      try {
-        await acpSetConfigOption(connectionId, sessionId, id, value);
-      } catch (e) {
-        console.warn(`bot: ${bot.name} could not set ${id}`, e);
-      }
-    }
-  }, []);
-
   /**
    * Show a bot's conversation, starting its process if it has none. Returns the
    * live ids, or null when the bot could not be opened.
    */
-  const open = useCallback(async (bot: Bot, requestedSession?: AcpSessionRecord) => {
+  const open = useCallback(async (bot: Bot) => {
     const ui = useBotUiStore.getState();
     const store = useAcpStore.getState();
 
@@ -110,10 +44,7 @@ export function useBotSession() {
     const existing = ui.connectionByBot[bot.id];
     const existingSession = ui.sessionByBot[bot.id];
     if (existing && existingSession) {
-      // The process is still ours; only the pane has to catch up. Selecting a
-      // session from the bot's history either resumes it or replays it into a
-      // fresh agent-side session when the agent cannot load sessions.
-      let activeSessionId = existingSession;
+      const activeSessionId = existingSession;
       store.setConnection({
         connectionId: existing,
         sessionId: activeSessionId,
@@ -122,31 +53,7 @@ export function useBotSession() {
         canLoadSession: store.canLoadSession,
       });
       store.setEntries([]);
-      if (requestedSession && requestedSession.sessionId !== existingSession) {
-        if (store.canLoadSession) {
-          store.setSessionId(requestedSession.sessionId);
-          store.applySession({
-            ...(await acpLoadSession(existing, requestedSession.sessionId, requestedSession.cwd)),
-            sessionId: requestedSession.sessionId,
-          });
-          activeSessionId = requestedSession.sessionId;
-          // `session/load` makes the agent stream the whole transcript back
-          // as live updates, which `applySession` has already put on screen.
-          // Replaying the stored copy on top would show every message twice.
-          ui.setBotSession(bot.id, activeSessionId);
-        } else {
-          const session = await acpNewSession(existing, bot.cwd);
-          store.applySession(session);
-          activeSessionId = session.sessionId;
-          ui.setBotSession(bot.id, activeSessionId);
-          replayInto(bot.id, {
-            history: [],
-            current: await acpGetSession(requestedSession.sessionId).catch(() => []),
-          });
-        }
-      } else {
-        replayInto(bot.id, await loadTranscript(bot.id, activeSessionId));
-      }
+      await replayCurrent(bot.id, activeSessionId);
       return { connectionId: existing, sessionId: activeSessionId };
     }
 
@@ -174,12 +81,10 @@ export function useBotSession() {
         return res.sessionId ? { connectionId: res.connectionId, sessionId: res.sessionId } : null;
       }
       const canLoadSession = res.initialize.agentCapabilities?.loadSession === true;
-      const sessionToRestore =
-        requestedSession ?? (await listBotSessions(bot.id).catch(() => []))[0];
-      let restoreStoredSession = Boolean(sessionToRestore && canLoadSession);
-      let activeSessionId = restoreStoredSession
-        ? (sessionToRestore as AcpSessionRecord).sessionId
-        : res.sessionId;
+      const sessionToRestore = (await listBotSessions(bot.id))[0];
+      if (stale()) return null;
+      const restoreStoredSession = Boolean(sessionToRestore && canLoadSession);
+      let activeSessionId = restoreStoredSession ? sessionToRestore!.sessionId : res.sessionId;
 
       // The store's connection/session must be set — and entries cleared —
       // before `session/load` is awaited below: the agent streams the
@@ -197,14 +102,13 @@ export function useBotSession() {
       if (restoreStoredSession && sessionToRestore) {
         store.setEntries([]);
         try {
-          store.applySession({
-            ...(await acpLoadSession(
-              res.connectionId,
-              sessionToRestore.sessionId,
-              sessionToRestore.cwd
-            )),
-            sessionId: sessionToRestore.sessionId,
-          });
+          const restored = await acpLoadSession(
+            res.connectionId,
+            sessionToRestore.sessionId,
+            sessionToRestore.cwd
+          );
+          if (stale()) return null;
+          store.applySession({ ...restored, sessionId: sessionToRestore.sessionId });
           ui.setBotSession(bot.id, sessionToRestore.sessionId);
         } catch (e) {
           // The agent may claim `loadSession` support yet still fail to
@@ -212,8 +116,9 @@ export function useBotSession() {
           // in memory) — fall back to the fresh session rather than let the
           // whole bot fail to open over a stale session id.
           console.warn(`bot: ${bot.name} could not resume session, starting fresh`, e);
-          restoreStoredSession = false;
+          if (stale()) return null;
           activeSessionId = res.sessionId;
+          if (res.sessionId) ui.setBotSession(bot.id, res.sessionId);
           store.setConnection({
             connectionId: res.connectionId,
             sessionId: res.sessionId,
@@ -239,21 +144,6 @@ export function useBotSession() {
         return null;
       }
       ui.setKekeSpawnFailed(false);
-
-      // Agents that support `session/load` resume the exact selected thread.
-      // For other agents, the stored transcript remains read-only history and
-      // prompts go to the fresh session this process opened.
-      if (requestedSession && !restoreStoredSession) {
-        replayInto(bot.id, {
-          history: [],
-          current: await acpGetSession(requestedSession.sessionId).catch(() => []),
-        });
-      } else {
-        replayInto(
-          bot.id,
-          await loadTranscript(bot.id, activeSessionId ?? undefined, !restoreStoredSession)
-        );
-      }
 
       return activeSessionId
         ? { connectionId: res.connectionId, sessionId: activeSessionId }
@@ -289,41 +179,5 @@ export function useBotSession() {
     useBotUiStore.getState().setSelectedBotId(bot.id);
   }, []);
 
-  /** Start a blank conversation on this bot, keeping its process if it is live. */
-  const startNew = useCallback(
-    async (bot: Bot) => {
-      const ui = useBotUiStore.getState();
-      const existing = ui.connectionByBot[bot.id];
-      if (existing) {
-        ui.setSelectedBotId(bot.id);
-        useAcpStore.getState().setAgentId(bot.agentId);
-        useAcpStore.getState().setConnection({
-          connectionId: existing,
-          sessionId: ui.sessionByBot[bot.id] ?? '',
-          agentTitle: bot.name,
-          authMethods: [],
-          canLoadSession: useAcpStore.getState().canLoadSession,
-        });
-        const ok = await acpFreshSession(existing, bot.cwd);
-        const sessionId = useAcpStore.getState().sessionId;
-        if (ok && sessionId) {
-          ui.setBotSession(bot.id, sessionId);
-          await applySettings(bot, existing, sessionId);
-        }
-        return;
-      }
-
-      const opened = await open(bot);
-      if (!opened) return;
-      const ok = await acpFreshSession(opened.connectionId, bot.cwd);
-      const sessionId = useAcpStore.getState().sessionId;
-      if (ok && sessionId) {
-        useBotUiStore.getState().setBotSession(bot.id, sessionId);
-        await applySettings(bot, opened.connectionId, sessionId);
-      }
-    },
-    [applySettings, open]
-  );
-
-  return { open, openBlank, startNew, applySettings };
+  return { open, openBlank };
 }

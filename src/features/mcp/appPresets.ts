@@ -1,16 +1,66 @@
 import type { McpServerConfig } from '@/components/codex/types';
 
-export const appPresets: { name: string; description: string; config: McpServerConfig }[] = [
+export const appPresets: {
+  name: string;
+  label: string;
+  description: string;
+  access: string;
+  config: McpServerConfig;
+}[] = [
   {
     name: 'github',
-    description:
-      'GitHub official remote server. Requires authorization; adding is not connecting an account.',
+    label: 'GitHub',
+    description: 'Repositories, issues and pull requests',
+    access: 'Authorization required',
     config: { type: 'http', url: 'https://api.githubcopilot.com/mcp/' },
   },
   {
     name: 'slack',
-    description:
-      'Slack official remote server. Requires authorization and provider access; adding is not connecting an account.',
+    label: 'Slack',
+    description: 'Workspace messages and channels',
+    access: 'Provider setup required',
     config: { type: 'http', url: 'https://mcp.slack.com/mcp' },
+  },
+  {
+    name: 'linear',
+    label: 'Linear',
+    description: 'Issues, projects and team planning',
+    access: 'Authorization required',
+    config: { type: 'http', url: 'https://mcp.linear.app/mcp' },
+  },
+  {
+    name: 'context7',
+    label: 'Context7',
+    description: 'Current library documentation and code examples',
+    access: 'API key supported',
+    config: { type: 'http', url: 'https://mcp.context7.com/mcp' },
+  },
+  {
+    name: 'deepwiki',
+    label: 'DeepWiki',
+    description: 'Documentation for public GitHub repositories',
+    access: 'No account required',
+    config: { type: 'http', url: 'https://mcp.deepwiki.com/mcp' },
+  },
+  {
+    name: 'desktop-commander',
+    label: 'Desktop Commander',
+    description: 'Local files and terminal commands',
+    access: 'Runs locally',
+    config: { type: 'stdio', command: 'npx', args: ['-y', '@wonderwhy-er/desktop-commander'] },
+  },
+  {
+    name: 'you-search',
+    label: 'You.com',
+    description: 'Web search and page content',
+    access: 'Free search endpoint',
+    config: { type: 'http', url: 'https://api.you.com/mcp?profile=free' },
+  },
+  {
+    name: 'parallel-search',
+    label: 'Parallel',
+    description: 'Web search and URL extraction',
+    access: 'No account required',
+    config: { type: 'http', url: 'https://search.parallel.ai/mcp' },
   },
 ];

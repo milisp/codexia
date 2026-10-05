@@ -14,17 +14,19 @@ bot when you want to return to the same assistant or schedule recurring work.
 
    > Read this project's README and summarize how to run its tests. Do not change files.
 
-Clicking a bot opens its chat. Use the chat's history action to revisit previous
-sessions rather than looking for nested sessions in the sidebar. Start a new
-conversation when you need fresh conversation context; this does not reset the
-bot's persistent memory.
+Clicking a bot opens its continuous conversation. Earlier messages and scheduled
+results appear in the same timeline; runtime sessions are managed automatically.
 
 ## Connect applications and tools
 
-Open the bot's settings and find **Apps and tools**. Connect/configure an
-application first, then select which configured servers this bot may use.
-The primary configuration is `~/.keke/.mcp.json`. Bot tools do not automatically
-share or modify Codex configuration. Custom MCP is an advanced option.
+Open the bot's settings and find **Apps and tools**. **Save & manage tools** opens
+**Plugins → Connectors** with **Bots** selected as the configuration target.
+Add a featured connector or use the + action for a custom local or remote MCP
+server. Manage configured servers, JSON definitions and Codex imports from the
+management action. Return to the bot's settings to select which tools it may use.
+Saving stops an idle bot runtime so its next task uses the updated configuration.
+The primary configuration is `~/.keke/.mcp.json`; Codex and Claude configurations
+remain separate.
 
 Adding the GitHub or Slack preset adds a server definition, not a working account
 connection. Codex OAuth credentials are not reused. Configured local stdio
@@ -76,7 +78,7 @@ a recorded workflow and does not automatically learn actions from your screen.
 3. Give the task a name, write a self-contained request, and choose its schedule.
 4. Check the host's local timezone; scheduling uses the backend machine's time.
 5. Use **Run now** to test without waiting for the scheduled time.
-6. Find the resulting conversation in the bot's history and check its outcome.
+6. Find the result in the bot conversation and check its outcome.
 
 Example task:
 
@@ -124,7 +126,7 @@ right to change another bot's permissions.
 ## Notifications and results
 
 Use the bell beside **Bots** to find unread background activity. Open the bot
-and its history to inspect the actual result rather than treating a completion
+and its conversation to inspect the actual result rather than treating a completion
 notification as proof that the answer is correct.
 
 - **Working:** execution is in progress.

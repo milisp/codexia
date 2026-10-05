@@ -167,130 +167,142 @@ const cleared = {
   selectedAuthMethod: null,
 } satisfies Partial<AcpStore>;
 
-export const useAcpStore = create<AcpStore>((set) => ({
-  active: false,
-  agentId: 'gemini',
-  connectionId: null,
-  sessionId: null,
-  agentTitle: null,
-  authMethods: [],
-  canLoadSession: false,
-  connecting: false,
-  running: false,
-  entries: [],
-  chunkSealed: false,
-  permission: null,
-  modes: null,
-  models: null,
-  configOptions: [],
-  reasoningEffort: null,
-  authenticating: null,
-  authNotice: null,
-  selectedAuthMethod: null,
-  restartNonce: 0,
+export const createAcpStore = () =>
+  create<AcpStore>((set) => ({
+    active: false,
+    agentId: 'gemini',
+    connectionId: null,
+    sessionId: null,
+    agentTitle: null,
+    authMethods: [],
+    canLoadSession: false,
+    connecting: false,
+    running: false,
+    entries: [],
+    chunkSealed: false,
+    permission: null,
+    modes: null,
+    models: null,
+    configOptions: [],
+    reasoningEffort: null,
+    authenticating: null,
+    authNotice: null,
+    selectedAuthMethod: null,
+    restartNonce: 0,
 
-  setActive: (active) => set({ active }),
-  setAgentId: (agentId) => set({ agentId }),
-  setConnection: ({ connectionId, sessionId, agentTitle, authMethods, canLoadSession }) =>
-    set({
-      connectionId,
-      sessionId,
-      agentTitle,
-      authMethods,
-      canLoadSession: canLoadSession ?? false,
-      connecting: false,
-    }),
-  setSessionId: (sessionId) => set({ sessionId }),
+    setActive: (active) => set({ active }),
+    setAgentId: (agentId) => set({ agentId }),
+    setConnection: ({ connectionId, sessionId, agentTitle, authMethods, canLoadSession }) =>
+      set({
+        connectionId,
+        sessionId,
+        agentTitle,
+        authMethods,
+        canLoadSession: canLoadSession ?? false,
+        connecting: false,
+      }),
+    setSessionId: (sessionId) => set({ sessionId }),
 
-  applySession: (session) =>
-    set({
-      sessionId: session?.sessionId ?? null,
-      modes: session?.modes ?? null,
-      models: session?.models ?? null,
-      configOptions: session?.configOptions ?? [],
-      reasoningEffort:
-        session?.models?.availableModels
-          .find((m) => m.modelId === session.models?.currentModelId)
-          ?._meta?.reasoningEfforts?.find((e) => e.default)?.id ?? null,
-    }),
+    applySession: (session) =>
+      set({
+        sessionId: session?.sessionId ?? null,
+        modes: session?.modes ?? null,
+        models: session?.models ?? null,
+        configOptions: session?.configOptions ?? [],
+        reasoningEffort:
+          session?.models?.availableModels
+            .find((m) => m.modelId === session.models?.currentModelId)
+            ?._meta?.reasoningEfforts?.find((e) => e.default)?.id ?? null,
+      }),
 
-  setCurrentMode: (currentModeId) =>
-    set((s) => (s.modes ? { modes: { ...s.modes, currentModeId } } : {})),
+    setCurrentMode: (currentModeId) =>
+      set((s) => (s.modes ? { modes: { ...s.modes, currentModeId } } : {})),
 
-  setCurrentModel: (currentModelId) =>
-    set((s) => (s.models ? { models: { ...s.models, currentModelId } } : {})),
+    setCurrentModel: (currentModelId) =>
+      set((s) => (s.models ? { models: { ...s.models, currentModelId } } : {})),
 
-  setConfigOptions: (configOptions) => set({ configOptions }),
+    setConfigOptions: (configOptions) => set({ configOptions }),
 
-  setReasoningEffort: (reasoningEffort) => set({ reasoningEffort }),
+    setReasoningEffort: (reasoningEffort) => set({ reasoningEffort }),
 
-  setConfigOptionValue: (configId, value) =>
-    set((s) => ({
-      configOptions: s.configOptions.map((o) =>
-        o.id === configId ? { ...o, currentValue: value } : o
-      ),
-    })),
-  setAuthenticating: (authenticating) => set({ authenticating, authNotice: null }),
-  setAuthNotice: (authNotice) => set({ authNotice }),
-  appendAuthNotice: (text) =>
-    set((s) => ({ authNotice: s.authNotice ? `${s.authNotice}\n${text}` : text })),
-  setSelectedAuthMethod: (selectedAuthMethod) => set({ selectedAuthMethod }),
-  setConnecting: (connecting) => set({ connecting }),
-  setRunning: (running) => set({ running }),
-  setPermission: (permission) => set({ permission }),
-  addEntry: (entry) => set((s) => ({ entries: [...s.entries, entry] })),
-  setEntries: (entries) => set({ entries, chunkSealed: false }),
+    setConfigOptionValue: (configId, value) =>
+      set((s) => ({
+        configOptions: s.configOptions.map((o) =>
+          o.id === configId ? { ...o, currentValue: value } : o
+        ),
+      })),
+    setAuthenticating: (authenticating) => set({ authenticating, authNotice: null }),
+    setAuthNotice: (authNotice) => set({ authNotice }),
+    appendAuthNotice: (text) =>
+      set((s) => ({ authNotice: s.authNotice ? `${s.authNotice}\n${text}` : text })),
+    setSelectedAuthMethod: (selectedAuthMethod) => set({ selectedAuthMethod }),
+    setConnecting: (connecting) => set({ connecting }),
+    setRunning: (running) => set({ running }),
+    setPermission: (permission) => set({ permission }),
+    addEntry: (entry) => set((s) => ({ entries: [...s.entries, entry] })),
+    setEntries: (entries) => set({ entries, chunkSealed: false }),
 
-  sealChunk: () => set({ chunkSealed: true }),
+    sealChunk: () => set({ chunkSealed: true }),
 
-  appendChunk: (role, text) =>
-    set((s) => {
-      const last = s.entries[s.entries.length - 1];
-      if (last && last.role === role && !s.chunkSealed) {
-        const updated = { ...last, text: last.text + text };
-        return { entries: [...s.entries.slice(0, -1), updated], chunkSealed: false };
-      }
-      return { entries: [...s.entries, { id: newId(), role, text }], chunkSealed: false };
-    }),
+    appendChunk: (role, text) =>
+      set((s) => {
+        const last = s.entries[s.entries.length - 1];
+        if (last && last.role === role && !s.chunkSealed) {
+          const updated = { ...last, text: last.text + text };
+          return { entries: [...s.entries.slice(0, -1), updated], chunkSealed: false };
+        }
+        return { entries: [...s.entries, { id: newId(), role, text }], chunkSealed: false };
+      }),
 
-  upsertToolCall: ({ toolCallId, title, status, kind, content, locations, rawInput, rawOutput }) =>
-    set((s) => {
-      const idx = s.entries.findIndex((e) => e.role === 'tool' && e.toolCallId === toolCallId);
-      if (idx === -1) {
-        return {
-          entries: [
-            ...s.entries,
-            {
-              id: newId(),
-              role: 'tool',
-              toolCallId,
-              title: title ?? toolCallId,
-              status: status ?? 'pending',
-              kind,
-              content,
-              locations,
-              rawInput,
-              rawOutput,
-            },
-          ],
+    upsertToolCall: ({
+      toolCallId,
+      title,
+      status,
+      kind,
+      content,
+      locations,
+      rawInput,
+      rawOutput,
+    }) =>
+      set((s) => {
+        const idx = s.entries.findIndex((e) => e.role === 'tool' && e.toolCallId === toolCallId);
+        if (idx === -1) {
+          return {
+            entries: [
+              ...s.entries,
+              {
+                id: newId(),
+                role: 'tool',
+                toolCallId,
+                title: title ?? toolCallId,
+                status: status ?? 'pending',
+                kind,
+                content,
+                locations,
+                rawInput,
+                rawOutput,
+              },
+            ],
+          };
+        }
+        const prev = s.entries[idx] as Extract<AcpEntry, { role: 'tool' }>;
+        const next = [...s.entries];
+        next[idx] = {
+          ...prev,
+          title: title ?? prev.title,
+          status: status ?? prev.status,
+          kind: kind ?? prev.kind,
+          content: content ?? prev.content,
+          locations: locations ?? prev.locations,
+          rawInput: rawInput ?? prev.rawInput,
+          rawOutput: rawOutput ?? prev.rawOutput,
         };
-      }
-      const prev = s.entries[idx] as Extract<AcpEntry, { role: 'tool' }>;
-      const next = [...s.entries];
-      next[idx] = {
-        ...prev,
-        title: title ?? prev.title,
-        status: status ?? prev.status,
-        kind: kind ?? prev.kind,
-        content: content ?? prev.content,
-        locations: locations ?? prev.locations,
-        rawInput: rawInput ?? prev.rawInput,
-        rawOutput: rawOutput ?? prev.rawOutput,
-      };
-      return { entries: next };
-    }),
+        return { entries: next };
+      }),
 
-  reset: () => set(cleared),
+    reset: () => set(cleared),
 
-  restart: () => set((s) => ({ ...cleared, restartNonce: s.restartNonce + 1 })),
-}));
+    restart: () => set((s) => ({ ...cleared, restartNonce: s.restartNonce + 1 })),
+  }));
+
+export const useAcpStore = createAcpStore();
