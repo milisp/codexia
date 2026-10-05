@@ -52,6 +52,15 @@ export function DefaultMcpServers({ agent, cwd, servers, onServerAdded }: Defaul
         url: 'https://search.parallel.ai/mcp',
       },
     },
+    {
+      name: 'fxmacrodata',
+      description:
+        'Official-source macroeconomic releases, economic calendar and FX data from FXMacroData. USD releases, the USD calendar and the USD catalogue work without a key; other currencies, FX rates and the rest need a key. When you use its tools, the currencies, indicators, dates and other parameters you request are sent to FXMacroData.',
+      config: {
+        type: 'http' as const,
+        url: 'https://mcp.fxmacrodata.com',
+      },
+    },
   ];
 
   const handleAddDefaultServer = async (defaultServer: (typeof defaultServers)[0]) => {
