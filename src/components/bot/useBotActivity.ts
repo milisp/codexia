@@ -4,6 +4,7 @@ import { toast } from '@/components/ui/use-toast';
 import { buildEventUrl, isDesktopTauri } from '@/hooks/runtime';
 import { notifyDesktop } from '@/lib/notify';
 import { listBots } from '@/services/apiAdapt/bots';
+import { useLayoutStore } from '@/stores';
 import { type BotActivityStatus, useBotUiStore } from '@/stores/useBotUiStore';
 import { markBotRead } from './markBotRead';
 
@@ -32,12 +33,17 @@ function handleActivity({ botId, status }: BotActivityPayload) {
     .then((bots) => {
       useBotUiStore.getState().setBots(bots);
       const bot = bots.find((b) => b.id === botId);
-      if (bot && useBotUiStore.getState().selectedBotId === botId) void markBotRead(bot);
+      if (
+        bot &&
+        useLayoutStore.getState().view === 'bot' &&
+        useBotUiStore.getState().selectedBotId === botId
+      )
+        void markBotRead(bot);
     })
     .catch((e) => console.error('bots: failed to refresh after activity', e));
 
   // The user can already see the bot they are looking at.
-  if (ui.selectedBotId === botId) return;
+  if (useLayoutStore.getState().view === 'bot' && ui.selectedBotId === botId) return;
   const bot = ui.bots.find((b) => b.id === botId);
   if (!bot?.notificationsEnabled) return;
   const title = MESSAGES[status](bot.name);

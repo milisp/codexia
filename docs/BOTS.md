@@ -2,7 +2,8 @@
 
 A bot is a named, long-lived agent with its own project folder, role, model,
 permissions, memory and tools. Bots run on the [keke](https://github.com/milisp/keke)
-agent. Create and configure them in the Bot tab (bot settings dialog).
+agent. Create them in the sidebar's Bots group and configure them in the bot
+settings dialog. For a first-use walkthrough, see [bots_usage.md](bots_usage.md).
 
 ## Trust levels
 
@@ -29,18 +30,45 @@ Each bot has its own persistent memory folder, passed to keke as
 
 Bots never share memory. To reset a bot's memory, delete that folder.
 
-## MCP servers
+## Applications and MCP servers
 
-In bot settings, pick which MCP servers the bot may use. The list comes from
-the MCP servers configured for Codex (Plugins > Connectors). Disabled or
+In bot settings, Apps and tools selects which MCP servers the bot may use. The
+primary definitions belong to keke in `~/.keke/.mcp.json`, not Codex. Disabled or
 since-removed servers are skipped. A bot with none selected gets no MCP tools
-(other than `codexia-bots`, below).
+(other than the separately authorized `codexia-bots` collaboration tools, below).
+
+Application presets help configure integrations; they do not grant credentials
+or bypass provider authorization. Local sandbox permissions do not constrain
+remote service writes: use account scopes, server tool restrictions and approval
+policy as appropriate for each integration.
+
+Codex definitions are an explicit import source, not an implicit fallback. Import
+must not overwrite an existing keke server of the same name. Codex OAuth state
+is not evidence that a keke server is authenticated. Computer-use servers may
+be imported as ordinary MCP definitions when compatible; Codex-specific plugin
+discovery and authorization are not transferred automatically.
+
+Selections are stored as `keke:<name>`; legacy bare Codex names are not silently
+rebound. Select/import them explicitly. HTTP/SSE native `headers` and stdio
+`env` are forwarded, without copying Codex OAuth state.
+
+**Selection is not an exclusive tool security boundary:** keke independently
+discovers trusted native MCP definitions. A bot may therefore see globally
+trusted tools beyond its selected ACP entries. Selected entries are namespaced
+to avoid native-name collisions. Use keke trust/approval controls and provider
+scopes; do not interpret an unchecked box as guaranteed denial of that tool.
 
 ## Routines
 
-A routine is a prompt that runs as the bot on a schedule. Manage them in the
-bot's settings: create, edit, pause, delete, or run now. Routines reuse
+A routine (Scheduled task in the UI) is a prompt that runs as the bot on a
+schedule. Manage them from the bot chat: create, edit, pause, delete, or run now. Routines reuse
 Automations, so they also appear in the Automations view (agent `bot`).
+
+The scheduler is hosted in the running backend and uses the host's local
+timezone. It is not a cloud scheduler: stopping the backend stops scheduling.
+The host must be awake. There is no application-level missed-run replay
+guarantee after shutdown or sleep. A disconnected remote client does not itself
+stop the host backend.
 
 ## Unattended runs
 
@@ -60,13 +88,24 @@ sidebar shows a status dot per bot while it works or after it finishes.
 
 ## Bot-to-bot help
 
-Bots get a built-in MCP server, `codexia-bots`, served by the local API at
+Authorized bot collaboration uses a built-in MCP server, `codexia-bots`, served by the local API at
 `/mcp/bots`, with two tools:
 
-- `list_bots`: id, name and title of the other (non-archived) bots.
+- `list_bots`: id, name and title of allowed, non-archived collaborators.
 - `ask_bot`: hand a self-contained request to another bot and wait for its
   answer. The other bot works in its own project, with its own trust level and
   memory, and does not see the asking conversation.
+
+The caller's collaborator allowlist is enforced by the backend, not just the
+settings UI. A coordinating bot uses the same mechanism as any other caller;
+it has no implicit administrative authority. Review the target's permissions
+before authorizing delegation: its tools may be more powerful than the caller's.
+
+The MCP endpoint requires a process-local bearer capability bound to the caller;
+the `from` query parameter alone is not authority. Capabilities are issued only
+for sessions with delegation enabled, expire after eight hours, and are revoked
+when the connection stops, its process exits, or its client is dropped. Existing
+and new bots default to an empty collaborator allowlist until explicitly saved.
 
 Help is one hop deep: a bot that was asked by another bot does not get
 `codexia-bots`, so bots cannot bounce work back and forth. The request shows
@@ -91,4 +130,4 @@ containing `:`). Codexia looks for it in this order:
 3. `npx @milisp/keke`
 
 Release builds ship keke as a sidecar, so no separate install is needed. If
-keke cannot be started, the Bot tab shows an Install keke button.
+keke cannot be started, the bot interface shows an Install keke button.

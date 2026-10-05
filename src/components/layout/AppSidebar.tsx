@@ -1,9 +1,11 @@
-import { Bug, Monitor, Search } from 'lucide-react';
+import { Bug, ChevronDown, Monitor, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SideBarBotPane } from '@/components/bot';
+import { BotNotifications } from '@/components/bot/BotNotifications';
 import { DesktopDrawer } from '@/components/pairing/DesktopDrawer';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Sidebar,
   SidebarContent,
@@ -22,35 +24,20 @@ import { UserInfo } from './UserInfo';
 
 export function AppSideBar() {
   const { t } = useTranslation('sidebar');
-  const modes: Array<{ id: SidebarMode; label: string }> = [
-    { id: 'agent', label: t('agent') },
-    { id: 'bot', label: t('bot') },
-  ];
-  const {
-    view,
-    setView,
-    activeSidebarTab,
-    sidebarMode,
-    setSidebarMode,
-    hasSeenBotTab,
-    setHasSeenBotTab,
-  } = useLayoutStore();
+  const { activeSidebarTab, sidebarMode, setSidebarMode, setHasSeenBotTab } = useLayoutStore();
   const { open: isSidebarOpen } = useSidebar();
   const { isMacos } = useTrafficLightConfig(isSidebarOpen);
   const [sessionManagerOpen, setSessionManagerOpen] = useState(false);
+  const [groupsCollapsed, setGroupsCollapsed] = useState(false);
   // Only a phone drives a remote machine; a desktop is its own backend and has
   // nothing to switch between.
   const [desktopDrawerOpen, setDesktopDrawerOpen] = useState(false);
 
   const selectMode = (mode: SidebarMode) => {
     setSidebarMode(mode);
-    // The Bot tab is a conversation, not a workspace: switching to it leaves
-    // the agent views behind rather than showing an empty one beside them.
+    // Expanding navigation must not replace the conversation currently open.
     if (mode === 'bot') {
-      setView('bot');
       setHasSeenBotTab(true);
-    } else if (view === 'bot') {
-      setView('agent');
     }
   };
 
@@ -85,36 +72,41 @@ export function AppSideBar() {
               </Button>
             )}
           </div>
-
-          {/* Agent / Bot */}
-          <div className="flex items-center gap-1 rounded-md bg-muted/50 p-0.5">
-            {modes.map((mode) => (
-              <button
-                type="button"
-                key={mode.id}
-                onClick={() => selectMode(mode.id)}
-                className={`relative inline-flex flex-1 items-center justify-center gap-1.5 rounded-[5px] px-2 py-1 text-xs font-medium transition-colors ${
-                  sidebarMode === mode.id
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <span>{mode.label}</span>
-                {mode.id === 'bot' && !hasSeenBotTab && sidebarMode !== 'bot' && (
-                  <span className="relative flex h-2 w-2 shrink-0">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-
-          {sidebarMode === 'agent' && <SideBarAgentHeader />}
         </SidebarHeader>
 
         <SidebarContent className="min-w-0 max-w-full overflow-x-hidden gap-0 px-0">
-          {sidebarMode === 'agent' ? <SideBarAgentList /> : <SideBarBotPane />}
+          {(['bot', 'agent'] as const).map((mode) => (
+            <Collapsible
+              key={mode}
+              open={sidebarMode === mode && !groupsCollapsed}
+              onOpenChange={(open) => {
+                setGroupsCollapsed(!open);
+                if (open) selectMode(mode);
+              }}
+            >
+              <div className="flex items-center px-1">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="flex-1 justify-start gap-2">
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform ${sidebarMode === mode && !groupsCollapsed ? '' : '-rotate-90'}`}
+                    />
+                    {mode === 'bot' ? 'Bots' : `Projects / ${t('agent')}`}
+                  </Button>
+                </CollapsibleTrigger>
+                {mode === 'bot' && <BotNotifications />}
+              </div>
+              <CollapsibleContent>
+                {mode === 'bot' ? (
+                  <SideBarBotPane />
+                ) : (
+                  <>
+                    <SideBarAgentHeader />
+                    <SideBarAgentList />
+                  </>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+          ))}
         </SidebarContent>
 
         <SidebarFooter className="flex-row items-center p-0 min-w-0 max-w-full overflow-x-hidden">

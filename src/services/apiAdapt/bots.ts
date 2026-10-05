@@ -23,6 +23,7 @@ export type Bot = {
   trustLevel: BotTrustLevel;
   approvedTools: string;
   mcpServers: string;
+  allowedBotIds?: string;
   pinned: boolean;
   archived: boolean;
   notificationsEnabled: boolean;
@@ -57,6 +58,7 @@ export type BotPatch = Partial<{
   trustLevel: BotTrustLevel;
   approvedTools: string[];
   mcpServers: string[];
+  allowedBotIds: string[];
   pinned: boolean;
   archived: boolean;
   notificationsEnabled: boolean;

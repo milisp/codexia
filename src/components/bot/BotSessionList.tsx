@@ -41,10 +41,15 @@ export function BotSessionList({ bot }: { bot: Bot }) {
   // opened on startup that the user never sent a message to). Exclude them so
   // they never appear as blank "New session" rows in the list.
   const titled = sessions.filter((s) => s.title !== null);
-  if (titled.length < 2) return null;
+  if (titled.length === 0)
+    return (
+      <p className="py-4 text-sm text-muted-foreground">
+        No conversation history yet. Send a message to begin.
+      </p>
+    );
 
   return (
-    <div className="flex flex-col shrink-0 gap-1 overflow-y-auto border-b px-3 py-1.5 max-h-40">
+    <div className="flex flex-col shrink-0 gap-1 overflow-y-auto px-1 py-1.5 max-h-96">
       {titled.map((session) => (
         <button
           type="button"

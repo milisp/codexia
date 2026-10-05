@@ -81,6 +81,12 @@ impl UnattendedApprovals {
 
 type Pending = Arc<DashMap<i64, oneshot::Sender<Result<Value, String>>>>;
 
+impl Drop for AcpClient {
+    fn drop(&mut self) {
+        self.revoke_delegation();
+    }
+}
+
 pub struct AcpClient {
     pub connection_id: String,
     pub agent_id: String,
@@ -91,6 +97,7 @@ pub struct AcpClient {
     /// bot's conversations out of the per-project session lists.
     pub bot_id: Option<String>,
     policy: ConnectionPolicy,
+    delegation_tokens: DashMap<String, ()>,
     /// Sessions opened on this connection, keyed by ACP session id. One agent
     /// process can host several sessions at once.
     sessions: Arc<DashMap<String, ()>>,
@@ -144,6 +151,7 @@ impl AcpClient {
             agent_name: agent.name.clone(),
             bot_id,
             policy,
+            delegation_tokens: DashMap::new(),
             sessions: Arc::new(DashMap::new()),
             last_session: Mutex::new(None),
             replaying: Arc::new(DashMap::new()),
@@ -169,6 +177,7 @@ impl AcpClient {
                         Err(e) => log::warn!("acp: bad frame from agent: {e}: {line}"),
                     }
                 }
+                client.revoke_delegation();
                 client.emit(json!({ "kind": "exited" }));
                 // Fail every request still waiting on a reply.
                 let ids: Vec<i64> = client.pending.iter().map(|e| *e.key()).collect();
@@ -214,10 +223,11 @@ impl AcpClient {
     /// Returns the full `session/new` result: besides `sessionId` it carries
     /// `modes`, `models` and `configOptions`, which drive the session controls.
     pub async fn new_session(&self, cwd: &str) -> Result<Value, String> {
+        let servers = self.session_mcp_servers();
         let res = self
             .request(
                 "session/new",
-                json!({ "cwd": cwd, "mcpServers": self.policy.mcp_servers }),
+                json!({ "cwd": cwd, "mcpServers": servers }),
             )
             .await?;
         let session_id = res
@@ -242,13 +252,14 @@ impl AcpClient {
     /// `agentCapabilities.loadSession` support this; the others must be given
     /// the stored transcript as read-only history instead.
     pub async fn load_session(&self, session_id: &str, cwd: &str) -> Result<Value, String> {
+        let servers = self.session_mcp_servers();
         // The replay arrives as ordinary `session/update` notifications, which
         // are already stored — don't write them a second time.
         self.replaying.insert(session_id.to_string(), ());
         let res = self
             .request(
                 "session/load",
-                json!({ "sessionId": session_id, "cwd": cwd, "mcpServers": self.policy.mcp_servers }),
+                json!({ "sessionId": session_id, "cwd": cwd, "mcpServers": servers }),
             )
             .await;
         self.replaying.remove(session_id);
@@ -405,7 +416,47 @@ impl AcpClient {
     }
 
     pub async fn kill(&self) {
+        self.revoke_delegation();
         let _ = self.child.lock().await.kill().await;
+    }
+
+    fn session_mcp_servers(&self) -> Vec<Value> {
+        let mut servers = self.policy.mcp_servers.clone();
+        for server in &mut servers {
+            if server["name"] != "codexia-bots" {
+                continue;
+            }
+            let Some(caller) = self.bot_id.as_deref() else { continue };
+            let Some(headers) = server["headers"].as_array_mut() else { continue };
+            for header in headers {
+                if header["name"] == "X-Codexia-Delegation" {
+                    let template = header["value"].as_str().unwrap_or_default();
+                    if crate::delegation::verify(template, caller) {
+                        let token = crate::delegation::issue(caller);
+                        self.delegation_tokens.insert(token.clone(), ());
+                        header["value"] = json!(token);
+                    }
+                }
+            }
+        }
+        servers
+    }
+
+    fn revoke_delegation(&self) {
+        for token in &self.delegation_tokens {
+            crate::delegation::revoke(token.key());
+        }
+        for server in &self.policy.mcp_servers {
+            if server["name"] == "codexia-bots" {
+                if let Some(headers) = server["headers"].as_array() {
+                    for header in headers {
+                        if header["name"] == "X-Codexia-Delegation" {
+                            crate::delegation::revoke(header["value"].as_str().unwrap_or_default());
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // --- JSON-RPC plumbing ---

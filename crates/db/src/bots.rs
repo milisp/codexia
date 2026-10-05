@@ -40,6 +40,8 @@ pub struct BotRecord {
     /// Per-conversation rather than per-installation, which is the only place
     /// ACP lets a client name them.
     pub mcp_servers: String,
+    /// Outgoing collaboration allowlist, stored as a JSON array of bot IDs.
+    pub allowed_bot_ids: String,
     pub pinned: bool,
     pub archived: bool,
     pub notifications_enabled: bool,
@@ -66,6 +68,7 @@ pub struct BotPatch {
     pub trust_level: Option<String>,
     pub approved_tools: Option<Vec<String>>,
     pub mcp_servers: Option<Vec<String>>,
+    pub allowed_bot_ids: Option<Vec<String>>,
     pub pinned: Option<bool>,
     pub archived: Option<bool>,
     pub notifications_enabled: Option<bool>,
@@ -76,7 +79,7 @@ pub struct BotPatch {
 const COLUMNS: &str = "id, name, title, avatar, color, agent_id, provider, model, \
      reasoning_effort, cwd, system_prompt, trust_level, approved_tools, mcp_servers, \
      pinned, archived, notifications_enabled, unread_count, \
-     last_viewed_at, created_at, updated_at";
+     last_viewed_at, created_at, updated_at, allowed_bot_ids";
 
 fn row_to_bot(row: &rusqlite::Row<'_>) -> rusqlite::Result<BotRecord> {
     Ok(BotRecord {
@@ -101,6 +104,7 @@ fn row_to_bot(row: &rusqlite::Row<'_>) -> rusqlite::Result<BotRecord> {
         last_viewed_at: row.get(18)?,
         created_at: row.get(19)?,
         updated_at: row.get(20)?,
+        allowed_bot_ids: row.get(21)?,
     })
 }
 
@@ -220,6 +224,7 @@ pub fn update_bot(id: &str, patch: &BotPatch) -> Result<BotRecord, String> {
     set!(trust_level, "trust_level");
     set_list!(approved_tools, "approved_tools");
     set_list!(mcp_servers, "mcp_servers");
+    set_list!(allowed_bot_ids, "allowed_bot_ids");
     set!(pinned, "pinned");
     set!(archived, "archived");
     set!(notifications_enabled, "notifications_enabled");

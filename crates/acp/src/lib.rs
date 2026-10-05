@@ -6,6 +6,8 @@
 pub mod agents;
 pub mod bots;
 pub mod client;
+pub mod delegation;
+pub mod mcp;
 pub mod runner;
 pub mod state;
 

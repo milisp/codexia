@@ -19,6 +19,7 @@ export function useBotSettingsForm(bot: Bot, open: boolean) {
   const [trustLevel, setTrustLevel] = useState<BotTrustLevel>(bot.trustLevel);
   const [approvedTools, setApprovedTools] = useState(() => parseBotList(bot.approvedTools));
   const [mcpServers, setMcpServers] = useState(() => parseBotList(bot.mcpServers));
+  const [allowedBotIds, setAllowedBotIds] = useState(() => parseBotList(bot.allowedBotIds));
 
   useEffect(() => {
     if (!open) return;
@@ -34,6 +35,7 @@ export function useBotSettingsForm(bot: Bot, open: boolean) {
     setTrustLevel(bot.trustLevel);
     setApprovedTools(parseBotList(bot.approvedTools));
     setMcpServers(parseBotList(bot.mcpServers));
+    setAllowedBotIds(parseBotList(bot.allowedBotIds));
   }, [open, bot]);
 
   return {
@@ -61,6 +63,8 @@ export function useBotSettingsForm(bot: Bot, open: boolean) {
     setApprovedTools,
     mcpServers,
     setMcpServers,
+    allowedBotIds,
+    setAllowedBotIds,
     /** The patch `updateBot` takes, with the bot's own name kept if cleared. */
     patch: {
       name: name.trim() || bot.name,
@@ -75,6 +79,7 @@ export function useBotSettingsForm(bot: Bot, open: boolean) {
       trustLevel,
       approvedTools,
       mcpServers,
+      allowedBotIds,
     },
   };
 }

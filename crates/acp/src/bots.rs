@@ -82,13 +82,13 @@ pub fn agent_def(bot: &BotRecord) -> Result<AcpAgentDef, String> {
 
 /// The bot's chosen MCP servers, as ACP `McpServer` entries.
 ///
-/// A bot stores server *names*; the definitions are the ones configured for
-/// Codex, so a server is set up once and offered everywhere. A name that no
-/// longer resolves, or a disabled server, is skipped rather than failing the
-/// bot. The built-in `codexia-bots` server is added when `delegate` is set, so
+/// Explicit `keke:<name>` selections resolve against keke's native user file.
+/// Legacy bare Codex names are deliberately not remapped: migration requires
+/// adding a native definition and explicitly selecting its qualified name.
+/// The built-in `codexia-bots` server is added when `delegate` is set, so
 /// the bot can hand work to the others.
 pub async fn mcp_servers(bot: &BotRecord, api_port: u16, delegate: bool) -> Vec<Value> {
-    use codexia_codex::config::mcp::{McpServerConfig, read_mcp_servers};
+    use crate::mcp::{acp_entry, read_mcp_servers};
 
     let mut servers = Vec::new();
     if delegate {
@@ -106,41 +106,35 @@ pub async fn mcp_servers(bot: &BotRecord, api_port: u16, delegate: bool) -> Vec<
         }
     };
     for name in wanted {
-        let Some(config) = configured.get(&name) else {
+        let Some(name) = name.strip_prefix("keke:") else {
+            log::warn!("bot {}: legacy MCP selection `{name}` needs explicit keke migration", bot.id);
+            continue;
+        };
+        if name == "codexia-bots" { continue; }
+        let Some(config) = configured.get(name) else {
             log::warn!("bot {}: MCP server `{name}` is not configured", bot.id);
             continue;
         };
-        servers.push(match config {
-            McpServerConfig::Stdio { enabled: false, .. }
-            | McpServerConfig::Http { enabled: false, .. }
-            | McpServerConfig::Sse { enabled: false, .. } => continue,
-            McpServerConfig::Stdio { command, args, env, .. } => json!({
-                "name": name,
-                "command": command,
-                "args": args,
-                "env": env.iter().flatten()
-                    .map(|(k, v)| json!({ "name": k, "value": v }))
-                    .collect::<Vec<_>>(),
-            }),
-            McpServerConfig::Http { url, .. } => {
-                json!({ "type": "http", "name": name, "url": url, "headers": [] })
-            }
-            McpServerConfig::Sse { url, .. } => {
-                json!({ "type": "sse", "name": name, "url": url, "headers": [] })
-            }
-        });
+        if config.get("disabled").and_then(Value::as_bool) == Some(true) { continue; }
+        // keke also discovers this native file itself and refuses same-name
+        // ACP entries. Keep the selected client copy in a separate namespace.
+        match acp_entry(&format!("codexia-keke:{name}"), config) {
+            Ok(server) => servers.push(server),
+            Err(e) => log::warn!("bot {}: invalid MCP server `{name}`: {e}", bot.id),
+        }
     }
     servers
 }
 
 /// Codexia's own MCP server, through which a bot reaches the other bots. The
-/// asking bot is named in the URL so it cannot be handed its own work back.
+/// URL identifies the caller; the bearer capability authenticates that identity.
 fn bots_server(bot_id: &str, api_port: u16) -> Value {
+    let capability = crate::delegation::issue(bot_id);
     json!({
         "type": "http",
         "name": "codexia-bots",
         "url": format!("http://127.0.0.1:{api_port}/mcp/bots?from={bot_id}"),
-        "headers": [],
+        "headers": [{ "name": "X-Codexia-Delegation", "value": capability }],
     })
 }
 
@@ -323,6 +317,24 @@ impl crate::AcpState {
 mod tests {
     use super::*;
 
+    #[tokio::test]
+    async fn delegated_run_has_no_builtin_capability() {
+        let bot: BotRecord = serde_json::from_value(json!({
+            "id": "delegated", "name": "Delegated", "title": null,
+            "avatar": "", "color": "", "agentId": "keke", "provider": null,
+            "model": null, "reasoningEffort": null, "cwd": "",
+            "systemPrompt": null, "trustLevel": "ask", "approvedTools": "[]",
+            "mcpServers": "[]", "allowedBotIds": "[]", "pinned": false,
+            "archived": false, "notificationsEnabled": true, "unreadCount": 0,
+            "lastViewedAt": null, "createdAt": "", "updatedAt": ""
+        })).unwrap();
+        assert!(mcp_servers(&bot, 9000, false).await.is_empty());
+        let servers = mcp_servers(&bot, 9000, true).await;
+        let token = servers[0]["headers"][0]["value"].as_str().unwrap();
+        assert!(crate::delegation::verify(token, &bot.id));
+        crate::delegation::revoke(token);
+    }
+
     #[test]
     fn trust_levels_map_to_keke_settings() {
         assert_eq!(trust("read_only"), ("on-request", "read_only"));
@@ -337,5 +349,9 @@ mod tests {
         let server = bots_server("bot-1", 9000);
         assert_eq!(server["url"], "http://127.0.0.1:9000/mcp/bots?from=bot-1");
         assert_eq!(server["type"], "http");
+        let token = server["headers"][0]["value"].as_str().unwrap();
+        assert!(crate::delegation::verify(token, "bot-1"));
+        assert!(!crate::delegation::verify(token, "bot-2"));
+        crate::delegation::revoke(token);
     }
 }

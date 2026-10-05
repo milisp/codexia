@@ -92,7 +92,10 @@ export function useBotRoutines(botId: string, open: boolean) {
   const runNow = async (task: AutomationTask) => {
     try {
       await runAutomationNow(task.id);
-      toast({ title: 'Routine started', description: task.name });
+      toast({
+        title: 'Run requested',
+        description: `${task.name} — check the bot conversation for progress and results.`,
+      });
     } catch (error) {
       fail('Could not run routine', error);
     }
