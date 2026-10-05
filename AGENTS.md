@@ -13,6 +13,15 @@
 - Zustand: for state management with persistence
 - Don't break Fast Refresh: a `.tsx` file rendering UI must only export PascalCase components (no lowercase JSX-returning helpers), otherwise HMR falls back to a full page reload and drops in-flight events
 
+## Product UI
+- Build a product interface, not an inline documentation page. Make the user's task and primary action obvious before adding explanatory copy.
+- Keep default views concise: clear labels, controls, and compact status indicators. Add helper text only when it changes the user's immediate decision or prevents a likely mistake.
+- Use progressive disclosure for technical details: help popovers, expandable advanced settings, or linked documentation. Keep configuration paths, protocol terminology, implementation details, and long compatibility or security explanations out of the default view unless needed for the current task.
+- Show actionable errors and permission requirements when relevant, close to the affected control. Do not repeat generic warnings throughout a panel or present a saved configuration as a verified connection.
+- Use recognizable app or service icons with short names for selection lists. Icon-only actions need accessible labels and tooltips; unfamiliar concepts still need visible labels.
+- Present supported capabilities clearly. A few presets must not make a general integration feature look limited to those providers; keep adding custom integrations easy to discover.
+- Before finishing a UI change, review the default view: remove repeated explanations, move reference material into help, and check that the next action is clear without reading paragraphs.
+
 ## Common Commands
 - `bun tauri dev` - read the backend output
 - `bunx tsc --noEmit` - test frontend if frontend change
