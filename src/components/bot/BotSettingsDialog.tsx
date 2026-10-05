@@ -13,11 +13,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { type Bot, deleteBot } from '@/services/apiAdapt/bots';
 import { useBotUiStore } from '@/stores/useBotUiStore';
-import { useLayoutStore } from '@/stores/useLayoutStore';
-import { usePluginsNavigationStore } from '@/stores/usePluginsNavigationStore';
 import { BotCollaborationFields } from './BotCollaborationFields';
 import { BotIdentityFields } from './BotIdentityFields';
-import { BotMcpFields } from './BotMcpFields';
 import { BotModelFields } from './BotModelFields';
 import { BotTrustFields } from './BotTrustFields';
 import { saveBotSettings } from './saveBotSettings';
@@ -111,17 +108,6 @@ export function BotSettingsDialog({ bot, open, onOpenChange }: BotSettingsDialog
               onApprovedToolsChange={form.setApprovedTools}
             />
 
-            <BotMcpFields
-              mcpServers={form.mcpServers}
-              onMcpServersChange={form.setMcpServers}
-              disabled={saving || running}
-              onManageTools={async () => {
-                if (await save()) {
-                  usePluginsNavigationStore.getState().openBotConnectors();
-                  useLayoutStore.getState().setView('plugins');
-                }
-              }}
-            />
             <BotCollaborationFields
               botId={bot.id}
               allowedBotIds={form.allowedBotIds}

@@ -24,7 +24,7 @@
 
 ### Bot experience
 - Organize bots around ongoing responsibilities and outcomes. Make conversation, current work, scheduled work, and results easy to reach; keep runtime configuration secondary.
-- Keep bot settings focused on identity, connected tools, and permissions. Put raw MCP JSON, runtime options, configuration paths, and migration/import details behind advanced controls.
+- Keep bot settings focused on identity and permissions. Select connected tools from the composer Plus menu and manage integrations in Plugins. Put raw MCP JSON, runtime options, configuration paths, and migration/import details behind advanced controls.
 - Separate app setup from per-bot access selection. Reuse configured integrations, show their actual connection state, and let users choose which tools each bot may access without repeating setup instructions.
 - Treat conversation as a natural entry point for assigning work and changing direction. Provide visible controls for reviewing activity, managing schedules, and stopping work where those capabilities exist.
 - Surface progress, results, and decisions that need the user. Keep protocol logs and diagnostic details available on demand instead of making users interpret them to understand task status.

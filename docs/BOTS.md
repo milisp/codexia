@@ -32,8 +32,8 @@ Bots never share memory. To reset a bot's memory, delete that folder.
 
 ## Applications and MCP servers
 
-In bot settings, Apps and tools selects which MCP servers the bot may use.
-Save & manage tools opens the existing Plugins → Connectors view with the Bots
+The composer Plus menu selects which MCP servers the bot may use.
+Manage opens the existing Plugins → Connectors view with the Bots
 target selected. Featured connectors and custom additions use the same view as
 Codex and Claude, with separate runtime-owned definitions. The primary definitions belong to keke in `~/.keke/.mcp.json`, not Codex. Disabled or
 since-removed servers are skipped. A bot with none selected gets no MCP tools

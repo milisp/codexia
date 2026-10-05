@@ -18,7 +18,6 @@ export function useBotSettingsForm(bot: Bot, open: boolean) {
   const [systemPrompt, setSystemPrompt] = useState(bot.systemPrompt ?? '');
   const [trustLevel, setTrustLevel] = useState<BotTrustLevel>(bot.trustLevel);
   const [approvedTools, setApprovedTools] = useState(() => parseBotList(bot.approvedTools));
-  const [mcpServers, setMcpServers] = useState(() => parseBotList(bot.mcpServers));
   const [allowedBotIds, setAllowedBotIds] = useState(() => parseBotList(bot.allowedBotIds));
 
   useEffect(() => {
@@ -34,7 +33,6 @@ export function useBotSettingsForm(bot: Bot, open: boolean) {
     setSystemPrompt(bot.systemPrompt ?? '');
     setTrustLevel(bot.trustLevel);
     setApprovedTools(parseBotList(bot.approvedTools));
-    setMcpServers(parseBotList(bot.mcpServers));
     setAllowedBotIds(parseBotList(bot.allowedBotIds));
   }, [open, bot]);
 
@@ -61,8 +59,6 @@ export function useBotSettingsForm(bot: Bot, open: boolean) {
     setTrustLevel,
     approvedTools,
     setApprovedTools,
-    mcpServers,
-    setMcpServers,
     allowedBotIds,
     setAllowedBotIds,
     /** The patch `updateBot` takes, with the bot's own name kept if cleared. */
@@ -78,7 +74,6 @@ export function useBotSettingsForm(bot: Bot, open: boolean) {
       systemPrompt,
       trustLevel,
       approvedTools,
-      mcpServers,
       allowedBotIds,
     },
   };

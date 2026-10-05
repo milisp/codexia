@@ -23,7 +23,7 @@ Remote connectors offer **Authorize** using Keke’s native MCP OAuth flow. Comp
 authorization in the browser on the desktop running the bot. **Authorized** means
 a credential is stored; it does not verify that every tool is available.
 
-Open the bot's settings and find **Apps and tools**. **Save & manage tools** opens
+Open the Plus menu beside the bot's message input, then **Manage**, to reach
 **Plugins → Connectors** with **Bots** selected as the configuration target.
 Add a featured connector or use the + action for a custom local or remote MCP
 server. Manage configured servers, JSON definitions and Codex imports from the
