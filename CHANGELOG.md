@@ -6,6 +6,18 @@
 > changelog. The release workflow reads the top `## [version]` section of this
 > file matching the tag being published.
 
+## [0.54.0] - 2026-10-05
+
+### Features & Improvements
+- Simplified Bot navigation and reorganized sidebar navigation into collapsible sections.
+- Bots now use native keke MCP configuration and require confirmed client-only MCP isolation.
+
+### Fixes & Maintenance
+- Fixed invalid social and browser icons.
+- Updated frontend dependencies and extracted vendor chunk configuration.
+- Updated the bundled keke agent to v0.1.37.
+- Simplified version bumps: refresh the workspace lockfile, commit version changes, and create the release tag automatically.
+
 ## [0.53.2] - 2026-10-02
 
 [Compare with v0.53.1](https://github.com/milisp/codexia/compare/v0.53.1...v0.53.2)

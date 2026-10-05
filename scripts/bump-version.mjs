@@ -10,6 +10,19 @@ if (!version || !/^\d+\.\d+\.\d+([.-][0-9A-Za-z.-]+)?$/.test(version)) {
 
 const url = (p) => new URL(p, import.meta.url);
 const read = (p) => readFileSync(url(p), "utf8");
+const cwd = url("../");
+const run = (command, args) => execFileSync(command, args, { cwd, stdio: "inherit" });
+
+if (execFileSync("git", ["status", "--porcelain"], { cwd, encoding: "utf8" }).trim()) {
+	console.error("Working tree is dirty, commit or stash first");
+	process.exit(1);
+}
+const tag = `v${version}`;
+const tags = execFileSync("git", ["tag", "--list", tag], { cwd, encoding: "utf8" });
+if (tags.trim()) {
+	console.error(`Tag ${tag} already exists`);
+	process.exit(1);
+}
 
 const pkg = JSON.parse(read("../package.json"));
 pkg.version = version;
@@ -24,29 +37,10 @@ if (!cargoRe.test(cargo)) {
 }
 writeFileSync(url("../Cargo.toml"), cargo.replace(cargoRe, `$1${version}$2`));
 
-// Cargo.lock: keep workspace member entries in sync (avoids a full cargo resolve)
-const members = [
-	"codexia",
-	"codexia-acp",
-	"codexia-automation",
-	"codexia-cc",
-	"codexia-codex",
-	"codexia-db",
-	"codexia-git",
-	"codexia-shared",
-	"codexia-telemetry",
-	"codexia-web",
-];
-let lock = read("../Cargo.lock");
-for (const name of members) {
-	lock = lock.replace(
-		new RegExp(`(name = "${name}"\\nversion = ")[^"]*(")`),
-		`$1${version}$2`,
-	);
-}
-writeFileSync(url("../Cargo.lock"), lock);
+run("cargo", ["update", "--workspace"]);
 
-execFileSync("git", ["add", "package.json", "Cargo.toml", "Cargo.lock"], {
-	stdio: "inherit",
-});
-console.log(`Version set to ${version}`);
+run("git", ["add", "package.json", "Cargo.toml", "Cargo.lock"]);
+run("git", ["commit", "-m", `chore: bump version to ${version}`]);
+run("git", ["tag", tag]);
+console.log(`Bumped to ${version} and tagged ${tag}`);
+console.log(`Push with: git push origin HEAD ${tag}`);
