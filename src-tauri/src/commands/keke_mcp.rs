@@ -15,3 +15,13 @@ pub async fn keke_add_mcp_server(name: String, config: Value) -> Result<(), Stri
 pub async fn keke_remove_mcp_server(name: String) -> Result<(), String> {
     mcp::remove_mcp_server(name).await
 }
+
+#[tauri::command]
+pub async fn keke_mcp_auth_statuses() -> Result<std::collections::BTreeMap<String, mcp::McpAuthStatus>, String> {
+    mcp::read_mcp_auth_statuses().await
+}
+
+#[tauri::command]
+pub async fn keke_mcp_login(name: String) -> Result<(), String> {
+    mcp::login_mcp_server(name).await
+}

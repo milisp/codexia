@@ -87,6 +87,100 @@ async fn update(name: String, config: Option<Value>) -> Result<(), String> {
 pub async fn add_mcp_server(name: String, config: Value) -> Result<(), String> { update(name, Some(config)).await }
 pub async fn remove_mcp_server(name: String) -> Result<(), String> { update(name, None).await }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct McpAuthStatus {
+    pub signed_in: Option<bool>,
+    pub error: Option<String>,
+}
+
+fn remote_url(config: &Value) -> Result<&str, String> {
+    if config.get("disabled").and_then(Value::as_bool) == Some(true) {
+        return Err("Enable this connector before authorizing it".into());
+    }
+    match config.get("type").and_then(Value::as_str) {
+        Some("http" | "sse") => config.get("url").and_then(Value::as_str).ok_or("Missing server URL".into()),
+        _ => Err("Local connectors do not use browser authorization".into()),
+    }
+}
+
+fn cli_command(agent: &crate::agents::AcpAgentDef, action: &str, name: &str, home: &Path) -> Result<tokio::process::Command, String> {
+    let prefix = agent.args.strip_suffix(&["agent".into(), "stdio".into()])
+        .ok_or("Keke launcher does not support MCP commands")?;
+    let mut command = tokio::process::Command::new(&agent.command);
+    command.args(prefix).args(["mcp", action, "--", name]).envs(&agent.env)
+        .env("KEKE_HOME", home).current_dir(home)
+        .stdin(std::process::Stdio::null()).kill_on_drop(true);
+    Ok(command)
+}
+
+async fn run_cli(action: &str, name: &str, timeout: std::time::Duration) -> Result<String, String> {
+    let agent = crate::agents::find_preset("keke").ok_or("Keke is unavailable")?;
+    if !agent.local { return Err("Install Keke before authorizing connectors".into()); }
+    let home = path()?.parent().ok_or("Keke home unavailable")?.to_path_buf();
+    let mut command = cli_command(&agent, action, name, &home)?;
+    let output = tokio::time::timeout(timeout, command.output()).await
+        .map_err(|_| "Authorization timed out; try again".to_string())?
+        .map_err(|error| error.to_string())?;
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+}
+
+fn signed_in(output: &str) -> Result<bool, String> {
+    let value = output.lines().find_map(|line| line.strip_prefix("signed in: "))
+        .ok_or("Keke did not report authorization status; update Keke")?;
+    match value {
+        "yes" => Ok(true),
+        value if value == "no" || value.starts_with("no ") => Ok(false),
+        _ => Err("Keke returned an unknown authorization status".into()),
+    }
+}
+
+/// Use the same installed launcher and credential store as the Bot runtime.
+/// A stored credential is reported as signed in, never as a verified connection.
+pub async fn read_mcp_auth_statuses() -> Result<BTreeMap<String, McpAuthStatus>, String> {
+    let servers = read_mcp_servers().await?;
+    let mut statuses = BTreeMap::new();
+    let mut jobs = tokio::task::JoinSet::new();
+    for (name, config) in servers {
+        if remote_url(&config).is_err() { continue; }
+        jobs.spawn(async move {
+            let result = run_cli("get", &name, std::time::Duration::from_secs(15)).await
+                .and_then(|output| signed_in(&output));
+            (name, result)
+        });
+    }
+    while let Some(result) = jobs.join_next().await {
+        let (name, result) = result.map_err(|error| error.to_string())?;
+        statuses.insert(name, match result {
+            Ok(value) => McpAuthStatus { signed_in: Some(value), error: None },
+            Err(error) => McpAuthStatus { signed_in: None, error: Some(error) },
+        });
+    }
+    Ok(statuses)
+}
+
+static LOGIN_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
+/// OAuth discovery, browser launch, callback validation and storage belong to Keke.
+pub async fn login_mcp_server(name: String) -> Result<(), String> {
+    let _guard = LOGIN_LOCK.try_lock().map_err(|_| "Another connector is being authorized")?;
+    let servers = read_mcp_servers().await?;
+    let config = servers.get(&name).ok_or("Connector is no longer configured")?;
+    let original_url = remote_url(config)?.to_string();
+    run_cli("login", &name, std::time::Duration::from_secs(360)).await?;
+    let current = read_mcp_servers().await?;
+    let current_url = current.get(&name).map(remote_url).transpose()?;
+    if current_url != Some(original_url.as_str()) {
+        return Err("Connector changed during authorization; authorize the current configuration".into());
+    }
+    let output = run_cli("get", &name, std::time::Duration::from_secs(15)).await?;
+    if !signed_in(&output)? { return Err("Keke did not save an authorization credential".into()); }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -120,5 +214,35 @@ mod tests {
         assert_eq!(root["future"], true);
         assert_eq!(root["mcpServers"]["test"]["future"], 42);
         std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn authorization_status_is_not_guessed_from_configuration() {
+        assert!(signed_in("transport: http\nsigned in: yes\n").unwrap());
+        assert!(!signed_in("signed in: no — keke mcp login linear\n").unwrap());
+        assert!(signed_in("configured: yes").is_err());
+        assert!(remote_url(&json!({"command":"node"})).is_err());
+        assert!(remote_url(&json!({"type":"http","url":"https://example.com","disabled":true})).is_err());
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn cli_auth_preserves_launcher_prefix_and_literal_server_name() {
+        let root = std::env::temp_dir().join(format!("codexia-auth-test-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&root).unwrap();
+        let script = root.join("fixture.sh");
+        std::fs::write(&script, "#!/bin/sh\nprintf '%s\\n' \"$@\"\nprintf '%s\\n' \"$KEKE_HOME\"\n").unwrap();
+        let agent = crate::agents::AcpAgentDef {
+            id: "keke".into(), name: "Keke".into(), command: "/bin/sh".into(),
+            args: vec![script.to_string_lossy().into_owned(), "agent".into(), "stdio".into()],
+            env: BTreeMap::new(), available: true, local: true,
+        };
+        let name = "-server; echo do-not-execute";
+        let output = cli_command(&agent, "login", name, &root).unwrap().output().await.unwrap();
+        assert!(output.status.success());
+        let lines: Vec<_> = std::str::from_utf8(&output.stdout).unwrap().lines().collect();
+        assert_eq!(&lines[..4], &["mcp", "login", "--", name]);
+        assert_eq!(lines[4], root.to_string_lossy());
+        std::fs::remove_dir_all(root).unwrap();
     }
 }

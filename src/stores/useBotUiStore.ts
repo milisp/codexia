@@ -29,6 +29,8 @@ interface BotUiStore {
    * user is looking at another bot.
    */
   runningByBot: Record<string, boolean>;
+  savingSettingsByBot: Record<string, boolean>;
+  setSavingSettings: (botId: string, saving: boolean) => void;
   setBotRunning: (botId: string, running: boolean) => void;
   /**
    * The latest unattended-run status the backend reported for each bot, so the
@@ -81,6 +83,11 @@ export const useBotUiStore = create<BotUiStore>((set) => ({
       return { connectionByBot, sessionByBot };
     }),
   runningByBot: {},
+  savingSettingsByBot: {},
+  setSavingSettings: (botId, saving) =>
+    set((state) => ({
+      savingSettingsByBot: { ...state.savingSettingsByBot, [botId]: saving },
+    })),
   setBotRunning: (botId, running) =>
     set((state) => ({ runningByBot: { ...state.runningByBot, [botId]: running } })),
   statusByBot: {},

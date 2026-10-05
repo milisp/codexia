@@ -11,10 +11,13 @@ import {
 } from '@/services/apiAdapt/kekeMcp';
 import { unifiedReadMcpConfig } from '@/services/apiAdapt/mcp';
 import { ConnectorIcon } from './ConnectorIcon';
+import { KekeMcpAuthControl } from './KekeMcpAuthControl';
 import { KekeMcpJsonEditor } from './KekeMcpJsonEditor';
+import { useKekeMcpAuth } from './useKekeMcpAuth';
 
 /** Manage shared Bot definitions here; access selection belongs to Bot settings. */
 export function KekeMcpView({ refreshKey = 0 }: { refreshKey?: number }) {
+  const auth = useKekeMcpAuth();
   const [servers, setServers] = useState<Record<string, KekeMcpServer>>({});
   const [imports, setImports] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,7 +86,10 @@ export function KekeMcpView({ refreshKey = 0 }: { refreshKey?: number }) {
           variant="ghost"
           aria-label="Refresh bot connectors"
           title="Refresh"
-          onClick={() => void load()}
+          onClick={() => {
+            load();
+            auth.refresh();
+          }}
         >
           <RefreshCw />
         </Button>
@@ -94,24 +100,41 @@ export function KekeMcpView({ refreshKey = 0 }: { refreshKey?: number }) {
         </p>
       )}
       {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
+      {auth.error && (
+        <p role="alert" className="text-sm text-destructive">
+          Could not check authorization: {auth.error}
+        </p>
+      )}
       {!loading && !error && Object.keys(servers).length === 0 && (
         <p className="text-sm text-muted-foreground">No connectors added yet.</p>
       )}
       {Object.entries(servers).map(([name, config]) => (
         <div key={name} className="flex flex-col gap-2 rounded-md border p-3">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <ConnectorIcon name={name} />
             <span className="min-w-0 flex-1 break-all text-sm font-medium">{name}</span>
-            <Badge variant="secondary">{config.disabled ? 'Disabled' : 'Configured'}</Badge>
+            <Badge variant="secondary">
+              {config.disabled
+                ? 'Disabled'
+                : auth.statuses[name]?.signedIn
+                  ? 'Signed in'
+                  : 'Configured'}
+            </Badge>
             <Button size="sm" variant="ghost" disabled={busy} onClick={() => setRemoveName(name)}>
               Remove
             </Button>
           </div>
+          {(config.type === 'http' || config.type === 'sse') && !config.disabled && (
+            <KekeMcpAuthControl name={name} auth={auth} disabled={busy} />
+          )}
           <details className="text-xs">
             <summary className="cursor-pointer text-muted-foreground">Configuration</summary>
-            <p className="my-2 text-muted-foreground">
-              Authentication is not checked here. Configuration may contain secrets.
-            </p>
+            <p className="my-2 text-muted-foreground">Configuration may contain secrets.</p>
+            {auth.statuses[name]?.error && (
+              <p className="my-2 text-destructive">
+                Authorization status unavailable: {auth.statuses[name].error}
+              </p>
+            )}
             <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all">
               {JSON.stringify(config, null, 2)}
             </pre>

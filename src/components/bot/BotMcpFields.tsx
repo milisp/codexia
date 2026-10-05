@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ConnectorIcon } from '@/features/mcp/ConnectorIcon';
+import { useKekeMcpAuth } from '@/features/mcp/useKekeMcpAuth';
 import {
   type KekeMcpServer,
   kekeMcpSelection,
@@ -24,6 +25,7 @@ export function BotMcpFields({
   onManageTools,
   disabled,
 }: BotMcpFieldsProps) {
+  const auth = useKekeMcpAuth();
   const [configured, setConfigured] = useState<Record<string, KekeMcpServer> | null>(null);
   const [error, setError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -74,7 +76,10 @@ export function BotMcpFields({
             variant="ghost"
             aria-label="Refresh tools"
             title="Refresh tools"
-            onClick={() => setRefreshKey((key) => key + 1)}
+            onClick={() => {
+              setRefreshKey((key) => key + 1);
+              auth.refresh();
+            }}
           >
             <RefreshCw />
           </Button>
@@ -119,7 +124,13 @@ export function BotMcpFields({
                 <span className="break-all">{name}</span>
               </span>
               <Badge variant="secondary">
-                {!config ? 'Unavailable' : config.disabled ? 'Disabled' : 'Configured'}
+                {!config
+                  ? 'Unavailable'
+                  : config.disabled
+                    ? 'Disabled'
+                    : auth.statuses[name]?.signedIn
+                      ? 'Signed in'
+                      : 'Configured'}
               </Badge>
             </Label>
           );

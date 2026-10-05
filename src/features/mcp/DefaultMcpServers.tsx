@@ -6,6 +6,8 @@ import { type UnifiedMcpClientName, unifiedAddMcpServer } from '@/services';
 import { addKekeMcpServer } from '@/services/apiAdapt/kekeMcp';
 import { appPresets } from './appPresets';
 import { ConnectorIcon } from './ConnectorIcon';
+import { KekeMcpAuthControl } from './KekeMcpAuthControl';
+import { useKekeMcpAuth } from './useKekeMcpAuth';
 
 interface DefaultMcpServersProps {
   agent: UnifiedMcpClientName | 'keke';
@@ -15,6 +17,7 @@ interface DefaultMcpServersProps {
 }
 
 export function DefaultMcpServers({ agent, cwd, servers, onServerAdded }: DefaultMcpServersProps) {
+  const auth = useKekeMcpAuth(agent === 'keke');
   const [adding, setAdding] = useState<string | null>(null);
   const add = async (preset: (typeof appPresets)[number]) => {
     setAdding(preset.name);
@@ -30,6 +33,7 @@ export function DefaultMcpServers({ agent, cwd, servers, onServerAdded }: Defaul
         });
       toast.success(`${preset.label} configured. ${preset.access}.`);
       onServerAdded();
+      if (agent === 'keke') await auth.refresh();
     } catch (error) {
       toast.error(`Could not add ${preset.label}: ${error}`);
     } finally {
@@ -66,6 +70,9 @@ export function DefaultMcpServers({ agent, cwd, servers, onServerAdded }: Defaul
                 {added ? <Check data-icon="inline-start" /> : <Plus data-icon="inline-start" />}
                 {added ? 'Added' : adding === preset.name ? 'Adding…' : 'Add'}
               </Button>
+              {agent === 'keke' && added && preset.authorizationRequired && (
+                <KekeMcpAuthControl name={preset.name} auth={auth} />
+              )}
             </div>
           );
         })}

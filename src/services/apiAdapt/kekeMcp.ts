@@ -1,6 +1,13 @@
 import { invoke } from '@tauri-apps/api/core';
 import { isDesktopTauri } from '@/hooks/runtime';
+import {
+  type KekeMcpAuthStatus,
+  loginKekeMcpServerTauri,
+  readKekeMcpAuthStatusesTauri,
+} from '@/services/tauri/kekeMcp';
 import { postJson } from './shared';
+
+export type { KekeMcpAuthStatus } from '@/services/tauri/kekeMcp';
 
 export type KekeMcpServer = {
   type?: 'stdio' | 'http' | 'sse';
@@ -30,4 +37,15 @@ export async function addKekeMcpServer(name: string, config: KekeMcpServer): Pro
 export async function removeKekeMcpServer(name: string): Promise<void> {
   if (isDesktopTauri()) await invoke('keke_remove_mcp_server', { name });
   else await postJson('/api/keke/mcp/remove', { name });
+}
+
+export async function readKekeMcpAuthStatuses(): Promise<Record<string, KekeMcpAuthStatus>> {
+  return isDesktopTauri()
+    ? readKekeMcpAuthStatusesTauri()
+    : postJson('/api/keke/mcp/auth-statuses', {});
+}
+
+export async function loginKekeMcpServer(name: string): Promise<void> {
+  if (isDesktopTauri()) await loginKekeMcpServerTauri(name);
+  else await postJson('/api/keke/mcp/login', { name });
 }

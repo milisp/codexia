@@ -11,9 +11,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
-import { acpStop } from '@/services/apiAdapt/acp';
-import { type Bot, deleteBot, updateBot } from '@/services/apiAdapt/bots';
-import { useAcpStore } from '@/stores/useAcpStore';
+import { type Bot, deleteBot } from '@/services/apiAdapt/bots';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 import { useLayoutStore } from '@/stores/useLayoutStore';
 import { usePluginsNavigationStore } from '@/stores/usePluginsNavigationStore';
@@ -22,6 +20,7 @@ import { BotIdentityFields } from './BotIdentityFields';
 import { BotMcpFields } from './BotMcpFields';
 import { BotModelFields } from './BotModelFields';
 import { BotTrustFields } from './BotTrustFields';
+import { saveBotSettings } from './saveBotSettings';
 import { useBotSettingsForm } from './useBotSettingsForm';
 
 interface BotSettingsDialogProps {
@@ -31,7 +30,7 @@ interface BotSettingsDialogProps {
 }
 
 export function BotSettingsDialog({ bot, open, onOpenChange }: BotSettingsDialogProps) {
-  const { upsertBot, removeBot } = useBotUiStore();
+  const { removeBot } = useBotUiStore();
   const form = useBotSettingsForm(bot, open);
   const [saving, setSaving] = useState(false);
   const running = useBotUiStore((state) => Boolean(state.runningByBot[bot.id]));
@@ -40,16 +39,7 @@ export function BotSettingsDialog({ bot, open, onOpenChange }: BotSettingsDialog
     if (saving || useBotUiStore.getState().runningByBot[bot.id]) return false;
     setSaving(true);
     try {
-      const connection = useBotUiStore.getState().connectionByBot[bot.id];
-      if (connection) {
-        await acpStop(connection);
-        useBotUiStore.getState().clearBotConnection(bot.id);
-        if (useAcpStore.getState().connectionId === connection) {
-          useAcpStore.getState().reset();
-          useAcpStore.getState().setAgentId(bot.agentId);
-        }
-      }
-      upsertBot(await updateBot(bot.id, form.patch));
+      await saveBotSettings(bot, form.patch);
       onOpenChange(false);
       return true;
     } catch (e) {

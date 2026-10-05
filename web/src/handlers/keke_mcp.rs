@@ -22,3 +22,11 @@ pub(crate) async fn api_keke_add_mcp_server(Json(params): Json<KekeMcpParams>) -
 pub(crate) async fn api_keke_remove_mcp_server(Json(params): Json<KekeMcpParams>) -> Result<Json<()>, ErrorResponse> {
     mcp::remove_mcp_server(params.name).await.map(Json).map_err(|error| ErrorResponse { error })
 }
+
+pub(crate) async fn api_keke_mcp_auth_statuses() -> Result<Json<std::collections::BTreeMap<String, mcp::McpAuthStatus>>, ErrorResponse> {
+    mcp::read_mcp_auth_statuses().await.map(Json).map_err(|error| ErrorResponse { error })
+}
+
+pub(crate) async fn api_keke_mcp_login(Json(params): Json<KekeMcpParams>) -> Result<Json<()>, ErrorResponse> {
+    mcp::login_mcp_server(params.name).await.map(Json).map_err(|error| ErrorResponse { error })
+}

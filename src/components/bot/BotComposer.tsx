@@ -7,6 +7,7 @@ import type { Bot } from '@/services/apiAdapt/bots';
 import { useAcpStore } from '@/stores/useAcpStore';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 import { BotKekeInstall } from './BotKekeInstall';
+import { BotToolsMenu } from './BotToolsMenu';
 import { useBotSession } from './useBotSession';
 
 export function BotComposer({ bot }: { bot: Bot }) {
@@ -15,6 +16,7 @@ export function BotComposer({ bot }: { bot: Bot }) {
   const sessionByBot = useBotUiStore((s) => s.sessionByBot);
   const kekeSpawnFailed = useBotUiStore((s) => s.kekeSpawnFailed);
   const running = useBotUiStore((s) => Boolean(s.runningByBot[bot.id]));
+  const savingSettings = useBotUiStore((s) => Boolean(s.savingSettingsByBot[bot.id]));
   const setBotRunning = useBotUiStore((s) => s.setBotRunning);
   const { open } = useBotSession();
   const [text, setText] = useState('');
@@ -40,7 +42,8 @@ export function BotComposer({ bot }: { bot: Bot }) {
 
   const send = async () => {
     const trimmed = text.trim();
-    if (!trimmed || running || connecting) return;
+    if (!trimmed || running || connecting || useBotUiStore.getState().savingSettingsByBot[bot.id])
+      return;
 
     // Reuse this bot's own process when the store is already pointed at it;
     // otherwise `open` restores or spawns it.
@@ -79,6 +82,7 @@ export function BotComposer({ bot }: { bot: Bot }) {
   return (
     <div className="shrink-0 border-t bg-background p-3">
       <div className="flex items-end gap-2 rounded-2xl border px-3 py-2">
+        <BotToolsMenu key={bot.id} bot={bot} />
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -102,7 +106,7 @@ export function BotComposer({ bot }: { bot: Bot }) {
           <Button
             size="icon"
             className="h-8 w-8 shrink-0 rounded-full"
-            disabled={!text.trim() || connecting}
+            disabled={!text.trim() || connecting || savingSettings}
             onClick={() => void send()}
           >
             <ArrowUp className="h-4 w-4" />

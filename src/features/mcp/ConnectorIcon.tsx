@@ -1,4 +1,4 @@
-import { BookOpen, CircleDashed, Globe, Hash, Layers, Plug, Search, Terminal } from 'lucide-react';
+import { BookOpen, CircleDashed, Globe, Hash, Layers, Plug, Search } from 'lucide-react';
 import githubIcon from '@/assets/github.svg';
 
 const icons = {
@@ -6,7 +6,6 @@ const icons = {
   linear: CircleDashed,
   context7: BookOpen,
   deepwiki: BookOpen,
-  'desktop-commander': Terminal,
   'you-search': Search,
   'parallel-search': Layers,
 };

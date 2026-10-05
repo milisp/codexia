@@ -398,6 +398,8 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/keke/mcp/read", post(crate::handlers::api_keke_read_mcp_servers))
         .route("/api/keke/mcp/add", post(crate::handlers::api_keke_add_mcp_server))
         .route("/api/keke/mcp/remove", post(crate::handlers::api_keke_remove_mcp_server))
+        .route("/api/keke/mcp/auth-statuses", post(crate::handlers::api_keke_mcp_auth_statuses))
+        .route("/api/keke/mcp/login", post(crate::handlers::api_keke_mcp_login))
         // Called by bots' own agent processes, over loopback — see `bots_mcp`.
         .route("/mcp/bots", post(api_bots_mcp))
         .route("/api/cc/connect", post(api_cc_connect))

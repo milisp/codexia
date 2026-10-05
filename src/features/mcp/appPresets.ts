@@ -5,6 +5,7 @@ export const appPresets: {
   label: string;
   description: string;
   access: string;
+  authorizationRequired?: boolean;
   config: McpServerConfig;
 }[] = [
   {
@@ -12,6 +13,7 @@ export const appPresets: {
     label: 'GitHub',
     description: 'Repositories, issues and pull requests',
     access: 'Authorization required',
+    authorizationRequired: true,
     config: { type: 'http', url: 'https://api.githubcopilot.com/mcp/' },
   },
   {
@@ -19,6 +21,7 @@ export const appPresets: {
     label: 'Slack',
     description: 'Workspace messages and channels',
     access: 'Provider setup required',
+    authorizationRequired: true,
     config: { type: 'http', url: 'https://mcp.slack.com/mcp' },
   },
   {
@@ -26,6 +29,7 @@ export const appPresets: {
     label: 'Linear',
     description: 'Issues, projects and team planning',
     access: 'Authorization required',
+    authorizationRequired: true,
     config: { type: 'http', url: 'https://mcp.linear.app/mcp' },
   },
   {
@@ -41,13 +45,6 @@ export const appPresets: {
     description: 'Documentation for public GitHub repositories',
     access: 'No account required',
     config: { type: 'http', url: 'https://mcp.deepwiki.com/mcp' },
-  },
-  {
-    name: 'desktop-commander',
-    label: 'Desktop Commander',
-    description: 'Local files and terminal commands',
-    access: 'Runs locally',
-    config: { type: 'stdio', command: 'npx', args: ['-y', '@wonderwhy-er/desktop-commander'] },
   },
   {
     name: 'you-search',
