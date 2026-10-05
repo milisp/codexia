@@ -60,18 +60,26 @@ export function DefaultMcpServers({ agent, cwd, servers, onServerAdded }: Defaul
                 <p className="text-xs text-muted-foreground">{preset.description}</p>
                 <span className="text-xs text-muted-foreground">{preset.access}</span>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                aria-label={`${added ? 'Added' : 'Add'} ${preset.label}`}
-                disabled={added || adding !== null}
-                onClick={() => void add(preset)}
-              >
-                {added ? <Check data-icon="inline-start" /> : <Plus data-icon="inline-start" />}
-                {added ? 'Added' : adding === preset.name ? 'Adding…' : 'Add'}
-              </Button>
-              {agent === 'keke' && added && preset.authorizationRequired && (
-                <KekeMcpAuthControl name={preset.name} auth={auth} />
+              {added ? (
+                agent === 'keke' && preset.authorizationRequired ? (
+                  <KekeMcpAuthControl name={preset.name} auth={auth} />
+                ) : (
+                  <Check
+                    aria-label={`${preset.label} configured`}
+                    className="size-4 shrink-0 text-muted-foreground"
+                  />
+                )
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  aria-label={`Add ${preset.label}`}
+                  disabled={adding !== null}
+                  onClick={() => add(preset)}
+                >
+                  <Plus data-icon="inline-start" />
+                  {adding === preset.name ? 'Adding…' : 'Add'}
+                </Button>
               )}
             </div>
           );

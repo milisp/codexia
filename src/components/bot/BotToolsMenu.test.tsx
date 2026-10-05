@@ -5,34 +5,47 @@ import { useBotUiStore } from '@/stores/useBotUiStore';
 import { useLayoutStore } from '@/stores/useLayoutStore';
 const save = vi.fn();
 vi.mock('./saveBotSettings', () => ({ saveBotSettings: (...args: unknown[]) => save(...args) }));
-vi.mock('./BotMcpFields', () => ({ BotMcpFields: ({ mcpServers, onMcpServersChange, onManageTools }: {
-  mcpServers: string[]; onMcpServersChange: (names: string[]) => void; onManageTools: () => void;
-}) => <><span>{mcpServers.join(',')}</span><button type="button" onClick={() => onMcpServersChange(['keke:linear'])}>Select Linear</button><button type="button" onClick={onManageTools}>Save & manage tools</button></> }));
+vi.mock('@/services/apiAdapt/kekeMcp', () => ({
+  kekeMcpSelection: (name: string) => `keke:${name}`,
+  readKekeMcpServers: vi.fn().mockResolvedValue({github:{type:'http'}, linear:{type:'http'}}),
+  readKekeMcpAuthStatuses: vi.fn().mockResolvedValue({}),
+}));
 import { BotToolsMenu } from './BotToolsMenu';
 const bot = { id: 'scout', name: 'Scout', mcpServers: '["keke:github"]' } as Bot;
 beforeEach(() => { vi.clearAllMocks(); save.mockResolvedValue(bot); useBotUiStore.setState({ runningByBot: {} }); useLayoutStore.setState({view:'bot'}); });
-it('opens from Plus and saves tools for the Bot through Apply', async () => {
+it('saves switches immediately without Apply or repeated helper text', async () => {
   render(<BotToolsMenu bot={bot} />);
   fireEvent.click(screen.getByRole('button', { name: 'Bot tools' }));
-  expect(await screen.findByText('keke:github')).toBeTruthy();
-  fireEvent.click(screen.getByRole('button', {name: 'Select Linear'}));
-  fireEvent.click(screen.getByRole('button', {name: 'Apply'}));
-  await waitFor(() => expect(save).toHaveBeenCalledWith(bot, {mcpServers:['keke:linear']}));
-  await waitFor(() => expect(screen.queryByText('Tools for Scout')).toBeNull());
+  const linear = await screen.findByRole('switch', {name:'linear'});
+  expect(screen.getByRole('switch', {name:'github'}).getAttribute('aria-checked')).toBe('true');
+  fireEvent.click(linear);
+  await waitFor(() => expect(save).toHaveBeenCalledWith(bot, {mcpServers:['keke:github','keke:linear']}));
+  await waitFor(() => expect(linear.getAttribute('aria-checked')).toBe('true'));
+  expect(screen.queryByRole('button', {name:'Apply'})).toBeNull();
+  expect(screen.queryByText('Choose which tools this bot can use.')).toBeNull();
+  expect(screen.queryByText('Configured')).toBeNull();
 });
-it('keeps the picker open after a failed save and prevents navigation', async () => {
+it('keeps the previous switch value when saving fails', async () => {
   save.mockRejectedValueOnce(new Error('offline'));
   render(<BotToolsMenu bot={bot} />);
   fireEvent.click(screen.getByRole('button', {name:'Bot tools'}));
-  fireEvent.click(await screen.findByRole('button', {name:'Save & manage tools'}));
+  const linear = await screen.findByRole('switch', {name:'linear'});
+  fireEvent.click(linear);
   await waitFor(() => expect(save).toHaveBeenCalledOnce());
-  expect(useLayoutStore.getState().view).toBe('bot');
-  expect(screen.getByText('Tools for Scout')).toBeTruthy();
+  await waitFor(() => expect(linear.hasAttribute('disabled')).toBe(false));
+  expect(linear.getAttribute('aria-checked')).toBe('false');
 });
 it('prevents tool changes during a running task', async () => {
   useBotUiStore.setState({runningByBot:{scout:true}});
   render(<BotToolsMenu bot={bot} />);
   fireEvent.click(screen.getByRole('button', {name:'Bot tools'}));
-  expect((await screen.findByRole('button', {name:'Apply'})).hasAttribute('disabled')).toBe(true);
+  expect((await screen.findByRole('switch', {name:'linear'})).hasAttribute('disabled')).toBe(true);
+  expect(save).not.toHaveBeenCalled();
+});
+it('opens connector management without an unnecessary save', async () => {
+  render(<BotToolsMenu bot={bot} />);
+  fireEvent.click(screen.getByRole('button', {name:'Bot tools'}));
+  fireEvent.click(await screen.findByRole('button', {name:'Manage'}));
+  expect(useLayoutStore.getState().view).toBe('plugins');
   expect(save).not.toHaveBeenCalled();
 });

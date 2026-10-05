@@ -19,8 +19,8 @@ results appear in the same timeline; runtime sessions are managed automatically.
 
 ## Connect applications and tools
 
-Remote connectors offer **Sign in** using Keke’s native MCP OAuth flow. Complete
-authorization in the browser on the desktop running the bot. **Signed in** means
+Remote connectors offer **Authorize** using Keke’s native MCP OAuth flow. Complete
+authorization in the browser on the desktop running the bot. **Authorized** means
 a credential is stored; it does not verify that every tool is available.
 
 Open the bot's settings and find **Apps and tools**. **Save & manage tools** opens
@@ -28,7 +28,7 @@ Open the bot's settings and find **Apps and tools**. **Save & manage tools** ope
 Add a featured connector or use the + action for a custom local or remote MCP
 server. Manage configured servers, JSON definitions and Codex imports from the
 management action. Use the Plus button beside the bot's message input to choose
-which tools it may use, then **Apply**. This saves access for the bot's next task.
+which tools it may use. Switches save access for the bot's next task immediately.
 Saving stops an idle bot runtime so its next task uses the updated configuration.
 The primary configuration is `~/.keke/.mcp.json`; Codex and Claude configurations
 remain separate.

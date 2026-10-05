@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { ConnectorIcon } from '@/features/mcp/ConnectorIcon';
 import { useKekeMcpAuth } from '@/features/mcp/useKekeMcpAuth';
 import {
@@ -17,6 +18,7 @@ interface BotMcpFieldsProps {
   onMcpServersChange: (names: string[]) => void;
   onManageTools: () => void;
   disabled?: boolean;
+  compact?: boolean;
 }
 
 export function BotMcpFields({
@@ -24,8 +26,9 @@ export function BotMcpFields({
   onMcpServersChange,
   onManageTools,
   disabled,
+  compact = false,
 }: BotMcpFieldsProps) {
-  const auth = useKekeMcpAuth();
+  const auth = useKekeMcpAuth(!compact);
   const [configured, setConfigured] = useState<Record<string, KekeMcpServer> | null>(null);
   const [error, setError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -68,7 +71,7 @@ export function BotMcpFields({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
-        <Label>Apps and tools</Label>
+        <span className="text-sm font-medium">{compact ? 'Tools' : 'Apps and tools'}</span>
         <div className="flex items-center gap-1">
           <Button
             type="button"
@@ -90,11 +93,13 @@ export function BotMcpFields({
             disabled={disabled}
             onClick={onManageTools}
           >
-            Save & manage tools
+            {compact ? 'Manage' : 'Save & manage tools'}
           </Button>
         </div>
       </div>
-      <p className="text-xs text-muted-foreground">Choose which tools this bot can use.</p>
+      {!compact && (
+        <p className="text-xs text-muted-foreground">Choose which tools this bot can use.</p>
+      )}
       {error && (
         <p role="alert" className="text-xs text-destructive">
           Could not load tools: {error}
@@ -112,26 +117,42 @@ export function BotMcpFields({
           return (
             <Label
               key={name}
-              className="flex items-center justify-between gap-3 rounded-md border p-3 font-normal"
+              className={
+                compact
+                  ? 'flex items-center justify-between gap-3 py-1 font-normal'
+                  : 'flex items-center justify-between gap-3 rounded-md border p-3 font-normal'
+              }
             >
               <span className="flex min-w-0 items-center gap-2">
-                <Checkbox
-                  checked={selected}
-                  disabled={disabled || ((!config || config.disabled === true) && !selected)}
-                  onCheckedChange={(checked) => toggle(selection, checked === true)}
-                />
+                {!compact && (
+                  <Checkbox
+                    checked={selected}
+                    disabled={disabled || ((!config || config.disabled === true) && !selected)}
+                    onCheckedChange={(checked) => toggle(selection, checked === true)}
+                  />
+                )}
                 <ConnectorIcon name={name} />
                 <span className="break-all">{name}</span>
               </span>
-              <Badge variant="secondary">
-                {!config
-                  ? 'Unavailable'
-                  : config.disabled
-                    ? 'Disabled'
-                    : auth.statuses[name]?.signedIn
-                      ? 'Signed in'
-                      : 'Configured'}
-              </Badge>
+              {compact ? (
+                <Switch
+                  aria-label={name}
+                  checked={selected}
+                  disabled={disabled || ((!config || config.disabled === true) && !selected)}
+                  title={!config ? 'Unavailable' : config.disabled ? 'Disabled' : undefined}
+                  onCheckedChange={(checked) => toggle(selection, checked)}
+                />
+              ) : (
+                <Badge variant="secondary">
+                  {!config
+                    ? 'Unavailable'
+                    : config.disabled
+                      ? 'Disabled'
+                      : auth.statuses[name]?.signedIn
+                        ? 'Authorized'
+                        : 'Configured'}
+                </Badge>
+              )}
             </Label>
           );
         })}

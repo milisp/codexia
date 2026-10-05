@@ -20,7 +20,7 @@ describe('featured connector targets', () => {
   it('keeps Claude presets in the existing global scope', async () => {
     const added = vi.fn();
     render(<DefaultMcpServers agent="cc" cwd="/project" servers={{github:{}}} onServerAdded={added} />);
-    expect(screen.getByRole('button', { name: 'Added GitHub' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Add GitHub' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Add Context7' }));
     await waitFor(() => expect(added).toHaveBeenCalledOnce());
     expect(addUnified).toHaveBeenCalledWith(expect.objectContaining({ clientName:'cc', scope:'global', serverName:'context7', path:'/project' }));
@@ -31,7 +31,8 @@ describe('featured connector targets', () => {
     login.mockImplementationOnce(() => new Promise<void>((resolve) => { complete = resolve; }));
     render(<DefaultMcpServers agent="keke" servers={{linear: {}}} onServerAdded={vi.fn()} />);
     expect(screen.queryByText('Desktop Commander')).toBeNull();
-    const signIn = await screen.findByRole('button', { name: 'Sign in to linear' });
+    expect(screen.queryByText('Added')).toBeNull();
+    const signIn = await screen.findByRole('button', { name: 'Authorize linear' });
     fireEvent.click(signIn);
     await screen.findByText('Authorizing…');
     expect(login).toHaveBeenCalledWith('linear');
@@ -44,7 +45,7 @@ describe('featured connector targets', () => {
     statuses.mockResolvedValue({ linear: { signedIn: false, error: null } });
     login.mockRejectedValueOnce(new Error('Provider rejected authorization'));
     render(<DefaultMcpServers agent="keke" servers={{linear: {}}} onServerAdded={vi.fn()} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Sign in to linear' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Authorize linear' }));
     expect((await screen.findByRole('alert')).textContent).toContain('Provider rejected authorization');
     expect(screen.queryByRole('button', { name: 'Reauthorize linear' })).toBeNull();
   });

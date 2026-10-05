@@ -19,11 +19,11 @@ export function KekeMcpAuthControl({
         size="sm"
         variant="outline"
         disabled={disabled || auth.pending !== null}
-        aria-label={`${signedIn ? 'Reauthorize' : 'Sign in to'} ${name}`}
+        aria-label={`${signedIn ? 'Reauthorize' : 'Authorize'} ${name}`}
         onClick={() => auth.authorize(name)}
       >
         {pending && <Loader2 className="animate-spin" data-icon="inline-start" />}
-        {pending ? 'Authorizing…' : signedIn ? 'Reauthorize' : 'Sign in'}
+        {pending ? 'Authorizing…' : signedIn ? 'Reauthorize' : 'Authorize'}
       </Button>
       {pending && (
         <p className="text-xs text-muted-foreground">

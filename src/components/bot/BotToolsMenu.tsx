@@ -15,12 +15,12 @@ export function BotToolsMenu({ bot }: { bot: Bot }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const running = useBotUiStore((state) => Boolean(state.runningByBot[bot.id]));
-  const save = async () => {
+  const save = async (next: string[]) => {
     if (saving || running) return false;
     setSaving(true);
     try {
-      await saveBotSettings(bot, { mcpServers: selected });
-      setOpen(false);
+      await saveBotSettings(bot, { mcpServers: next });
+      setSelected(next);
       return true;
     } catch (error) {
       toast.error(`Could not save tools: ${error}`);
@@ -52,29 +52,25 @@ export function BotToolsMenu({ bot }: { bot: Bot }) {
       <PopoverContent
         side="top"
         align="start"
-        className="max-h-[70vh] w-96 max-w-[calc(100vw-2rem)] overflow-y-auto"
+        className="max-h-[70vh] w-72 max-w-[calc(100vw-2rem)] overflow-y-auto"
       >
         <div className="flex flex-col gap-3">
-          <p className="text-sm font-medium">Tools for {bot.name}</p>
           <BotMcpFields
+            compact
             mcpServers={selected}
-            onMcpServersChange={setSelected}
+            onMcpServersChange={(next) => {
+              save(next);
+            }}
             disabled={saving || running}
             onManageTools={async () => {
-              if (await save()) {
-                usePluginsNavigationStore.getState().openBotConnectors();
-                useLayoutStore.getState().setView('plugins');
-              }
+              setOpen(false);
+              usePluginsNavigationStore.getState().openBotConnectors();
+              useLayoutStore.getState().setView('plugins');
             }}
           />
           {running && (
             <p className="text-xs text-muted-foreground">Stop the current task to change tools.</p>
           )}
-          <div className="flex justify-end">
-            <Button size="sm" disabled={saving || running} onClick={save}>
-              {saving ? 'Saving…' : 'Apply'}
-            </Button>
-          </div>
         </div>
       </PopoverContent>
     </Popover>

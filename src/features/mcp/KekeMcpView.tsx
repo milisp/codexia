@@ -117,7 +117,7 @@ export function KekeMcpView({ refreshKey = 0 }: { refreshKey?: number }) {
               {config.disabled
                 ? 'Disabled'
                 : auth.statuses[name]?.signedIn
-                  ? 'Signed in'
+                  ? 'Authorized'
                   : 'Configured'}
             </Badge>
             <Button size="sm" variant="ghost" disabled={busy} onClick={() => setRemoveName(name)}>
