@@ -77,29 +77,6 @@ fn init_bots_table(conn: &Connection) -> Result<(), String> {
     Ok(())
 }
 
-#[cfg(test)]
-mod bot_migration_tests {
-    use super::*;
-
-    #[test]
-    fn collaboration_migration_is_idempotent_and_defaults_to_denied() {
-        let conn = Connection::open_in_memory().unwrap();
-        init_bots_table(&conn).unwrap();
-        conn.execute("ALTER TABLE bots DROP COLUMN allowed_bot_ids", []).unwrap();
-        conn.execute(
-            "INSERT INTO bots (id, name, avatar, color, agent_id, cwd, trust_level, created_at, updated_at)
-             VALUES ('old', 'Old', '', '', 'keke', '/', 'ask', '', '')",
-            [],
-        ).unwrap();
-        init_bots_table(&conn).unwrap();
-        init_bots_table(&conn).unwrap();
-        let allowed: String = conn.query_row(
-            "SELECT allowed_bot_ids FROM bots WHERE id = 'old'", [], |row| row.get(0),
-        ).unwrap();
-        assert_eq!(allowed, "[]");
-    }
-}
-
 /// Create the ACP session list and its transcript table
 fn init_acp_sessions_tables(conn: &Connection) -> Result<(), String> {
     conn.execute(
@@ -257,4 +234,27 @@ fn init_automation_runs_tables(conn: &Connection) -> Result<(), String> {
     .map_err(|e| format!("Failed to create automation_run_steps index: {}", e))?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod bot_migration_tests {
+    use super::*;
+
+    #[test]
+    fn collaboration_migration_is_idempotent_and_defaults_to_denied() {
+        let conn = Connection::open_in_memory().unwrap();
+        init_bots_table(&conn).unwrap();
+        conn.execute("ALTER TABLE bots DROP COLUMN allowed_bot_ids", []).unwrap();
+        conn.execute(
+            "INSERT INTO bots (id, name, avatar, color, agent_id, cwd, trust_level, created_at, updated_at)
+             VALUES ('old', 'Old', '', '', 'keke', '/', 'ask', '', '')",
+            [],
+        ).unwrap();
+        init_bots_table(&conn).unwrap();
+        init_bots_table(&conn).unwrap();
+        let allowed: String = conn.query_row(
+            "SELECT allowed_bot_ids FROM bots WHERE id = 'old'", [], |row| row.get(0),
+        ).unwrap();
+        assert_eq!(allowed, "[]");
+    }
 }

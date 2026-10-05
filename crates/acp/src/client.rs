@@ -41,12 +41,12 @@ pub struct ConnectionPolicy {
 impl ConnectionPolicy {
     fn revoke_delegation(&self) {
         for server in &self.mcp_servers {
-            if server["name"] == "codexia-bots" {
-                if let Some(headers) = server["headers"].as_array() {
-                    for header in headers {
-                        if header["name"] == "X-Codexia-Delegation" {
-                            crate::delegation::revoke(header["value"].as_str().unwrap_or_default());
-                        }
+            if server["name"] == "codexia-bots"
+                && let Some(headers) = server["headers"].as_array()
+            {
+                for header in headers {
+                    if header["name"] == "X-Codexia-Delegation" {
+                        crate::delegation::revoke(header["value"].as_str().unwrap_or_default());
                     }
                 }
             }
