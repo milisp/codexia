@@ -1,8 +1,10 @@
-import { Bug, ChevronDown, Monitor, Search } from 'lucide-react';
-import { useState } from 'react';
+import { Bug, ChevronDown, ChevronRight, Monitor, Plus, Search } from 'lucide-react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SideBarBotPane } from '@/components/bot';
 import { BotNotifications } from '@/components/bot/BotNotifications';
+import { BotSettingsDialog } from '@/components/bot/BotSettingsDialog';
+import { defaultLook, newBotId } from '@/components/bot/botDefaults';
 import { DesktopDrawer } from '@/components/pairing/DesktopDrawer';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -14,32 +16,57 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { toast } from '@/components/ui/use-toast';
 import { useTrafficLightConfig } from '@/hooks';
 import { isPhone } from '@/hooks/runtime';
-import { type SidebarMode, useLayoutStore } from '@/stores';
+import { type Bot, createBot } from '@/services/apiAdapt/bots';
+import { useLayoutStore } from '@/stores';
+import { useAcpStore } from '@/stores/useAcpStore';
+import { useBotUiStore } from '@/stores/useBotUiStore';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { UpdateIndicator } from '../../features/UpdateIndicator';
 import { SessionManagerDialog } from '../common/SessionManagerDialog';
-import { SideBarAgentHeader, SideBarAgentList } from './SideBarAgentPane';
+import { SideBarAgentHeader, SideBarAgentList, SideBarProjectActions } from './SideBarAgentPane';
+import { SideBarPinnedList } from './SideBarPinnedList';
 import { UserInfo } from './UserInfo';
 
 export function AppSideBar() {
   const { t } = useTranslation('sidebar');
-  const { activeSidebarTab, sidebarMode, setSidebarMode, setHasSeenBotTab } = useLayoutStore();
+  const { activeSidebarTab, sidebarMode, setHasSeenBotTab } = useLayoutStore();
   const { open: isSidebarOpen } = useSidebar();
   const { isMacos } = useTrafficLightConfig(isSidebarOpen);
   const [sessionManagerOpen, setSessionManagerOpen] = useState(false);
-  const [groupsCollapsed, setGroupsCollapsed] = useState(false);
+  const [botsOpen, setBotsOpen] = useState(sidebarMode === 'bot');
+  const [projectsOpen, setProjectsOpen] = useState(sidebarMode === 'agent');
   // Only a phone drives a remote machine; a desktop is its own backend and has
   // nothing to switch between.
   const [desktopDrawerOpen, setDesktopDrawerOpen] = useState(false);
+  const [newBot, setNewBot] = useState<Bot | null>(null);
+  const cwd = useWorkspaceStore((s) => s.cwd);
+  const bots = useBotUiStore((s) => s.bots);
+  const upsertBot = useBotUiStore((s) => s.upsertBot);
+  const setView = useLayoutStore((s) => s.setView);
 
-  const selectMode = (mode: SidebarMode) => {
-    setSidebarMode(mode);
-    // Expanding navigation must not replace the conversation currently open.
-    if (mode === 'bot') {
-      setHasSeenBotTab(true);
+  const handleCreateBot = useCallback(async () => {
+    const look = defaultLook(bots.length);
+    try {
+      const bot = await createBot({
+        id: newBotId(),
+        name: `Bot ${bots.length + 1}`,
+        avatar: look.avatar,
+        color: look.color,
+        cwd: cwd ?? '',
+      });
+      upsertBot(bot);
+      useAcpStore.getState().reset();
+      useAcpStore.getState().setAgentId(bot.agentId);
+      useBotUiStore.getState().setSelectedBotId(bot.id);
+      setView('bot');
+      setNewBot(bot);
+    } catch (error) {
+      toast({ title: 'Could not create bot', description: String(error), variant: 'destructive' });
     }
-  };
+  }, [bots.length, cwd, setView, upsertBot]);
 
   return (
     <>
@@ -75,38 +102,59 @@ export function AppSideBar() {
         </SidebarHeader>
 
         <SidebarContent className="min-w-0 max-w-full overflow-x-hidden gap-0 px-0">
-          {(['bot', 'agent'] as const).map((mode) => (
-            <Collapsible
-              key={mode}
-              open={sidebarMode === mode && !groupsCollapsed}
-              onOpenChange={(open) => {
-                setGroupsCollapsed(!open);
-                if (open) selectMode(mode);
-              }}
-            >
-              <div className="flex items-center px-1">
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="flex-1 justify-start gap-2">
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform ${sidebarMode === mode && !groupsCollapsed ? '' : '-rotate-90'}`}
-                    />
-                    {mode === 'bot' ? 'Bots' : `Projects / ${t('agent')}`}
-                  </Button>
-                </CollapsibleTrigger>
-                {mode === 'bot' && <BotNotifications />}
-              </div>
-              <CollapsibleContent>
-                {mode === 'bot' ? (
-                  <SideBarBotPane />
-                ) : (
-                  <>
-                    <SideBarAgentHeader />
-                    <SideBarAgentList />
-                  </>
-                )}
-              </CollapsibleContent>
-            </Collapsible>
-          ))}
+          <SideBarAgentHeader />
+
+          <Collapsible
+            open={botsOpen}
+            onOpenChange={(open) => {
+              setBotsOpen(open);
+              if (open) setHasSeenBotTab(true);
+            }}
+          >
+            <div className="flex items-center px-1">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="flex-1 justify-start gap-2">
+                  <span>Bots</span>
+                  <ChevronRight
+                    className={`h-4 w-4 text-muted-foreground/60 transition-transform ${botsOpen ? 'rotate-90' : ''}`}
+                  />
+                </Button>
+              </CollapsibleTrigger>
+              <BotNotifications />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                title={t('newBot')}
+                aria-label={t('newBot')}
+                onClick={handleCreateBot}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            <CollapsibleContent>
+              <SideBarBotPane />
+            </CollapsibleContent>
+          </Collapsible>
+
+          <SideBarPinnedList />
+
+          <Collapsible open={projectsOpen} onOpenChange={setProjectsOpen}>
+            <div className="flex items-center px-1">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="flex-1 justify-start gap-2">
+                  <span>Projects</span>
+                  <ChevronDown
+                    className={`h-4 w-4 text-muted-foreground/60 transition-transform ${projectsOpen ? '' : '-rotate-90'}`}
+                  />
+                </Button>
+              </CollapsibleTrigger>
+              <SideBarProjectActions />
+            </div>
+            <CollapsibleContent>
+              <SideBarAgentList />
+            </CollapsibleContent>
+          </Collapsible>
         </SidebarContent>
 
         <SidebarFooter className="flex-row items-center p-0 min-w-0 max-w-full overflow-x-hidden">
@@ -134,6 +182,16 @@ export function AppSideBar() {
         onOpenChange={setSessionManagerOpen}
         defaultTab={activeSidebarTab === 'cc' ? 'cc' : 'codex'}
       />
+
+      {newBot && (
+        <BotSettingsDialog
+          bot={newBot}
+          open={Boolean(newBot)}
+          onOpenChange={(open) => {
+            if (!open) setNewBot(null);
+          }}
+        />
+      )}
 
       {isPhone() && <DesktopDrawer open={desktopDrawerOpen} onOpenChange={setDesktopDrawerOpen} />}
     </>

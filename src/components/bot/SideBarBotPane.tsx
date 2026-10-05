@@ -1,15 +1,8 @@
-import { Plus } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/use-toast';
-import { type Bot, createBot, listBots } from '@/services/apiAdapt/bots';
+import { useCallback, useEffect } from 'react';
+import { type Bot, listBots } from '@/services/apiAdapt/bots';
 import { useLayoutStore } from '@/stores';
 import { useBotUiStore } from '@/stores/useBotUiStore';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { BotAvatar } from './BotAvatar';
-import { BotSettingsDialog } from './BotSettingsDialog';
-import { defaultLook, newBotId } from './botDefaults';
 import { markBotRead } from './markBotRead';
 import { useBotSession } from './useBotSession';
 
@@ -28,38 +21,16 @@ function since(iso: string) {
  * wakes when you open it.
  */
 export function SideBarBotPane() {
-  const { t } = useTranslation('sidebar');
-  const { bots, setBots, upsertBot, selectedBotId, connectionByBot, runningByBot, statusByBot } =
+  const { bots, setBots, selectedBotId, connectionByBot, runningByBot, statusByBot } =
     useBotUiStore();
   const setView = useLayoutStore((s) => s.setView);
-  const cwd = useWorkspaceStore((s) => s.cwd);
-  const { open, openBlank } = useBotSession();
-  const [newBot, setNewBot] = useState<Bot | null>(null);
+  const { open } = useBotSession();
 
   useEffect(() => {
     listBots()
       .then(setBots)
       .catch((e) => console.error('bots: failed to list', e));
   }, [setBots]);
-
-  const create = useCallback(async () => {
-    const look = defaultLook(bots.length);
-    try {
-      const bot = await createBot({
-        id: newBotId(),
-        name: `Bot ${bots.length + 1}`,
-        avatar: look.avatar,
-        color: look.color,
-        cwd: cwd ?? '',
-      });
-      upsertBot(bot);
-      openBlank(bot);
-      setView('bot');
-      setNewBot(bot);
-    } catch (e) {
-      toast({ title: 'Could not create bot', description: String(e), variant: 'destructive' });
-    }
-  }, [bots.length, cwd, openBlank, setView, upsertBot]);
 
   const select = useCallback(
     (bot: Bot) => {
@@ -77,13 +48,6 @@ export function SideBarBotPane() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="px-1 pb-1">
-        <Button variant="ghost" size="sm" className="w-full justify-start gap-2" onClick={create}>
-          <Plus className="h-4 w-4" />
-          {t('newBot')}
-        </Button>
-      </div>
-
       <div className="min-h-0 flex-1 overflow-y-auto">
         {bots.length === 0 && (
           <p className="px-3 py-6 text-center text-xs text-muted-foreground">
@@ -138,16 +102,6 @@ export function SideBarBotPane() {
           </div>
         ))}
       </div>
-
-      {newBot && (
-        <BotSettingsDialog
-          bot={newBot}
-          open={Boolean(newBot)}
-          onOpenChange={(open) => {
-            if (!open) setNewBot(null);
-          }}
-        />
-      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { CheckCircle2, KeyRound, Plus, User } from 'lucide-react';
+import { BarChart2, CheckCircle2, KeyRound, Plus, Settings, User, Users } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import OpenAIIcon from '@/assets/openai.svg';
@@ -131,7 +131,10 @@ export function UserInfo() {
             {savedAccounts.length > 0 && (
               <>
                 <Separator className="my-1" />
-                <p className="px-2 py-1 text-xs text-muted-foreground">Accounts</p>
+                <div className="flex items-center gap-2 px-2 py-1">
+                  <Users className="h-4 w-4" />
+                  <p className="text-xs text-muted-foreground">Accounts</p>
+                </div>
                 {savedAccounts.map((acc) => (
                   <Button
                     key={acc.label}
@@ -165,8 +168,24 @@ export function UserInfo() {
               {label ? 'Add Account' : 'ChatGPT Login'}
             </Button>
             <Separator className="my-1" />
-            <Button variant="ghost" className="w-full justify-start" onClick={handleOpenSettings}>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-2"
+              onClick={handleOpenSettings}
+            >
+              <Settings className="h-4 w-4" />
               {t('settings')}
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-2"
+              onClick={() => {
+                setView('insights');
+                setPopoverOpen(false);
+              }}
+            >
+              <BarChart2 className="h-4 w-4" />
+              {t('insights')}
             </Button>
           </div>
         </PopoverContent>
