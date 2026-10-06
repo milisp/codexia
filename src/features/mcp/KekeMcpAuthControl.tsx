@@ -1,7 +1,6 @@
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { KekeMcpServer } from '@/services/apiAdapt/kekeMcp';
-import { isGitHubMcpServer } from './mcpAuthentication';
 import type { useKekeMcpAuth } from './useKekeMcpAuth';
 
 export function KekeMcpAuthControl({
@@ -29,7 +28,7 @@ export function KekeMcpAuthControl({
         {pending && <Loader2 className="animate-spin" data-icon="inline-start" />}
         {pending ? 'Authorizing…' : signedIn ? 'Reauthorize' : 'Authorize'}
       </Button>
-      {pending && !isGitHubMcpServer(config) && (
+      {pending && auth.githubName !== name && (
         <p className="text-xs text-muted-foreground">
           Complete authorization in your desktop browser.
         </p>

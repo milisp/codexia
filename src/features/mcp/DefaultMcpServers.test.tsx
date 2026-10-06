@@ -3,12 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const addKeke = vi.fn().mockResolvedValue(undefined);
 const login = vi.fn();
 const tokenAuth = vi.fn();
+const servers = vi.fn().mockResolvedValue({});
 const statuses = vi.fn().mockResolvedValue({ linear: { signedIn: false, error: null } });
 const addUnified = vi.fn().mockResolvedValue(undefined);
-vi.mock('@/services/apiAdapt/kekeMcp', () => ({ addKekeMcpServer: (...args: unknown[]) => addKeke(...args), loginKekeMcpServer: (...args: unknown[]) => login(...args), readKekeMcpAuthStatuses: () => statuses(), authorizeGitHubMcp: (...args: unknown[]) => tokenAuth(...args) }));
+vi.mock('@/services/apiAdapt/kekeMcp', () => ({ readKekeMcpServers: () => servers(), addKekeMcpServer: (...args: unknown[]) => addKeke(...args), loginKekeMcpServer: (...args: unknown[]) => login(...args), readKekeMcpAuthStatuses: () => statuses(), authorizeGitHubMcp: (...args: unknown[]) => tokenAuth(...args) }));
 vi.mock('@/services', () => ({ unifiedAddMcpServer: (...args: unknown[]) => addUnified(...args) }));
 import { DefaultMcpServers } from './DefaultMcpServers';
-beforeEach(() => { vi.clearAllMocks(); login.mockResolvedValue(undefined); tokenAuth.mockResolvedValue(undefined); statuses.mockResolvedValue({linear:{signedIn:false,error:null},github:{signedIn:false,error:null}}); });
+beforeEach(() => { vi.clearAllMocks(); servers.mockResolvedValue({}); login.mockResolvedValue(undefined); tokenAuth.mockResolvedValue(undefined); statuses.mockResolvedValue({linear:{signedIn:false,error:null},github:{signedIn:false,error:null}}); });
 describe('featured connector targets', () => {
   it('adds a Bot preset only to keke', async () => {
     const added = vi.fn();
@@ -75,7 +76,15 @@ describe('featured connector targets', () => {
     expect(screen.getByRole('dialog')).toBeTruthy();
     expect(login).not.toHaveBeenCalled();
   });
-  it('does not start authorization for public connectors', async () => {
+  it('starts GitHub browser authorization when a registered client is configured', async () => {
+    servers.mockResolvedValue({github:{type:'http',url:'https://api.githubcopilot.com/mcp/',oauth:{client_id:'fixture',client_secret:'${GITHUB_MCP_CLIENT_SECRET}'}}});
+    render(<DefaultMcpServers agent="keke" servers={{}} onServerAdded={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', {name:'Add GitHub'}));
+    await waitFor(() => expect(login).toHaveBeenCalledWith('github'));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(tokenAuth).not.toHaveBeenCalled();
+  });
+  it('does not start authorization for public connectors' , async () => {
     const added = vi.fn();
     render(<DefaultMcpServers agent="keke" servers={{}} onServerAdded={added} />);
     fireEvent.click(screen.getByRole('button', {name:'Add DeepWiki'}));

@@ -42,20 +42,49 @@ pub fn acp_entry(name: &str, config: &Value) -> Result<Value, String> {
         }
         "http" | "sse" => {
             let url = config.get("url").and_then(Value::as_str).filter(|v| v.starts_with("https://") || v.starts_with("http://")).ok_or("Missing HTTP(S) URL")?;
-            Ok(json!({"type":kind,"name":name,"url":url,"headers":pairs("headers")?}))
+            let mut entry = json!({"type":kind,"name":name,"url":url,"headers":pairs("headers")?});
+            if let Some(meta) = config.get("_meta") {
+                if !meta.is_object() { return Err("MCP metadata must be an object".into()); }
+                entry["_meta"] = meta.clone();
+            }
+            if let Some(oauth) = config.get("oauth") {
+                if !oauth.is_object() { return Err("MCP OAuth configuration must be an object".into()); }
+                if entry.get("_meta").is_none() { entry["_meta"] = json!({}); }
+                entry["_meta"]["keke.dev/oauth"] = oauth.clone();
+            }
+            Ok(entry)
         }
         _ => Err("Unsupported MCP transport".into()),
     }
 }
 
-pub async fn read_mcp_servers() -> Result<McpServers, String> {
-    let root = document(&path()?)?;
-    serde_json::from_value(root.get("mcpServers").cloned().unwrap_or(json!({}))).map_err(|e| e.to_string())
+fn configure_oauth(config: &mut Value) {
+    if config.get("oauth").is_some() { return; }
+    if let Some(oauth) = config.get("_meta").and_then(|meta| meta.get("keke.dev/oauth")).cloned() {
+        config["oauth"] = oauth;
+        return;
+    }
+    if github_url(config).is_err() { return; }
+    let Ok(client_id) = std::env::var("GITHUB_MCP_CLIENT_ID") else { return; };
+    if client_id.trim().is_empty() { return; }
+    let mut oauth = json!({"client_id":client_id.trim(), "redirect_uri":
+        std::env::var("GITHUB_MCP_REDIRECT_URI").unwrap_or_else(|_| "http://127.0.0.1:8765/callback".into())});
+    if std::env::var("GITHUB_MCP_CLIENT_SECRET").is_ok_and(|value| !value.trim().is_empty()) {
+        oauth["client_secret"] = json!("${GITHUB_MCP_CLIENT_SECRET}");
+    }
+    config["oauth"] = oauth;
 }
 
-async fn update(name: String, config: Option<Value>) -> Result<(), String> {
+pub async fn read_mcp_servers() -> Result<McpServers, String> {
+    let root = document(&path()?)?;
+    let mut servers: McpServers = serde_json::from_value(root.get("mcpServers").cloned().unwrap_or(json!({}))).map_err(|e| e.to_string())?;
+    for config in servers.values_mut() { configure_oauth(config); }
+    Ok(servers)
+}
+
+async fn update(name: String, mut config: Option<Value>) -> Result<(), String> {
     if name.trim().is_empty() || name == "codexia-bots" { return Err("Empty or reserved server name".into()); }
-    if let Some(config) = &config { acp_entry(&name, config)?; }
+    if let Some(config) = &mut config { configure_oauth(config); acp_entry(&name, config)?; }
     let _guard = WRITE_LOCK.lock().await;
     let path = path()?;
     let mut root = document(&path)?;
@@ -239,8 +268,19 @@ pub async fn login_mcp_server(name: String) -> Result<(), String> {
     let servers = read_mcp_servers().await?;
     let config = servers.get(&name).ok_or("Connector is no longer configured")?;
     let original_url = remote_url(config)?.to_string();
-    if github_url(config).is_ok() {
-        return Err("GitHub requires a personal access token or a registered GitHub App. Use the GitHub authorization dialog.".into());
+    if github_url(config).is_ok() && config.get("oauth").is_none() {
+        return Err("Configure GITHUB_MCP_CLIENT_ID before authorizing GitHub in the browser".into());
+    }
+    // CLI login reads the native document; ACP metadata alone is not enough.
+    if let Some(oauth) = config.get("oauth") {
+        let _write = WRITE_LOCK.lock().await;
+        let path = path()?;
+        let mut root = document(&path)?;
+        let stored = root.get_mut("mcpServers").and_then(|servers| servers.get_mut(&name))
+            .ok_or("Connector is no longer configured")?;
+        if remote_url(stored)? != original_url { return Err("Connector changed before authorization".into()); }
+        stored["oauth"] = oauth.clone();
+        save_document(&path, &root)?;
     }
     run_cli("login", &name, std::time::Duration::from_secs(360)).await?;
     let current = read_mcp_servers().await?;
@@ -270,6 +310,20 @@ mod tests {
         assert_eq!(stdio["env"][0]["value"], "${TEST_VALUE}");
         assert!(acp_entry("test", &json!({"command":"node","args":[1]})).is_err());
         assert!(acp_entry("test", &json!({})).is_err());
+    }
+
+    #[test]
+    fn oauth_metadata_survives_native_and_acp_conversion() {
+        let oauth = json!({"client_id":"fixture", "client_secret":"${FIXTURE_SECRET}", "redirect_uri":"http://127.0.0.1:8765/callback"});
+        for kind in ["http", "sse"] {
+            let mut config = json!({"type":kind,"url":"https://example.com/mcp", "_meta":{"other":"preserved", "keke.dev/oauth":oauth}});
+            configure_oauth(&mut config);
+            assert_eq!(config["oauth"], oauth);
+            let entry = acp_entry("fixture", &config).unwrap();
+            assert_eq!(entry["_meta"]["keke.dev/oauth"], oauth);
+            assert_eq!(entry["_meta"]["other"], "preserved");
+            assert!(entry.to_string().contains("${FIXTURE_SECRET}"));
+        }
     }
 
     #[test]

@@ -5,6 +5,7 @@ import {
   type KekeMcpServer,
   loginKekeMcpServer,
   readKekeMcpAuthStatuses,
+  readKekeMcpServers,
 } from '@/services/apiAdapt/kekeMcp';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 import { isGitHubMcpServer, mcpAuthError } from './mcpAuthentication';
@@ -42,16 +43,20 @@ export function useKekeMcpAuth(enabled = true) {
 
   const authorize = async (name: string, config?: KekeMcpServer) => {
     if (busy.current) return false;
-    if (isGitHubMcpServer(config)) {
-      setErrors((previous) => ({ ...previous, [name]: '' }));
-      setGitHubName(name);
-      return false;
-    }
     busy.current = true;
     setPending(name);
     setErrors((previous) => ({ ...previous, [name]: '' }));
     try {
+      if (isGitHubMcpServer(config)) {
+        const current = (await readKekeMcpServers())[name];
+        const metadata = current?._meta as Record<string, unknown> | undefined;
+        if (!current?.oauth && !metadata?.['keke.dev/oauth']) {
+          if (mounted.current) setGitHubName(name);
+          return false;
+        }
+      }
       await loginKekeMcpServer(name);
+      useBotUiStore.getState().markMcpChanged(name);
       if (mounted.current)
         setStatuses((previous) => ({ ...previous, [name]: { signedIn: true, error: null } }));
       await refresh();
