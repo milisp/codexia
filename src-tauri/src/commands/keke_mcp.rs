@@ -25,3 +25,8 @@ pub async fn keke_mcp_auth_statuses() -> Result<std::collections::BTreeMap<Strin
 pub async fn keke_mcp_login(name: String) -> Result<(), String> {
     mcp::login_mcp_server(name).await
 }
+
+#[tauri::command]
+pub async fn keke_mcp_authorize_github(name: String, token: String) -> Result<(), String> {
+    mcp::authorize_github_mcp(name, token).await
+}

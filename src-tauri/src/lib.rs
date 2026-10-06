@@ -85,6 +85,7 @@ pub fn run() {
                 commands::keke_mcp::keke_remove_mcp_server,
                 commands::keke_mcp::keke_mcp_auth_statuses,
                 commands::keke_mcp::keke_mcp_login,
+                commands::keke_mcp::keke_mcp_authorize_github,
                 commands::codex::initialize_codex_async,
                 commands::dictation::dictation_model_status,
                 commands::dictation::dictation_download_model,

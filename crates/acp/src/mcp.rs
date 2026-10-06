@@ -67,7 +67,11 @@ async fn update(name: String, config: Option<Value>) -> Result<(), String> {
         }
         None => { servers.remove(&name); }
     }
-    std::fs::create_dir_all(path.parent().unwrap()).map_err(|e| e.to_string())?;
+    save_document(&path, &root)
+}
+
+fn save_document(path: &Path, root: &Value) -> Result<(), String> {
+    std::fs::create_dir_all(path.parent().ok_or("Invalid configuration path")?).map_err(|e| e.to_string())?;
     let temp = path.with_file_name(format!(".mcp.{}.tmp", uuid::Uuid::new_v4()));
     let result = (|| {
         use std::io::Write;
@@ -76,9 +80,9 @@ async fn update(name: String, config: Option<Value>) -> Result<(), String> {
         #[cfg(unix)]
         { use std::os::unix::fs::OpenOptionsExt; options.mode(0o600); }
         let mut file = options.open(&temp).map_err(|e| e.to_string())?;
-        file.write_all(serde_json::to_string_pretty(&root).map_err(|e| e.to_string())?.as_bytes()).map_err(|e| e.to_string())?;
+        file.write_all(serde_json::to_string_pretty(root).map_err(|e| e.to_string())?.as_bytes()).map_err(|e| e.to_string())?;
         file.sync_all().map_err(|e| e.to_string())?;
-        std::fs::rename(&temp, &path).map_err(|e| e.to_string())
+        std::fs::rename(&temp, path).map_err(|e| e.to_string())
     })();
     if result.is_err() { let _ = std::fs::remove_file(temp); }
     result
@@ -86,6 +90,67 @@ async fn update(name: String, config: Option<Value>) -> Result<(), String> {
 
 pub async fn add_mcp_server(name: String, config: Value) -> Result<(), String> { update(name, Some(config)).await }
 pub async fn remove_mcp_server(name: String) -> Result<(), String> { update(name, None).await }
+
+fn github_url(config: &Value) -> Result<String, String> {
+    let raw = remote_url(config)?;
+    let url = reqwest::Url::parse(raw).map_err(|_| "Invalid GitHub MCP URL")?;
+    if url.scheme() != "https" || url.host_str() != Some("api.githubcopilot.com")
+        || !url.username().is_empty() || url.password().is_some() || url.port_or_known_default() != Some(443) {
+        return Err("GitHub tokens can only be sent to the official GitHub MCP server".into());
+    }
+    Ok(raw.to_string())
+}
+
+fn has_auth_header(config: &Value) -> bool {
+    config.get("headers").and_then(Value::as_object).is_some_and(|headers| {
+        headers.iter().any(|(name, value)| name.eq_ignore_ascii_case("authorization")
+            && value.as_str().is_some_and(|value| !value.trim().is_empty() && !value.contains("${")))
+    })
+}
+
+fn set_auth_header(config: &mut Value, token: &str) -> Result<(), String> {
+    let headers = config.as_object_mut().ok_or("Invalid connector configuration")?
+        .entry("headers").or_insert(json!({})).as_object_mut().ok_or("Invalid headers")?;
+    headers.retain(|name, _| !name.eq_ignore_ascii_case("authorization"));
+    headers.insert("Authorization".into(), Value::String(format!("Bearer {token}")));
+    Ok(())
+}
+
+async fn verify_github_token(url: &str, token: &str) -> Result<(), String> {
+    let client = reqwest::Client::builder().redirect(reqwest::redirect::Policy::none())
+        .timeout(std::time::Duration::from_secs(30)).build().map_err(|_| "Could not prepare GitHub authorization")?;
+    let response = client.post(url).bearer_auth(token).header("Accept", "application/json, text/event-stream")
+        .json(&json!({"jsonrpc":"2.0","id":1,"method":"initialize","params":{
+            "protocolVersion":"2025-06-18","capabilities":{},
+            "clientInfo":{"name":"codexia","version":env!("CARGO_PKG_VERSION")}
+        }})).send().await.map_err(|_| "Could not reach GitHub. Try again.")?;
+    match response.status().as_u16() {
+        200..=299 => Ok(()),
+        401 => Err("GitHub rejected this token. Check that it is valid and has not expired.".into()),
+        403 => Err("GitHub denied access. Check the token's permissions and organization approval.".into()),
+        _ => Err(format!("GitHub could not authorize this connector (HTTP {}).", response.status().as_u16())),
+    }
+}
+
+/// GitHub does not support dynamic registration; use its supported bearer token path.
+pub async fn authorize_github_mcp(name: String, token: String) -> Result<(), String> {
+    let token = token.trim();
+    if token.is_empty() || token.chars().any(char::is_whitespace) {
+        return Err("Enter a GitHub personal access token".into());
+    }
+    let servers = read_mcp_servers().await?;
+    let original = servers.get(&name).ok_or("Connector is no longer configured")?;
+    let url = github_url(original)?;
+    verify_github_token(&url, token).await?;
+    let _guard = WRITE_LOCK.lock().await;
+    let path = path()?;
+    let mut root = document(&path)?;
+    let config = root.get_mut("mcpServers").and_then(Value::as_object_mut)
+        .and_then(|servers| servers.get_mut(&name)).ok_or("Connector is no longer configured")?;
+    if github_url(config)? != url { return Err("Connector changed during authorization. Try again.".into()); }
+    set_auth_header(config, token)?;
+    save_document(&path, &root)
+}
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -146,6 +211,10 @@ pub async fn read_mcp_auth_statuses() -> Result<BTreeMap<String, McpAuthStatus>,
     let mut jobs = tokio::task::JoinSet::new();
     for (name, config) in servers {
         if remote_url(&config).is_err() { continue; }
+        if has_auth_header(&config) {
+            statuses.insert(name, McpAuthStatus { signed_in: Some(true), error: None });
+            continue;
+        }
         jobs.spawn(async move {
             let result = run_cli("get", &name, std::time::Duration::from_secs(15)).await
                 .and_then(|output| signed_in(&output));
@@ -170,6 +239,9 @@ pub async fn login_mcp_server(name: String) -> Result<(), String> {
     let servers = read_mcp_servers().await?;
     let config = servers.get(&name).ok_or("Connector is no longer configured")?;
     let original_url = remote_url(config)?.to_string();
+    if github_url(config).is_ok() {
+        return Err("GitHub requires a personal access token or a registered GitHub App. Use the GitHub authorization dialog.".into());
+    }
     run_cli("login", &name, std::time::Duration::from_secs(360)).await?;
     let current = read_mcp_servers().await?;
     let current_url = current.get(&name).map(remote_url).transpose()?;
@@ -198,6 +270,51 @@ mod tests {
         assert_eq!(stdio["env"][0]["value"], "${TEST_VALUE}");
         assert!(acp_entry("test", &json!({"command":"node","args":[1]})).is_err());
         assert!(acp_entry("test", &json!({})).is_err());
+    }
+
+    #[test]
+    fn github_tokens_are_scoped_to_the_official_host_and_preserve_configuration() {
+        for url in ["https://api.githubcopilot.com.evil.test/mcp/", "http://api.githubcopilot.com/mcp/", "https://user@api.githubcopilot.com/mcp/", "https://api.githubcopilot.com:8443/mcp/"] {
+            assert!(github_url(&json!({"type":"http","url":url})).is_err());
+        }
+        let mut config = json!({"type":"http","url":"https://api.githubcopilot.com/mcp/","future":42,"headers":{"authorization":"old","X-Custom":"kept"}});
+        assert!(github_url(&config).is_ok());
+        set_auth_header(&mut config, "fixture-token").unwrap();
+        assert_eq!(config["headers"]["Authorization"], "Bearer fixture-token");
+        assert!(config["headers"].get("authorization").is_none());
+        assert_eq!(config["headers"]["X-Custom"], "kept");
+        assert_eq!(config["future"], 42);
+        assert!(has_auth_header(&config));
+        assert!(!has_auth_header(&json!({"headers":{"Authorization":"Bearer ${TOKEN}"}})));
+    }
+
+    #[tokio::test]
+    async fn github_authorization_checks_the_mcp_endpoint_and_redacts_failures() {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        for status in [200, 401, 403] {
+            let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let endpoint = format!("http://{}/mcp/", listener.local_addr().unwrap());
+            let server = tokio::spawn(async move {
+                let (mut socket, _) = listener.accept().await.unwrap();
+                let mut request = Vec::new();
+                loop {
+                    let mut buffer = [0; 2048];
+                    let count = socket.read(&mut buffer).await.unwrap();
+                    if count == 0 { break; }
+                    request.extend_from_slice(&buffer[..count]);
+                    if request.windows(4).any(|bytes| bytes == b"\r\n\r\n") { break; }
+                }
+                let request = String::from_utf8(request).unwrap().to_lowercase();
+                assert!(request.starts_with("post /mcp/"));
+                assert!(request.contains("authorization: bearer fixture-token"));
+                let response = format!("HTTP/1.1 {status} Test\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+                socket.write_all(response.as_bytes()).await.unwrap();
+            });
+            let result = verify_github_token(&endpoint, "fixture-token").await;
+            if status == 200 { assert!(result.is_ok()); }
+            else { assert!(!result.unwrap_err().contains("fixture-token")); }
+            server.await.unwrap();
+        }
     }
 
     #[test]

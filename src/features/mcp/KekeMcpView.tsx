@@ -11,8 +11,10 @@ import {
 } from '@/services/apiAdapt/kekeMcp';
 import { unifiedReadMcpConfig } from '@/services/apiAdapt/mcp';
 import { ConnectorIcon } from './ConnectorIcon';
+import { KekeGitHubAuthDialog } from './KekeGitHubAuthDialog';
 import { KekeMcpAuthControl } from './KekeMcpAuthControl';
 import { KekeMcpJsonEditor } from './KekeMcpJsonEditor';
+import { needsPresetAuthorization } from './mcpAuthentication';
 import { useKekeMcpAuth } from './useKekeMcpAuth';
 
 /** Manage shared Bot definitions here; access selection belongs to Bot settings. */
@@ -45,7 +47,8 @@ export function KekeMcpView({ refreshKey = 0 }: { refreshKey?: number }) {
     try {
       await addKekeMcpServer(name, config);
       await load();
-      toast.success(`${name} configured. Select it in your bot’s settings.`);
+      toast.success(`${name} configured. Select it from the bot’s Plus menu.`);
+      if (needsPresetAuthorization(config)) await auth.authorize(name, config);
       return true;
     } catch (failure) {
       toast.error(`Could not add ${name}: ${failure}`);
@@ -79,6 +82,7 @@ export function KekeMcpView({ refreshKey = 0 }: { refreshKey?: number }) {
 
   return (
     <div className="flex flex-col gap-4 px-4">
+      <KekeGitHubAuthDialog auth={auth} />
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">Bot connectors</h3>
         <Button
@@ -125,7 +129,7 @@ export function KekeMcpView({ refreshKey = 0 }: { refreshKey?: number }) {
             </Button>
           </div>
           {(config.type === 'http' || config.type === 'sse') && !config.disabled && (
-            <KekeMcpAuthControl name={name} auth={auth} disabled={busy} />
+            <KekeMcpAuthControl name={name} auth={auth} disabled={busy} config={config} />
           )}
           <details className="text-xs">
             <summary className="cursor-pointer text-muted-foreground">Configuration</summary>

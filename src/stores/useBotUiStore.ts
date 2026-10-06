@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Bot } from '@/services/apiAdapt/bots';
+import { type Bot, parseBotList } from '@/services/apiAdapt/bots';
 
 /**
  * Client state for the Bot tab. The bots themselves live in the database, so
@@ -21,6 +21,8 @@ interface BotUiStore {
    * reuses its process instead of paying for a spawn and a fresh session.
    */
   connectionByBot: Record<string, string>;
+  mcpChangedByBot: Record<string, boolean>;
+  markMcpChanged: (name: string) => void;
   setBotConnection: (botId: string, connectionId: string) => void;
   clearBotConnection: (botId: string) => void;
   /**
@@ -74,13 +76,30 @@ export const useBotUiStore = create<BotUiStore>((set) => ({
   selectedBotId: null,
   setSelectedBotId: (selectedBotId) => set({ selectedBotId }),
   connectionByBot: {},
+  mcpChangedByBot: {},
+  markMcpChanged: (name) =>
+    set((state) => ({
+      mcpChangedByBot: {
+        ...state.mcpChangedByBot,
+        ...Object.fromEntries(
+          state.bots
+            .filter(
+              (bot) =>
+                state.connectionByBot[bot.id] &&
+                parseBotList(bot.mcpServers).includes(`keke:${name}`)
+            )
+            .map((bot) => [bot.id, true])
+        ),
+      },
+    })),
   setBotConnection: (botId, connectionId) =>
     set((state) => ({ connectionByBot: { ...state.connectionByBot, [botId]: connectionId } })),
   clearBotConnection: (botId) =>
     set((state) => {
       const { [botId]: _removed, ...connectionByBot } = state.connectionByBot;
       const { [botId]: _session, ...sessionByBot } = state.sessionByBot;
-      return { connectionByBot, sessionByBot };
+      const { [botId]: _changed, ...mcpChangedByBot } = state.mcpChangedByBot;
+      return { connectionByBot, sessionByBot, mcpChangedByBot };
     }),
   runningByBot: {},
   savingSettingsByBot: {},

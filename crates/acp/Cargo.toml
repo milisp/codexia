@@ -20,6 +20,7 @@ codexia-codex = { workspace = true }
 async-trait = { workspace = true }
 which = "6.0"
 dirs = { workspace = true }
+reqwest = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }

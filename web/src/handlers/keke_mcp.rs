@@ -30,3 +30,13 @@ pub(crate) async fn api_keke_mcp_auth_statuses() -> Result<Json<std::collections
 pub(crate) async fn api_keke_mcp_login(Json(params): Json<KekeMcpParams>) -> Result<Json<()>, ErrorResponse> {
     mcp::login_mcp_server(params.name).await.map(Json).map_err(|error| ErrorResponse { error })
 }
+
+#[derive(Deserialize)]
+pub(crate) struct GitHubMcpAuthParams {
+    name: String,
+    token: String,
+}
+
+pub(crate) async fn api_keke_mcp_authorize_github(Json(params): Json<GitHubMcpAuthParams>) -> Result<Json<()>, ErrorResponse> {
+    mcp::authorize_github_mcp(params.name, params.token).await.map(Json).map_err(|error| ErrorResponse { error })
+}

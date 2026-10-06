@@ -19,8 +19,9 @@ results appear in the same timeline; runtime sessions are managed automatically.
 
 ## Connect applications and tools
 
-Remote connectors offer **Authorize** using Keke’s native MCP OAuth flow. Complete
-authorization in the browser on the desktop running the bot. **Authorized** means
+Adding a featured connector starts authorization immediately when required.
+GitHub uses a personal access token; other OAuth connectors use Keke’s native flow.
+Complete browser authorization on the desktop running the bot. **Authorized** means
 a credential is stored; it does not verify that every tool is available.
 
 Open the Plus menu beside the bot's message input, then **Manage**, to reach

@@ -12,7 +12,7 @@ export const appPresets: {
     name: 'github',
     label: 'GitHub',
     description: 'Repositories, issues and pull requests',
-    access: 'Authorization required',
+    access: 'GitHub token required',
     authorizationRequired: true,
     config: { type: 'http', url: 'https://api.githubcopilot.com/mcp/' },
   },

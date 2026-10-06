@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { isDesktopTauri } from '@/hooks/runtime';
 import {
+  authorizeGitHubMcpTauri,
   type KekeMcpAuthStatus,
   loginKekeMcpServerTauri,
   readKekeMcpAuthStatusesTauri,
@@ -48,4 +49,9 @@ export async function readKekeMcpAuthStatuses(): Promise<Record<string, KekeMcpA
 export async function loginKekeMcpServer(name: string): Promise<void> {
   if (isDesktopTauri()) await loginKekeMcpServerTauri(name);
   else await postJson('/api/keke/mcp/login', { name });
+}
+
+export async function authorizeGitHubMcp(name: string, token: string): Promise<void> {
+  if (isDesktopTauri()) await authorizeGitHubMcpTauri(name, token);
+  else await postJson('/api/keke/mcp/authorize-github', { name, token });
 }

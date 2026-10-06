@@ -17,6 +17,7 @@ export function BotComposer({ bot }: { bot: Bot }) {
   const kekeSpawnFailed = useBotUiStore((s) => s.kekeSpawnFailed);
   const running = useBotUiStore((s) => Boolean(s.runningByBot[bot.id]));
   const savingSettings = useBotUiStore((s) => Boolean(s.savingSettingsByBot[bot.id]));
+  const toolsChanged = useBotUiStore((s) => Boolean(s.mcpChangedByBot[bot.id]));
   const setBotRunning = useBotUiStore((s) => s.setBotRunning);
   const { open } = useBotSession();
   const [text, setText] = useState('');
@@ -48,7 +49,7 @@ export function BotComposer({ bot }: { bot: Bot }) {
     // Reuse this bot's own process when the store is already pointed at it;
     // otherwise `open` restores or spawns it.
     const live =
-      botConnection && botSession && connectionId === botConnection
+      botConnection && botSession && connectionId === botConnection && !toolsChanged
         ? { connectionId: botConnection, sessionId: botSession }
         : await open(bot);
     if (!live) return;

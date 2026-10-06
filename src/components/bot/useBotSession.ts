@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { toast } from '@/components/ui/use-toast';
-import { acpGetSession, acpLoadSession, acpStart } from '@/services/apiAdapt/acp';
+import { acpGetSession, acpLoadSession, acpStart, acpStop } from '@/services/apiAdapt/acp';
 import type { Bot } from '@/services/apiAdapt/bots';
 import { listBotSessions } from '@/services/apiAdapt/bots';
 import { useAcpStore } from '@/stores/useAcpStore';
@@ -41,8 +41,27 @@ export function useBotSession() {
     // the one on screen — otherwise a slow bot lands in a faster one's pane.
     const stale = () => useBotUiStore.getState().selectedBotId !== bot.id;
 
-    const existing = ui.connectionByBot[bot.id];
+    let existing = ui.connectionByBot[bot.id];
     const existingSession = ui.sessionByBot[bot.id];
+    if (existing && ui.mcpChangedByBot[bot.id] && !ui.runningByBot[bot.id]) {
+      try {
+        await acpStop(existing);
+      } catch (error) {
+        toast({
+          title: 'Could not reconnect tools',
+          description: String(error),
+          variant: 'destructive',
+        });
+        return null;
+      }
+      useBotUiStore.getState().clearBotConnection(bot.id);
+      if (stale()) return null;
+      if (useAcpStore.getState().connectionId === existing) {
+        store.reset();
+        store.setAgentId(bot.agentId);
+      }
+      existing = '';
+    }
     if (existing && existingSession) {
       const activeSessionId = existingSession;
       store.setConnection({

@@ -4,12 +4,14 @@ import type { Bot } from '@/services/apiAdapt/bots';
 import { useAcpStore } from '@/stores/useAcpStore';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 
+const acpStop = vi.fn().mockResolvedValue(undefined);
 const acpStart = vi.fn();
 const acpGetSession = vi.fn();
 const listBotSessions = vi.fn();
 const acpSetConfigOption = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('@/services/apiAdapt/acp', () => ({
+  acpStop: (...args: unknown[]) => acpStop(...args),
   acpStart: (...args: unknown[]) => acpStart(...args),
   acpGetSession: (...args: unknown[]) => acpGetSession(...args),
   acpSetConfigOption: (...args: unknown[]) => acpSetConfigOption(...args),
@@ -19,7 +21,8 @@ vi.mock('@/services/apiAdapt', () => ({
   getHomeDirectory: async () => '/home/tester',
 }));
 
-vi.mock('@/services/apiAdapt/bots', () => ({
+vi.mock('@/services/apiAdapt/bots', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/services/apiAdapt/bots')>()),
   listBotSessions: (...args: unknown[]) => listBotSessions(...args),
 }));
 
@@ -94,6 +97,7 @@ beforeEach(() => {
     bots: [],
     selectedBotId: null,
     connectionByBot: {},
+    mcpChangedByBot: {},
     sessionByBot: {},
     statusByBot: {},
     runningByBot: {},
@@ -253,4 +257,27 @@ describe('useBotSession.open', () => {
     expect(texts()).toEqual([]);
     expect(useBotUiStore.getState().selectedBotId).toBe('bot2');
   });
+});
+it('restarts only the affected idle Bot after its GitHub credential changes', async () => {
+  const scout = {...bot('bot1'), mcpServers:'["keke:github"]'};
+  const other = {...bot('bot2'), mcpServers:'["keke:linear"]'};
+  useBotUiStore.setState({bots:[scout,other],connectionByBot:{bot1:'old',bot2:'other'},sessionByBot:{bot1:'old-session',bot2:'other-session'}});
+  useBotUiStore.getState().markMcpChanged('github');
+  expect(useBotUiStore.getState().mcpChangedByBot.bot1).toBe(true);
+  expect(useBotUiStore.getState().mcpChangedByBot.bot2).toBeUndefined();
+  acpStart.mockResolvedValue({connectionId:'new',sessionId:'new-session',initialize:{},session:{sessionId:'new-session'},sessionError:null});
+  listBotSessions.mockResolvedValue([]);
+  acpGetSession.mockResolvedValue([]);
+  await openBot()(scout);
+  expect(acpStop).toHaveBeenCalledWith('old');
+  expect(useBotUiStore.getState().connectionByBot.bot1).toBe('new');
+  expect(useBotUiStore.getState().connectionByBot.bot2).toBe('other');
+  expect(useBotUiStore.getState().mcpChangedByBot.bot1).toBeUndefined();
+});
+it('defers credential reconnection until an active task finishes', async () => {
+  useBotUiStore.setState({connectionByBot:{bot1:'active'},sessionByBot:{bot1:'session'},runningByBot:{bot1:true},mcpChangedByBot:{bot1:true}});
+  acpGetSession.mockResolvedValue([]);
+  await openBot()(bot('bot1'));
+  expect(acpStop).not.toHaveBeenCalled();
+  expect(useBotUiStore.getState().mcpChangedByBot.bot1).toBe(true);
 });

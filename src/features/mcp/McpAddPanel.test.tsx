@@ -1,9 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+const login = vi.fn().mockResolvedValue(undefined);
 const addKeke = vi.fn().mockResolvedValue(undefined);
 const addUnified = vi.fn().mockResolvedValue(undefined);
 const addClaude = vi.fn().mockResolvedValue(undefined);
-vi.mock('@/services/apiAdapt/kekeMcp', () => ({ addKekeMcpServer: (...args: unknown[]) => addKeke(...args) }));
+vi.mock('@/services/apiAdapt/kekeMcp', () => ({ addKekeMcpServer: (...args: unknown[]) => addKeke(...args), readKekeMcpAuthStatuses: vi.fn().mockResolvedValue({}), loginKekeMcpServer: (...args: unknown[]) => login(...args) }));
 vi.mock('@/services', () => ({ unifiedAddMcpServer: (...args: unknown[]) => addUnified(...args), ccMcpAdd: (...args: unknown[]) => addClaude(...args) }));
 vi.mock('@/stores', () => ({ useAgentSettingsStore: () => ({ selectedAgent: 'codex' }), useWorkspaceStore: () => ({ cwd: '/tmp' }) }));
 import { McpAddPanel } from './McpAddPanel';
@@ -32,4 +33,14 @@ describe('Bot custom connectors', () => {
     expect(addKeke).not.toHaveBeenCalled();
     expect(addUnified).not.toHaveBeenCalled();
   });
+  it('starts OAuth after adding a recognized remote server from the custom form', async () => {
+    const added = vi.fn();
+    render(<McpAddPanel target="keke" onAdded={added} />);
+    fireEvent.change(screen.getByRole('textbox', {name:'Server name'}), {target:{value:'team-linear'}});
+    fireEvent.change(screen.getByRole('textbox', {name:'Server URL'}), {target:{value:'https://mcp.linear.app/mcp'}});
+    fireEvent.click(screen.getByRole('button', {name:'Add Server'}));
+    await waitFor(() => expect(login).toHaveBeenCalledWith('team-linear'));
+    await waitFor(() => expect(added).toHaveBeenCalledOnce());
+  });
+
 });
