@@ -4,11 +4,12 @@ on:
   push:
     tags:
       - "v*"
-  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
-  # keke agent version bundled as a sidecar (tag of milisp/keke-agent).
-  KEKE_VERSION: v0.1.38
   VITE_REDIRECT_URL: ${{ secrets.VITE_REDIRECT_URL }}
   VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
   VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
@@ -23,16 +24,33 @@ jobs:
       contents: write
     outputs:
       section: ${{ steps.notes.outputs.section }}
+      tag: ${{ steps.target.outputs.tag }}
     steps:
       - uses: actions/checkout@v7
         with:
           ref: master
           fetch-depth: 0
 
+      - name: Validate pushed tag matches project version
+        id: target
+        shell: bash
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          TAG="$REF_NAME"
+          git rev-parse --verify "refs/tags/$TAG" >/dev/null || { echo "::error::Release tag $TAG does not exist"; exit 1; }
+          PACKAGE_VERSION=$(git show "$TAG:package.json" | node -e "let s='';process.stdin.on('data',c=>s+=c);process.stdin.on('end',()=>console.log(JSON.parse(s).version))")
+          CARGO_VERSION=$(git show "$TAG:Cargo.toml" | sed -n '/^\[workspace.package\]/,/^\[/p' | sed -n 's/^version *= *"\([^"]*\)".*/\1/p')
+          [[ "$TAG" == "v$PACKAGE_VERSION" && "$PACKAGE_VERSION" == "$CARGO_VERSION" ]] || { echo "::error::Tag $TAG != package.json $PACKAGE_VERSION or Cargo.toml $CARGO_VERSION"; exit 1; }
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
       - name: Ensure CHANGELOG.md has an entry for this tag
         id: notes
         shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.target.outputs.tag }}
         run: |
+          GITHUB_REF_NAME="$RELEASE_TAG"
           VERSION="${GITHUB_REF_NAME#v}"
           SECTION=$(awk -v ver="[$VERSION]" '
             /^## \[/ { if (found) exit; if (index($0, ver)) { found=1; next } }
@@ -48,7 +66,7 @@ jobs:
             {
               echo "## [${VERSION}] - ${DATE}"
               echo
-              git log "${RANGE}" --pretty=format:'- %s (`%h`)' --no-merges
+              git log "${RANGE}" --pretty=format:"- %s (\`%h\`)" --no-merges
               echo
               echo
             } > "${ENTRY}"
@@ -57,7 +75,7 @@ jobs:
             {
               head -n $((FIRST_SECTION_LINE - 1)) CHANGELOG.md
               cat "${ENTRY}"
-              tail -n +${FIRST_SECTION_LINE} CHANGELOG.md
+              tail -n "+${FIRST_SECTION_LINE}" CHANGELOG.md
             } > CHANGELOG.md.new
             mv CHANGELOG.md.new CHANGELOG.md
             rm -f "${ENTRY}"
@@ -109,6 +127,8 @@ jobs:
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.sync-changelog.outputs.tag }}
 
       - name: setup node
         uses: actions/setup-node@v7
@@ -129,7 +149,7 @@ jobs:
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          echo $APPLE_CERTIFICATE | base64 --decode > certificate.p12
+          echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
@@ -142,7 +162,7 @@ jobs:
         run: |
           CERT_INFO=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application")
           CERT_ID=$(echo "$CERT_INFO" | awk -F'"' '{print $2}')
-          echo "CERT_ID=$CERT_ID" >> $GITHUB_ENV
+          echo "CERT_ID=$CERT_ID" >> "$GITHUB_ENV"
           echo "Certificate imported."
 
       - name: install dependencies (ubuntu only)
@@ -167,6 +187,13 @@ jobs:
             TRIPLE=$(rustc -vV | sed -n 's/host: //p')
           fi
           echo "triple=$TRIPLE" >> "$GITHUB_OUTPUT"
+
+      - name: Read pinned keke version
+        shell: bash
+        run: |
+          VERSION=$(cat .github/keke-version)
+          [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.-]+)?$ ]] || { echo "Invalid keke version: $VERSION" >&2; exit 1; }
+          echo "KEKE_VERSION=$VERSION" >> "$GITHUB_ENV"
 
       - name: Checkout keke
         uses: actions/checkout@v7
@@ -220,10 +247,10 @@ jobs:
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ env.CERT_ID }}
         with:
-          tagName: v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
-          releaseName: "v__VERSION__"
+          tagName: ${{ needs.sync-changelog.outputs.tag }}
+          releaseName: ${{ needs.sync-changelog.outputs.tag }}
           releaseBody: ${{ steps.notes.outputs.body }}
-          releaseDraft: false
+          releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }} --config src-tauri/tauri.keke.conf.json
 
@@ -232,3 +259,34 @@ jobs:
         run: |
           security delete-keychain build.keychain
           rm -f certificate.p12
+
+  windows-portable:
+    needs: [sync-changelog, publish-tauri]
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release-windows-portable.yml
+    with:
+      tag: ${{ needs.sync-changelog.outputs.tag }}
+    secrets: inherit
+
+  web-packages:
+    needs: [sync-changelog, publish-tauri]
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release-web.yml
+    with:
+      tag: ${{ needs.sync-changelog.outputs.tag }}
+    secrets: inherit
+
+  publish-release:
+    needs: [sync-changelog, publish-tauri, windows-portable, web-packages]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish completed release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.sync-changelog.outputs.tag }}
+        run: gh release edit "$RELEASE_TAG" --draft=false
