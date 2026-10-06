@@ -6,6 +6,11 @@
 > changelog. The release workflow reads the top `## [version]` section of this
 > file matching the tag being published.
 
+## [0.54.2] - 2026-10-06
+
+- chore: bump version to 0.54.2 (`37a9f318`)
+- Fix release coordination and unify pinned keke version (`01705d0f`)
+
 ## [0.54.1] - 2026-10-06
 
 ### Features & Improvements
