@@ -6,6 +6,18 @@
 > changelog. The release workflow reads the top `## [version]` section of this
 > file matching the tag being published.
 
+## [0.54.1] - 2026-10-06
+
+### Features & Improvements
+- Added native MCP sign-in and a tool picker in the Bot composer; connector setup is managed in Plugins.
+- Added FXMacroData as an optional Quick Add MCP server.
+- Reorganized Bot navigation and simplified tool access controls.
+
+### Fixes & Maintenance
+- Fixed GitHub MCP token authorization and connector authorization on add.
+- Updated the bundled keke agent to v0.1.38.
+- Updated release CI and migrated Bot creation test coverage.
+
 ## [0.54.0] - 2026-10-05
 
 ### Features & Improvements
