@@ -11,6 +11,19 @@ vi.mock('@/services', () => ({ unifiedAddMcpServer: (...args: unknown[]) => addU
 import { DefaultMcpServers } from './DefaultMcpServers';
 beforeEach(() => { vi.clearAllMocks(); servers.mockResolvedValue({}); login.mockResolvedValue(undefined); tokenAuth.mockResolvedValue(undefined); statuses.mockResolvedValue({linear:{signedIn:false,error:null},github:{signedIn:false,error:null}}); });
 describe('featured connector targets', () => {
+  it('keeps FXMacroData outside Featured and adds it from Finance & economics', async () => {
+    const added = vi.fn();
+    render(<DefaultMcpServers agent="keke" servers={{}} onServerAdded={added} />);
+    expect(screen.queryByRole('button', { name: 'Add FXMacroData' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'All connectors' }));
+    expect(screen.getByRole('button', { name: 'Add FXMacroData' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Finance & economics' }));
+    expect(screen.queryByRole('button', { name: 'Add GitHub' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Add FXMacroData' }));
+    await waitFor(() => expect(added).toHaveBeenCalledOnce());
+    expect(addKeke).toHaveBeenCalledWith('fxmacrodata', { type: 'http', url: 'https://mcp.fxmacrodata.com' });
+    expect(login).not.toHaveBeenCalled();
+  });
   it('adds a Bot preset only to keke', async () => {
     const added = vi.fn();
     render(<DefaultMcpServers agent="keke" servers={{}} onServerAdded={added} />);

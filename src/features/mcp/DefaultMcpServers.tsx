@@ -19,6 +19,7 @@ interface DefaultMcpServersProps {
 
 export function DefaultMcpServers({ agent, cwd, servers, onServerAdded }: DefaultMcpServersProps) {
   const auth = useKekeMcpAuth(agent === 'keke');
+  const [category, setCategory] = useState('featured');
   const [adding, setAdding] = useState<string | null>(null);
   const catalogKey = `${agent}:${cwd ?? ''}`;
   const [additions, setAdditions] = useState<{
@@ -38,7 +39,7 @@ export function DefaultMcpServers({ agent, cwd, servers, onServerAdded }: Defaul
           serverConfig: preset.config,
           scope: agent === 'cc' ? 'global' : undefined,
         });
-      toast.success(`${preset.label} configured. ${preset.access}.`);
+      toast.success(`${preset.label} configured.${preset.access ? ` ${preset.access}.` : ''}`);
       onServerAdded();
       setAdditions((previous) => ({
         key: catalogKey,
@@ -62,49 +63,76 @@ export function DefaultMcpServers({ agent, cwd, servers, onServerAdded }: Defaul
     <div className="flex flex-col gap-4">
       <KekeGitHubAuthDialog auth={auth} />
       <div>
-        <h3 className="text-lg font-semibold">Featured connectors</h3>
+        <h3 className="text-lg font-semibold">Connectors</h3>
         <p className="text-sm text-muted-foreground">
           Add tools for {agent === 'keke' ? 'your bots' : agent === 'cc' ? 'Claude' : 'Codex'}.
         </p>
       </div>
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Connector category">
+        {[
+          { value: 'featured', label: 'Featured' },
+          { value: 'all', label: 'All connectors' },
+          { value: 'finance', label: 'Finance & economics' },
+        ].map((item) => (
+          <Button
+            key={item.value}
+            size="sm"
+            variant={category === item.value ? 'secondary' : 'ghost'}
+            aria-pressed={category === item.value}
+            onClick={() => setCategory(item.value)}
+          >
+            {item.label}
+          </Button>
+        ))}
+      </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {appPresets.map((preset) => {
-          const added = preset.name in servers || preset.name in justAdded;
-          const config = (servers[preset.name] ?? justAdded[preset.name]) as
-            | KekeMcpServer
-            | undefined;
-          return (
-            <div key={preset.name} className="flex items-start gap-3 rounded-lg border p-4">
-              <ConnectorIcon name={preset.name} />
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className="text-sm font-medium">{preset.label}</span>
-                <p className="text-xs text-muted-foreground">{preset.description}</p>
-                <span className="text-xs text-muted-foreground">{preset.access}</span>
-              </div>
-              {added ? (
-                agent === 'keke' && preset.authorizationRequired ? (
-                  <KekeMcpAuthControl name={preset.name} auth={auth} config={config} />
+        {appPresets
+          .filter(
+            (preset) =>
+              category === 'all' ||
+              (category === 'featured'
+                ? preset.category !== 'finance'
+                : preset.category === category)
+          )
+          .map((preset) => {
+            const added = preset.name in servers || preset.name in justAdded;
+            const config = (servers[preset.name] ?? justAdded[preset.name]) as
+              | KekeMcpServer
+              | undefined;
+            return (
+              <div key={preset.name} className="flex items-start gap-3 rounded-lg border p-4">
+                <ConnectorIcon name={preset.name} />
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="text-sm font-medium">{preset.label}</span>
+                  <p className="text-xs text-muted-foreground">{preset.description}</p>
+                  {preset.access ? (
+                    <span className="text-xs text-muted-foreground">{preset.access}</span>
+                  ) : null}
+                </div>
+                {added ? (
+                  agent === 'keke' && preset.authorizationRequired ? (
+                    <KekeMcpAuthControl name={preset.name} auth={auth} config={config} />
+                  ) : (
+                    <Check
+                      aria-label={`${preset.label} configured`}
+                      className="size-4 shrink-0 text-muted-foreground"
+                    />
+                  )
                 ) : (
-                  <Check
-                    aria-label={`${preset.label} configured`}
-                    className="size-4 shrink-0 text-muted-foreground"
-                  />
-                )
-              ) : (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  aria-label={`Add ${preset.label}`}
-                  disabled={adding !== null}
-                  onClick={() => add(preset)}
-                >
-                  <Plus data-icon="inline-start" />
-                  {adding === preset.name ? 'Adding…' : 'Add'}
-                </Button>
-              )}
-            </div>
-          );
-        })}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    aria-label={`Add ${preset.label}`}
+                    disabled={adding !== null}
+                    onClick={() => add(preset)}
+                  >
+                    <Plus data-icon="inline-start" />
+                    {adding === preset.name ? 'Adding…' : 'Add'}
+                  </Button>
+                )}
+              </div>
+            );
+          })}
       </div>
     </div>
   );

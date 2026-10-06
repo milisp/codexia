@@ -4,7 +4,8 @@ export const appPresets: {
   name: string;
   label: string;
   description: string;
-  access: string;
+  access?: string;
+  category?: 'finance';
   authorizationRequired?: boolean;
   config: McpServerConfig;
 }[] = [
@@ -59,5 +60,12 @@ export const appPresets: {
     description: 'Web search and URL extraction',
     access: 'No account required',
     config: { type: 'http', url: 'https://search.parallel.ai/mcp' },
+  },
+  {
+    name: 'fxmacrodata',
+    label: 'FXMacroData',
+    description: 'Macroeconomic releases, economic calendar and FX data',
+    category: 'finance',
+    config: { type: 'http', url: 'https://mcp.fxmacrodata.com' },
   },
 ];
