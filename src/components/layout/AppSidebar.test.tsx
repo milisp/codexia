@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useLayoutStore } from '@/stores';
 import { useAcpStore } from '@/stores/useAcpStore';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 
@@ -44,6 +45,17 @@ beforeEach(() => {
 });
 
 describe('AppSideBar', () => {
+  it('opens the Bots view without creating a bot', () => {
+    useLayoutStore.setState({ view: 'agent' });
+    render(<SidebarProvider><AppSideBar /></SidebarProvider>);
+    fireEvent.click(screen.getByRole('button', { name: /^Bots$/ }));
+    expect(useLayoutStore.getState().view).toBe('bot');
+    expect(screen.getByRole('button', { name: 'Collapse bots' })).toBeTruthy();
+    expect(createBot).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse bots' }));
+    expect(useLayoutStore.getState().view).toBe('bot');
+  });
+
   it('clears the pane when a bot is created, so the previous bot does not appear to be it', async () => {
     createBot.mockImplementation(async (bot: Record<string, unknown>) => ({
       ...bot,

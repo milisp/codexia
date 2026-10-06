@@ -51,7 +51,7 @@ export function SideBarBotPane() {
       <div className="min-h-0 flex-1 overflow-y-auto">
         {bots.length === 0 && (
           <p className="px-3 py-6 text-center text-xs text-muted-foreground">
-            No bots yet. A bot is a named agent you can keep messaging.
+            Your bots will appear here.
           </p>
         )}
 

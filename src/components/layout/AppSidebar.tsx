@@ -1,10 +1,10 @@
 import { Bug, ChevronDown, ChevronRight, Monitor, Plus, Search } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SideBarBotPane } from '@/components/bot';
 import { BotNotifications } from '@/components/bot/BotNotifications';
 import { BotSettingsDialog } from '@/components/bot/BotSettingsDialog';
-import { defaultLook, newBotId } from '@/components/bot/botDefaults';
+import { useCreateBot } from '@/components/bot/useCreateBot';
 import { DesktopDrawer } from '@/components/pairing/DesktopDrawer';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -16,14 +16,9 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { toast } from '@/components/ui/use-toast';
 import { useTrafficLightConfig } from '@/hooks';
 import { isPhone } from '@/hooks/runtime';
-import { type Bot, createBot } from '@/services/apiAdapt/bots';
 import { useLayoutStore } from '@/stores';
-import { useAcpStore } from '@/stores/useAcpStore';
-import { useBotUiStore } from '@/stores/useBotUiStore';
-import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { UpdateIndicator } from '../../features/UpdateIndicator';
 import { SessionManagerDialog } from '../common/SessionManagerDialog';
 import { SideBarAgentHeader, SideBarAgentList, SideBarProjectActions } from './SideBarAgentPane';
@@ -41,32 +36,8 @@ export function AppSideBar() {
   // Only a phone drives a remote machine; a desktop is its own backend and has
   // nothing to switch between.
   const [desktopDrawerOpen, setDesktopDrawerOpen] = useState(false);
-  const [newBot, setNewBot] = useState<Bot | null>(null);
-  const cwd = useWorkspaceStore((s) => s.cwd);
-  const bots = useBotUiStore((s) => s.bots);
-  const upsertBot = useBotUiStore((s) => s.upsertBot);
+  const { newBot, setNewBot, creating, handleCreateBot } = useCreateBot();
   const setView = useLayoutStore((s) => s.setView);
-
-  const handleCreateBot = useCallback(async () => {
-    const look = defaultLook(bots.length);
-    try {
-      const bot = await createBot({
-        id: newBotId(),
-        name: `Bot ${bots.length + 1}`,
-        avatar: look.avatar,
-        color: look.color,
-        cwd: cwd ?? '',
-      });
-      upsertBot(bot);
-      useAcpStore.getState().reset();
-      useAcpStore.getState().setAgentId(bot.agentId);
-      useBotUiStore.getState().setSelectedBotId(bot.id);
-      setView('bot');
-      setNewBot(bot);
-    } catch (error) {
-      toast({ title: 'Could not create bot', description: String(error), variant: 'destructive' });
-    }
-  }, [bots.length, cwd, setView, upsertBot]);
 
   return (
     <>
@@ -112,9 +83,25 @@ export function AppSideBar() {
             }}
           >
             <div className="flex items-center px-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-1 justify-start"
+                onClick={() => {
+                  setBotsOpen(true);
+                  setHasSeenBotTab(true);
+                  setView('bot');
+                }}
+              >
+                Bots
+              </Button>
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="flex-1 justify-start gap-2">
-                  <span>Bots</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  aria-label={botsOpen ? 'Collapse bots' : 'Expand bots'}
+                >
                   <ChevronRight
                     className={`h-4 w-4 text-muted-foreground/60 transition-transform ${botsOpen ? 'rotate-90' : ''}`}
                   />
@@ -128,6 +115,7 @@ export function AppSideBar() {
                 title={t('newBot')}
                 aria-label={t('newBot')}
                 onClick={handleCreateBot}
+                disabled={creating}
               >
                 <Plus className="h-4 w-4" />
               </Button>

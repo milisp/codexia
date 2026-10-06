@@ -13,13 +13,19 @@ import { BotMessageList } from './BotMessageList';
 import { BotPermissionGate } from './BotPermissionGate';
 import { BotRoutines } from './BotRoutines';
 import { BotSettingsDialog } from './BotSettingsDialog';
+import { BotWelcome } from './BotWelcome';
 import { TRUST_LEVELS } from './botAgentDef';
+import { markBotRead } from './markBotRead';
 import { useBotDragDrop } from './useBotDragDrop';
+import { useBotSession } from './useBotSession';
+import { useCreateBot } from './useCreateBot';
 
 /** The full-screen conversation with one bot. */
 export default function BotChatView() {
   const { bots, selectedBotId, connectionByBot } = useBotUiStore();
   const connectionId = useAcpStore((s) => s.connectionId);
+  const { newBot, setNewBot, creating, handleCreateBot } = useCreateBot();
+  const { open } = useBotSession();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tasksOpen, setTasksOpen] = useState(false);
   const { open: isSidebarOpen, openMobile, isMobile } = useSidebar();
@@ -44,9 +50,19 @@ export default function BotChatView() {
             </div>
           )}
         </header>
-        <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-          Pick a bot, or make a new one.
-        </div>
+        <BotWelcome
+          bots={bots}
+          creating={creating}
+          onCreate={handleCreateBot}
+          onSelect={(item) => {
+            const status = useBotUiStore.getState().statusByBot[item.id];
+            if (status === 'blocked' || status === 'failed') {
+              useBotUiStore.getState().setBotStatus(item.id, null);
+            }
+            void markBotRead(item);
+            void open(item);
+          }}
+        />
       </div>
     );
   }
@@ -102,7 +118,14 @@ export default function BotChatView() {
       <BotPermissionGate bot={bot} />
       <BotComposer bot={bot} />
 
-      <BotSettingsDialog bot={bot} open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <BotSettingsDialog
+        bot={newBot ?? bot}
+        open={settingsOpen || Boolean(newBot)}
+        onOpenChange={(next) => {
+          setSettingsOpen(next);
+          if (!next) setNewBot(null);
+        }}
+      />
       <Dialog open={tasksOpen} onOpenChange={setTasksOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
