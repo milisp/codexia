@@ -8,7 +8,7 @@ on:
 
 env:
   # keke agent version bundled as a sidecar (tag of milisp/keke-agent).
-  KEKE_VERSION: v0.1.37
+  KEKE_VERSION: v0.1.38
   VITE_REDIRECT_URL: ${{ secrets.VITE_REDIRECT_URL }}
   VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
   VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
