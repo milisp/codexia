@@ -65,12 +65,12 @@ fn configure_oauth(config: &mut Value) {
         return;
     }
     if github_url(config).is_err() { return; }
-    let Ok(client_id) = std::env::var("GITHUB_MCP_CLIENT_ID") else { return; };
+    let Ok(client_id) = std::env::var("MCP_GITHUB_CLIENT_ID") else { return; };
     if client_id.trim().is_empty() { return; }
     let mut oauth = json!({"client_id":client_id.trim(), "redirect_uri":
-        std::env::var("GITHUB_MCP_REDIRECT_URI").unwrap_or_else(|_| "http://127.0.0.1:8765/callback".into())});
-    if std::env::var("GITHUB_MCP_CLIENT_SECRET").is_ok_and(|value| !value.trim().is_empty()) {
-        oauth["client_secret"] = json!("${GITHUB_MCP_CLIENT_SECRET}");
+        std::env::var("MCP_GITHUB_REDIRECT_URI").unwrap_or_else(|_| "http://127.0.0.1:8765/callback".into())});
+    if std::env::var("MCP_GITHUB_CLIENT_SECRET").is_ok_and(|value| !value.trim().is_empty()) {
+        oauth["client_secret"] = json!("${MCP_GITHUB_CLIENT_SECRET}");
     }
     config["oauth"] = oauth;
 }
@@ -269,7 +269,7 @@ pub async fn login_mcp_server(name: String) -> Result<(), String> {
     let config = servers.get(&name).ok_or("Connector is no longer configured")?;
     let original_url = remote_url(config)?.to_string();
     if github_url(config).is_ok() && config.get("oauth").is_none() {
-        return Err("Configure GITHUB_MCP_CLIENT_ID before authorizing GitHub in the browser".into());
+        return Err("Configure MCP_GITHUB_CLIENT_ID before authorizing GitHub in the browser".into());
     }
     // CLI login reads the native document; ACP metadata alone is not enough.
     if let Some(oauth) = config.get("oauth") {

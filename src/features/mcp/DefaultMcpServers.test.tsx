@@ -77,7 +77,7 @@ describe('featured connector targets', () => {
     expect(login).not.toHaveBeenCalled();
   });
   it('starts GitHub browser authorization when a registered client is configured', async () => {
-    servers.mockResolvedValue({github:{type:'http',url:'https://api.githubcopilot.com/mcp/',oauth:{client_id:'fixture',client_secret:'${GITHUB_MCP_CLIENT_SECRET}'}}});
+    servers.mockResolvedValue({github:{type:'http',url:'https://api.githubcopilot.com/mcp/',oauth:{client_id:'fixture',client_secret:'${MCP_GITHUB_CLIENT_SECRET}'}}});
     render(<DefaultMcpServers agent="keke" servers={{}} onServerAdded={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', {name:'Add GitHub'}));
     await waitFor(() => expect(login).toHaveBeenCalledWith('github'));
