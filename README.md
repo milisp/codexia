@@ -8,7 +8,7 @@
   </p>
 
   <p>
-    <a href="https://github.com/milisp/codexia/releases"><img src="https://img.shields.io/github/downloads/milisp/codexia/total.svg?style=for-the-badge&label=Downloads&color=2ea44f" alt="Downloads"></a>
+    <a href="https://milisp.github.io/modern-github-release/#/repo/milisp/codexia"><img src="https://img.shields.io/github/downloads/milisp/codexia/total.svg?style=for-the-badge&label=Downloads&color=2ea44f" alt="Downloads"></a>
     <a href="https://github.com/milisp/codexia/stargazers"><img src="https://img.shields.io/github/stars/milisp/codexia?style=for-the-badge&label=Stars&color=f1c40f" alt="Stars"></a>
     <a href="https://discord.gg/zAjtD4kf5K"><img src="https://img.shields.io/badge/Discord-Join-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
     <a href="http://x.com/intent/follow?screen_name=lisp_mi"><img src="https://img.shields.io/badge/Follow-@lisp__mi-000000?style=for-the-badge&logo=x&logoColor=white" alt="Follow on X"></a>
@@ -68,7 +68,7 @@ scoop install codexia
 ```
 
 ### Prebuilt releases (macOS / Linux / Windows)
-- [GitHub Releases](https://github.com/milisp/codexia/releases)
+- [GitHub Releases](https://milisp.github.io/modern-github-release/#/repo/milisp/codexia)
 
 Windows also ships a portable archive (`codexia_<version>_x64_portable.zip`) that
 runs without installing.
