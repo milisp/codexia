@@ -1,4 +1,4 @@
-import { LayoutGrid, List, PanelRight, Square, SquareTerminal } from 'lucide-react';
+import { LayoutGrid, PanelRight, SquareTerminal } from 'lucide-react';
 import { useCodexStore } from '@/components/codex/stores';
 import { NewAgentButton } from '@/components/common/NewAgentButton';
 import { Badge } from '@/components/ui/badge';
@@ -10,16 +10,9 @@ import { PublishButton } from '@/features/publish/PublishButton';
 import { useTrafficLightConfig } from '@/hooks';
 import { isPhone } from '@/hooks/runtime';
 import { useCCStore, useLayoutStore, useWorkspaceStore } from '@/stores';
-import type { AgentCardsViewMode } from '@/stores/useAgentCenterStore';
 import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { getFilename } from '@/utils/getFilename';
 import { OpenAppMenu } from './openApp/OpenAppMenu';
-
-const CARDS_VIEW_MODES: { mode: AgentCardsViewMode; icon: typeof LayoutGrid; title: string }[] = [
-  { mode: 'solo', icon: Square, title: 'Solo view' },
-  { mode: 'grid', icon: LayoutGrid, title: 'Grid view' },
-  { mode: 'list', icon: List, title: 'List view' },
-];
 
 export function AgentViewHeader() {
   const {
@@ -30,7 +23,7 @@ export function AgentViewHeader() {
     setRightPanelOpen,
   } = useLayoutStore();
   const isTerminalOpen = isRightPanelOpen && activeRightPanelTab === 'terminal';
-  const { cardsViewMode, setCardsViewMode } = useAgentCenterStore();
+  const { cards, cardsViewMode, setCardsViewMode } = useAgentCenterStore();
   const { open: isSidebarOpen, openMobile, isMobile } = useSidebar();
   const { needsTrafficLightOffset } = useTrafficLightConfig(isSidebarOpen);
   const { currentThreadId } = useCodexStore();
@@ -62,20 +55,17 @@ export function AgentViewHeader() {
         {cwd && <ProjectRunMenu />}
         {cwd && <PublishButton />}
         {cwd && <OpenAppMenu path={cwd} />}
-        <span className="flex items-center gap-0.5 border rounded-md p-0.5">
-          {CARDS_VIEW_MODES.map(({ mode, icon: Icon, title }) => (
-            <Button
-              key={mode}
-              variant={cardsViewMode === mode ? 'secondary' : 'ghost'}
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => setCardsViewMode(mode)}
-              title={title}
-            >
-              <Icon className="size-3.5" />
-            </Button>
-          ))}
-        </span>
+        {cards.length > 1 && (
+          <Button
+            variant={cardsViewMode === 'grid' ? 'secondary' : 'ghost'}
+            size="icon"
+            onClick={() => setCardsViewMode(cardsViewMode === 'grid' ? 'solo' : 'grid')}
+            title={cardsViewMode === 'grid' ? 'Focus current session' : 'Grid view'}
+            aria-label={cardsViewMode === 'grid' ? 'Focus current session' : 'Grid view'}
+          >
+            <LayoutGrid className="size-4" />
+          </Button>
+        )}
         {!isRightPanelOpen && (
           <>
             {hasActiveSession && <GitActions />}

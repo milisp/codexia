@@ -5,8 +5,8 @@ export type AgentCenterCard =
   | { kind: 'codex'; id: string; preview?: string; worktreePath?: string; cwd?: string | null }
   | { kind: 'cc'; id: string; preview?: string; worktreePath?: string; cwd?: string | null };
 
-// Multi-agent view layout mode: grid of cards, compact list (header only), or solo active card.
-export type AgentCardsViewMode = 'grid' | 'list' | 'solo';
+// Multi-agent view layout mode: grid of cards or solo active card.
+export type AgentCardsViewMode = 'grid' | 'solo';
 
 // User-adjusted size for a solo card in grid mode (Ghostty-style manual resize).
 // width is omitted until the user drags the right edge, letting the card fall back
@@ -78,9 +78,12 @@ export const useAgentCenterStore = create<AgentCenterState>()(
     }),
     {
       name: 'agent-center-store',
-      version: 4,
+      version: 5,
       migrate: (persistedState: any, version: number) => {
         if (version === 3 && persistedState?.cardsViewMode === 'single') {
+          persistedState.cardsViewMode = 'solo';
+        }
+        if (persistedState?.cardsViewMode === 'list') {
           persistedState.cardsViewMode = 'solo';
         }
         return persistedState;

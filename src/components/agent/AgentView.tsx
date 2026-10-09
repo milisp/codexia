@@ -41,7 +41,7 @@ export default function AgentView() {
   return (
     <div className="flex flex-col min-h-0 h-full">
       <AgentViewHeader />
-      {cards.length > 0 && cardsViewMode !== 'solo' ? (
+      {cards.length > 0 && cardsViewMode === 'grid' ? (
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
           <div className="flex-1 min-h-0 overflow-y-auto p-2">
             {cardsViewMode === 'grid' && (
@@ -56,20 +56,6 @@ export default function AgentView() {
                     card={card}
                     isSelected={currentAgentCardId === card.id}
                     onRemove={() => removeCard(card)}
-                  />
-                ))}
-              </div>
-            )}
-
-            {cardsViewMode === 'list' && (
-              <div className="flex flex-col gap-1">
-                {cards.map((card) => (
-                  <AgentCard
-                    key={`${card.kind}-${card.id}`}
-                    card={card}
-                    isSelected={currentAgentCardId === card.id}
-                    onRemove={() => removeCard(card)}
-                    hideBody={currentAgentCardId !== card.id}
                   />
                 ))}
               </div>
