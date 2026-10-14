@@ -4,6 +4,7 @@ import { CodexMcpView } from '@/features/mcp/CodexMcpView';
 import { DefaultMcpServers } from '@/features/mcp/DefaultMcpServers';
 import { KekeMcpView } from '@/features/mcp/KekeMcpView';
 import { McpAddPanel } from '@/features/mcp/McpAddPanel';
+import { McpLinkerHint } from '@/features/mcp/McpLinkerHint';
 import { Clone } from '@/features/skills/Clone';
 import { InstalledTab } from '@/features/skills/InstalledTab';
 import SkillsViewContent from '@/features/skills/SkillsView';
@@ -99,6 +100,7 @@ export function PluginsViewContent() {
               }}
             />
           )}
+          <McpLinkerHint />
         </div>
       )}
 
