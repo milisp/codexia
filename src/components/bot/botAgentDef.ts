@@ -4,7 +4,7 @@ import type { Bot, BotTrustLevel } from '@/services/apiAdapt/bots';
 const TRUST: Record<BotTrustLevel, { approvalPolicy: string; sandboxMode: string }> = {
   read_only: { approvalPolicy: 'on-request', sandboxMode: 'read_only' },
   ask: { approvalPolicy: 'on-request', sandboxMode: 'workspace_write' },
-  autonomous: { approvalPolicy: 'never', sandboxMode: 'workspace_write' },
+  autonomous: { approvalPolicy: 'auto', sandboxMode: 'workspace_write' },
 };
 
 export function trustFor(bot: Bot) {
@@ -21,6 +21,6 @@ export const TRUST_LEVELS: Array<{ id: BotTrustLevel; label: string; description
   {
     id: 'autonomous',
     label: 'Autonomous',
-    description: 'Works unattended in its own workspace.',
+    description: 'Works on its own; an AI reviewer checks risky steps.',
   },
 ];

@@ -12,7 +12,7 @@ use super::{
     handlers::{
         api_account_rate_limits, api_allow_sleep, api_archive_thread, api_unarchive_thread, api_canonicalize_path,
         api_acp_list_agents, api_acp_install_agent, api_acp_start, api_acp_prompt, api_acp_cancel,
-        api_acp_authenticate, api_acp_new_session, api_acp_respond_permission, api_acp_stop,
+        api_acp_authenticate, api_acp_new_session, api_acp_respond_permission, api_acp_stop, api_acp_waiting_approvals,
         api_acp_set_mode, api_acp_set_model, api_acp_set_config_option,
         api_acp_load_session, api_acp_list_sessions, api_acp_get_session, api_acp_delete_session,
         api_telemetry_status, api_telemetry_set_consent, api_telemetry_active, api_list_bots, api_create_bot, api_update_bot, api_delete_bot, api_bot_sessions, api_bots_mcp,
@@ -389,6 +389,7 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/acp/set-model", post(api_acp_set_model))
         .route("/api/acp/set-config-option", post(api_acp_set_config_option))
         .route("/api/acp/respond-permission", post(api_acp_respond_permission))
+        .route("/api/acp/waiting-approvals", post(api_acp_waiting_approvals))
         .route("/api/acp/stop", post(api_acp_stop))
         .route("/api/bots/list", post(api_list_bots))
         .route("/api/bots/create", post(api_create_bot))

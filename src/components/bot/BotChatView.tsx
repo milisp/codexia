@@ -13,6 +13,7 @@ import { BotMessageList } from './BotMessageList';
 import { BotPermissionGate } from './BotPermissionGate';
 import { BotRoutines } from './BotRoutines';
 import { BotSettingsDialog } from './BotSettingsDialog';
+import { BotWaitingApprovals } from './BotWaitingApprovals';
 import { BotWelcome } from './BotWelcome';
 import { TRUST_LEVELS } from './botAgentDef';
 import { markBotRead } from './markBotRead';
@@ -115,6 +116,7 @@ export default function BotChatView() {
       </header>
 
       <BotMessageList bot={bot} />
+      <BotWaitingApprovals bot={bot} />
       <BotPermissionGate bot={bot} />
       <BotComposer bot={bot} />
 

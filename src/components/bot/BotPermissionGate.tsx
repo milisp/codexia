@@ -32,6 +32,8 @@ export function BotPermissionGate({ bot }: { bot: Bot }) {
     if (!permission || !connectionId) return;
     if (answered.current === permission.requestId) return;
 
+    // Only a person may answer this one; a standing approval does not count.
+    if (permission.personRequired) return;
     const key = approvalKey(permission.title, permission.toolKind);
     if (!approved.includes(key)) return;
 
@@ -48,7 +50,7 @@ export function BotPermissionGate({ bot }: { bot: Bot }) {
   if (!permission || !connectionId) return null;
 
   const key = approvalKey(permission.title, permission.toolKind);
-  if (approved.includes(key)) return null;
+  if (!permission.personRequired && approved.includes(key)) return null;
 
   const respond = async (optionId: string | null) => {
     setPermission(null);
@@ -80,9 +82,11 @@ export function BotPermissionGate({ bot }: { bot: Bot }) {
             {option.name}
           </Button>
         ))}
-        <Button size="sm" variant="outline" onClick={allowAlways}>
-          Always allow {key}
-        </Button>
+        {!permission.personRequired && (
+          <Button size="sm" variant="outline" onClick={allowAlways}>
+            Always allow {key}
+          </Button>
+        )}
         <Button size="sm" variant="ghost" onClick={() => respond(null)}>
           Cancel
         </Button>

@@ -1,4 +1,6 @@
-import { Bot as BotIcon, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import kekeStatic from '@/assets/keke/keke.webp';
+import kekeWave from '@/assets/keke/keke-wave.webp';
 import { Button } from '@/components/ui/button';
 import type { Bot } from '@/services/apiAdapt/bots';
 import { BotAvatar } from './BotAvatar';
@@ -15,7 +17,15 @@ export function BotWelcome({ bots, creating, onCreate, onSelect }: BotWelcomePro
     <div className="flex flex-1 min-h-0 overflow-y-auto px-6 py-10">
       <div className="m-auto w-full max-w-lg space-y-6">
         <div className="space-y-2 text-center">
-          <BotIcon className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
+          <picture>
+            <source srcSet={kekeStatic} media="(prefers-reduced-motion: reduce)" />
+            <img
+              src={kekeWave}
+              alt=""
+              aria-hidden="true"
+              className="mx-auto mb-4 h-28 w-28 select-none"
+            />
+          </picture>
           <h1 className="text-2xl font-semibold tracking-tight">
             {bots.length === 0 ? 'Create your first bot' : 'Who would you like to work with?'}
           </h1>

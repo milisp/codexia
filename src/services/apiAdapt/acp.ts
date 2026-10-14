@@ -243,6 +243,26 @@ export async function acpRespondPermission(
   });
 }
 
+/** An unattended bot request waiting for a person (see the backend's
+ *  `AcpClient::ask_person`). Answer it with `acpRespondPermission`. */
+export type AcpWaitingApproval = {
+  connectionId: string;
+  requestId: string;
+  botId: string | null;
+  sessionId?: string | null;
+  toolCall?: { title?: string; kind?: string } | null;
+  options: Array<{ optionId: string; name: string; kind?: string }>;
+  /** Only a person may answer, and only for this call: no standing approval. */
+  personRequired: boolean;
+  requestedAt: string;
+};
+
+export async function acpWaitingApprovals(botId?: string) {
+  return await postJson<AcpWaitingApproval[]>('/api/acp/waiting-approvals', {
+    bot_id: botId ?? null,
+  });
+}
+
 export async function acpStop(connectionId: string) {
   await postNoContent('/api/acp/stop', { connection_id: connectionId });
 }

@@ -1,6 +1,7 @@
 use std::process::Stdio;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
+use std::time::Duration;
 
 use codexia_shared::event_sink::EventSink;
 use dashmap::DashMap;
@@ -54,48 +55,174 @@ impl ConnectionPolicy {
     }
 }
 
+/// How long an unattended request waits for a person before it is refused.
+/// Long enough to cover a night's sleep; a run waiting this long has been
+/// abandoned, and holding its process open forever would hide that.
+pub const PERSON_WAIT: Duration = Duration::from_secs(12 * 60 * 60);
+
+/// Whether keke marked this request as one only a person may answer, once.
+/// A keke extension (`_meta["keke.dev/person-required"]`), not a standard ACP
+/// field; anything other than `true` is an ordinary request.
+pub fn person_required(params: &Value) -> bool {
+    params
+        .get("_meta")
+        .and_then(|meta| meta.get("keke.dev/person-required"))
+        .and_then(Value::as_bool)
+        == Some(true)
+}
+
 /// The standing answer for permission requests on an unattended connection.
 #[derive(Clone, Default)]
 pub struct UnattendedApprovals {
-    /// Allow everything — an autonomous bot.
+    /// Allow everything a standing answer may cover — an autonomous bot.
+    /// Never covers a request only a person may answer.
     pub allow_all: bool,
     /// Tool keys (`toolCall.kind`, else its title) a person approved for good.
     pub approved_tools: Vec<String>,
-    /// Set once any request had to be refused, so the run can report that it
-    /// was blocked rather than claim it finished its job.
+    /// Set once any request was refused, or went unanswered, so the run can
+    /// report that it was blocked rather than claim it finished its job.
     pub blocked: Arc<AtomicBool>,
+    /// Requests currently waiting for a person.
+    pub waiting: Arc<WaitClock>,
+}
+
+/// What an unattended connection does with one permission request.
+#[derive(Debug, PartialEq)]
+enum Standing {
+    /// Answered from the bot's standing approvals.
+    Answer(Value),
+    /// Nobody may answer for the person: park it until they do.
+    AskPerson,
 }
 
 impl UnattendedApprovals {
-    /// Pick the option to answer `params` with: an allow-once when the tool is
-    /// approved, otherwise a reject-once (or a cancel when none is offered).
-    fn answer(&self, params: &Value) -> Value {
+    fn standing(&self, params: &Value) -> Standing {
+        if person_required(params) {
+            return Standing::AskPerson;
+        }
         let tool = params.get("toolCall");
         let key = tool
             .and_then(|t| t.get("kind"))
             .and_then(Value::as_str)
             .or_else(|| tool.and_then(|t| t.get("title")).and_then(Value::as_str))
             .unwrap_or_default();
-        let allowed = self.allow_all || self.approved_tools.iter().any(|t| t == key);
-        if !allowed {
-            self.blocked.store(true, Ordering::Relaxed);
+        if self.allow_all || self.approved_tools.iter().any(|t| t == key) {
+            return Standing::Answer(select(params, "allow_once"));
         }
-        let wanted = if allowed { "allow_once" } else { "reject_once" };
-        let option = params
-            .get("options")
-            .and_then(Value::as_array)
-            .and_then(|options| {
-                options
-                    .iter()
-                    .find(|o| o.get("kind").and_then(Value::as_str) == Some(wanted))
-            })
-            .and_then(|o| o.get("optionId"))
-            .cloned();
-        match option {
-            Some(id) => json!({ "outcome": { "outcome": "selected", "optionId": id } }),
-            None => json!({ "outcome": { "outcome": "cancelled" } }),
+        Standing::AskPerson
+    }
+}
+
+/// Counts requests waiting for a person and the time spent waiting, so an
+/// unattended run can stop its own clock while nobody is there to answer.
+#[derive(Default)]
+pub struct WaitClock {
+    state: std::sync::Mutex<WaitState>,
+    /// Told `true` when the first request starts waiting and `false` when the
+    /// last one is answered.
+    on_change: std::sync::OnceLock<Box<dyn Fn(bool) + Send + Sync>>,
+}
+
+#[derive(Default)]
+struct WaitState {
+    open: usize,
+    since: Option<tokio::time::Instant>,
+    total: Duration,
+}
+
+impl WaitClock {
+    pub fn on_change(&self, f: impl Fn(bool) + Send + Sync + 'static) {
+        let _ = self.on_change.set(Box::new(f));
+    }
+
+    /// Total time spent with at least one request waiting, including now.
+    pub fn waited(&self) -> Duration {
+        let state = self.state.lock().unwrap_or_else(|e| e.into_inner());
+        state.total + state.since.map(|s| s.elapsed()).unwrap_or_default()
+    }
+
+    pub fn is_waiting(&self) -> bool {
+        self.state.lock().unwrap_or_else(|e| e.into_inner()).open > 0
+    }
+
+    #[cfg(test)]
+    pub(crate) fn start_for_test(&self) {
+        self.start();
+    }
+
+    #[cfg(test)]
+    pub(crate) fn end_for_test(&self) {
+        self.end();
+    }
+
+    fn start(&self) {
+        let first = {
+            let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
+            state.open += 1;
+            if state.open == 1 {
+                state.since = Some(tokio::time::Instant::now());
+            }
+            state.open == 1
+        };
+        if first && let Some(f) = self.on_change.get() {
+            f(true);
         }
     }
+
+    fn end(&self) {
+        let last = {
+            let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
+            state.open = state.open.saturating_sub(1);
+            if state.open == 0 {
+                if let Some(since) = state.since.take() {
+                    state.total += since.elapsed();
+                }
+                true
+            } else {
+                false
+            }
+        };
+        if last && let Some(f) = self.on_change.get() {
+            f(false);
+        }
+    }
+}
+
+/// Answer `params` with its first option of `kind`, or cancel when it offers
+/// none.
+fn select(params: &Value, kind: &str) -> Value {
+    let option = params
+        .get("options")
+        .and_then(Value::as_array)
+        .and_then(|options| {
+            options
+                .iter()
+                .find(|o| o.get("kind").and_then(Value::as_str) == Some(kind))
+        })
+        .and_then(|o| o.get("optionId"))
+        .cloned();
+    match option {
+        Some(id) => json!({ "outcome": { "outcome": "selected", "optionId": id } }),
+        None => json!({ "outcome": { "outcome": "cancelled" } }),
+    }
+}
+
+/// Whether a reply to `params` let the call go ahead.
+fn allowed(params: &Value, reply: &Value) -> bool {
+    let Some(chosen) = reply["outcome"]["optionId"].as_str() else {
+        return false;
+    };
+    params
+        .get("options")
+        .and_then(Value::as_array)
+        .and_then(|options| {
+            options
+                .iter()
+                .find(|o| o.get("optionId").and_then(Value::as_str) == Some(chosen))
+        })
+        .and_then(|o| o.get("kind"))
+        .and_then(Value::as_str)
+        .is_some_and(|kind| kind.starts_with("allow"))
 }
 
 type Pending = Arc<DashMap<i64, oneshot::Sender<Result<Value, String>>>>;
@@ -132,6 +259,9 @@ pub struct AcpClient {
     /// JSON-RPC id of an in-flight `session/request_permission`, keyed by the
     /// request id we hand to the frontend.
     pending_permissions: Arc<DashMap<String, oneshot::Sender<Value>>>,
+    /// What each unattended request waiting for a person looks like, as it
+    /// was announced, so a client that was not listening can still list it.
+    waiting_requests: Arc<DashMap<String, Value>>,
     sink: Arc<dyn EventSink>,
 }
 
@@ -185,6 +315,7 @@ impl AcpClient {
             next_id: AtomicI64::new(1),
             pending: Arc::new(DashMap::new()),
             pending_permissions: Arc::new(DashMap::new()),
+            waiting_requests: Arc::new(DashMap::new()),
             sink,
         });
 
@@ -255,7 +386,7 @@ impl AcpClient {
             Err(error) => {
                 client.kill().await;
                 return Err(if client.policy.strict_mcp {
-                    format!("Bot requires keke strict MCP isolation (--mcp-policy client-only): {error}. Use a runtime that confirms the active policy during ACP initialize.")
+                    format!("Bot requires keke strict MCP isolation (--mcp-policy client-only) and require_approval support: {error}. Update keke to a version that confirms both during ACP initialize.")
                 } else { error });
             }
         };
@@ -535,6 +666,67 @@ impl AcpClient {
         }
     }
 
+    /// Put a permission request in front of a person and answer the agent
+    /// once they do. On an unattended connection the request is also listed
+    /// for clients that were not watching, waits at most [`PERSON_WAIT`], and
+    /// any outcome other than an allow marks the run as blocked.
+    fn ask_person(self: &Arc<Self>, params: Value, id: Value, unattended: Option<UnattendedApprovals>) {
+        let request_id = format!("{}-{}", self.connection_id, id);
+        let (tx, rx) = oneshot::channel();
+        self.pending_permissions.insert(request_id.clone(), tx);
+        let announced = json!({
+            "kind": "permission",
+            "requestId": request_id,
+            "sessionId": params.get("sessionId"),
+            "toolCall": params.get("toolCall"),
+            "options": params.get("options"),
+            "personRequired": person_required(&params),
+            "unattended": unattended.is_some(),
+            "botId": self.bot_id,
+            "requestedAt": chrono::Utc::now().to_rfc3339(),
+        });
+        if unattended.is_some() {
+            let mut listed = announced.clone();
+            if let Some(obj) = listed.as_object_mut() {
+                obj.insert("connectionId".into(), json!(self.connection_id));
+            }
+            self.waiting_requests.insert(request_id.clone(), listed);
+        }
+        self.emit(announced);
+
+        let this = self.clone();
+        tokio::spawn(async move {
+            let cancelled = || json!({ "outcome": { "outcome": "cancelled" } });
+            let result = match &unattended {
+                Some(unattended) => {
+                    unattended.waiting.start();
+                    let result = match tokio::time::timeout(PERSON_WAIT, rx).await {
+                        Ok(answer) => answer.unwrap_or_else(|_| cancelled()),
+                        Err(_) => {
+                            this.pending_permissions.remove(&request_id);
+                            select(&params, "reject_once")
+                        }
+                    };
+                    this.waiting_requests.remove(&request_id);
+                    if !allowed(&params, &result) {
+                        unattended.blocked.store(true, Ordering::Relaxed);
+                    }
+                    unattended.waiting.end();
+                    result
+                }
+                None => rx.await.unwrap_or_else(|_| cancelled()),
+            };
+            let _ = this
+                .write(json!({ "jsonrpc": "2.0", "id": id, "result": result }))
+                .await;
+        });
+    }
+
+    /// Unattended requests on this connection still waiting for a person.
+    pub fn waiting_requests(&self) -> Vec<Value> {
+        self.waiting_requests.iter().map(|e| e.value().clone()).collect()
+    }
+
     fn emit(&self, mut payload: Value) {
         if let Some(obj) = payload.as_object_mut() {
             obj.insert("connectionId".into(), json!(self.connection_id));
@@ -678,30 +870,13 @@ impl AcpClient {
                 Ok(Some(Value::Null))
             }
             "session/request_permission" => {
-                if let Some(unattended) = &self.policy.unattended {
-                    return Ok(Some(unattended.answer(&params)));
+                let unattended = self.policy.unattended.clone();
+                if let Some(unattended) = &unattended
+                    && let Standing::Answer(answer) = unattended.standing(&params)
+                {
+                    return Ok(Some(answer));
                 }
-                let request_id = format!("{}-{}", self.connection_id, id);
-                let (tx, rx) = oneshot::channel();
-                self.pending_permissions.insert(request_id.clone(), tx);
-                self.emit(json!({
-                    "kind": "permission",
-                    "requestId": request_id,
-                    "sessionId": params.get("sessionId"),
-                    "toolCall": params.get("toolCall"),
-                    "options": params.get("options"),
-                }));
-
-                let this = self.clone();
-                let id = id.clone();
-                tokio::spawn(async move {
-                    let result = rx
-                        .await
-                        .unwrap_or_else(|_| json!({ "outcome": { "outcome": "cancelled" } }));
-                    let _ = this
-                        .write(json!({ "jsonrpc": "2.0", "id": id, "result": result }))
-                        .await;
-                });
+                self.ask_person(params, id.clone(), unattended);
                 Ok(None)
             }
             other => Err(format!("unsupported client method: {other}")),
@@ -715,6 +890,14 @@ fn validate_mcp_policy(policy: &ConnectionPolicy, init: &Value) -> Result<(), St
             .and_then(Value::as_str) != Some("client-only")
     {
         return Err("runtime did not confirm client-only MCP policy; refusing to open a Bot session".into());
+    }
+    // Bots rely on keke to mark requests only a person may answer; without
+    // that an unattended run could approve a payment from a standing rule.
+    if policy.strict_mcp
+        && init.get("_meta").and_then(|meta| meta.get("keke.dev/require-approval"))
+            .and_then(Value::as_bool) != Some(true)
+    {
+        return Err("runtime did not confirm require_approval support; refusing to open a Bot session".into());
     }
     Ok(())
 }
@@ -738,13 +921,18 @@ mod tests {
             assert!(validate_mcp_policy(&ConnectionPolicy::default(), &init).is_ok());
         }
         assert!(validate_mcp_policy(&strict,
-            &json!({"_meta":{"keke.dev/mcp-policy":"client-only"}})).is_ok());
+            &json!({"_meta":{"keke.dev/mcp-policy":"client-only", "keke.dev/require-approval":true}})).is_ok());
     }
 
     // The fixture only speaks ACP and inspects launcher arguments. No real
     // agent, credentials, MCP server or database is touched by these tests.
     #[cfg(unix)]
     async fn fixture(policy: ConnectionPolicy, advertised: &str) -> Result<(Arc<AcpClient>, Value), String> {
+        fixture_with(policy, advertised, "present").await
+    }
+
+    #[cfg(unix)]
+    async fn fixture_with(policy: ConnectionPolicy, advertised: &str, require: &str) -> Result<(Arc<AcpClient>, Value), String> {
         let agent = AcpAgentDef {
             id: "fixture".into(), name: "Fixture".into(), command: "python3".into(),
             args: vec!["-u".into(), "-c".into(), r#"
@@ -754,13 +942,14 @@ for line in sys.stdin:
     if msg['method'] == 'initialize':
         result = {'arguments': sys.argv[1:]}
         if os.environ['POLICY'] != 'absent':
-            result['_meta'] = {'keke.dev/mcp-policy': os.environ['POLICY']}
+            result['_meta'] = {'keke.dev/mcp-policy': os.environ['POLICY'],
+                               'keke.dev/require-approval': os.environ.get('REQUIRE') != 'absent'}
         reply = {'result': result}
     else:
         reply = {'error': {'code': -32603, 'message': json.dumps(msg['params'])}}
     print(json.dumps(dict(jsonrpc='2.0', id=msg['id'], **reply)), flush=True)
 "#.into()],
-            env: [("POLICY".into(), advertised.into())].into(),
+            env: [("POLICY".into(), advertised.into()), ("REQUIRE".into(), require.into())].into(),
             available: true, local: true,
         };
         AcpClient::spawn("fixture".into(), &agent, None, Some("caller".into()), policy, Arc::new(QuietSink)).await
@@ -838,34 +1027,189 @@ for line in sys.stdin:
         })
     }
 
-    fn picked(answer: &Value) -> Option<&str> {
-        answer["outcome"]["optionId"].as_str()
+    fn person_only(kind: &str) -> Value {
+        let mut request = request(kind);
+        request["_meta"] = json!({ "keke.dev/person-required": true });
+        request
+    }
+
+    fn answered(standing: Standing) -> Option<String> {
+        match standing {
+            Standing::Answer(answer) => answer["outcome"]["optionId"].as_str().map(str::to_string),
+            Standing::AskPerson => None,
+        }
     }
 
     #[test]
-    fn unattended_allows_approved_tools_only() {
+    fn unattended_answers_only_from_standing_approvals_and_asks_otherwise() {
         let approvals = UnattendedApprovals {
             approved_tools: vec!["read".into()],
             ..Default::default()
         };
-        assert_eq!(picked(&approvals.answer(&request("read"))), Some("allow"));
+        assert_eq!(answered(approvals.standing(&request("read"))).as_deref(), Some("allow"));
+        // Not approved: a person decides; nothing is refused on their behalf.
+        assert_eq!(approvals.standing(&request("execute")), Standing::AskPerson);
         assert!(!approvals.blocked.load(Ordering::Relaxed));
-
-        assert_eq!(picked(&approvals.answer(&request("execute"))), Some("deny"));
-        assert!(approvals.blocked.load(Ordering::Relaxed));
     }
 
     #[test]
-    fn unattended_allow_all_never_blocks() {
+    fn nothing_standing_answers_a_request_only_a_person_may_answer() {
+        let approvals = UnattendedApprovals {
+            allow_all: true,
+            approved_tools: vec!["execute".into()],
+            ..Default::default()
+        };
+        assert_eq!(answered(approvals.standing(&request("execute"))).as_deref(), Some("allow"));
+        assert_eq!(approvals.standing(&person_only("execute")), Standing::AskPerson);
+        // Only a literal `true` marks it; anything else is an ordinary request.
+        let mut odd = request("execute");
+        odd["_meta"] = json!({ "keke.dev/person-required": "true" });
+        assert!(!person_required(&odd));
+    }
+
+    #[test]
+    fn only_an_allow_option_counts_as_allowed() {
+        let params = request("execute");
+        assert!(allowed(&params, &select(&params, "allow_once")));
+        assert!(!allowed(&params, &select(&params, "reject_once")));
+        assert!(!allowed(&params, &json!({ "outcome": { "outcome": "cancelled" } })));
+        assert_eq!(select(&json!({ "options": [] }), "reject_once")["outcome"]["outcome"], "cancelled");
+    }
+
+    #[test]
+    fn the_wait_clock_reports_edges_and_accumulates() {
+        let clock = WaitClock::default();
+        let seen = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let log = Arc::clone(&seen);
+        clock.on_change(move |waiting| log.lock().unwrap().push(waiting));
+        clock.start();
+        clock.start();
+        assert!(clock.is_waiting());
+        std::thread::sleep(Duration::from_millis(20));
+        clock.end();
+        assert!(clock.is_waiting());
+        clock.end();
+        assert!(!clock.is_waiting());
+        assert!(clock.waited() >= Duration::from_millis(20));
+        assert_eq!(*seen.lock().unwrap(), vec![true, false]);
+    }
+
+    #[test]
+    fn strict_policy_requires_approval_rule_support() {
+        let strict = ConnectionPolicy { strict_mcp: true, ..Default::default() };
+        let isolated = json!({"_meta":{"keke.dev/mcp-policy":"client-only"}});
+        assert!(validate_mcp_policy(&strict, &isolated).is_err());
+        assert!(validate_mcp_policy(&strict, &json!({"_meta":{
+            "keke.dev/mcp-policy":"client-only", "keke.dev/require-approval": true}})).is_ok());
+        assert!(validate_mcp_policy(&ConnectionPolicy::default(), &isolated).is_ok());
+    }
+
+    /// A fixture agent that asks for permission once, right after
+    /// initialize, and writes the answer it got to `out`. Standing in for keke
+    /// on an unattended connection without opening a session (which would
+    /// touch the session database).
+    #[cfg(unix)]
+    async fn asking_fixture(
+        unattended: UnattendedApprovals,
+        meta: Value,
+        out: &std::path::Path,
+    ) -> Arc<AcpClient> {
+        let agent = AcpAgentDef {
+            id: "asker".into(), name: "Asker".into(), command: "python3".into(),
+            args: vec!["-u".into(), "-c".into(), r#"
+import json, os, sys
+meta = json.loads(os.environ['META'])
+msg = json.loads(sys.stdin.readline())
+print(json.dumps({'jsonrpc':'2.0','id':msg['id'],'result':{}}), flush=True)
+ask = {'jsonrpc':'2.0','id':900,'method':'session/request_permission','params':{
+    'sessionId':'s1','toolCall':{'kind':'execute','title':'pay'},
+    'options':[{'optionId':'allow','kind':'allow_once'},{'optionId':'deny','kind':'reject_once'}]}}
+if meta: ask['params']['_meta'] = meta
+print(json.dumps(ask), flush=True)
+reply = sys.stdin.readline()
+with open(os.environ['OUT'], 'w') as f:
+    f.write(reply)
+sys.stdin.read()
+"#.into()],
+            env: [
+                ("META".into(), meta.to_string()),
+                ("OUT".into(), out.to_string_lossy().into_owned()),
+            ].into(),
+            available: true, local: true,
+        };
+        let policy = ConnectionPolicy { unattended: Some(unattended), ..Default::default() };
+        AcpClient::spawn("asker".into(), &agent, None, Some("bot-1".into()), policy, Arc::new(QuietSink))
+            .await
+            .unwrap()
+            .0
+    }
+
+    #[cfg(unix)]
+    async fn first_waiting(client: &AcpClient) -> Value {
+        for _ in 0..250 {
+            if let Some(first) = client.waiting_requests().first() {
+                return first.clone();
+            }
+            tokio::time::sleep(Duration::from_millis(20)).await;
+        }
+        panic!("no request started waiting");
+    }
+
+    #[cfg(unix)]
+    async fn told(out: &std::path::Path) -> Value {
+        for _ in 0..250 {
+            if let Ok(text) = std::fs::read_to_string(out)
+                && !text.is_empty()
+            {
+                return serde_json::from_str::<Value>(&text).unwrap()["result"].clone();
+            }
+            tokio::time::sleep(Duration::from_millis(20)).await;
+        }
+        panic!("the agent was never answered");
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn an_unattended_request_waits_for_a_person_and_is_listed_meanwhile() {
+        let dir = std::env::temp_dir().join(format!("codexia-acp-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let out = dir.join("told.json");
         let approvals = UnattendedApprovals { allow_all: true, ..Default::default() };
-        assert_eq!(picked(&approvals.answer(&request("execute"))), Some("allow"));
+        let client = asking_fixture(approvals.clone(), json!({"keke.dev/person-required": true}), &out).await;
+        // Autonomous does not answer it: it waits, listed, until a person does.
+        let listed = first_waiting(&client).await;
+        assert_eq!(listed["personRequired"], true);
+        assert_eq!(listed["botId"], "bot-1");
+        assert_eq!(listed["connectionId"], "asker");
+        assert!(approvals.waiting.is_waiting());
+        assert!(!out.exists());
+        client
+            .respond_permission(listed["requestId"].as_str().unwrap(), Some("allow".into()))
+            .unwrap();
+        assert_eq!(told(&out).await["outcome"]["optionId"], "allow");
+        assert!(client.waiting_requests().is_empty());
+        assert!(!approvals.waiting.is_waiting());
         assert!(!approvals.blocked.load(Ordering::Relaxed));
+        client.kill().await;
+        let _ = std::fs::remove_dir_all(dir);
     }
 
-    #[test]
-    fn unattended_cancels_when_no_reject_option() {
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn a_person_declining_an_unattended_request_blocks_the_run() {
+        let dir = std::env::temp_dir().join(format!("codexia-acp-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let out = dir.join("told.json");
         let approvals = UnattendedApprovals::default();
-        let answer = approvals.answer(&json!({ "toolCall": { "title": "x" }, "options": [] }));
-        assert_eq!(answer["outcome"]["outcome"], "cancelled");
+        let client = asking_fixture(approvals.clone(), Value::Null, &out).await;
+        let listed = first_waiting(&client).await;
+        assert_eq!(listed["personRequired"], false);
+        client
+            .respond_permission(listed["requestId"].as_str().unwrap(), Some("deny".into()))
+            .unwrap();
+        assert_eq!(told(&out).await["outcome"]["optionId"], "deny");
+        assert!(approvals.blocked.load(Ordering::Relaxed));
+        client.kill().await;
+        let _ = std::fs::remove_dir_all(dir);
     }
 }

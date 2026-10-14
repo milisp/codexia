@@ -98,21 +98,26 @@ permissions; test reading before enabling posting.
 ### The host must be running
 
 The scheduler runs inside the Codexia backend, not in a hosted cloud service.
-The desktop application or standalone backend must remain running, and the
-host must be awake and have any required network access. Closing the backend
-stops execution. There is no application-level guarantee that missed schedules
-are replayed after shutdown or sleep; inspect results and run manually if needed.
+The desktop application or standalone backend must remain running and have any
+required network access. Closing the backend stops execution. Codexia keeps the
+computer awake while a bot works. A task that comes due while the computer
+sleeps runs once when it wakes; tasks missed while Codexia was closed are not
+run. For an always-on host, turn off automatic sleep in the system settings.
 Disconnecting a phone is different from stopping its desktop backend.
 
 ### Background approvals
 
-Scheduled tasks run without an interactive approval dialog. Autonomous bots
-allow permission requests; other bots allow only tools previously approved with
-**Always allow**. Otherwise the task is marked **blocked**, not successful.
+Scheduled tasks go ahead on their own only where a standing answer exists: tools
+you approved with **Always allow**, or, for Autonomous bots, steps keke's
+reviewer approves. Any other step waits for you: the bot shows **Needs
+approval**, you get a notification, and Allow/Deny appear above the bot's
+composer, on the desktop or a connected phone. Payments, purchases, refunds,
+transfers, subscriptions and MCP deletions always wait for you, at every trust
+level.
 
-Review the requested operation in an interactive chat, approve only the needed
-tool if appropriate, and retry. Do not switch to Autonomous merely to dismiss
-an error: that setting gives unattended runs much broader authority.
+Denying a step, or leaving it unanswered for 12 hours, marks the task
+**blocked**, not successful. Do not switch to Autonomous merely to avoid
+approvals: that setting gives unattended runs much broader authority.
 
 ## Ask another bot for help
 
@@ -136,7 +141,8 @@ and its conversation to inspect the actual result rather than treating a complet
 notification as proof that the answer is correct.
 
 - **Working:** execution is in progress.
-- **Blocked:** a required operation lacked approval.
+- **Needs approval:** a step is waiting for your answer; the run continues once you answer.
+- **Blocked:** a step was denied or not answered within 12 hours.
 - **Failed:** execution encountered an error; inspect the result and connection.
 - **Done:** execution finished; review the output.
 
@@ -147,9 +153,10 @@ toasts; desktop system notifications require operating-system permission.
 
 - **No tools listed:** configure an application/MCP server, then authorize it
   for this bot. A saved server name does not prove its connection is healthy.
-- **No scheduled result:** check that the backend was running, the host was
-  awake, the task was not paused, and the schedule matches the host timezone.
-- **Blocked:** check tool approvals; retry only after reviewing the operation.
+- **No scheduled result:** check that the backend was running, the task was not
+  paused, and the schedule matches the host timezone. A run missed during sleep
+  happens once on wake; one missed while Codexia was closed does not happen.
+- **Blocked:** a step was denied or timed out; review it and run again.
 - **Cannot ask a colleague:** check the calling bot's allowed collaborators and
   whether the target is archived.
 - **Bot cannot start:** check the keke installation prompt and model/provider

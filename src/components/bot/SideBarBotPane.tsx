@@ -75,17 +75,26 @@ export function SideBarBotPane() {
                   </span>
                 </span>
                 {(runningByBot[bot.id] ||
+                  statusByBot[bot.id] === 'waiting' ||
                   statusByBot[bot.id] === 'blocked' ||
                   statusByBot[bot.id] === 'failed') && (
                   <span
                     role="img"
-                    aria-label={runningByBot[bot.id] ? 'working' : statusByBot[bot.id]}
+                    aria-label={
+                      statusByBot[bot.id] === 'waiting'
+                        ? 'needs approval'
+                        : runningByBot[bot.id]
+                          ? 'working'
+                          : statusByBot[bot.id]
+                    }
                     className={`h-2 w-2 shrink-0 rounded-full ${
-                      runningByBot[bot.id]
-                        ? 'animate-pulse bg-primary'
-                        : statusByBot[bot.id] === 'failed'
-                          ? 'bg-destructive'
-                          : 'bg-amber-500'
+                      statusByBot[bot.id] === 'waiting'
+                        ? 'animate-pulse bg-amber-500'
+                        : runningByBot[bot.id]
+                          ? 'animate-pulse bg-primary'
+                          : statusByBot[bot.id] === 'failed'
+                            ? 'bg-destructive'
+                            : 'bg-amber-500'
                     }`}
                   />
                 )}

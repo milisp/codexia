@@ -29,6 +29,7 @@ Build your team of **Bots** — long-lived AI coworkers with memory and schedule
 A bot is a named agent with its own project, persona, memory and permissions — you message it like a colleague, and it keeps working while you look elsewhere.
 
 - **Trust levels that are enforced**: Read-only, Ask before writing, or Autonomous — backed by the agent's OS sandbox, not just a prompt
+- **You stay in charge of money**: payments, purchases and deletions always wait for your approval, even in scheduled runs; approve on the desktop or over remote access
 - **Persistent memory**: each bot remembers across conversations and restarts
 - **Routines**: schedule prompts a bot runs on its own (daily, weekdays, every N hours); results land in its history with an unread badge and a system notification
 - **Bots help each other**: a bot can hand a job to another bot and use its answer

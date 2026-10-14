@@ -11,8 +11,9 @@ import { markBotRead } from './markBotRead';
 type BotActivityPayload = { botId: string; sessionId?: string; status: BotActivityStatus };
 
 const MESSAGES: Record<Exclude<BotActivityStatus, 'working'>, (name: string) => string> = {
+  waiting: (name) => `${name} needs your approval`,
   done: (name) => `${name} finished`,
-  blocked: (name) => `${name} is blocked — needs approval`,
+  blocked: (name) => `${name} stopped — a step was not approved`,
   failed: (name) => `${name} failed`,
 };
 
@@ -24,11 +25,27 @@ function handleActivity({ botId, status }: BotActivityPayload) {
     return;
   }
   if (!(status in MESSAGES)) return;
-  ui.setBotRunning(botId, false);
+  // Waiting is still a run in progress: it resumes once the person answers.
+  ui.setBotRunning(botId, status === 'waiting');
   ui.setBotStatus(botId, status);
 
   // The backend already bumped `unreadCount`; re-read so the badge shows it —
   // unless the bot is open, in which case the reply has already been seen.
+  if (status !== 'waiting') refreshAfterRun(botId);
+
+  // The user can already see the bot they are looking at.
+  if (useLayoutStore.getState().view === 'bot' && ui.selectedBotId === botId) return;
+  const bot = ui.bots.find((b) => b.id === botId);
+  if (!bot?.notificationsEnabled) return;
+  const title = MESSAGES[status](bot.name);
+  const showToast = () =>
+    toast({ title, variant: status === 'failed' ? 'destructive' : undefined });
+  // Focused window: in-app toast. Otherwise a system notification (toast as fallback).
+  if (document.hasFocus()) showToast();
+  else void notifyDesktop(title, undefined, showToast);
+}
+
+function refreshAfterRun(botId: string) {
   listBots()
     .then((bots) => {
       useBotUiStore.getState().setBots(bots);
@@ -41,17 +58,6 @@ function handleActivity({ botId, status }: BotActivityPayload) {
         void markBotRead(bot);
     })
     .catch((e) => console.error('bots: failed to refresh after activity', e));
-
-  // The user can already see the bot they are looking at.
-  if (useLayoutStore.getState().view === 'bot' && ui.selectedBotId === botId) return;
-  const bot = ui.bots.find((b) => b.id === botId);
-  if (!bot?.notificationsEnabled) return;
-  const title = MESSAGES[status](bot.name);
-  const showToast = () =>
-    toast({ title, variant: status === 'failed' ? 'destructive' : undefined });
-  // Focused window: in-app toast. Otherwise a system notification (toast as fallback).
-  if (document.hasFocus()) showToast();
-  else void notifyDesktop(title, undefined, showToast);
 }
 
 /**
