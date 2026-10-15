@@ -6,6 +6,27 @@
 > changelog. The release workflow reads the top `## [version]` section of this
 > file matching the tag being published.
 
+## [0.55.0] - 2026-10-15
+
+[Compare with v0.54.2](https://github.com/milisp/codexia/compare/v0.54.2...v0.55.0)
+
+### Features & Improvements
+- Payments, purchases, refunds, transfers, subscriptions and MCP deletions always wait for your approval, at every bot trust level (keke `require_approval`).
+- Scheduled and delegated bot runs wait for you instead of failing: "Needs approval" in the sidebar and bell, a notification, and Allow/Deny above the composer, from the desktop or remote access. The one-hour limit pauses while waiting; waits end after 12 hours.
+- Autonomous bots use keke's `auto` mode, where a model reviewer checks risky steps, instead of approving everything.
+- Bots keep the computer awake while they work and let it sleep while they wait for you.
+- Bot runs stream live into the conversation on every client; scheduled and delegated runs show as "Scheduled · name" / "Asked by bot" markers.
+- "Always allow" is remembered per tool, never for every MCP tool at once.
+- Bot replies render Markdown; the bot welcome shows the keke mascot.
+- MCP Linker is linked from Connectors and Tools.
+
+### Fixes & Maintenance
+- Scheduled and delegated runs use the bot's own provider, not keke's default.
+- "Needs approval" survives a reload or reconnect.
+- A resumed bot session shows its thoughts and tool calls.
+- Session views simplified to grid and solo.
+- Updated the bundled keke agent to v0.1.45 (requires 0.1.44 or later for bots).
+
 ## [0.54.2] - 2026-10-06
 
 - chore: bump version to 0.54.2 (`37a9f318`)
