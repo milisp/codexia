@@ -30,9 +30,14 @@ impl AgentRunner for BotAgentRunner {
         let on_started = spec.on_started.clone();
         let report = self
             .state
-            .run_bot_unattended(bot_id, &spec.prompt, spec.cwd.as_deref(), true, |session_id| {
-                on_started(session_id)
-            })
+            .run_bot_unattended(
+                bot_id,
+                &spec.prompt,
+                spec.cwd.as_deref(),
+                true,
+                serde_json::json!({ "kind": "routine", "name": spec.task_name }),
+                |session_id| on_started(session_id),
+            )
             .await?;
         if report.blocked {
             // The run itself finished, but part of the job was refused: say so

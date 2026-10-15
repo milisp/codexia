@@ -15,6 +15,7 @@ type AcpEventPayload = {
   toolCall?: Record<string, unknown>;
   options?: Array<{ optionId: string; name: string; kind?: string }>;
   personRequired?: boolean;
+  approvalKey?: string;
   line?: string;
 };
 
@@ -63,6 +64,7 @@ export function useAcpEvents(connectionId: string | null) {
           toolKind: payload.toolCall?.kind as string | undefined,
           options: payload.options ?? [],
           personRequired: payload.personRequired === true,
+          approvalKey: payload.approvalKey,
         });
         return;
       }

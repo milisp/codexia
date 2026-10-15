@@ -7,6 +7,7 @@ import { useBotUiStore } from '@/stores/useBotUiStore';
 const acpStop = vi.fn().mockResolvedValue(undefined);
 const acpStart = vi.fn();
 const acpGetSession = vi.fn();
+const acpLoadSession = vi.fn();
 const listBotSessions = vi.fn();
 const acpSetConfigOption = vi.fn().mockResolvedValue(undefined);
 
@@ -14,6 +15,7 @@ vi.mock('@/services/apiAdapt/acp', () => ({
   acpStop: (...args: unknown[]) => acpStop(...args),
   acpStart: (...args: unknown[]) => acpStart(...args),
   acpGetSession: (...args: unknown[]) => acpGetSession(...args),
+  acpLoadSession: (...args: unknown[]) => acpLoadSession(...args),
   acpSetConfigOption: (...args: unknown[]) => acpSetConfigOption(...args),
 }));
 
@@ -129,6 +131,34 @@ describe('useBotSession.open', () => {
     await open(bot('bot1'));
 
     expect(texts()).toEqual([]);
+  });
+
+  it("shows a resumed session as Codexia stored it, not keke's thinner replay", async () => {
+    acpStart.mockResolvedValue({
+      connectionId: 'c-new',
+      sessionId: 's-new',
+      initialize: { agentCapabilities: { loadSession: true } },
+      session: { sessionId: 's-new' },
+      sessionError: null,
+    });
+    listBotSessions.mockResolvedValue([sessionRecord('s-run', 'bot1')]);
+    // keke replays only the messages while it loads...
+    acpLoadSession.mockImplementation(async () => {
+      useAcpStore.getState().addEntry({ id: 'replayed', role: 'agent', text: 'Tea is $4.20.' });
+      return { sessionId: 's-run' };
+    });
+    // ...while the stored transcript also has the thinking and the tool call.
+    acpGetSession.mockResolvedValue([
+      { sessionUpdate: 'agent_thought_chunk', content: { type: 'text', text: 'Look it up' } },
+      { sessionUpdate: 'tool_call', toolCallId: 't1', title: 'acp:shop:lookup_price', status: 'completed' },
+      said('Tea is $4.20.'),
+    ]);
+
+    await openBot()(bot('bot1'));
+
+    const entries = useAcpStore.getState().entries;
+    expect(entries.map((e) => e.role)).toEqual(['thought', 'tool', 'agent']);
+    expect(acpGetSession).toHaveBeenCalledWith('s-run');
   });
 
   it("lets the backend build the bot's process and apply its settings", async () => {

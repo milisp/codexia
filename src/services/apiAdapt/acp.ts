@@ -254,6 +254,8 @@ export type AcpWaitingApproval = {
   options: Array<{ optionId: string; name: string; kind?: string }>;
   /** Only a person may answer, and only for this call: no standing approval. */
   personRequired: boolean;
+  /** What "always allow" would remember: keke's tool id when it names one. */
+  approvalKey?: string;
   requestedAt: string;
 };
 

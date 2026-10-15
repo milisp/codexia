@@ -129,6 +129,11 @@ export function useBotSession() {
           if (stale()) return null;
           store.applySession({ ...restored, sessionId: sessionToRestore.sessionId });
           ui.setBotSession(bot.id, sessionToRestore.sessionId);
+          // keke's replay is the conversation as the model sees it — no
+          // thoughts or tool calls. Show what Codexia stored instead, which is
+          // what a later open shows too.
+          store.setEntries([]);
+          await replayCurrent(bot.id, sessionToRestore.sessionId);
         } catch (e) {
           // The agent may claim `loadSession` support yet still fail to
           // resume a session from a previous process (e.g. it only kept it

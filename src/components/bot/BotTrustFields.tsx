@@ -1,6 +1,7 @@
 import { X } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import type { BotTrustLevel } from '@/services/apiAdapt/bots';
+import { approvalLabel } from './approvalKey';
 import { TRUST_LEVELS } from './botAgentDef';
 
 interface BotTrustFieldsProps {
@@ -45,9 +46,10 @@ export function BotTrustFields({
             {approvedTools.map((tool) => (
               <span
                 key={tool}
+                title={tool}
                 className="flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs"
               >
-                {tool}
+                {approvalLabel(tool)}
                 <button
                   type="button"
                   aria-label={`Stop always allowing ${tool}`}

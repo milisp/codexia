@@ -1,8 +1,10 @@
+import { Bot as BotIcon, Clock } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { AcpToolCall } from '@/components/acp/AcpToolCall';
+import { Markdown } from '@/components/Markdown';
 import { Button } from '@/components/ui/button';
 import type { Bot } from '@/services/apiAdapt/bots';
-import { useAcpStore } from '@/stores/useAcpStore';
+import { type AcpTurnTrigger, useAcpStore } from '@/stores/useAcpStore';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 import { BotAvatar } from './BotAvatar';
 import { useBotTimeline } from './useBotTimeline';
@@ -56,6 +58,10 @@ export function BotMessageList({ bot }: { bot: Bot }) {
           );
         }
 
+        if (entry.role === 'user' && entry.trigger) {
+          return <TriggeredTurn key={entry.id} trigger={entry.trigger} text={entry.text} />;
+        }
+
         if (entry.role === 'user') {
           return (
             <div key={entry.id} className="flex justify-end">
@@ -87,8 +93,8 @@ export function BotMessageList({ bot }: { bot: Bot }) {
         return (
           <div key={entry.id} className="flex items-end gap-2">
             <BotAvatar bot={bot} size="sm" />
-            <div className="max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-bl-md bg-muted px-3 py-2">
-              {entry.text}
+            <div className="min-w-0 max-w-[80%] rounded-2xl rounded-bl-md bg-muted px-3 py-2">
+              <Markdown value={entry.text} />
             </div>
           </div>
         );
@@ -103,5 +109,28 @@ export function BotMessageList({ bot }: { bot: Bot }) {
 
       <div ref={bottomRef} />
     </div>
+  );
+}
+
+/**
+ * A turn a routine or another bot started. Not shown as a message from you:
+ * a compact marker, with the request it ran on one click away.
+ */
+function TriggeredTurn({ trigger, text }: { trigger: AcpTurnTrigger; text: string }) {
+  const Icon = trigger.kind === 'routine' ? Clock : BotIcon;
+  const label =
+    trigger.kind === 'routine'
+      ? `Scheduled · ${trigger.name ?? 'task'}`
+      : `Asked by ${trigger.name ?? 'another bot'}`;
+  return (
+    <details className="group mx-auto max-w-[80%] py-1 text-center text-xs text-muted-foreground">
+      <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded-full border px-2 py-0.5 hover:bg-muted">
+        <Icon className="h-3 w-3" />
+        {label}
+      </summary>
+      <div className="mt-1 whitespace-pre-wrap rounded-md border bg-muted/40 px-3 py-2 text-left">
+        {text}
+      </div>
+    </details>
   );
 }

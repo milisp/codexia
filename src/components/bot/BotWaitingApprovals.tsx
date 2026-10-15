@@ -8,6 +8,11 @@ import {
 } from '@/services/apiAdapt/acp';
 import { type Bot, parseBotList, updateBot } from '@/services/apiAdapt/bots';
 import { useBotUiStore } from '@/stores/useBotUiStore';
+import { approvalKey, approvalLabel } from './approvalKey';
+
+function keyOf(request: AcpWaitingApproval) {
+  return approvalKey({ approvalKey: request.approvalKey, ...request.toolCall });
+}
 
 /**
  * Steps an unattended run (a scheduled task, another bot's request) is waiting
@@ -44,7 +49,7 @@ export function BotWaitingApprovals({ bot }: { bot: Bot }) {
     setError(null);
     try {
       await acpRespondPermission(request.connectionId, request.requestId, optionId);
-      const key = request.toolCall?.kind ?? request.toolCall?.title;
+      const key = keyOf(request);
       if (remember && key) {
         const approved = parseBotList(bot.approvedTools);
         if (!approved.includes(key)) {
@@ -61,7 +66,7 @@ export function BotWaitingApprovals({ bot }: { bot: Bot }) {
     <div className="shrink-0 space-y-2 border-t bg-amber-500/5 p-3">
       {waiting.map((request) => {
         const title = request.toolCall?.title ?? 'Permission requested';
-        const key = request.toolCall?.kind ?? request.toolCall?.title;
+        const key = keyOf(request);
         const allow = request.options.find((o) => o.kind === 'allow_once');
         return (
           <div key={request.requestId} className="space-y-2">
@@ -89,9 +94,10 @@ export function BotWaitingApprovals({ bot }: { bot: Bot }) {
                 <Button
                   size="sm"
                   variant="outline"
+                  title={key}
                   onClick={() => respond(request, allow.optionId, true)}
                 >
-                  Always allow {key}
+                  Always allow {approvalLabel(key)}
                 </Button>
               )}
             </div>

@@ -63,6 +63,20 @@ it('offers no standing approval for a step only a person may approve', async () 
   expect(update).not.toHaveBeenCalled();
 });
 
+it('remembers an MCP tool by its id, never by the kind every MCP tool shares', async () => {
+  listWaiting.mockResolvedValueOnce([
+    waiting({
+      approvalKey: 'acp:shop:lookup_price',
+      toolCall: { title: 'acp:shop:lookup_price: calls the `shop` MCP server', kind: 'other' },
+    }),
+  ]).mockResolvedValue([]);
+  render(<BotWaitingApprovals bot={bot} />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Always allow lookup_price' }));
+  await waitFor(() =>
+    expect(update).toHaveBeenCalledWith('scout', { approvedTools: ['acp:shop:lookup_price'] })
+  );
+});
+
 it('renders nothing when no step is waiting', async () => {
   listWaiting.mockResolvedValue([]);
   const { container } = render(<BotWaitingApprovals bot={bot} />);

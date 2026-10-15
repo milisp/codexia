@@ -17,8 +17,11 @@ export type AcpToolContent =
 export type AcpToolLocation = { path: string; line?: number };
 
 /** A rendered line in the ACP transcript. */
+/** Where a turn nobody typed came from (`_meta["codexia.dev/trigger"]`). */
+export type AcpTurnTrigger = { kind: 'routine' | 'bot'; name?: string };
+
 export type AcpEntry =
-  | { id: string; role: 'user'; text: string }
+  | { id: string; role: 'user'; text: string; trigger?: AcpTurnTrigger }
   | { id: string; role: 'agent'; text: string }
   | { id: string; role: 'thought'; text: string }
   | { id: string; role: 'error'; text: string }
@@ -44,6 +47,8 @@ export type AcpPermissionRequest = {
    * reported one. Coarse on purpose: it is the unit a standing "always allow"
    * can be about, where a per-call title never repeats. */
   toolKind?: string;
+  /** The backend's key for a standing approval (keke's tool id when known). */
+  approvalKey?: string;
   options: AcpPermissionOption[];
   /** keke marked it as one only a person may answer, once: a standing
    * approval must not answer it and "always allow" must not be offered. */

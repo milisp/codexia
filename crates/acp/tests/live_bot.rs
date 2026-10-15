@@ -101,7 +101,7 @@ async fn run_and_answer(
     let run = tokio::spawn({
         let state = Arc::clone(state);
         let bot_id = bot_id.to_string();
-        async move { state.run_bot_unattended(&bot_id, PROMPT, None, false, |_| {}).await }
+        async move { state.run_bot_unattended(&bot_id, PROMPT, None, false, json!({ "kind": "routine", "name": "live test" }), |_| {}).await }
     });
 
     let mut run = run;
