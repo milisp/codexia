@@ -5,14 +5,23 @@ import { useAcpStore } from '@/stores/useAcpStore';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 
 const createBot = vi.fn();
+const updateBot = vi.fn();
+const createAutomation = vi.fn();
 
 vi.mock('@/services/apiAdapt/bots', () => ({
   listBots: vi.fn().mockResolvedValue([]),
   createBot: (...args: unknown[]) => createBot(...args),
   listBotSessions: vi.fn().mockResolvedValue([]),
-  updateBot: vi.fn(),
+  updateBot: (...args: unknown[]) => updateBot(...args),
   deleteBot: vi.fn(),
   parseBotList: () => [],
+}));
+
+vi.mock('@/services/apiAdapt/automation', () => ({
+  createAutomation: (...args: unknown[]) => createAutomation(...args),
+}));
+vi.mock('@/services/apiAdapt/kekeMcp', () => ({
+  readKekeMcpServers: vi.fn().mockResolvedValue({ 'github-mcp': { command: 'gh-mcp' } }),
 }));
 
 vi.mock('react-i18next', () => ({
@@ -85,8 +94,42 @@ describe('AppSideBar', () => {
       </SidebarProvider>
     );
     fireEvent.click(screen.getByRole('button', { name: 'newBot' }));
+    expect(createBot).not.toHaveBeenCalled();
+    fireEvent.click(await screen.findByRole('button', { name: /Blank bot/ }));
 
     await waitFor(() => expect(useAcpStore.getState().entries).toEqual([]));
     expect(useBotUiStore.getState().selectedBotId).toBeTruthy();
+    expect(updateBot).not.toHaveBeenCalled();
+    expect(createAutomation).not.toHaveBeenCalled();
+  });
+
+  it('creates a bot from a role with its connected tools and its routine', async () => {
+    createBot.mockImplementation(async (bot: Record<string, unknown>) => ({ ...bot, agentId: 'keke' }));
+    updateBot.mockImplementation(async (id: string, patch: Record<string, unknown>) => ({
+      id,
+      agentId: 'keke',
+      ...patch,
+    }));
+    render(
+      <SidebarProvider>
+        <AppSideBar />
+      </SidebarProvider>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'newBot' }));
+    // GitHub is configured, so the role shows it as connected, not as a link.
+    expect(await screen.findAllByText('GitHub ✓')).not.toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Use PR Reviewer' }));
+
+    await waitFor(() => expect(createAutomation).toHaveBeenCalled());
+    expect(createBot).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'PR Reviewer', avatar: '🔍', trustLevel: 'read_only' })
+    );
+    expect(updateBot).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ title: 'Reviews open pull requests', mcpServers: ['keke:github-mcp'] })
+    );
+    expect(createAutomation).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Morning PR review', agent: 'bot', projects: [] })
+    );
   });
 });

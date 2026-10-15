@@ -44,8 +44,6 @@ Its reported weakness is that too many proactive cards become noise.
 
 ## Where Codexia is behind
 
-- **Blank-page setup.** A new bot starts from an empty role, while Grok
-  offers 56 ready-made roles.
 - **Schedules only.** There are no event triggers (git push, CI failure, new
   issue, file change).
 - **No credential vault** and no human takeover of a browser session.
@@ -81,7 +79,7 @@ tool call; it continues the draft's own conversation with the final text and
 asks the bot to carry out `action`, under the normal approval rules. Details
 in [BOTS.md](BOTS.md#drafts-and-hand-backs).
 
-### 3. Role templates, honest about requirements (proposed)
+### 3. Role templates, honest about requirements (shipped)
 
 A template gallery in the Create Bot flow. Each template states **what it
 needs** (MCP servers, schedule, trust level) and **where it stops** (draft,

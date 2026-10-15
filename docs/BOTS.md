@@ -5,6 +5,25 @@ permissions, memory and tools. Bots run on the [keke](https://github.com/milisp/
 agent. Create them in the sidebar's Bots group and configure them in the bot
 settings dialog. For a first-use walkthrough, see [bots_usage.md](bots_usage.md).
 
+## Starting from a role
+
+**New bot** opens a picker: a blank bot, or one of the roles grouped as
+Engineering, Briefs, Inbox and calendar, Operations and Personal. A role
+fills in the name, look, role prompt, trust level and tools, and adds its
+routine (shown on the card, e.g. "Weekdays 09:00"). Each card says:
+
+- **What it needs**: the project folder, a keke MCP server (GitHub, Gmail,
+  Calendar, Drive or Sheets), or web search. A configured server whose name
+  matches shows a check and is selected for the bot; a missing one shows
+  **Connect …**, which opens Plugins. Web search is turned on in keke's own
+  config (`[providers.<name>.web_search]`) and is not checked here; on a
+  Grok subscription login it currently returns no results.
+- **Where it stops**: a report, a draft, or an action that asks you. Every
+  role's prompt tells the bot to use `propose_draft` and `hand_back`.
+
+Everything a role sets can be changed afterwards in the bot's settings and
+scheduled tasks. The roles are in `src/components/bot/botTemplates.ts`.
+
 ## Today
 
 With no bot open, the Bot tab shows **Today** (also the first row of the bot
