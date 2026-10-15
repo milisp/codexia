@@ -108,8 +108,17 @@ pub async fn list_automation_runs(
 }
 
 pub async fn list_automations(handle: &AutomationHandle) -> Result<Vec<AutomationTask>, String> {
-    let runtime = handle.lock().await;
+    let mut runtime = handle.lock().await;
     let mut tasks = runtime.tasks.values().cloned().collect::<Vec<AutomationTask>>();
+    for task in &mut tasks {
+        let Some(job_id) = runtime.job_ids.get(&task.id).copied() else {
+            continue;
+        };
+        match runtime.scheduler.next_tick_for_job(job_id).await {
+            Ok(next) => task.next_run_at = next.map(|at| at.to_rfc3339()),
+            Err(err) => log::warn!("automation '{}': no next run time: {}", task.id, err),
+        }
+    }
     tasks.sort_by(|a, b| b.created_at.cmp(&a.created_at));
     Ok(tasks)
 }
@@ -136,6 +145,7 @@ pub async fn create_automation(
         paused: false,
         cwd_mode: input.cwd_mode,
         bot_id: input.bot_id,
+        next_run_at: None,
     };
 
     let job_id = schedule_task(&runtime.scheduler, runtime.ctx.clone(), &task).await?;
@@ -183,6 +193,7 @@ pub async fn update_automation(
         paused: existing.paused,
         cwd_mode: input.cwd_mode,
         bot_id: input.bot_id,
+        next_run_at: None,
     };
 
     if !updated.paused {

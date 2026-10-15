@@ -2,6 +2,7 @@ use axum::{Json, extract::State as AxumState};
 use serde::Deserialize;
 
 use codexia_db::acp_sessions::AcpSessionRecord;
+use codexia_db::bot_runs::BotRunRecord;
 use codexia_db::bots::{BotPatch, BotRecord};
 
 use crate::types::{ErrorResponse, WebServerState};
@@ -116,6 +117,22 @@ pub(crate) async fn api_bot_sessions(
     Json(params): Json<BotSessionsParams>,
 ) -> Result<Json<Vec<AcpSessionRecord>>, ErrorResponse> {
     codexia_db::acp_sessions::list_bot_sessions(&params.bot_id, params.limit.unwrap_or(100))
+        .map(Json)
+        .map_err(err)
+}
+
+#[derive(Deserialize)]
+pub(crate) struct BotRunsParams {
+    #[serde(default)]
+    pub limit: Option<usize>,
+}
+
+/// Recent unattended runs of every bot, newest first: what Today lists as
+/// done since you looked.
+pub(crate) async fn api_bot_runs(
+    Json(params): Json<BotRunsParams>,
+) -> Result<Json<Vec<BotRunRecord>>, ErrorResponse> {
+    codexia_db::bot_runs::list_recent(params.limit.unwrap_or(100))
         .map(Json)
         .map_err(err)
 }

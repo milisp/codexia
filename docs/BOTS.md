@@ -5,6 +5,23 @@ permissions, memory and tools. Bots run on the [keke](https://github.com/milisp/
 agent. Create them in the sidebar's Bots group and configure them in the bot
 settings dialog. For a first-use walkthrough, see [bots_usage.md](bots_usage.md).
 
+## Today
+
+With no bot open, the Bot tab shows **Today** (also the first row of the bot
+list). It holds only what is new or needs you:
+
+- **Needs you**: bots whose unattended run is waiting for an approval, with
+  the Allow/Deny buttons inline.
+- **Done since you looked**: one line per unattended run that finished after
+  you last opened its bot: the trigger, the start of the reply, and a
+  Blocked/Failed badge when it did not finish cleanly. Opening a row, or
+  **Mark all seen**, clears it.
+- **Coming up**: the next five scheduled runs. They happen only while
+  Codexia is running on this computer.
+
+Runs are recorded in `~/.codexia/cache.db` (`bot_runs`); a run that was still
+open when the app quit is shown as failed.
+
 ## Trust levels
 
 The trust level decides what a bot may do without asking you.

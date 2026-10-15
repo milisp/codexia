@@ -94,3 +94,22 @@ export async function deleteBot(id: string) {
 export async function listBotSessions(botId: string, limit?: number) {
   return await postJson<AcpSessionRecord[]>('/api/bots/sessions', { botId, limit });
 }
+
+/** One unattended run (a routine, another bot asking), as Today lists it. */
+export type BotRun = {
+  runId: string;
+  botId: string;
+  sessionId: string | null;
+  triggerKind: string;
+  triggerName: string | null;
+  status: 'working' | 'waiting' | 'done' | 'blocked' | 'failed';
+  /** The start of the bot's reply (or the error) once the run has finished. */
+  summary: string | null;
+  startedAt: string;
+  finishedAt: string | null;
+};
+
+/** Recent runs of every bot, newest first. Reads the database only. */
+export async function listBotRuns(limit?: number) {
+  return await postJson<BotRun[]>('/api/bots/runs', { limit });
+}

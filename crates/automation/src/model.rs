@@ -55,6 +55,11 @@ pub struct AutomationTask {
     /// `agent` is `bot`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bot_id: Option<String>,
+    /// When the scheduler will fire next (RFC 3339). Filled in when tasks are
+    /// listed, never stored: it is the live scheduler's answer, and a paused
+    /// task has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub next_run_at: Option<String>,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]

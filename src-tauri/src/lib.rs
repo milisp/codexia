@@ -189,6 +189,9 @@ pub fn run() {
                 if let Err(err) = codexia_db::automation_runs::fail_orphaned_runs() {
                     log::warn!("failed to clean up orphaned automation runs: {}", err);
                 }
+                if let Err(err) = codexia_db::bot_runs::fail_orphaned() {
+                    log::warn!("failed to clean up orphaned bot runs: {}", err);
+                }
 
                 cc::scan::start_session_scanner();
 

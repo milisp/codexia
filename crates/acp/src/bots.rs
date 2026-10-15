@@ -246,6 +246,13 @@ pub struct RunReport {
     pub reply: String,
 }
 
+/// Run bookkeeping is best effort: a database hiccup must not fail the run.
+fn record_run(result: Result<(), String>) {
+    if let Err(e) = result {
+        log::warn!("bots: could not record the run: {e}");
+    }
+}
+
 /// The agent's messages in a stored transcript, joined into one reply.
 fn reply_text(session_id: &str) -> String {
     codexia_db::acp_sessions::get_updates(session_id)
@@ -306,11 +313,51 @@ impl crate::AcpState {
     ) -> Result<RunReport, String> {
         let bot = codexia_db::bots::get_bot(bot_id)?
             .ok_or_else(|| format!("No bot with id `{bot_id}`"))?;
+        let connection_id = uuid::Uuid::new_v4().to_string();
+        // The run record outlives the process, so Today can list it later.
+        record_run(codexia_db::bot_runs::insert_started(
+            &connection_id,
+            &bot.id,
+            trigger.get("kind").and_then(Value::as_str).unwrap_or("routine"),
+            trigger.get("name").and_then(Value::as_str),
+        ));
+        let result = self
+            .run_unattended_inner(&bot, &connection_id, prompt, cwd, delegate, trigger, on_started)
+            .await;
+        let (session_id, status, summary) = match &result {
+            Ok(report) => (
+                Some(report.session_id.as_str()),
+                if report.blocked { "blocked" } else { "done" },
+                codexia_db::bot_runs::summarize(&report.reply),
+            ),
+            Err(e) => (None, "failed", Some(e.clone())),
+        };
+        record_run(codexia_db::bot_runs::update(
+            &connection_id,
+            session_id,
+            status,
+            summary.as_deref(),
+        ));
+        result
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    async fn run_unattended_inner(
+        &self,
+        bot: &BotRecord,
+        connection_id: &str,
+        prompt: &str,
+        cwd: Option<&str>,
+        delegate: bool,
+        trigger: Value,
+        on_started: impl FnOnce(&str),
+    ) -> Result<RunReport, String> {
+        let bot = bot.clone();
         let cwd = cwd.filter(|c| !c.is_empty()).unwrap_or(&bot.cwd).to_string();
         let policy = policy(&bot, self.api_port(), true, delegate).await;
         let approvals = policy.unattended.clone().unwrap_or_default();
 
-        let connection_id = uuid::Uuid::new_v4().to_string();
+        let connection_id = connection_id.to_string();
         // Keep the computer awake while the bot works, but not while it waits
         // for a person: nothing runs then, and the wait may last all night.
         let awake_key = format!("bot-run-{connection_id}");
@@ -321,15 +368,18 @@ impl crate::AcpState {
             let session_cell = Arc::clone(&session_cell);
             let sink = self.sink();
             let bot_id = bot.id.clone();
+            let run_id = connection_id.clone();
             move |waiting| {
                 let mut held = awake.lock().unwrap_or_else(|e| e.into_inner());
                 *held = (!waiting).then(|| KeepAwake::hold(awake_key.clone()));
+                let status = if waiting { "waiting" } else { "working" };
+                record_run(codexia_db::bot_runs::update(&run_id, None, status, None));
                 sink.emit(
                     BOT_EVENT,
                     json!({
                         "botId": bot_id,
                         "sessionId": session_cell.get(),
-                        "status": if waiting { "waiting" } else { "working" },
+                        "status": status,
                     }),
                 );
             }
@@ -355,6 +405,7 @@ impl crate::AcpState {
                 .ok_or("session/new returned no sessionId")?
                 .to_string();
             let _ = session_cell.set(session_id.clone());
+            record_run(codexia_db::bot_runs::update(&connection_id, Some(&session_id), "working", None));
             apply_settings(&client, &session_id, &bot).await;
             on_started(&session_id);
             self.emit_bot(&bot.id, &session_id, "working");

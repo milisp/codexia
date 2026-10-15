@@ -29,6 +29,8 @@ export type AutomationTask = {
   created_at: string;
   paused: boolean;
   cwd_mode: AutomationCwdMode;
+  /** The scheduler's next fire time; absent when paused. */
+  next_run_at?: string | null;
 };
 
 export type AutomationRun = {

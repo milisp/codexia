@@ -47,6 +47,11 @@ pub async fn start_web_server_with_events(
     .await
     .map_err(std::io::Error::other)?;
 
+    // Bot runs left open belong to a previous process and can never finish.
+    if let Err(err) = codexia_db::bot_runs::fail_orphaned() {
+        log::warn!("[web] failed to clean up orphaned bot runs: {err}");
+    }
+
     codexia_cc::scan::start_session_scanner();
 
     let device_token = DeviceToken::load_or_create().map_err(std::io::Error::other)?;
