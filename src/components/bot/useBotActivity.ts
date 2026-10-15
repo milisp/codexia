@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { buildEventUrl, isDesktopTauri } from '@/hooks/runtime';
 import { notifyDesktop } from '@/lib/notify';
+import { acpWaitingApprovals } from '@/services/apiAdapt/acp';
 import { listBots } from '@/services/apiAdapt/bots';
 import { useLayoutStore } from '@/stores';
 import { type BotActivityStatus, useBotUiStore } from '@/stores/useBotUiStore';
@@ -61,6 +62,24 @@ function refreshAfterRun(botId: string) {
 }
 
 /**
+ * Marks bots whose unattended run is waiting for a person. `bot:activity` is
+ * only seen live, so a client that opens or reconnects mid-wait (a reload, a
+ * phone over remote access) asks the backend instead.
+ */
+function restoreWaiting() {
+  acpWaitingApprovals()
+    .then((waiting) => {
+      const ui = useBotUiStore.getState();
+      for (const botId of new Set(waiting.map((w) => w.botId))) {
+        if (!botId) continue;
+        ui.setBotRunning(botId, true);
+        ui.setBotStatus(botId, 'waiting');
+      }
+    })
+    .catch((e) => console.error('bots: failed to read waiting approvals', e));
+}
+
+/**
  * Follows unattended bot runs (routines, bot-to-bot help) via the backend's
  * `bot:activity` event: Tauri event on desktop, `/api/events` SSE elsewhere.
  * Mount once, where the bot list lives.
@@ -68,6 +87,7 @@ function refreshAfterRun(botId: string) {
 export function useBotActivity() {
   useEffect(() => {
     if (isDesktopTauri()) {
+      restoreWaiting();
       const unlisten = listen<BotActivityPayload>('bot:activity', (e) => handleActivity(e.payload));
       return () => {
         void unlisten.then((fn) => fn());
@@ -75,6 +95,8 @@ export function useBotActivity() {
     }
 
     const es = new EventSource(buildEventUrl('/api/events'));
+    // Events sent while disconnected are lost; catch up on what still waits.
+    es.onopen = restoreWaiting;
     es.onmessage = (e) => {
       try {
         const envelope = JSON.parse(e.data as string) as { event?: string; payload?: unknown };

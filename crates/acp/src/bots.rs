@@ -346,6 +346,7 @@ impl crate::AcpState {
         self.insert(connection_id.clone(), Arc::clone(&client));
 
         let result = async {
+            select_provider(&client, &bot).await;
             let session = client.new_session(&cwd).await?;
             let session_id = session
                 .get("sessionId")

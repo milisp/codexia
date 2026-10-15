@@ -65,8 +65,8 @@ export function BotRoutines({ botId, open }: BotRoutinesProps) {
         </div>
         <ScheduleEditor form={form} onChange={setField} />
         <p className="text-xs text-muted-foreground">
-          Uses the backend machine’s local timezone. Keep that backend running and awake. Test the
-          request in chat first; background runs cannot ask for new approvals.
+          Uses the backend machine’s local timezone; keep that backend running. A step that needs
+          your approval waits for you, and you are notified.
         </p>
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => setEditing(null)}>
