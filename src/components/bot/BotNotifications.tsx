@@ -20,7 +20,10 @@ export function BotNotifications() {
   }, []);
   const results = bots.filter(
     (bot) =>
-      bot.unreadCount > 0 || statusByBot[bot.id] === 'blocked' || statusByBot[bot.id] === 'failed'
+      bot.unreadCount > 0 ||
+      statusByBot[bot.id] === 'waiting' ||
+      statusByBot[bot.id] === 'blocked' ||
+      statusByBot[bot.id] === 'failed'
   );
   return (
     <Popover open={visible} onOpenChange={setVisible}>
@@ -60,8 +63,12 @@ export function BotNotifications() {
           >
             <span className="font-medium">{bot.name}</span>
             <span className="text-xs text-muted-foreground">
-              {runningByBot[bot.id] ? 'Working' : (statusByBot[bot.id] ?? 'Unread result')} ·{' '}
-              {bot.unreadCount} unread
+              {statusByBot[bot.id] === 'waiting'
+                ? 'Needs approval'
+                : runningByBot[bot.id]
+                  ? 'Working'
+                  : (statusByBot[bot.id] ?? 'Unread result')}{' '}
+              · {bot.unreadCount} unread
             </span>
             {bot.title && (
               <span className="line-clamp-2 text-xs text-muted-foreground">{bot.title}</span>

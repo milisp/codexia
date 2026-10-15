@@ -1,4 +1,7 @@
-use std::{collections::HashSet, sync::Arc};
+use std::{
+    collections::HashSet,
+    sync::{Arc, LazyLock},
+};
 
 use nosleep::{NoSleep, NoSleepType};
 use tokio::sync::Mutex;
@@ -22,6 +25,42 @@ impl SleepState {
     pub async fn allow_sleep(&self, conversation_id: Option<String>) -> Result<(), String> {
         let mut controller = self.controller.lock().await;
         controller.allow_sleep(conversation_id)
+    }
+}
+
+/// Process-wide holds taken by backend work (bot runs) rather than by a
+/// frontend request, so they survive the window closing and are released by
+/// `Drop` even when the run errors out.
+static HOLDS: LazyLock<std::sync::Mutex<NoSleepController>> =
+    LazyLock::new(|| std::sync::Mutex::new(NoSleepController::new()));
+
+/// Keeps the computer from idle-sleeping while it is alive. The display may
+/// still sleep, and closing a laptop lid or a manual sleep is not prevented.
+pub struct KeepAwake {
+    key: String,
+}
+
+impl KeepAwake {
+    /// `key` must be unique per holder; a second hold with the same key is
+    /// the same hold.
+    pub fn hold(key: impl Into<String>) -> Self {
+        let key = key.into();
+        if let Ok(mut holds) = HOLDS.lock()
+            && let Err(e) = holds.prevent_sleep(Some(key.clone()))
+        {
+            log::warn!("keep-awake: could not prevent sleep: {e}");
+        }
+        Self { key }
+    }
+}
+
+impl Drop for KeepAwake {
+    fn drop(&mut self) {
+        if let Ok(mut holds) = HOLDS.lock()
+            && let Err(e) = holds.allow_sleep(Some(std::mem::take(&mut self.key)))
+        {
+            log::warn!("keep-awake: could not allow sleep: {e}");
+        }
     }
 }
 

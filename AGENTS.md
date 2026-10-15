@@ -85,6 +85,7 @@ codexia/
 
 ## docs
 - docs/ROADMAP-MULTI-CLIENT.md
+- docs/BOT_DESIGN.md
 
 ## web server
 

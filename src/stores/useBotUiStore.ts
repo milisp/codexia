@@ -6,7 +6,7 @@ import { type Bot, parseBotList } from '@/services/apiAdapt/bots';
  * nothing here is persisted: this is the cache the sidebar renders from, plus
  * the live connections that must survive switching between bots.
  */
-export type BotActivityStatus = 'working' | 'done' | 'blocked' | 'failed';
+export type BotActivityStatus = 'working' | 'waiting' | 'done' | 'blocked' | 'failed';
 
 interface BotUiStore {
   bots: Bot[];

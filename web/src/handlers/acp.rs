@@ -284,6 +284,19 @@ pub(crate) async fn api_acp_respond_permission(
     Ok(StatusCode::OK)
 }
 
+#[derive(Deserialize)]
+pub(crate) struct AcpWaitingApprovalsParams {
+    #[serde(default)]
+    bot_id: Option<String>,
+}
+
+pub(crate) async fn api_acp_waiting_approvals(
+    AxumState(state): AxumState<WebServerState>,
+    Json(params): Json<AcpWaitingApprovalsParams>,
+) -> Json<Vec<Value>> {
+    Json(state.acp_state.waiting_approvals(params.bot_id.as_deref()))
+}
+
 pub(crate) async fn api_acp_stop(
     AxumState(state): AxumState<WebServerState>,
     Json(params): Json<AcpConnectionParams>,

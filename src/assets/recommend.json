@@ -7,6 +7,13 @@
             "badge": "Made by us"
         },
         {
+            "name": "MCP Linker",
+            "description": "Manage MCP servers and sync them across Claude Code, Codex, Cursor, Claude Desktop and more",
+            "url": "https://mcp-linker.milisp.dev/?ref=codexia",
+            "setup": "brew install mcplinker",
+            "badge": "Made by us"
+        },
+        {
             "name": "gstack",
             "description": "Use Garry Tan's exact Claude Code setup: 23 opinionated tools that serve as CEO, Designer, Eng Manager, Release Manager, Doc Engineer, and QA",
             "url": "https://github.com/garrytan/gstack",

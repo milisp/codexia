@@ -13,11 +13,34 @@ The trust level decides what a bot may do without asking you.
 | --- | --- | --- | --- |
 | Read-only | `on-request` | `read_only` | Cannot write. File writes the agent routes through Codexia are refused too. |
 | Ask (default) | `on-request` | `workspace_write` | Writes inside its project; asks you before anything risky. |
-| Autonomous | `never` | `workspace_write` | Never asks; every permission request is allowed. |
+| Autonomous | `auto` | `workspace_write` | keke's model-backed reviewer answers ordinary requests; a failed or unclear review refuses the step. |
 
 The sandbox mode and approval policy are sent to keke for every session, so
 they are enforced by the agent, not just shown in the UI. An unknown level
-falls back to Ask.
+falls back to Ask. Autonomous uses keke's `auto`, not `never`: `never` would
+authorize every step, sandbox escapes included, without any review. The
+reviewer is a model and can be wrong or misled; it is a check, not a guarantee.
+
+## Steps only you can approve
+
+Some steps need your answer every time, at every trust level, whether or not
+anyone is watching. Codexia hands keke these tool-name rules
+(`KEKE_REQUIRE_APPROVAL`) for every bot:
+
+```
+*pay*  *purchase*  *checkout*  *buy*  *refund*  *transfer*  *subscri*  acp:*:*delete*
+```
+
+They match keke's tool ids case-insensitively, for example
+`acp:stripe:create_payment`. A matching step:
+
+- is never answered by "Always allow", by the Autonomous reviewer, or by a
+  standing approval, and offers no "Always allow" button;
+- in a scheduled or delegated run, waits for you (see below) instead of running.
+
+Rules match tool names, not effects. A payment made through a shell command, a
+browser click or a tool with an unrelated name is not recognized. Use provider
+account scopes and spending limits as well.
 
 ## Memory
 
@@ -84,22 +107,46 @@ Automations, so they also appear in the Automations view (agent `bot`).
 
 The scheduler is hosted in the running backend and uses the host's local
 timezone. It is not a cloud scheduler: stopping the backend stops scheduling.
-The host must be awake. There is no application-level missed-run replay
-guarantee after shutdown or sleep. A disconnected remote client does not itself
-stop the host backend.
+A disconnected remote client does not itself stop the host backend.
+
+### Sleep
+
+- **During a run** Codexia keeps the computer from idle-sleeping (interactive
+  bot turns and unattended runs alike), and releases it when the run ends or
+  while it waits for you. The display may still sleep. Closing a laptop lid
+  or choosing Sleep still sleeps the computer.
+- **Between runs** the computer sleeps according to your system settings. A
+  routine that comes due while it sleeps runs **once** when it wakes, if
+  Codexia is still running: several missed times are not each replayed.
+- **After Codexia restarts** routines missed while it was closed are not run;
+  the next scheduled time is used.
+
+For a bot host that should run around the clock (a Mac mini, say), turn off
+automatic sleep in the system settings and keep Codexia running.
 
 ## Unattended runs
 
 Routines and bot-to-bot requests run with nobody watching, in a short-lived
-process of their own. Permission requests are answered automatically:
+process of their own. A permission request is answered from standing approvals
+when it can be:
 
-- Autonomous bots: everything is allowed.
-- Other bots: allowed only for tools you have approved with "Always allow"
-  in an earlier chat; everything else is refused.
+- Autonomous bots: keke's reviewer decides ordinary steps itself.
+- Other bots: tools you approved with "Always allow" go ahead.
 
-If any step is refused, the run finishes with status **blocked** instead of
-success, so a half-done job is not reported as done. Open the bot, approve the
-tool with "Always allow" (or raise the trust level), and run again.
+Anything else, including every step only you can approve, **waits for you**.
+The bot shows **Needs approval** in the sidebar and the bell, you get a
+notification, and the step appears above the bot's composer with Allow and
+Deny. Answer it from the desktop or from a phone connected over remote
+access; the run then continues where it stopped. While a step waits:
+
+- the run's one-hour work limit is paused;
+- the computer is allowed to sleep, since nothing is running;
+- the step waits at most 12 hours, then it is refused.
+
+If you deny a step, or it is refused after 12 hours, the run finishes with
+status **blocked** instead of success, so a half-done job is not reported as
+done. A waiting step lives in the running backend: quitting Codexia refuses
+it.
 
 Every unattended run is filed in the bot's conversation with an unread badge. The
 sidebar shows a status dot per bot while it works or after it finishes.
@@ -139,10 +186,13 @@ Notifications can be turned off per bot in its settings.
 
 ## keke requirement
 
-Bots require keke's ACP client-only MCP isolation support. Codexia launches
+Bots require keke's ACP client-only MCP isolation and `require_approval`
+support (keke 0.1.44 or later). Codexia launches
 `keke agent stdio --mcp-policy client-only` and requires the initialize response's
-`_meta["keke.dev/mcp-policy"]` to equal `"client-only"`. This is a keke extension,
-not a standard ACP field. Codexia checks this confirmation rather than assuming
+`_meta["keke.dev/mcp-policy"]` to equal `"client-only"` and
+`_meta["keke.dev/require-approval"]` to be `true`. These are keke extensions,
+not standard ACP fields. keke marks a request only a person may answer with
+`_meta["keke.dev/person-required"]`. Codexia checks this confirmation rather than assuming
 support from a version number. A runtime that rejects the isolation launch
 option or does not confirm the active policy cannot start a bot; there is no
 fallback to global MCP discovery. This applies to interactive bots, scheduled

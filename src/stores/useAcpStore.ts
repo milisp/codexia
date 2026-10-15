@@ -45,6 +45,9 @@ export type AcpPermissionRequest = {
    * can be about, where a per-call title never repeats. */
   toolKind?: string;
   options: AcpPermissionOption[];
+  /** keke marked it as one only a person may answer, once: a standing
+   * approval must not answer it and "always allow" must not be offered. */
+  personRequired?: boolean;
 };
 
 interface AcpStore {

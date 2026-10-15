@@ -136,7 +136,30 @@ impl AcpState {
         session_id: Option<&str>,
         text: &str,
     ) -> Result<Value, String> {
-        self.get(connection_id)?.prompt(session_id, text).await
+        let client = self.get(connection_id)?;
+        // A bot turn keeps the computer awake until it ends, like an
+        // unattended run; other ACP agents are covered by the frontend's own
+        // per-task setting.
+        let _awake = client
+            .bot_id
+            .as_ref()
+            .map(|_| codexia_shared::sleep::KeepAwake::hold(format!("bot-turn-{connection_id}")));
+        client.prompt(session_id, text).await
+    }
+
+    /// Unattended bot requests waiting for a person, across every running
+    /// connection, optionally only for one bot. Oldest first.
+    pub fn waiting_approvals(&self, bot_id: Option<&str>) -> Vec<Value> {
+        let mut waiting: Vec<Value> = self
+            .connections
+            .iter()
+            .filter(|c| bot_id.is_none() || c.value().bot_id.as_deref() == bot_id)
+            .flat_map(|c| c.value().waiting_requests())
+            .collect();
+        waiting.sort_by(|a, b| {
+            a["requestedAt"].as_str().unwrap_or_default().cmp(b["requestedAt"].as_str().unwrap_or_default())
+        });
+        waiting
     }
 
     pub async fn cancel(

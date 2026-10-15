@@ -11,24 +11,47 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use codexia_db::bots::{BotRecord, parse_list};
+use codexia_shared::sleep::KeepAwake;
 use serde_json::{Value, json};
 
 use crate::agents::{AcpAgentDef, find_preset};
-use crate::client::{AcpClient, ConnectionPolicy, UnattendedApprovals};
+use crate::client::{AcpClient, ConnectionPolicy, UnattendedApprovals, WaitClock};
 
 /// Event carrying a bot's background activity: `{ botId, sessionId, status }`,
-/// where `status` is `working`, `done`, `blocked` or `failed`.
+/// where `status` is `working`, `waiting` (a step needs a person), `done`,
+/// `blocked` or `failed`.
 pub const BOT_EVENT: &str = "bot:activity";
 
-/// Longest an unattended turn may run before it is abandoned.
+/// Longest an unattended turn may work before it is abandoned. Time spent
+/// waiting for a person does not count against it.
 const UNATTENDED_TIMEOUT: Duration = Duration::from_secs(60 * 60);
 
+/// Tool-name patterns keke must put in front of a person every time, for
+/// every bot and trust level: money moving and permanent deletion through
+/// MCP tools. No standing approval, autonomous trust level or automatic
+/// reviewer answers them. Matched case-insensitively against keke's tool id
+/// (`acp:<server>:<tool>` for the servers a bot is given); see keke's
+/// `require_approval`. Names, not effects: a payment made through a shell
+/// command or a browser click is not recognized here.
+pub const REQUIRED_APPROVALS: &[&str] = &[
+    "*pay*",
+    "*purchase*",
+    "*checkout*",
+    "*buy*",
+    "*refund*",
+    "*transfer*",
+    "*subscri*",
+    "acp:*:*delete*",
+];
+
 /// The approval policy and sandbox mode a trust level stands for, in keke's
-/// own spelling.
+/// own spelling. Autonomous is keke's `auto`: a model-backed reviewer answers
+/// ordinary requests and fails closed, rather than `never`, which would
+/// authorize everything, sandbox escapes included, without review.
 pub fn trust(level: &str) -> (&'static str, &'static str) {
     match level {
         "read_only" => ("on-request", "read_only"),
-        "autonomous" => ("never", "workspace_write"),
+        "autonomous" => ("auto", "workspace_write"),
         _ => ("on-request", "workspace_write"),
     }
 }
@@ -70,6 +93,9 @@ pub fn agent_def(bot: &BotRecord) -> Result<AcpAgentDef, String> {
     if let Some(dir) = memory_dir(&bot.id) {
         env.insert("KEKE_MEMORY_DIR".into(), dir.to_string_lossy().into_owned());
     }
+    // Startup confirms keke enforces these (see `client::validate_mcp_policy`),
+    // so an older keke that would ignore the variable cannot start a bot.
+    env.insert("KEKE_REQUIRE_APPROVAL".into(), REQUIRED_APPROVALS.join(","));
 
     Ok(AcpAgentDef {
         id: format!("keke-bot-{}", bot.id),
@@ -230,6 +256,38 @@ fn reply_text(session_id: &str) -> String {
         .collect()
 }
 
+/// Drive `turn` to completion within [`UNATTENDED_TIMEOUT`] of working time:
+/// the clock stops while a request waits for a person.
+async fn run_with_budget<F>(turn: F, waiting: &WaitClock) -> Result<Value, String>
+where
+    F: std::future::Future<Output = Result<Value, String>>,
+{
+    run_with_budget_of(turn, waiting, UNATTENDED_TIMEOUT).await
+}
+
+async fn run_with_budget_of<F>(turn: F, waiting: &WaitClock, budget: Duration) -> Result<Value, String>
+where
+    F: std::future::Future<Output = Result<Value, String>>,
+{
+    let started = tokio::time::Instant::now();
+    tokio::pin!(turn);
+    loop {
+        let deadline = started + budget + waiting.waited();
+        tokio::select! {
+            result = &mut turn => return result,
+            () = tokio::time::sleep_until(deadline) => {
+                if waiting.is_waiting() || tokio::time::Instant::now() < started + budget + waiting.waited() {
+                    continue;
+                }
+                return Err(format!(
+                    "the bot did not finish within {} minutes of work",
+                    budget.as_secs() / 60
+                ));
+            }
+        }
+    }
+}
+
 impl crate::AcpState {
     /// Run one prompt on a bot with nobody watching: its own short-lived
     /// process, a fresh session filed under the bot, permission requests
@@ -249,13 +307,33 @@ impl crate::AcpState {
             .ok_or_else(|| format!("No bot with id `{bot_id}`"))?;
         let cwd = cwd.filter(|c| !c.is_empty()).unwrap_or(&bot.cwd).to_string();
         let policy = policy(&bot, self.api_port(), true, delegate).await;
-        let blocked = policy
-            .unattended
-            .as_ref()
-            .map(|u| Arc::clone(&u.blocked))
-            .unwrap_or_default();
+        let approvals = policy.unattended.clone().unwrap_or_default();
 
         let connection_id = uuid::Uuid::new_v4().to_string();
+        // Keep the computer awake while the bot works, but not while it waits
+        // for a person: nothing runs then, and the wait may last all night.
+        let awake_key = format!("bot-run-{connection_id}");
+        let awake = Arc::new(std::sync::Mutex::new(Some(KeepAwake::hold(awake_key.clone()))));
+        let session_cell = Arc::new(std::sync::OnceLock::<String>::new());
+        approvals.waiting.on_change({
+            let awake = Arc::clone(&awake);
+            let session_cell = Arc::clone(&session_cell);
+            let sink = self.sink();
+            let bot_id = bot.id.clone();
+            move |waiting| {
+                let mut held = awake.lock().unwrap_or_else(|e| e.into_inner());
+                *held = (!waiting).then(|| KeepAwake::hold(awake_key.clone()));
+                sink.emit(
+                    BOT_EVENT,
+                    json!({
+                        "botId": bot_id,
+                        "sessionId": session_cell.get(),
+                        "status": if waiting { "waiting" } else { "working" },
+                    }),
+                );
+            }
+        });
+
         let (client, _) = AcpClient::spawn(
             connection_id.clone(),
             &agent_def(&bot)?,
@@ -274,13 +352,12 @@ impl crate::AcpState {
                 .and_then(Value::as_str)
                 .ok_or("session/new returned no sessionId")?
                 .to_string();
+            let _ = session_cell.set(session_id.clone());
             apply_settings(&client, &session_id, &bot).await;
             on_started(&session_id);
             self.emit_bot(&bot.id, &session_id, "working");
 
-            let turn = tokio::time::timeout(UNATTENDED_TIMEOUT, client.prompt(Some(&session_id), prompt))
-                .await
-                .unwrap_or_else(|_| Err("the bot did not finish within an hour".to_string()));
+            let turn = run_with_budget(client.prompt(Some(&session_id), prompt), &approvals.waiting).await;
             if let Err(e) = turn {
                 self.emit_bot(&bot.id, &session_id, "failed");
                 return Err(e);
@@ -290,9 +367,10 @@ impl crate::AcpState {
         .await;
 
         let _ = self.stop(&connection_id).await;
+        drop(awake.lock().unwrap_or_else(|e| e.into_inner()).take());
         let session_id = result?;
 
-        let blocked = blocked.load(Ordering::Relaxed);
+        let blocked = approvals.blocked.load(Ordering::Relaxed);
         if let Err(e) = codexia_db::bots::increment_unread(&bot.id) {
             log::warn!("bot {}: could not count the reply: {e}", bot.id);
         }
@@ -374,9 +452,48 @@ mod tests {
     fn trust_levels_map_to_keke_settings() {
         assert_eq!(trust("read_only"), ("on-request", "read_only"));
         assert_eq!(trust("ask"), ("on-request", "workspace_write"));
-        assert_eq!(trust("autonomous"), ("never", "workspace_write"));
+        assert_eq!(trust("autonomous"), ("auto", "workspace_write"));
         // An unknown level falls back to the cautious default, not to autonomous.
         assert_eq!(trust("bogus"), ("on-request", "workspace_write"));
+    }
+
+    #[test]
+    fn every_bot_hands_keke_the_required_approval_rules() {
+        let bot: BotRecord = serde_json::from_value(json!({
+            "id": "b", "name": "B", "title": null,
+            "avatar": "", "color": "", "agentId": "keke", "provider": null,
+            "model": null, "reasoningEffort": null, "cwd": "",
+            "systemPrompt": null, "trustLevel": "autonomous", "approvedTools": "[]",
+            "mcpServers": "[]", "allowedBotIds": "[]", "pinned": false,
+            "archived": false, "notificationsEnabled": true, "unreadCount": 0,
+            "lastViewedAt": null, "createdAt": "", "updatedAt": ""
+        })).unwrap();
+        let def = agent_def(&bot).unwrap();
+        let rules = def.env.get("KEKE_REQUIRE_APPROVAL").unwrap();
+        assert!(rules.split(',').any(|r| r == "*pay*"));
+        assert_eq!(rules.split(',').count(), REQUIRED_APPROVALS.len());
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn the_work_budget_stops_while_waiting_for_a_person() {
+        let waiting = WaitClock::default();
+        // Never finishes: only the budget can end it.
+        let stuck = std::future::pending::<Result<Value, String>>();
+        let err = run_with_budget_of(stuck, &waiting, Duration::from_secs(60)).await.unwrap_err();
+        assert!(err.contains("1 minutes"));
+
+        // Two minutes of waiting for a person on top of a one-minute budget
+        // still finishes, because the wait does not count as work.
+        let waiting = Arc::new(WaitClock::default());
+        let clock = Arc::clone(&waiting);
+        let turn = async move {
+            clock.start_for_test();
+            tokio::time::sleep(Duration::from_secs(120)).await;
+            clock.end_for_test();
+            tokio::time::sleep(Duration::from_secs(30)).await;
+            Ok(json!("done"))
+        };
+        assert_eq!(run_with_budget_of(turn, &waiting, Duration::from_secs(60)).await.unwrap(), json!("done"));
     }
 
     #[test]
