@@ -4,7 +4,7 @@ import { toast } from '@/components/ui/use-toast';
 import { buildEventUrl, isDesktopTauri } from '@/hooks/runtime';
 import { notifyDesktop } from '@/lib/notify';
 import { acpWaitingApprovals } from '@/services/apiAdapt/acp';
-import { listBots } from '@/services/apiAdapt/bots';
+import { type BotInboxItem, listBots } from '@/services/apiAdapt/bots';
 import { useLayoutStore } from '@/stores';
 import { type BotActivityStatus, useBotUiStore } from '@/stores/useBotUiStore';
 import { markBotRead } from './markBotRead';
@@ -44,6 +44,23 @@ function handleActivity({ botId, status }: BotActivityPayload) {
   // Focused window: in-app toast. Otherwise a system notification (toast as fallback).
   if (document.hasFocus()) showToast();
   else void notifyDesktop(title, undefined, showToast);
+}
+
+type BotInboxPayload = { botId: string; item?: BotInboxItem };
+
+/** A bot left a draft or handed a step back, or one was handled elsewhere. */
+function handleInbox({ botId, item }: BotInboxPayload) {
+  const ui = useBotUiStore.getState();
+  ui.bumpInbox();
+  if (item?.status !== 'open') return;
+  if (useLayoutStore.getState().view === 'bot' && ui.selectedBotId === botId) return;
+  const bot = ui.bots.find((b) => b.id === botId);
+  if (!bot?.notificationsEnabled) return;
+  const title =
+    item.kind === 'draft' ? `${bot.name} wrote a draft for you` : `${bot.name} needs you`;
+  const showToast = () => toast({ title, description: item.title });
+  if (document.hasFocus()) showToast();
+  else void notifyDesktop(title, item.title, showToast);
 }
 
 function refreshAfterRun(botId: string) {
@@ -88,20 +105,27 @@ export function useBotActivity() {
   useEffect(() => {
     if (isDesktopTauri()) {
       restoreWaiting();
-      const unlisten = listen<BotActivityPayload>('bot:activity', (e) => handleActivity(e.payload));
+      const stops = [
+        listen<BotActivityPayload>('bot:activity', (e) => handleActivity(e.payload)),
+        listen<BotInboxPayload>('bot:inbox', (e) => handleInbox(e.payload)),
+      ];
       return () => {
-        void unlisten.then((fn) => fn());
+        for (const stop of stops) void stop.then((fn) => fn());
       };
     }
 
     const es = new EventSource(buildEventUrl('/api/events'));
     // Events sent while disconnected are lost; catch up on what still waits.
-    es.onopen = restoreWaiting;
+    es.onopen = () => {
+      restoreWaiting();
+      useBotUiStore.getState().bumpInbox();
+    };
     es.onmessage = (e) => {
       try {
         const envelope = JSON.parse(e.data as string) as { event?: string; payload?: unknown };
         if (envelope.event === 'bot:activity')
           handleActivity(envelope.payload as BotActivityPayload);
+        else if (envelope.event === 'bot:inbox') handleInbox(envelope.payload as BotInboxPayload);
       } catch {}
     };
     return () => es.close();

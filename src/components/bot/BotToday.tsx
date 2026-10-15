@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Bot } from '@/services/apiAdapt/bots';
 import { BotAvatar } from './BotAvatar';
+import { BotInboxCard } from './BotInboxCard';
 import { BotWaitingApprovals } from './BotWaitingApprovals';
 import { triggerLabel } from './triggerLabel';
 import { agoLabel, useBotToday, whenLabel } from './useBotToday';
@@ -24,8 +25,9 @@ interface BotTodayProps {
  * you last looked, and what runs next. Only actionable or new items appear.
  */
 export function BotToday({ creating, onCreate, onSelect }: BotTodayProps) {
-  const { bots, waiting, done, upcoming, error, markAllSeen } = useBotToday();
-  const empty = waiting.length === 0 && done.length === 0;
+  const { bots, waiting, inbox, done, upcoming, error, markAllSeen } = useBotToday();
+  const needsYou = waiting.length + inbox.length;
+  const empty = needsYou === 0 && done.length === 0;
 
   return (
     <div className="flex min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6">
@@ -50,12 +52,20 @@ export function BotToday({ creating, onCreate, onSelect }: BotTodayProps) {
           </p>
         )}
 
-        {waiting.length > 0 && (
-          <Section title="Needs you" count={waiting.length}>
+        {needsYou > 0 && (
+          <Section title="Needs you" count={needsYou}>
             {waiting.map((bot) => (
               <div key={bot.id} className="rounded-lg border border-amber-500/40 bg-amber-500/5">
                 <BotHeader bot={bot} onSelect={onSelect} />
                 <BotWaitingApprovals bot={bot} className="px-3 pb-3" />
+              </div>
+            ))}
+            {inbox.map(({ item, bot }) => (
+              <div key={item.id} className="rounded-lg border">
+                <BotHeader bot={bot} onSelect={onSelect} />
+                <div className="px-3 pb-3">
+                  <BotInboxCard item={item} />
+                </div>
               </div>
             ))}
           </Section>

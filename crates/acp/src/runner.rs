@@ -36,6 +36,7 @@ impl AgentRunner for BotAgentRunner {
                 spec.cwd.as_deref(),
                 true,
                 serde_json::json!({ "kind": "routine", "name": spec.task_name }),
+                None,
                 |session_id| on_started(session_id),
             )
             .await?;

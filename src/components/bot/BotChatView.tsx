@@ -9,6 +9,7 @@ import { useAcpStore } from '@/stores/useAcpStore';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 import { BotAvatar } from './BotAvatar';
 import { BotComposer } from './BotComposer';
+import { BotInbox } from './BotInbox';
 import { BotMessageList } from './BotMessageList';
 import { BotPermissionGate } from './BotPermissionGate';
 import { BotRoutines } from './BotRoutines';
@@ -108,6 +109,7 @@ export default function BotChatView() {
       </header>
 
       <BotMessageList bot={bot} />
+      <BotInbox botId={bot.id} />
       <BotWaitingApprovals bot={bot} />
       <BotPermissionGate bot={bot} />
       <BotComposer bot={bot} />

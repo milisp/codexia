@@ -16,6 +16,8 @@ type BotEvent =
       payload: {
         botId?: string;
         kind?: string;
+        /** Set on a `session/load` replay of what is already stored. */
+        replay?: boolean;
         sessionId?: string;
         update?: Record<string, unknown>;
       };
@@ -65,7 +67,7 @@ export function useBotTimeline(botId: string, activeSessionId?: string) {
         return;
       }
       const sessionId = payload.sessionId;
-      if (payload.kind !== 'update' || !payload.update || !sessionId) return;
+      if (payload.kind !== 'update' || payload.replay || !payload.update || !sessionId) return;
       // The open session is drawn from the live composer store.
       if (sessionId === activeRef.current) return;
       const transcript = transcripts.current.get(sessionId);

@@ -15,7 +15,7 @@ use super::{
         api_acp_authenticate, api_acp_new_session, api_acp_respond_permission, api_acp_stop, api_acp_waiting_approvals,
         api_acp_set_mode, api_acp_set_model, api_acp_set_config_option,
         api_acp_load_session, api_acp_list_sessions, api_acp_get_session, api_acp_delete_session,
-        api_telemetry_status, api_telemetry_set_consent, api_telemetry_active, api_list_bots, api_create_bot, api_update_bot, api_delete_bot, api_bot_sessions, api_bot_runs, api_bots_mcp,
+        api_telemetry_status, api_telemetry_set_consent, api_telemetry_active, api_list_bots, api_create_bot, api_update_bot, api_delete_bot, api_bot_sessions, api_bot_runs, api_bot_inbox, api_resolve_bot_inbox, api_bots_mcp,
         api_cc_list_projects, api_cc_mcp_add, api_cc_mcp_disable, api_cc_mcp_enable,
         api_cc_mcp_get, api_cc_mcp_list, api_cc_mcp_remove,
         api_cc_connect, api_cc_disconnect, api_cc_get_installed_skills,
@@ -397,6 +397,8 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/bots/delete", post(api_delete_bot))
         .route("/api/bots/sessions", post(api_bot_sessions))
         .route("/api/bots/runs", post(api_bot_runs))
+        .route("/api/bots/inbox", post(api_bot_inbox))
+        .route("/api/bots/inbox/resolve", post(api_resolve_bot_inbox))
         .route("/api/keke/mcp/read", post(crate::handlers::api_keke_read_mcp_servers))
         .route("/api/keke/mcp/add", post(crate::handlers::api_keke_add_mcp_server))
         .route("/api/keke/mcp/remove", post(crate::handlers::api_keke_remove_mcp_server))

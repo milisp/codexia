@@ -16,7 +16,7 @@ pub use agents::{AcpAgentDef, find_preset, install_preset, list_agents};
 pub use codexia_db::acp_sessions::{
     AcpSessionRecord, delete_session, get_updates, list_sessions,
 };
-pub use bots::{BOT_EVENT, RunReport};
+pub use bots::{BOT_EVENT, INBOX_EVENT, RunReport};
 pub use runner::BotAgentRunner;
 pub use client::{ACP_EVENT, AcpClient, ConnectionPolicy, UnattendedApprovals};
 pub use state::{AcpStartResult, AcpState};

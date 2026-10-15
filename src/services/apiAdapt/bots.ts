@@ -113,3 +113,37 @@ export type BotRun = {
 export async function listBotRuns(limit?: number) {
   return await postJson<BotRun[]>('/api/bots/runs', { limit });
 }
+
+/** A draft to review before anything is sent, or a step handed back to you. */
+export type BotInboxItem = {
+  id: string;
+  botId: string;
+  sessionId: string;
+  kind: 'draft' | 'handback';
+  title: string;
+  /** The draft text, or the steps to take (Markdown). */
+  body: string;
+  /** Draft: what Send does (absent: copy only). Hand-back: a link, if any. */
+  action: string | null;
+  status: 'open' | 'sent' | 'discarded' | 'done' | 'dismissed';
+  createdAt: string;
+  resolvedAt: string | null;
+};
+
+/** Open drafts and hand-backs, oldest first, for one bot or all of them. */
+export async function listBotInbox(botId?: string) {
+  return await postJson<BotInboxItem[]>('/api/bots/inbox', { botId });
+}
+
+/**
+ * Act on an inbox item. `send` and `done` continue the bot's conversation in
+ * the background, under its usual approval rules.
+ */
+export async function resolveBotInbox(params: {
+  id: string;
+  action: 'send' | 'discard' | 'done' | 'dismiss';
+  body?: string;
+  note?: string;
+}) {
+  return await postJson<BotInboxItem>('/api/bots/inbox/resolve', params);
+}

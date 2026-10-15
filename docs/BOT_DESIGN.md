@@ -48,8 +48,6 @@ Its reported weakness is that too many proactive cards become noise.
   offers 56 ready-made roles.
 - **Schedules only.** There are no event triggers (git push, CI failure, new
   issue, file change).
-- **Results are chat text.** There is no structured "draft for review" a person
-  can edit and then send.
 - **No credential vault** and no human takeover of a browser session.
 
 ## Proposed design
@@ -69,7 +67,7 @@ To avoid Hark's noise problem, Today shows only items that are actionable or
 new, with no suggestions the user did not ask for. A bot that has nothing to
 report stays out of it.
 
-### 2. Draft-first results (proposed)
+### 2. Draft-first results (shipped)
 
 A run can end with **drafts**, not only chat text: an email reply, a post, a
 PR description, a calendar change. Drafts appear in Today and in the bot with
@@ -77,10 +75,11 @@ PR description, a calendar change. Drafts appear in Today and in the bot with
 that needs approval. This turns "stops at a draft" (Grok's dominant pattern)
 into a first-class object.
 
-Implementation sketch: a built-in `codexia-bots` tool `propose_draft(kind,
-target, body, tool_call)` that stores the draft instead of executing. Send
-replays `tool_call` through the bot under the normal approval rules. It is
-never executed without a person pressing Send.
+As shipped: the built-in `codexia-bots` tool `propose_draft(title, body,
+action?)` stores the draft instead of executing. Send does not replay a stored
+tool call; it continues the draft's own conversation with the final text and
+asks the bot to carry out `action`, under the normal approval rules. Details
+in [BOTS.md](BOTS.md#drafts-and-hand-backs).
 
 ### 3. Role templates, honest about requirements (proposed)
 
@@ -109,7 +108,7 @@ project, a GitHub issue or PR assigned or labelled (via the GitHub MCP or
 `gh`), a CI run failing, a file appearing in a folder. Grok Bot reportedly
 cannot trigger on email; a local agent can watch what is on the machine.
 
-### 5. Hand-back steps (proposed)
+### 5. Hand-back steps (shipped)
 
 Dots hands password changes and transfers back to the person. In Codexia, a
 step that needs a secret or a login becomes a **hand-back card**: the bot

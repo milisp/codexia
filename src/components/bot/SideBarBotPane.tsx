@@ -4,6 +4,7 @@ import { listBots } from '@/services/apiAdapt/bots';
 import { useLayoutStore } from '@/stores';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 import { BotAvatar } from './BotAvatar';
+import { useBotInbox } from './useBotInbox';
 import { useOpenBot } from './useOpenBot';
 
 /** "3m", "4h", "2d" — enough to place a conversation without a full date. */
@@ -33,7 +34,8 @@ export function SideBarBotPane() {
   }, [setBots]);
 
   const view = useLayoutStore((s) => s.view);
-  const needsYou = bots.filter((bot) => statusByBot[bot.id] === 'waiting').length;
+  const { items: inbox } = useBotInbox();
+  const needsYou = bots.filter((bot) => statusByBot[bot.id] === 'waiting').length + inbox.length;
   const onToday = view === 'bot' && !selectedBotId;
 
   return (
