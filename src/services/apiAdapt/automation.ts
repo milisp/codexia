@@ -14,6 +14,13 @@ export type AutomationSchedule = {
   weekdays: AutomationWeekday[];
 };
 
+/** Something on the backend machine that starts a task instead of its schedule. */
+export type AutomationTrigger =
+  | { kind: 'git_branch'; repo: string; branch: string }
+  | { kind: 'new_file'; folder: string }
+  | { kind: 'ci_failed'; repo: string }
+  | { kind: 'issue_assigned'; repo: string };
+
 export type AutomationTask = {
   id: string;
   name: string;
@@ -29,8 +36,12 @@ export type AutomationTask = {
   created_at: string;
   paused: boolean;
   cwd_mode: AutomationCwdMode;
-  /** The scheduler's next fire time; absent when paused. */
+  /** The scheduler's next fire time; absent when paused or event-triggered. */
   next_run_at?: string | null;
+  /** Runs on this event instead of the schedule. */
+  trigger?: AutomationTrigger | null;
+  /** Why the trigger cannot be checked right now. */
+  trigger_error?: string | null;
 };
 
 export type AutomationRun = {
@@ -64,6 +75,7 @@ export async function createAutomation(payload: {
   model_provider?: string;
   model?: string;
   cwd_mode?: AutomationCwdMode;
+  trigger?: AutomationTrigger | null;
 }) {
   return await postJson<AutomationTask>('/api/automation/create', payload);
 }
@@ -79,6 +91,7 @@ export async function updateAutomation(payload: {
   model_provider?: string;
   model?: string;
   cwd_mode?: AutomationCwdMode;
+  trigger?: AutomationTrigger | null;
 }) {
   return await postJson<AutomationTask>('/api/automation/update', payload);
 }

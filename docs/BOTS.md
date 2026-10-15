@@ -175,6 +175,28 @@ The scheduler is hosted in the running backend and uses the host's local
 timezone. It is not a cloud scheduler: stopping the backend stops scheduling.
 A disconnected remote client does not itself stop the host backend.
 
+### Event triggers
+
+Instead of a schedule, a routine can run **when something happens** on the
+backend machine:
+
+| When | Checked with | Every |
+| --- | --- | --- |
+| New commits on a branch (any ref, e.g. `main` or `origin/main`) | `git rev-parse` in the repository | 30 s |
+| A new file or folder appears directly in a folder (dotfiles ignored) | a directory listing | 30 s |
+| A GitHub Actions run fails | `gh run list` in the repository | 5 min |
+| An open issue is newly assigned to you | `gh issue list --assignee @me` | 5 min |
+
+The run gets the routine's prompt plus what set it off (the branch move and
+its `git log`, the new file names, the failed run's name, branch and link, or
+the issue). It shows in the conversation as **When · name**. The first check
+only records the current state, so creating a routine or restarting Codexia
+never fires on what was already there, and changes made while Codexia was
+closed are not replayed. `origin/main` only moves when something fetches.
+The GitHub triggers need the `gh` CLI installed and signed in on the backend
+machine; when a check fails, the reason is shown under the routine. A
+trigger that fires while the routine is still running is skipped.
+
 ### Sleep
 
 - **During a run** Codexia keeps the computer from idle-sleeping (interactive

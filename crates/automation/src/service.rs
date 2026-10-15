@@ -6,7 +6,7 @@ use codexia_db::automation_runs;
 use super::AutomationRunRecord;
 use super::execution::execute_task;
 use super::model::{
-    AutomationSchedule, AutomationTask, CwdMode, default_model, default_model_provider,
+    AutomationSchedule, AutomationTask, AutomationTrigger, CwdMode, default_model, default_model_provider,
     normalize_agent, or_default,
 };
 use super::runtime::{AutomationHandle, save_store, schedule_task};
@@ -23,6 +23,8 @@ pub struct AutomationInput {
     pub model: Option<String>,
     pub cwd_mode: Option<CwdMode>,
     pub bot_id: Option<String>,
+    /// Run on this event instead of the schedule.
+    pub trigger: Option<AutomationTrigger>,
 }
 
 struct NormalizedInput {
@@ -36,6 +38,7 @@ struct NormalizedInput {
     model: String,
     cwd_mode: CwdMode,
     bot_id: Option<String>,
+    trigger: Option<AutomationTrigger>,
 }
 
 fn normalize(input: AutomationInput, known_agents: &[String]) -> Result<NormalizedInput, String> {
@@ -50,6 +53,9 @@ fn normalize(input: AutomationInput, known_agents: &[String]) -> Result<Normaliz
     }
 
     let cron_expression = schedule_to_cron(&input.schedule)?;
+    if let Some(trigger) = &input.trigger {
+        super::trigger::validate(trigger)?;
+    }
 
     let agent = normalize_agent(input.agent, known_agents)?;
     // A bot runs as itself, with its own model and project; the task only
@@ -80,6 +86,7 @@ fn normalize(input: AutomationInput, known_agents: &[String]) -> Result<Normaliz
         model: or_default(input.model, default_model),
         cwd_mode: input.cwd_mode.unwrap_or_default(),
         bot_id,
+        trigger: input.trigger,
     })
 }
 
@@ -111,6 +118,7 @@ pub async fn list_automations(handle: &AutomationHandle) -> Result<Vec<Automatio
     let mut runtime = handle.lock().await;
     let mut tasks = runtime.tasks.values().cloned().collect::<Vec<AutomationTask>>();
     for task in &mut tasks {
+        task.trigger_error = runtime.trigger_errors.get(&task.id).cloned();
         let Some(job_id) = runtime.job_ids.get(&task.id).copied() else {
             continue;
         };
@@ -146,10 +154,14 @@ pub async fn create_automation(
         cwd_mode: input.cwd_mode,
         bot_id: input.bot_id,
         next_run_at: None,
+        trigger: input.trigger,
+        trigger_error: None,
     };
 
-    let job_id = schedule_task(&runtime.scheduler, runtime.ctx.clone(), &task).await?;
-    runtime.job_ids.insert(task.id.clone(), job_id);
+    if task.trigger.is_none() {
+        let job_id = schedule_task(&runtime.scheduler, runtime.ctx.clone(), &task).await?;
+        runtime.job_ids.insert(task.id.clone(), job_id);
+    }
     runtime.tasks.insert(task.id.clone(), task.clone());
 
     save_store(&runtime.storage_path, runtime.tasks.values().cloned()).await?;
@@ -194,9 +206,11 @@ pub async fn update_automation(
         cwd_mode: input.cwd_mode,
         bot_id: input.bot_id,
         next_run_at: None,
+        trigger: input.trigger,
+        trigger_error: None,
     };
 
-    if !updated.paused {
+    if !updated.paused && updated.trigger.is_none() {
         let job_id = schedule_task(&runtime.scheduler, runtime.ctx.clone(), &updated).await?;
         runtime.job_ids.insert(task_id.clone(), job_id);
     }
@@ -227,7 +241,7 @@ pub async fn set_automation_paused(
                 .await
                 .map_err(|err| err.to_string())?;
         }
-    } else if !runtime.job_ids.contains_key(&task_id) {
+    } else if task.trigger.is_none() && !runtime.job_ids.contains_key(&task_id) {
         let job_id = schedule_task(&runtime.scheduler, runtime.ctx.clone(), &task).await?;
         runtime.job_ids.insert(task_id.clone(), job_id);
     }

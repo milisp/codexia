@@ -5,6 +5,8 @@ export function triggerLabel(kind: AcpTurnTrigger['kind'] | string, name?: strin
   switch (kind) {
     case 'routine':
       return `Scheduled · ${name ?? 'task'}`;
+    case 'event':
+      return `When · ${name ?? 'task'}`;
     case 'bot':
       return `Asked by ${name ?? 'another bot'}`;
     case 'draft':

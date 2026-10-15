@@ -44,11 +44,9 @@ Its reported weakness is that too many proactive cards become noise.
 
 ## Where Codexia is behind
 
-- **Schedules only.** There are no event triggers (git push, CI failure, new
-  issue, file change).
 - **No credential vault** and no human takeover of a browser session.
 
-## Proposed design
+## Design
 
 ### 1. Today: one place to arrive (shipped)
 
@@ -98,7 +96,7 @@ Templates are starting points: they prefill name, role prompt, schedule and
 suggested tools. A missing MCP server shows as "Connect GitHub" next to the
 template rather than failing on the first run.
 
-### 4. Event triggers (proposed)
+### 4. Event triggers (shipped)
 
 Routines get **When** as well as **Every**. Triggers come from things Codexia
 already watches or can poll cheaply: a git branch updated in the bot's

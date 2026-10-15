@@ -15,6 +15,9 @@ pub struct AgentRunSpec {
     pub cwd: Option<String>,
     /// The bot to run as, for the `bot` agent. Other agents ignore it.
     pub bot_id: Option<String>,
+    /// What set the run off, when it was an event rather than the schedule
+    /// (`New commits on main: ...`). Already appended to `prompt`.
+    pub event: Option<String>,
     pub on_started: RunStartedHook,
 }
 

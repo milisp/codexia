@@ -18,7 +18,10 @@ export type AcpToolLocation = { path: string; line?: number };
 
 /** A rendered line in the ACP transcript. */
 /** Where a turn nobody typed came from (`_meta["codexia.dev/trigger"]`). */
-export type AcpTurnTrigger = { kind: 'routine' | 'bot' | 'draft' | 'handback'; name?: string };
+export type AcpTurnTrigger = {
+  kind: 'routine' | 'event' | 'bot' | 'draft' | 'handback';
+  name?: string;
+};
 
 export type AcpEntry =
   | { id: string; role: 'user'; text: string; trigger?: AcpTurnTrigger }

@@ -1,4 +1,4 @@
-import { Bot as BotIcon, CircleCheck, Clock, Send } from 'lucide-react';
+import { Bot as BotIcon, CircleCheck, Clock, Send, Zap } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { AcpToolCall } from '@/components/acp/AcpToolCall';
 import { Markdown } from '@/components/Markdown';
@@ -115,6 +115,7 @@ export function BotMessageList({ bot }: { bot: Bot }) {
 
 const TRIGGER_ICONS: Record<AcpTurnTrigger['kind'], typeof Clock> = {
   routine: Clock,
+  event: Zap,
   bot: BotIcon,
   draft: Send,
   handback: CircleCheck,

@@ -11,7 +11,7 @@ import {
 } from '@/services/apiAdapt';
 import { getErrorMessage } from '@/utils/errorUtils';
 
-export type RoutineDraft = Pick<AutomationTask, 'name' | 'prompt' | 'schedule'>;
+export type RoutineDraft = Pick<AutomationTask, 'name' | 'prompt' | 'schedule' | 'trigger'>;
 
 function fail(title: string, error: unknown) {
   toast({ title, description: getErrorMessage(error), variant: 'destructive' });

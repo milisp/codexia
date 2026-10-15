@@ -53,6 +53,7 @@ pub(crate) async fn api_create_automation(
             model: params.model,
             cwd_mode: params.cwd_mode,
             bot_id: params.bot_id,
+            trigger: params.trigger,
         },
     )
     .await
@@ -90,6 +91,7 @@ pub(crate) async fn api_update_automation(
             model: params.model,
             cwd_mode: params.cwd_mode,
             bot_id: params.bot_id,
+            trigger: params.trigger,
         },
     )
     .await
