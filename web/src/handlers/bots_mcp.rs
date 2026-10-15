@@ -166,7 +166,14 @@ async fn call_tool(state: &WebServerState, from: &str, params: &Value) -> Value 
 
             match state
                 .acp_state
-                .run_bot_unattended(&target.id, &prompt, None, false, |_| {})
+                .run_bot_unattended(
+                    &target.id,
+                    &prompt,
+                    None,
+                    false,
+                    serde_json::json!({ "kind": "bot", "name": asker }),
+                    |_| {},
+                )
                 .await
             {
                 Ok(report) => {

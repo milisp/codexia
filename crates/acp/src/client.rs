@@ -77,13 +77,36 @@ pub struct UnattendedApprovals {
     /// Allow everything a standing answer may cover — an autonomous bot.
     /// Never covers a request only a person may answer.
     pub allow_all: bool,
-    /// Tool keys (`toolCall.kind`, else its title) a person approved for good.
+    /// Tool keys (see [`approval_key`]) a person approved for good.
     pub approved_tools: Vec<String>,
     /// Set once any request was refused, or went unanswered, so the run can
     /// report that it was blocked rather than claim it finished its job.
     pub blocked: Arc<AtomicBool>,
     /// Requests currently waiting for a person.
     pub waiting: Arc<WaitClock>,
+}
+
+/// `_meta` key on a stored user turn that came from a routine or another bot.
+pub const TRIGGER_META: &str = "codexia.dev/trigger";
+
+/// keke's `_meta` name for the tool a permission request is about.
+const TOOL_META: &str = "keke.dev/tool";
+
+/// What a standing approval is keyed on: the tool id keke names in `_meta`,
+/// else the ACP kind, else the title. ACP's `other` is never a key — it is the
+/// kind of every MCP tool, so approving it would approve all of them at once.
+pub fn approval_key(params: &Value) -> String {
+    let tool = params.get("toolCall");
+    let named = params
+        .get("_meta")
+        .and_then(|m| m.get(TOOL_META))
+        .and_then(Value::as_str);
+    let kind = tool
+        .and_then(|t| t.get("kind"))
+        .and_then(Value::as_str)
+        .filter(|k| *k != "other");
+    let title = || tool.and_then(|t| t.get("title")).and_then(Value::as_str);
+    named.or(kind).or_else(title).unwrap_or_default().to_string()
 }
 
 /// What an unattended connection does with one permission request.
@@ -100,13 +123,8 @@ impl UnattendedApprovals {
         if person_required(params) {
             return Standing::AskPerson;
         }
-        let tool = params.get("toolCall");
-        let key = tool
-            .and_then(|t| t.get("kind"))
-            .and_then(Value::as_str)
-            .or_else(|| tool.and_then(|t| t.get("title")).and_then(Value::as_str))
-            .unwrap_or_default();
-        if self.allow_all || self.approved_tools.iter().any(|t| t == key) {
+        let key = approval_key(params);
+        if self.allow_all || self.approved_tools.contains(&key) {
             return Standing::Answer(select(params, "allow_once"));
         }
         Standing::AskPerson
@@ -545,16 +563,29 @@ impl AcpClient {
     /// Send a user turn. Resolves when the agent finishes the turn; streamed
     /// output arrives meanwhile as `session/update` events.
     pub async fn prompt(&self, session_id: Option<&str>, text: &str) -> Result<Value, String> {
+        self.prompt_from(session_id, text, None).await
+    }
+
+    /// [`Self::prompt`] for a turn nobody typed: `trigger` (a routine, another
+    /// bot) is kept on the stored turn as `_meta["codexia.dev/trigger"]`, so the
+    /// conversation can show where it came from instead of a message from you.
+    pub async fn prompt_from(
+        &self,
+        session_id: Option<&str>,
+        text: &str,
+        trigger: Option<Value>,
+    ) -> Result<Value, String> {
         let session_id = self.resolve_session(session_id).await?;
         // The agent never echoes the user's turn back, so record it here to
         // keep the persisted transcript complete.
-        self.persist(
-            &session_id,
-            &json!({
-                "sessionUpdate": "user_message_chunk",
-                "content": { "type": "text", "text": text }
-            }),
-        );
+        let mut turn = json!({
+            "sessionUpdate": "user_message_chunk",
+            "content": { "type": "text", "text": text }
+        });
+        if let Some(trigger) = trigger {
+            turn["_meta"] = json!({ TRIGGER_META: trigger });
+        }
+        self.persist(&session_id, &turn);
         if let Err(e) = codexia_db::acp_sessions::set_title_if_empty(&session_id, text) {
             log::warn!("acp: failed to set session title: {e}");
         }
@@ -681,6 +712,7 @@ impl AcpClient {
             "toolCall": params.get("toolCall"),
             "options": params.get("options"),
             "personRequired": person_required(&params),
+            "approvalKey": approval_key(&params),
             "unattended": unattended.is_some(),
             "botId": self.bot_id,
             "requestedAt": chrono::Utc::now().to_rfc3339(),
@@ -731,6 +763,9 @@ impl AcpClient {
         if let Some(obj) = payload.as_object_mut() {
             obj.insert("connectionId".into(), json!(self.connection_id));
             obj.insert("agentId".into(), json!(self.agent_id));
+            if let Some(bot_id) = &self.bot_id {
+                obj.insert("botId".into(), json!(bot_id));
+            }
         }
         self.sink.emit(ACP_EVENT, payload);
     }
@@ -1031,6 +1066,28 @@ for line in sys.stdin:
         let mut request = request(kind);
         request["_meta"] = json!({ "keke.dev/person-required": true });
         request
+    }
+
+    #[test]
+    fn standing_approvals_are_keyed_on_the_tool_never_on_other() {
+        let mut shop = request("other");
+        shop["toolCall"]["title"] = json!("acp:shop:lookup_price: calls the `shop` MCP server");
+        assert_eq!(approval_key(&shop), "acp:shop:lookup_price: calls the `shop` MCP server");
+        shop["_meta"] = json!({ "keke.dev/tool": "acp:shop:lookup_price" });
+        assert_eq!(approval_key(&shop), "acp:shop:lookup_price");
+        assert_eq!(approval_key(&request("execute")), "execute");
+
+        // A bot that once saved the coarse `other` key does not get every MCP tool.
+        let legacy = UnattendedApprovals { approved_tools: vec!["other".into()], ..Default::default() };
+        assert_eq!(legacy.standing(&shop), Standing::AskPerson);
+        let exact = UnattendedApprovals {
+            approved_tools: vec!["acp:shop:lookup_price".into()],
+            ..Default::default()
+        };
+        assert_eq!(answered(exact.standing(&shop)).as_deref(), Some("allow"));
+        let mut send = shop.clone();
+        send["_meta"]["keke.dev/tool"] = json!("acp:gmail:send_email");
+        assert_eq!(exact.standing(&send), Standing::AskPerson);
     }
 
     fn answered(standing: Standing) -> Option<String> {

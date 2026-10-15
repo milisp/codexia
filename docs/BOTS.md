@@ -131,7 +131,11 @@ process of their own. A permission request is answered from standing approvals
 when it can be:
 
 - Autonomous bots: keke's reviewer decides ordinary steps itself.
-- Other bots: tools you approved with "Always allow" go ahead.
+- Other bots: tools you approved with "Always allow" go ahead. "Always allow"
+  is remembered per tool (keke's tool id in `_meta["keke.dev/tool"]`, keke
+  0.1.45 or later, such as `acp:shop:lookup_price`), never for ACP's `other`
+  kind, which every MCP tool shares. With an older keke the key falls back to
+  the request title.
 
 Anything else, including every step only you can approve, **waits for you**.
 The bot shows **Needs approval** in the sidebar and the bell, you get a
@@ -150,6 +154,20 @@ it.
 
 Every unattended run is filed in the bot's conversation with an unread badge. The
 sidebar shows a status dot per bot while it works or after it finishes.
+
+## One conversation per bot
+
+A bot has one continuous conversation, like Grok Bot and Dots: chat turns,
+scheduled runs and requests from other bots all appear in it, oldest first.
+A run nobody typed starts with a marker (**Scheduled · name** or **Asked by
+bot**) that expands to the request it ran on, not with a message from you. A
+run in progress streams into the conversation live, on every connected client,
+including one that opened it mid-run.
+
+Underneath, each scheduled or delegated run is a fresh keke session, so one
+long-running bot does not grow an unbounded context. What carries over between
+runs is the bot's memory folder. Opening a bot resumes its latest session, so
+you can reply to a routine's result directly.
 
 ## Bot-to-bot help
 

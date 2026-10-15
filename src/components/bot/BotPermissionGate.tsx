@@ -4,12 +4,7 @@ import { acpRespondPermission } from '@/services/apiAdapt/acp';
 import { type Bot, parseBotList, updateBot } from '@/services/apiAdapt/bots';
 import { useAcpStore } from '@/stores/useAcpStore';
 import { useBotUiStore } from '@/stores/useBotUiStore';
-
-/** What a standing approval is about. Falls back to the title when the agent
- *  reported no category, so the whitelist is never keyed on nothing. */
-function approvalKey(title: string, toolKind?: string) {
-  return toolKind ?? title;
-}
+import { approvalKey, approvalLabel } from './approvalKey';
 
 /**
  * The bot's answer to a permission request.
@@ -34,30 +29,30 @@ export function BotPermissionGate({ bot }: { bot: Bot }) {
 
     // Only a person may answer this one; a standing approval does not count.
     if (permission.personRequired) return;
-    const key = approvalKey(permission.title, permission.toolKind);
-    if (!approved.includes(key)) return;
+    const key = approvalKey({ ...permission, kind: permission.toolKind });
+    if (!key || !approved.includes(key)) return;
 
     answered.current = permission.requestId;
     setPermission(null);
     addEntry({
       id: `auto-${permission.requestId}`,
       role: 'thought',
-      text: `Auto-approved ${key} — ${bot.name} has a standing approval for it.`,
+      text: `Auto-approved ${approvalLabel(key)} — ${bot.name} has a standing approval for it.`,
     });
     void acpRespondPermission(connectionId, permission.requestId, 'allow');
   }, [permission, connectionId, approved, setPermission, addEntry, bot.name]);
 
   if (!permission || !connectionId) return null;
 
-  const key = approvalKey(permission.title, permission.toolKind);
-  if (!permission.personRequired && approved.includes(key)) return null;
+  const key = approvalKey({ ...permission, kind: permission.toolKind });
+  if (!permission.personRequired && key && approved.includes(key)) return null;
 
   const respond = async (optionId: string | null) => {
     setPermission(null);
     await acpRespondPermission(connectionId, permission.requestId, optionId);
   };
 
-  const allowAlways = async () => {
+  const allowAlways = async (key: string) => {
     const next = [...approved, key];
     setPermission(null);
     await acpRespondPermission(connectionId, permission.requestId, 'allow');
@@ -82,9 +77,9 @@ export function BotPermissionGate({ bot }: { bot: Bot }) {
             {option.name}
           </Button>
         ))}
-        {!permission.personRequired && (
-          <Button size="sm" variant="outline" onClick={allowAlways}>
-            Always allow {key}
+        {!permission.personRequired && key && (
+          <Button size="sm" variant="outline" title={key} onClick={() => allowAlways(key)}>
+            Always allow {approvalLabel(key)}
           </Button>
         )}
         <Button size="sm" variant="ghost" onClick={() => respond(null)}>

@@ -301,6 +301,7 @@ impl crate::AcpState {
         prompt: &str,
         cwd: Option<&str>,
         delegate: bool,
+        trigger: Value,
         on_started: impl FnOnce(&str),
     ) -> Result<RunReport, String> {
         let bot = codexia_db::bots::get_bot(bot_id)?
@@ -358,7 +359,10 @@ impl crate::AcpState {
             on_started(&session_id);
             self.emit_bot(&bot.id, &session_id, "working");
 
-            let turn = run_with_budget(client.prompt(Some(&session_id), prompt), &approvals.waiting).await;
+            let turn = run_with_budget(
+                client.prompt_from(Some(&session_id), prompt, Some(trigger)),
+                &approvals.waiting,
+            ).await;
             if let Err(e) = turn {
                 self.emit_bot(&bot.id, &session_id, "failed");
                 return Err(e);

@@ -47,6 +47,35 @@ describe('continuous Bot timeline', () => {
     expect(useAcpStore.getState().configOptions).toEqual([]);
   });
 
+  it('streams a running scheduled run in place, without reloading, and ignores other bots', async () => {
+    listSessions.mockResolvedValue([record('scheduled', '1')]);
+    getSession.mockResolvedValue([said('Looking up')]);
+    const { result } = renderHook(() => useBotTimeline('bot'));
+    await waitFor(() => expect(texts(result.current.sections)).toEqual(['Looking up']));
+    const update = (botId: string, text: string) =>
+      act(() => activity({ data: JSON.stringify({
+        event: 'acp-message',
+        payload: { botId, kind: 'update', sessionId: 'scheduled', update: said(text) },
+      }) }));
+    update('bot', ' the price');
+    update('other-bot', ' (not this one)');
+    expect(texts(result.current.sections)).toEqual(['Looking up the price']);
+    expect(getSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('loads a run it has not seen when its first update arrives', async () => {
+    listSessions.mockResolvedValue([]);
+    const { result } = renderHook(() => useBotTimeline('bot'));
+    await waitFor(() => expect(listSessions).toHaveBeenCalledTimes(1));
+    listSessions.mockResolvedValue([record('new-run', '1')]);
+    getSession.mockResolvedValue([said('started')]);
+    act(() => activity({ data: JSON.stringify({
+      event: 'acp-message',
+      payload: { botId: 'bot', kind: 'update', sessionId: 'new-run', update: said('started') },
+    }) }));
+    await waitFor(() => expect(texts(result.current.sections)).toEqual(['started']));
+  });
+
   it('does not leak a slow timeline into another Bot', async () => {
     let release: (value: unknown[]) => void = () => {};
     const slow = new Promise<unknown[]>((resolve) => { release = resolve; });

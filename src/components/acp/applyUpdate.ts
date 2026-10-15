@@ -13,6 +13,7 @@ export function applyAcpUpdate(update: Record<string, any>, store = useAcpStore.
           id: `u-${Math.random().toString(36).slice(2)}`,
           role: 'user',
           text: update.content.text,
+          trigger: update._meta?.['codexia.dev/trigger'],
         });
       break;
     case 'agent_message_chunk':
