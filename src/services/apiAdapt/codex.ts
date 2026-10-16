@@ -38,6 +38,18 @@ import type {
   ThreadGoalSetResponse,
   ThreadListParams,
   ThreadListResponse,
+  ThreadQueueAddParams,
+  ThreadQueueAddResponse,
+  ThreadQueueDeleteParams,
+  ThreadQueueDeleteResponse,
+  ThreadQueueListParams,
+  ThreadQueueListResponse,
+  ThreadQueueReorderParams,
+  ThreadQueueReorderResponse,
+  ThreadQueueStartParams,
+  ThreadQueueStartResponse,
+  ThreadQueueUpdateParams,
+  ThreadQueueUpdateResponse,
   ThreadReadParams,
   ThreadReadResponse,
   ThreadReadStateUpdateParams,
@@ -49,6 +61,8 @@ import type {
   ThreadStartParams,
   ThreadStartResponse,
   TurnInterruptParams,
+  TurnSettingsUpdateParams,
+  TurnSettingsUpdateResponse,
   TurnStartParams,
   TurnStartResponse,
   TurnSteerParams,
@@ -95,6 +109,34 @@ export async function turnStart(params: TurnStartParams) {
 
 export async function turnSteer(params: TurnSteerParams) {
   return await postJson<TurnSteerResponse>('/api/codex/turn/steer', params);
+}
+
+export async function turnSettingsUpdate(params: TurnSettingsUpdateParams) {
+  return await postJson<TurnSettingsUpdateResponse>('/api/codex/turn/settings/update', params);
+}
+
+export async function threadQueueAdd(params: ThreadQueueAddParams) {
+  return await postJson<ThreadQueueAddResponse>('/api/codex/thread/queue/add', params);
+}
+
+export async function threadQueueList(params: ThreadQueueListParams) {
+  return await postJson<ThreadQueueListResponse>('/api/codex/thread/queue/list', params);
+}
+
+export async function threadQueueUpdate(params: ThreadQueueUpdateParams) {
+  return await postJson<ThreadQueueUpdateResponse>('/api/codex/thread/queue/update', params);
+}
+
+export async function threadQueueDelete(params: ThreadQueueDeleteParams) {
+  return await postJson<ThreadQueueDeleteResponse>('/api/codex/thread/queue/delete', params);
+}
+
+export async function threadQueueReorder(params: ThreadQueueReorderParams) {
+  return await postJson<ThreadQueueReorderResponse>('/api/codex/thread/queue/reorder', params);
+}
+
+export async function threadQueueStart(params: ThreadQueueStartParams) {
+  return await postJson<ThreadQueueStartResponse>('/api/codex/thread/queue/start', params);
 }
 
 export async function turnInterrupt(params: TurnInterruptParams) {

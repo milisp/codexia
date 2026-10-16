@@ -25,6 +25,7 @@ import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useModels } from '../hooks/useModels';
 import { EnvKeysDialog } from './EnvKeysDialog';
 import { nextReasoningEffort, ReasoningEffortSelector } from './ReasoningEffortSelector';
+import { applyToRunningTurn } from './runningTurnSettings';
 
 // Models shown per provider before "Show all" in the composer popover.
 const COLLAPSED_MODEL_COUNT = 3;
@@ -541,15 +542,26 @@ export function ModelReasonSelector({ mode = 'popover' }: { mode?: 'popover' | '
     }
   };
 
+  // A user pick also reaches the turn that is running right now, if any.
+  const handleModelChange = (id: string) => {
+    setModel(id);
+    applyToRunningTurn({ model: id });
+  };
+
+  const handleEffortChange = (effort: ReasoningEffort) => {
+    setReasoningEffort(effort);
+    applyToRunningTurn({ effort });
+  };
+
   if (mode === 'panel') {
     return (
       <BaseModelSelector
         provider={modelProvider}
         onProviderChange={onProviderChange}
         value={providerModels[modelProvider] ?? ''}
-        onValueChange={setModel}
+        onValueChange={handleModelChange}
         reasoningEffort={reasoningEffort}
-        onReasoningEffortChange={setReasoningEffort}
+        onReasoningEffortChange={handleEffortChange}
         onClose={triggerInputFocus}
         mode="panel"
       />
@@ -561,9 +573,9 @@ export function ModelReasonSelector({ mode = 'popover' }: { mode?: 'popover' | '
       provider={modelProvider}
       onProviderChange={onProviderChange}
       value={providerModels[modelProvider] ?? ''}
-      onValueChange={setModel}
+      onValueChange={handleModelChange}
       reasoningEffort={reasoningEffort}
-      onReasoningEffortChange={setReasoningEffort}
+      onReasoningEffortChange={handleEffortChange}
       onClose={triggerInputFocus}
     />
   );

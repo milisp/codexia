@@ -37,6 +37,9 @@ use super::{
         api_git_status, api_git_unstage_files, api_git_commit, api_git_push,
         api_git_has_worktree_changes,
         api_list_threads, api_delete_thread, api_rename_thread, api_thread_read, api_thread_read_state_update, api_turn_steer,
+        api_turn_settings_update, api_thread_queue_add, api_thread_queue_list,
+        api_thread_queue_update, api_thread_queue_delete, api_thread_queue_reorder,
+        api_thread_queue_start,
         api_thread_goal_set, api_thread_goal_get, api_thread_goal_clear,
         api_thread_compact_start, api_thread_memory_mode_set, api_memory_reset,
         api_hooks_list, api_plugin_list, api_plugin_read, api_plugin_install,
@@ -238,6 +241,13 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/codex/turn/start", post(api_turn_start))
         .route("/api/codex/turn/steer", post(api_turn_steer))
         .route("/api/codex/turn/interrupt", post(api_turn_interrupt))
+        .route("/api/codex/turn/settings/update", post(api_turn_settings_update))
+        .route("/api/codex/thread/queue/add", post(api_thread_queue_add))
+        .route("/api/codex/thread/queue/list", post(api_thread_queue_list))
+        .route("/api/codex/thread/queue/update", post(api_thread_queue_update))
+        .route("/api/codex/thread/queue/delete", post(api_thread_queue_delete))
+        .route("/api/codex/thread/queue/reorder", post(api_thread_queue_reorder))
+        .route("/api/codex/thread/queue/start", post(api_thread_queue_start))
         .route(
             "/api/codex/model/list",
             get(api_model_list).post(api_model_list_post),

@@ -1,7 +1,11 @@
 import { type RefObject, useCallback } from 'react';
 import type { ServerNotification } from '@/bindings/ServerNotification';
 import type { AccountLoginCompletedNotification } from '@/bindings/v2';
-import { useCodexStore, useThreadReadStateStore } from '@/components/codex/stores';
+import {
+  useCodexStore,
+  useThreadQueueStore,
+  useThreadReadStateStore,
+} from '@/components/codex/stores';
 import { allowSleep, preventSleep } from '@/services/apiAdapt';
 import { playBeep } from '@/utils/beep';
 import { shouldPlayCompletionBeep } from './beepOnCompletion';
@@ -51,6 +55,13 @@ export function useServerNotificationHandler(
       }
 
       if (threadId) {
+        // The notification only names the thread; the queue itself is refetched
+        // and never enters the transcript.
+        if (method === 'thread/queue/changed') {
+          void useThreadQueueStore.getState().refresh(threadId);
+          return;
+        }
+
         if (
           [
             'thread/settings/updated',
