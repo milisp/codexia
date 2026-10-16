@@ -16,6 +16,11 @@
 
 </div>
 
+<p align="center">
+  🚀 <strong>New:</strong> <a href="https://www.producthunt.com/products/mcp-linker?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=codexia">MCP Linker</a> — sync MCP servers between Claude Code, Codex, Cursor &amp; more — is live on Product Hunt!<br>
+  <a href="https://www.producthunt.com/products/mcp-linker?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=codexia" target="_blank" rel="noopener noreferrer"><img alt="MCP Linker on Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1281069&amp;theme=light"></a>
+</p>
+
 Use your existing Claude subscription or ChatGPT plan — no API key required.
 
 Build your team of **Bots** — long-lived AI coworkers with memory and scheduled routines. Manage Claude Code, Codex, and Agent Client Protocol (ACP) agents in one workspace, with git worktrees and remote control.
