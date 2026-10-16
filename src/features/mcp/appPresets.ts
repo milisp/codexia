@@ -62,6 +62,13 @@ export const appPresets: {
     config: { type: 'http', url: 'https://search.parallel.ai/mcp' },
   },
   {
+    name: 'cohesivity',
+    label: 'Cohesivity',
+    description: 'Postgres, hosting and storage for your apps, no account needed',
+    access: 'Sign-in optional',
+    config: { type: 'http', url: 'https://cohesivity.ai/mcp' },
+  },
+  {
     name: 'fxmacrodata',
     label: 'FXMacroData',
     description: 'Macroeconomic releases, economic calendar and FX data',
