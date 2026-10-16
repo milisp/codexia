@@ -6,6 +6,27 @@
 > changelog. The release workflow reads the top `## [version]` section of this
 > file matching the tag being published.
 
+## [0.56.0] - 2026-10-16
+
+[Compare with v0.55.0](https://github.com/milisp/codexia/compare/v0.55.0...v0.56.0)
+
+### Features & Improvements
+- Bots: a Today view with waiting approvals, unseen runs and upcoming routines; drafts and hand-back cards; start a bot from a role template; event triggers for routines.
+- Always-visible agent picker with brand icons; ACP agents can pick a project and are listed on mobile; ACP thoughts show as a collapsed "Thinking" marker.
+- Project bar above the composer, seeded from past sessions; sidebar projects are now backed by app-server projects, with unified section headers and recent projects.
+- Codex 0.163 support: server-side message queue and live turn settings, server-side plugin search, estimated thread cost, custom model ids stored on the backend, and unread state from the server with a central keymap.
+- Codex transcripts render with AI Elements patterns (reasoning summaries as Markdown, parsed commands and readable durations in step lines).
+- Bundled keke agent v0.1.46.
+
+### Fixes & Maintenance
+- Editing a message reverts the thread in place; unrendered notifications no longer show in the transcript.
+- The model panel shows provider models and manual entry.
+- Files open correctly under Vite 8 and missing folders are handled; the web server returns a plain Response from read-directory.
+- Deleting a project from Settings asks for confirmation; unread state adopts the server's on a revision conflict.
+- A background bot resume shows in the open conversation.
+- Sidebar "Customize" and "Scheduled" labels are translated.
+- CI hardening: actions pinned to commit SHAs, read-only workflow permissions, checkout credentials not persisted, signing key limited to the build steps, Dependabot enabled, and a SECURITY.md added. Unused manual CI workflows removed.
+
 ## [0.55.0] - 2026-10-15
 
 [Compare with v0.54.2](https://github.com/milisp/codexia/compare/v0.54.2...v0.55.0)
