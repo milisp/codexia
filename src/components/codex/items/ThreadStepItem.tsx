@@ -8,7 +8,6 @@ import {
   WrenchIcon,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { fmtElapsed } from '@/components/agent/utils';
 import { CodeOutput } from '@/components/ai-elements/CodeOutput';
 import { Reasoning } from '@/components/ai-elements/Reasoning';
 import { Subagent } from '@/components/ai-elements/Subagent';
@@ -19,7 +18,7 @@ import {
   CollabAgentToolCallItem,
   type CollabAgentToolCallItemData,
 } from './CollabAgentToolCallItem';
-import { isStepFailed, type StepItem } from './stepItems';
+import { displayCommand, formatStepDuration, isStepFailed, type StepItem } from './stepItems';
 
 interface ThreadStepItemProps {
   item: StepItem;
@@ -54,25 +53,26 @@ export function ThreadStepItem({ item, running = false }: ThreadStepItemProps) {
         />
       );
     case 'commandExecution': {
+      const command = displayCommand(item);
       let title: string;
       if (running) {
-        title = t('items.runningCommand', { command: item.command });
+        title = t('items.runningCommand', { command });
       } else if (item.status === 'declined') {
-        title = t('items.commandDeclined', { command: item.command });
+        title = t('items.commandDeclined', { command });
       } else if (item.exitCode !== null && item.exitCode !== 0) {
-        title = t('items.commandExited', { command: item.command, code: item.exitCode });
+        title = t('items.commandExited', { command, code: item.exitCode });
       } else if (item.status === 'failed') {
-        title = t('items.commandFailed', { command: item.command });
+        title = t('items.commandFailed', { command });
       } else {
-        title = t('items.ranCommand', { command: item.command });
+        title = t('items.ranCommand', { command });
       }
       return (
         <Terminal
-          command={item.command}
+          command={command}
           title={title}
           description={
-            !running && typeof item.durationMs === 'number'
-              ? fmtElapsed(item.durationMs)
+            !running && typeof item.durationMs === 'number' && item.durationMs > 0
+              ? formatStepDuration(item.durationMs)
               : undefined
           }
           status={status}
@@ -83,7 +83,9 @@ export function ThreadStepItem({ item, running = false }: ThreadStepItemProps) {
     case 'mcpToolCall': {
       const hasDetails = !!item.result || !!item.error;
       const duration =
-        !running && typeof item.durationMs === 'number' ? fmtElapsed(item.durationMs) : undefined;
+        !running && typeof item.durationMs === 'number' && item.durationMs > 0
+          ? formatStepDuration(item.durationMs)
+          : undefined;
       return (
         <Tool
           icon={<WrenchIcon />}
@@ -131,8 +133,8 @@ export function ThreadStepItem({ item, running = false }: ThreadStepItemProps) {
                 : t('items.calledTool', { tool: name })
           }
           description={
-            !running && typeof item.durationMs === 'number'
-              ? fmtElapsed(item.durationMs)
+            !running && typeof item.durationMs === 'number' && item.durationMs > 0
+              ? formatStepDuration(item.durationMs)
               : undefined
           }
           status={status}
@@ -209,7 +211,7 @@ export function ThreadStepItem({ item, running = false }: ThreadStepItemProps) {
       );
     }
     case 'sleep': {
-      const duration = fmtElapsed(item.durationMs);
+      const duration = formatStepDuration(item.durationMs);
       return (
         <Tool
           icon={<TimerIcon />}

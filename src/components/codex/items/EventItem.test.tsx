@@ -89,7 +89,7 @@ describe('EventItem steps', () => {
   it('renders a successful command title and duration', () => {
     render(<EventItem event={completed(command())} />);
     expect(screen.getByText('Ran bun test')).toBeTruthy();
-    expect(screen.getByText('0:03')).toBeTruthy();
+    expect(screen.getByText('3.0s')).toBeTruthy();
   });
 
   it('does not render item/started when the item already completed', () => {
@@ -117,7 +117,7 @@ describe('EventItem steps', () => {
         })}
       />
     );
-    expect(screen.getByText('github · 0:01')).toBeTruthy();
+    expect(screen.getByText('github · 1.0s')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Called search/ }));
     expect(screen.getByText(/"hits": 3/)).toBeTruthy();
   });
@@ -148,7 +148,7 @@ describe('EventItem steps', () => {
     expect(screen.getByText('Searched the web: tauri')).toBeTruthy();
     expect(screen.getByText('Context compacted')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Hook prompt/ })).toBeTruthy();
-    expect(screen.getByText('Slept for 0:05')).toBeTruthy();
+    expect(screen.getByText('Slept for 5.0s')).toBeTruthy();
   });
 
   it('renders a sub-agent call with its prompt', () => {
@@ -255,4 +255,28 @@ describe('thread step chain', () => {
     );
     expect(container.querySelector('[data-status="running"]')).toBeNull();
   });
+
+describe('step helpers', () => {
+  it('shows the parsed command instead of the shell wrapper', () => {
+    render(
+      <EventItem
+        event={completed({
+          type: 'commandExecution',
+          id: 'c2',
+          command: "/bin/zsh -lc 'rg --files'",
+          commandActions: [{ type: 'listFiles', command: 'rg --files', path: null }],
+          cwd: '/tmp',
+          processId: null,
+          source: 'agent',
+          status: 'completed',
+          aggregatedOutput: 'a.txt',
+          exitCode: 0,
+          durationMs: 120,
+        } as never)}
+      />
+    );
+    expect(screen.getByText('Ran rg --files')).toBeTruthy();
+    expect(screen.getByText('120ms')).toBeTruthy();
+  });
+});
 });
