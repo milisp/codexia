@@ -1,58 +1,83 @@
 import { Button } from '@/components/ui/button';
-import { useLayoutStore } from '@/stores';
+import { cn } from '@/lib/utils';
 import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
-import { AgentIcon } from '../common/AgentIcon';
-
-const AGENT_TYPES = ['codex', 'cc'] as const;
+import { AgentLogo } from './AgentLogo';
+import { type AgentOption, BUILTIN_AGENTS, useAgentChoice } from './useAgentChoice';
 
 interface AgentSwitcherProps {
-  /** "icon" = icon-only ghost buttons; "tab" = icon + label tabs */
-  variant?: 'icon' | 'tab';
+  /**
+   * "all" switches the chat agent, ACP agents included. "builtin" only picks
+   * between Codex and Claude Agent, for screens that configure those two.
+   */
+  scope?: 'all' | 'builtin';
   className?: string;
 }
 
-export function AgentSwitcher({ variant = 'icon', className }: AgentSwitcherProps) {
-  const { selectedAgent, setSelectedAgent } = useAgentSettingsStore();
-  const { setActiveSidebarTab } = useLayoutStore();
+interface AgentIconButtonsProps {
+  options: AgentOption[];
+  isCurrent: (option: AgentOption) => boolean;
+  onSelect: (option: AgentOption) => void;
+  className?: string;
+}
 
-  if (variant === 'tab') {
-    return (
-      <div className={`flex items-center ${className ?? ''}`}>
-        {AGENT_TYPES.map((agent) => (
-          <button
-            type="button"
-            key={agent}
-            onClick={() => {
-              setSelectedAgent(agent);
-              setActiveSidebarTab(agent);
-            }}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
-              selectedAgent === agent
-                ? 'bg-muted text-foreground'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-            }`}
-          >
-            <AgentIcon agent={agent} />
-            <span>{agent === 'cc' ? 'Claude Agent' : 'Codex'}</span>
-          </button>
-        ))}
-      </div>
-    );
-  }
-
+function AgentIconButtons({ options, isCurrent, onSelect, className }: AgentIconButtonsProps) {
   return (
-    <span className={className}>
-      {AGENT_TYPES.map((agent) => (
-        <Button
-          key={agent}
-          variant="ghost"
-          size="icon"
-          className={`h-8 w-8 ${selectedAgent === agent ? 'bg-accent' : ''}`}
-          onClick={() => setSelectedAgent(agent)}
-        >
-          <AgentIcon agent={agent} />
-        </Button>
-      ))}
+    <span className={cn('flex items-center gap-0.5', className)}>
+      {options.map((option) => {
+        const label = option.available ? option.name : `${option.name} (not installed)`;
+        return (
+          <Button
+            key={`${option.kind}-${option.id}`}
+            variant="ghost"
+            size="icon"
+            aria-label={label}
+            aria-pressed={isCurrent(option)}
+            title={label}
+            className={cn(
+              'h-8 w-8',
+              isCurrent(option) && 'bg-accent',
+              !option.available && 'opacity-50'
+            )}
+            onClick={() => onSelect(option)}
+          >
+            <AgentLogo id={option.id} />
+          </Button>
+        );
+      })}
     </span>
+  );
+}
+
+function AllAgentsSwitcher({ className }: { className?: string }) {
+  const { options, isCurrent, select } = useAgentChoice();
+  return (
+    <AgentIconButtons
+      options={options}
+      isCurrent={isCurrent}
+      onSelect={select}
+      className={className}
+    />
+  );
+}
+
+function BuiltinAgentSwitcher({ className }: { className?: string }) {
+  const { selectedAgent, setSelectedAgent } = useAgentSettingsStore();
+  return (
+    <AgentIconButtons
+      options={BUILTIN_AGENTS}
+      isCurrent={(option) => option.id === selectedAgent}
+      onSelect={(option) => {
+        if (option.kind === 'builtin') setSelectedAgent(option.id);
+      }}
+      className={className}
+    />
+  );
+}
+
+export function AgentSwitcher({ scope = 'all', className }: AgentSwitcherProps) {
+  return scope === 'builtin' ? (
+    <BuiltinAgentSwitcher className={className} />
+  ) : (
+    <AllAgentsSwitcher className={className} />
   );
 }

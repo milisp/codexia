@@ -139,7 +139,7 @@ export function PluginsViewHeader() {
           </SelectContent>
         </Select>
       ) : (
-        <AgentSwitcher />
+        <AgentSwitcher scope="builtin" />
       )}
       {connectorsVisible && connectorTarget === 'bots' && selectedBotId && (
         <Button
