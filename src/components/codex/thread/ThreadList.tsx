@@ -1,6 +1,6 @@
 import { listen } from '@tauri-apps/api/event';
 import type { LucideIcon } from 'lucide-react';
-import { Archive, FolderX, GitFork, Loader2, Pin, PinOff } from 'lucide-react';
+import { Archive, FolderX, GitFork, Loader2, MailOpen, Pin, PinOff } from 'lucide-react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ServerNotification } from '@/bindings/ServerNotification';
@@ -10,7 +10,13 @@ import type {
   ThreadListResponse,
   ThreadNameUpdatedNotification,
 } from '@/bindings/v2';
-import { useCodexStore, useConfigStore, useThreadListStore } from '@/components/codex/stores';
+import {
+  isThreadUnread,
+  useCodexStore,
+  useConfigStore,
+  useThreadListStore,
+  useThreadReadStateStore,
+} from '@/components/codex/stores';
 import { RenameThreadDialog } from '@/components/codex/thread/RenameThreadDialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,9 +28,11 @@ import {
 } from '@/components/ui/context-menu';
 import { toast } from '@/components/ui/use-toast';
 import { isDesktopTauri } from '@/hooks/runtime';
+import { THREADS_CHANGED_EVENT } from '@/hooks/useGlobalShortcuts';
 import { archiveThread, deleteThread, listThreads, renameThread } from '@/services/apiAdapt';
 import { gitRemoveWorktree } from '@/services/apiAdapt/git';
 import { codexService } from '@/services/codexService';
+import { setThreadReadState } from '@/services/threadReadState';
 import { useAgentCenterStore, useLayoutStore } from '@/stores';
 import { usePinStore } from '@/stores/usePinStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
@@ -60,6 +68,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
   const pinnedIds = usePinStore((s) => s.pinned);
   const togglePin = usePinStore((s) => s.togglePin);
   const modelProvider = useConfigStore((s) => s.modelProvider);
+  const readStates = useThreadReadStateStore((s) => s.states);
   const [response, setResponse] = useState<ThreadListResponse>(EMPTY_LIST);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [renameThreadId, setRenameThreadId] = useState<string | null>(null);
@@ -107,6 +116,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
         const res = await listThreads(params);
         if (cancelled) return;
         loadedRef.current = { cwd, count: res.data.length };
+        useThreadReadStateStore.getState().mergeFromList(res.readStates);
         setResponse(res);
       } catch (err) {
         if (!cancelled) console.error('Failed to load threads:', err);
@@ -119,6 +129,12 @@ export function ThreadList({ cwd }: ThreadListProps) {
   }, [cwd, sortKey, providerFilter, refreshCounter]);
 
   const refresh = useCallback(() => setRefreshCounter((n) => n + 1), []);
+
+  // Shortcuts (e.g. archive chat) change the list from outside this component.
+  useEffect(() => {
+    window.addEventListener(THREADS_CHANGED_EVENT, refresh);
+    return () => window.removeEventListener(THREADS_CHANGED_EVENT, refresh);
+  }, [refresh]);
 
   // When a new thread is created in the store (e.g. after threadStart),
   // refresh the list so the sidebar reflects it immediately.
@@ -242,6 +258,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
         cwd,
       };
       const res = await listThreads(params);
+      useThreadReadStateStore.getState().mergeFromList(res.readStates);
       setResponse((prev) => {
         const seen = new Set(prev.data.map((t) => t.id));
         const data = [...prev.data, ...res.data.filter((t) => !seen.has(t.id))];
@@ -326,6 +343,15 @@ export function ThreadList({ cwd }: ThreadListProps) {
               cwd: thread.cwd || cwd,
             }),
         },
+        {
+          label: isThreadUnread(readStates, thread.id) ? 'Mark as read' : 'Mark as unread',
+          icon: MailOpen,
+          onSelect: () =>
+            void setThreadReadState(
+              thread.id,
+              isThreadUnread(readStates, thread.id) ? 'read' : 'unread'
+            ),
+        },
         { label: 'Fork', icon: GitFork, onSelect: () => void handleFork(thread.id) },
         { label: 'Archive', icon: Archive, onSelect: () => void handleArchive(thread.id) },
         ...(thread.cwd.includes('/.codexia/worktrees/')
@@ -347,6 +373,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
     },
     [
       cwd,
+      readStates,
       pinnedIds,
       togglePin,
       openRenameDialog,
@@ -389,7 +416,14 @@ export function ThreadList({ cwd }: ThreadListProps) {
                   {threadStatusMap[thread.id]?.type === 'active' && (
                     <Loader2 className="h-3 w-3 shrink-0 animate-spin text-muted-foreground" />
                   )}
-                  {thread.name ?? (thread.preview || 'New chat')}
+                  {isThreadUnread(readStates, thread.id) && (
+                    <span
+                      role="img"
+                      aria-label="Unread"
+                      className="h-2 w-2 shrink-0 rounded-full bg-blue-500"
+                    />
+                  )}
+                  <span className="truncate">{thread.name ?? (thread.preview || 'New chat')}</span>
                 </div>
                 <div className="flex items-center justify-end h-6 w-12 relative">
                   <span className="text-xs text-muted-foreground whitespace-nowrap group-hover:hidden">

@@ -31,3 +31,15 @@ describe('addEvent transcript filtering', () => {
     expect(state.threadStatusMap[THREAD]).toEqual({ type: 'idle' });
   });
 });
+
+describe("thread/readState/changed", () => {
+  it("never reaches the transcript", () => {
+    useCodexStore.setState({ events: {}, threadStatusMap: {} });
+    notify({
+      method: "thread/readState/changed",
+      params: { threadId: THREAD, readState: { firstUnread: null, revision: "r1" } },
+    });
+
+    expect(useCodexStore.getState().events[THREAD] ?? []).toHaveLength(0);
+  });
+});

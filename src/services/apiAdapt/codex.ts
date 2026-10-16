@@ -34,6 +34,10 @@ import type {
   ThreadGoalSetResponse,
   ThreadListParams,
   ThreadListResponse,
+  ThreadReadParams,
+  ThreadReadResponse,
+  ThreadReadStateUpdateParams,
+  ThreadReadStateUpdateResponse,
   ThreadResumeParams,
   ThreadResumeResponse,
   ThreadRevertParams,
@@ -52,7 +56,7 @@ import type {
   FrontendProviderModels,
   ProviderPreset,
 } from '@/components/codex/types';
-import { getJson, postJson, postNoContent } from './shared';
+import { getJson, postJson, postJsonWithOptions, postNoContent } from './shared';
 
 export * from './mcp';
 export * from './skills';
@@ -114,6 +118,21 @@ export async function deleteThread(threadId: ThreadId) {
 export async function renameThread(threadId: ThreadId, name: string) {
   const params = { threadId, name };
   return await postJson('/api/codex/thread/rename', params);
+}
+
+// Read-state callers show their own errors (or stay silent), so no generic toast.
+export async function updateThreadReadState(params: ThreadReadStateUpdateParams) {
+  return await postJsonWithOptions<ThreadReadStateUpdateResponse>(
+    '/api/codex/thread/readState/update',
+    params,
+    { suppressToast: true }
+  );
+}
+
+export async function readThread(params: ThreadReadParams) {
+  return await postJsonWithOptions<ThreadReadResponse>('/api/codex/thread/read', params, {
+    suppressToast: true,
+  });
 }
 
 export async function getAccount() {

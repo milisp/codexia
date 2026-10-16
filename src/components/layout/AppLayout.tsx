@@ -5,6 +5,8 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { SidebarInset, SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEdgeSwipe } from '@/hooks/useEdgeSwipe';
+import { useGlobalShortcuts } from '@/hooks/useGlobalShortcuts';
+import { useOpenThreadRead } from '@/hooks/useOpenThreadRead';
 import { useLayoutStore } from '@/stores';
 
 const SettingsView = lazy(() => import('@/components/settings/SettingsView'));
@@ -162,18 +164,10 @@ const ViewLoadingFallback = () => (
 );
 
 export function AppLayout() {
-  const { view, setView, isSidebarOpen, setSidebarOpen } = useLayoutStore();
+  const { view, isSidebarOpen, setSidebarOpen } = useLayoutStore();
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === ',') {
-        event.preventDefault();
-        setView('settings');
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setView]);
+  useGlobalShortcuts();
+  useOpenThreadRead();
 
   const mainContent = (
     <div className="flex flex-col min-w-0 h-full">

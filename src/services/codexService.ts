@@ -11,7 +11,7 @@ import type {
   ThreadStartParams,
   UserInput,
 } from '@/bindings/v2';
-import { useCodexStore, useConfigStore } from '@/components/codex/stores';
+import { useCodexStore, useConfigStore, useThreadReadStateStore } from '@/components/codex/stores';
 import { useWorkspaceStore } from '@/stores';
 import { useSettingsStore } from '@/stores/settings';
 import { convertThreadHistoryToEvents } from '@/utils/threadHistoryConverter';
@@ -167,6 +167,7 @@ export const codexService = {
       const response = await listThreads(params);
       const workingDirThreads = response.data;
       const nextCursor = response.nextCursor ?? null;
+      useThreadReadStateStore.getState().mergeFromList(response.readStates);
       const { setThreads, setThreadListNextCursor } = useCodexStore.getState();
       setThreads(workingDirThreads);
       setThreadListNextCursor(nextCursor);

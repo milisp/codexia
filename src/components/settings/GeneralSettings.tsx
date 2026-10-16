@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getTelemetryStatus, setTelemetryConsent, type TelemetryStatus } from '@/lib/telemetry';
 import { cn } from '@/lib/utils';
 import { type Accent, type Theme, useThemeStore } from '@/stores/settings';
+import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { LanguageSelector } from './LanguageSelector';
 
 const ACCENT_OPTIONS: Array<{ value: Accent; label: string; colorClass: string }> = [
@@ -189,6 +190,7 @@ export function GeneralSettings() {
           </CardContent>
         </Card>
       </section>
+      <KeyboardShortcuts />
       {telemetry?.available && (
         <section className="space-y-3">
           <h3 className="text-sm font-medium px-1">{t('telemetrySection')}</h3>

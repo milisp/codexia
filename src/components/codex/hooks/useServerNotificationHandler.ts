@@ -1,7 +1,7 @@
 import { type RefObject, useCallback } from 'react';
 import type { ServerNotification } from '@/bindings/ServerNotification';
 import type { AccountLoginCompletedNotification } from '@/bindings/v2';
-import { useCodexStore } from '@/components/codex/stores';
+import { useCodexStore, useThreadReadStateStore } from '@/components/codex/stores';
 import { allowSleep, preventSleep } from '@/services/apiAdapt';
 import { playBeep } from '@/utils/beep';
 import { shouldPlayCompletionBeep } from './beepOnCompletion';
@@ -29,6 +29,14 @@ export function useServerNotificationHandler(
         threadId = payload.params.thread.id;
       } else if ('threadId' in payload.params) {
         threadId = payload.params.threadId;
+      }
+
+      if (method === 'thread/readState/changed') {
+        // Sidebar state only; never part of the transcript.
+        useThreadReadStateStore
+          .getState()
+          .setState(payload.params.threadId, payload.params.readState);
+        return;
       }
 
       if (method === 'account/updated') {
