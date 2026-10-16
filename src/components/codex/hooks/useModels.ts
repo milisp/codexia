@@ -78,10 +78,12 @@ export function useModels() {
   const refreshProviders = useModelCacheStore((s) => s.refreshProviders);
   const presets = useModelCacheStore((s) => s.presets);
   const storedModels = useModelSettingsStore((s) => s.models);
+  const loadStoredModels = useModelSettingsStore((s) => s.load);
 
   useEffect(() => {
     load();
-  }, [load]);
+    loadStoredModels();
+  }, [load, loadStoredModels]);
 
   // Precomputed once per data change instead of per render/filter pass.
   const itemsByProvider = useMemo(() => {
