@@ -202,6 +202,123 @@ function BaseModelSelector({
     handleSelect(provider, id);
   }, [searchQuery, provider, addCustomModel, handleSelect]);
 
+  // Shared by the popover and the inline panel so both offer the same models,
+  // suggestions and manual entry.
+  const modelPicker = (
+    <>
+      <div className={cn(!showSearch && 'hidden')}>
+        <CommandInput
+          placeholder={pickingProvider ? 'Search provider...' : 'Search or type a model id...'}
+          value={searchQuery}
+          onValueChange={setSearchQuery}
+          className="text-xs"
+        />
+      </div>
+
+      <CommandList className={mode === 'panel' ? 'max-h-[min(55vh,400px)]' : 'max-h-64'}>
+        <CommandEmpty className="py-4 text-xs text-muted-foreground">No results found</CommandEmpty>
+
+        {pickingProvider ? (
+          <CommandGroup>
+            {allProviders.map((p) => (
+              <CommandItem
+                key={p}
+                value={`provider ${p}`}
+                onSelect={() => handlePickProvider(p)}
+                className="gap-1.5 text-xs"
+              >
+                <ProviderIcons providerId={p} size="sm" />
+                <span className="truncate">{p}</span>
+                {p === provider && <Check className="ml-auto h-3.5 w-3.5 shrink-0" />}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        ) : (
+          <CommandGroup>
+            {visibleItems.map((item) => (
+              <ModelItem
+                key={item.id}
+                provider={provider}
+                item={item}
+                selected={item.id === value}
+                showProvider={false}
+                onSelect={() => handleSelect(provider, item.id)}
+                onRemove={
+                  // Only user-added models can be removed; the rest come
+                  // from the provider itself.
+                  (storedModels[provider] ?? []).some((m) => m.id === item.id)
+                    ? () => removeCustomModel(provider, item.id)
+                    : undefined
+                }
+              />
+            ))}
+            {canUseTyped && (
+              <CommandItem
+                value={`use-${query}`}
+                onSelect={handleUseTyped}
+                className="gap-1.5 pl-7 text-xs text-muted-foreground"
+                forceMount
+              >
+                Use "{query}"
+              </CommandItem>
+            )}
+            {!expanded && !query && currentItems.length > visibleItems.length && (
+              <CommandItem
+                value={`${provider} show all models`}
+                onSelect={() => setExpandedProviders((prev) => new Set(prev).add(provider))}
+                className="gap-1.5 pl-7 text-xs text-muted-foreground"
+              >
+                Show all {currentItems.length} models
+                <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0" />
+              </CommandItem>
+            )}
+            {/* llms.json models are offered for the user to add, never
+              listed as if they were already configured. */}
+            {suggestions.map((item) => (
+              <CommandItem
+                key={`suggested-${item.id}`}
+                value={`add ${provider} ${item.id}`}
+                onSelect={() => handleAddSuggested(item.id)}
+                className="gap-1.5 pl-7 text-xs text-muted-foreground"
+              >
+                <Plus className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{item.label}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+      </CommandList>
+
+      {/* Manual model entry: providers other than openai/ollama have no
+        model list of their own to pick from. */}
+      {!pickingProvider && provider !== 'openai' && provider !== 'ollama' && (
+        <div className="flex items-center gap-1 border-t p-1">
+          <Input
+            className="h-7 text-xs"
+            placeholder="Add model id..."
+            value={newModelId}
+            onChange={(e) => setNewModelId(e.target.value)}
+            onKeyDown={(e) => {
+              // cmdk owns Enter/arrows for the list; keep them local here.
+              e.stopPropagation();
+              if (e.key === 'Enter') handleAddTyped();
+            }}
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 shrink-0"
+            title="Add model"
+            disabled={!newModelId.trim()}
+            onClick={handleAddTyped}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+    </>
+  );
+
   return (
     <div className="flex items-center">
       {mode === 'panel' ? (
@@ -238,41 +355,20 @@ function BaseModelSelector({
               <Settings className="h-4 w-4" />
             </Button>
           </div>
-          {showSearch && (
-            <CommandInput
-              placeholder="Search or type a model id..."
-              value={searchQuery}
-              onValueChange={setSearchQuery}
-            />
-          )}
-          <Command loop>
-            <CommandList className="max-h-[min(55vh,400px)]">
-              <CommandEmpty className="py-4 text-xs text-muted-foreground">
-                No results found
-              </CommandEmpty>
-              {pickingProvider ? (
-                <CommandGroup>
-                  {allProviders.map((p) => (
-                    <CommandItem key={p} value={p} onSelect={() => handlePickProvider(p)}>
-                      {p}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              ) : (
-                <CommandGroup>
-                  {visibleItems.map((item) => (
-                    <ModelItem
-                      key={item.id}
-                      provider={provider}
-                      item={item}
-                      selected={item.id === value}
-                      showProvider={false}
-                      onSelect={() => handleSelect(provider, item.id)}
-                    />
-                  ))}
-                </CommandGroup>
-              )}
-            </CommandList>
+          <Command
+            loop
+            onKeyDown={(e) => {
+              // Escape backs out of provider picking / search first.
+              if (e.key === 'Escape' && (pickingProvider || showSearch)) {
+                e.preventDefault();
+                e.stopPropagation();
+                setPickingProvider(false);
+                setShowSearch(false);
+                setSearchQuery('');
+              }
+            }}
+          >
+            {modelPicker}
           </Command>
           {reasoningEffort !== undefined && onReasoningEffortChange && (
             <ReasoningEffortSelector
@@ -373,120 +469,7 @@ function BaseModelSelector({
                 </Button>
               </div>
 
-              <div className={cn(!showSearch && 'hidden')}>
-                <CommandInput
-                  placeholder={
-                    pickingProvider ? 'Search provider...' : 'Search or type a model id...'
-                  }
-                  value={searchQuery}
-                  onValueChange={setSearchQuery}
-                  className="text-xs"
-                />
-              </div>
-
-              <CommandList className="max-h-64">
-                <CommandEmpty className="py-4 text-xs text-muted-foreground">
-                  No results found
-                </CommandEmpty>
-
-                {pickingProvider ? (
-                  <CommandGroup>
-                    {allProviders.map((p) => (
-                      <CommandItem
-                        key={p}
-                        value={`provider ${p}`}
-                        onSelect={() => handlePickProvider(p)}
-                        className="gap-1.5 text-xs"
-                      >
-                        <ProviderIcons providerId={p} size="sm" />
-                        <span className="truncate">{p}</span>
-                        {p === provider && <Check className="ml-auto h-3.5 w-3.5 shrink-0" />}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                ) : (
-                  <CommandGroup>
-                    {visibleItems.map((item) => (
-                      <ModelItem
-                        key={item.id}
-                        provider={provider}
-                        item={item}
-                        selected={item.id === value}
-                        showProvider={false}
-                        onSelect={() => handleSelect(provider, item.id)}
-                        onRemove={
-                          // Only user-added models can be removed; the rest come
-                          // from the provider itself.
-                          (storedModels[provider] ?? []).some((m) => m.id === item.id)
-                            ? () => removeCustomModel(provider, item.id)
-                            : undefined
-                        }
-                      />
-                    ))}
-                    {canUseTyped && (
-                      <CommandItem
-                        value={`use-${query}`}
-                        onSelect={handleUseTyped}
-                        className="gap-1.5 pl-7 text-xs text-muted-foreground"
-                        forceMount
-                      >
-                        Use "{query}"
-                      </CommandItem>
-                    )}
-                    {!expanded && !query && currentItems.length > visibleItems.length && (
-                      <CommandItem
-                        value={`${provider} show all models`}
-                        onSelect={() => setExpandedProviders((prev) => new Set(prev).add(provider))}
-                        className="gap-1.5 pl-7 text-xs text-muted-foreground"
-                      >
-                        Show all {currentItems.length} models
-                        <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0" />
-                      </CommandItem>
-                    )}
-                    {/* llms.json models are offered for the user to add, never
-                      listed as if they were already configured. */}
-                    {suggestions.map((item) => (
-                      <CommandItem
-                        key={`suggested-${item.id}`}
-                        value={`add ${provider} ${item.id}`}
-                        onSelect={() => handleAddSuggested(item.id)}
-                        className="gap-1.5 pl-7 text-xs text-muted-foreground"
-                      >
-                        <Plus className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">{item.label}</span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-              </CommandList>
-
-              {/* Manual model entry: providers other than openai/ollama have no
-                model list of their own to pick from. */}
-              {!pickingProvider && provider !== 'openai' && provider !== 'ollama' && (
-                <div className="flex items-center gap-1 border-t p-1">
-                  <Input
-                    className="h-7 text-xs"
-                    placeholder="Add model id..."
-                    value={newModelId}
-                    onChange={(e) => setNewModelId(e.target.value)}
-                    onKeyDown={(e) => {
-                      // cmdk owns Enter/arrows for the list; keep them local here.
-                      e.stopPropagation();
-                      if (e.key === 'Enter') handleAddTyped();
-                    }}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 shrink-0"
-                    title="Add model"
-                    disabled={!newModelId.trim()}
-                    onClick={handleAddTyped}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+              {modelPicker}
             </Command>
 
             {reasoningEffort !== undefined && onReasoningEffortChange && (
