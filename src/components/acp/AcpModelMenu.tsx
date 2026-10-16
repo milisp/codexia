@@ -45,7 +45,9 @@ export function AcpModelMenu({ embedded = false }: { embedded?: boolean }) {
 
   if (!connectionId || !sessionId)
     return embedded ? (
-      <p className="px-2 py-3 text-xs text-muted-foreground">Connecting to agent…</p>
+      <p className="px-2 py-3 text-xs text-muted-foreground">
+        {cwd ? 'Connecting to agent…' : 'Choose a project to start the agent.'}
+      </p>
     ) : null;
 
   const apply = async (revert: () => void, request: () => Promise<void>) => {
@@ -141,7 +143,7 @@ export function AcpModelMenu({ embedded = false }: { embedded?: boolean }) {
       embedded={embedded}
       authMethods={authMethods}
       selectedAuthMethod={selectedAuthMethod}
-      onSelectAuthMethod={(methodId) => void signIn(methodId)}
+      onSelectAuthMethod={(methodId) => signIn(methodId)}
       authenticating={authenticating}
       authNotice={authNotice}
       configOptions={configOptions}
