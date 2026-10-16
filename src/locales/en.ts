@@ -206,6 +206,10 @@ export const en = {
       collapseContent: 'Collapse plan content',
       expandPlan: 'Expand plan',
     },
+    items: {
+      webSearch: 'Searched the web: {{query}}',
+      contextCompacted: 'Context compacted',
+    },
     fileChanges: {
       changed_one: '{{count}} file changed',
       changed_other: '{{count}} files changed',

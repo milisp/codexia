@@ -210,6 +210,10 @@ export const fr = {
       collapseContent: 'Réduire le contenu du plan',
       expandPlan: 'Développer le plan',
     },
+    items: {
+      webSearch: 'Recherche web : {{query}}',
+      contextCompacted: 'Contexte compacté',
+    },
     fileChanges: {
       changed_one: '{{count}} fichier modifié',
       changed_other: '{{count}} fichiers modifiés',

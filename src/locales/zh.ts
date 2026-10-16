@@ -204,6 +204,10 @@ export const zh = {
       collapseContent: '收起计划内容',
       expandPlan: '展开计划',
     },
+    items: {
+      webSearch: '已搜索网页:{{query}}',
+      contextCompacted: '已压缩上下文',
+    },
     fileChanges: {
       changed_other: '{{count}} 个文件已更改',
       expandAll: '全部展开',

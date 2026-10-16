@@ -194,6 +194,10 @@ export const ja = {
       collapseContent: 'プランを折りたたむ',
       expandPlan: 'プランを展開',
     },
+    items: {
+      webSearch: 'ウェブを検索しました: {{query}}',
+      contextCompacted: 'コンテキストを圧縮しました',
+    },
     fileChanges: {
       changed_other: '{{count}} 件のファイルを変更',
       expandAll: 'すべて展開',

@@ -20,24 +20,6 @@ import { ThreadFileChangesSummary } from './ThreadFileChangesSummary';
 import { TurnPlan } from './TurnPlan';
 import { EditableUserMessageItem } from './UserMessageItem';
 
-type CollapsedJsonItemProps = {
-  label: string;
-  value: unknown;
-};
-
-const CollapsedJsonItem = ({ label, value }: CollapsedJsonItemProps) => {
-  return (
-    <details className="overflow-hidden rounded-md border bg-muted/20">
-      <summary className="cursor-pointer px-2 py-1 text-xs font-medium text-muted-foreground">
-        {label}
-      </summary>
-      <pre className="max-h-64 overflow-auto border-t bg-background/80 p-2">
-        <code>{JSON.stringify(value, null, 2)}</code>
-      </pre>
-    </details>
-  );
-};
-
 type EventItemProps = {
   event: ServerNotification;
   context?: RenderEventContext;
@@ -113,8 +95,17 @@ export const EventItem = ({ event, context }: EventItemProps) => {
           return <CollabAgentToolCallItem item={item as unknown as CollabAgentToolCallItemData} />;
         case 'mcpToolCall':
           return <McpToolCallItem item={item} />;
+        case 'webSearch':
+          return (
+            <p className="text-xs text-muted-foreground">
+              {t('items.webSearch', { query: item.query })}
+            </p>
+          );
+        case 'contextCompaction':
+          return <p className="text-xs text-muted-foreground">{t('items.contextCompacted')}</p>;
         default:
-          return <CollapsedJsonItem label={item.type} value={item} />;
+          // Item types without a renderer stay out of the transcript.
+          return null;
       }
     }
     case 'turn/completed': {
@@ -170,6 +161,6 @@ export const EventItem = ({ event, context }: EventItemProps) => {
       return null;
 
     default:
-      return <CollapsedJsonItem label={event.method} value={event.params} />;
+      return null;
   }
 };
