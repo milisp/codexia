@@ -1,5 +1,6 @@
 import { Bot as BotIcon, CircleCheck, Clock, Send, Zap } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import { AcpThought } from '@/components/acp/AcpThought';
 import { AcpToolCall } from '@/components/acp/AcpToolCall';
 import { Markdown } from '@/components/Markdown';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,8 @@ export function BotMessageList({ bot }: { bot: Bot }) {
   // Per-bot, so a turn running in another conversation does not show this bot
   // as typing.
   const running = useBotUiStore((s) => Boolean(s.runningByBot[bot.id]));
+  // While the newest entry is a thought, it already says the bot is working.
+  const thinking = running && entries[entries.length - 1]?.role === 'thought';
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: the count is the trigger, not a value the effect reads
@@ -50,7 +53,7 @@ export function BotMessageList({ bot }: { bot: Bot }) {
         </div>
       )}
 
-      {entries.map((entry) => {
+      {entries.map((entry, index) => {
         if (entry.role === 'tool') {
           return (
             <div key={entry.id} className="max-w-[85%]">
@@ -81,12 +84,10 @@ export function BotMessageList({ bot }: { bot: Bot }) {
           );
         }
 
-        // A thought is the bot working, not the bot talking — kept quiet so the
-        // conversation still reads as a conversation.
         if (entry.role === 'thought') {
           return (
-            <div key={entry.id} className="px-1 text-xs italic text-muted-foreground">
-              {entry.text}
+            <div key={entry.id} className="pl-9">
+              <AcpThought text={entry.text} live={thinking && index === entries.length - 1} />
             </div>
           );
         }
@@ -101,7 +102,7 @@ export function BotMessageList({ bot }: { bot: Bot }) {
         );
       })}
 
-      {(connecting || running) && (
+      {(connecting || (running && !thinking)) && (
         <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
           <BotAvatar bot={bot} size="sm" />
           {connecting ? `Waking ${bot.name}…` : 'Typing…'}
