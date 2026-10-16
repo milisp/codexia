@@ -15,7 +15,6 @@ import { TelemetryConsentDialog } from '@/components/settings/TelemetryConsentDi
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from '@/contexts/ThemeContext';
-import { HistoryProjectsDialog } from '@/features/ProjectSelector';
 import { TodoCaptureHint } from '@/features/todos/TodoCaptureHint';
 import { isDesktopTauri, isPhone } from '@/hooks/runtime';
 import { useAppDeepLink } from '@/hooks/useAppDeepLink';
@@ -116,7 +115,6 @@ function AppShell() {
     <>
       <AppLayout />
       <TodoCaptureHint />
-      <HistoryProjectsDialog />
       <TelemetryConsentDialog />
       <QuitDialog open={quitDialogOpen} onOpenChange={setQuitDialogOpen} />
     </>

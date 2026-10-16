@@ -23,11 +23,12 @@ export function AgentComposer() {
 
   return (
     <div className="flex flex-col">
+      {/* Project bar sits on top of the input, like the composer's own header */}
+      {!currentAgentCardId && <WorkspaceSwitcher className="mx-2 pb-1 sm:mx-1" />}
       {/* Input area */}
-      <div className={`shrink-0 ${currentAgentCardId && 'pb-2'}`}>
+      <div className="shrink-0 pb-3">
         {acpActive ? <AcpComposer /> : selectedAgent === 'cc' ? <CCComposer /> : <CodexComposer />}
       </div>
-      {!currentAgentCardId && <WorkspaceSwitcher />}
     </div>
   );
 }

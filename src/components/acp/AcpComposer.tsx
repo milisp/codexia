@@ -1,12 +1,12 @@
 import { ArrowUp, Download, Loader2, Square } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AgentModelPanel } from '@/components/agent/AgentModelPanel';
+import { AgentModelTrigger } from '@/components/agent/AgentModelTrigger';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { acpCancel, acpPrompt, acpStart } from '@/services/apiAdapt/acp';
 import { useWorkspaceStore } from '@/stores';
 import { useAcpStore } from '@/stores/useAcpStore';
-import { AgentModelPanel } from '@/components/agent/AgentModelPanel';
-import { AgentModelTrigger } from '@/components/agent/AgentModelTrigger';
 import { captureBotOptions } from '@/stores/useBotOptionsStore';
 import { AcpSessionControls } from './AcpSessionControls';
 import { useAcpAgents } from './useAcpAgents';
@@ -142,6 +142,11 @@ export function AcpComposer() {
       <div className="flex items-center justify-between gap-2 px-1 py-1 bg-muted/20 border-t">
         <div className="flex items-center gap-1 min-w-0">
           <AcpSessionControls />
+          {!cwd && !connectionId && (
+            <span className="px-1 text-[10px] text-muted-foreground">
+              Choose a project above to start {agent?.name ?? 'the agent'}
+            </span>
+          )}
           {connecting && (
             <span className="flex items-center gap-1 px-1 text-[10px] text-muted-foreground">
               <Loader2 className="h-3 w-3 animate-spin" />
