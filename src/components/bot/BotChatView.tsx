@@ -14,6 +14,7 @@ import { BotMessageList } from './BotMessageList';
 import { BotPermissionGate } from './BotPermissionGate';
 import { BotRoutines } from './BotRoutines';
 import { BotSettingsDialog } from './BotSettingsDialog';
+import { BotTemplatePicker } from './BotTemplatePicker';
 import { BotToday } from './BotToday';
 import { BotWaitingApprovals } from './BotWaitingApprovals';
 import { BotWelcome } from './BotWelcome';
@@ -26,7 +27,8 @@ import { useOpenBot } from './useOpenBot';
 export default function BotChatView() {
   const { bots, selectedBotId, connectionByBot } = useBotUiStore();
   const connectionId = useAcpStore((s) => s.connectionId);
-  const { newBot, setNewBot, creating, handleCreateBot } = useCreateBot();
+  const { newBot, setNewBot, creating, handleCreateBot, pickerOpen, setPickerOpen, createFrom } =
+    useCreateBot();
   const openBot = useOpenBot();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tasksOpen, setTasksOpen] = useState(false);
@@ -35,6 +37,15 @@ export default function BotChatView() {
   const { needsTrafficLightOffset } = useTrafficLightConfig(isSidebarOpen);
 
   useAcpEvents(connectionId);
+
+  const picker = (
+    <BotTemplatePicker
+      open={pickerOpen}
+      onOpenChange={setPickerOpen}
+      creating={creating}
+      onPick={createFrom}
+    />
+  );
 
   const bot = bots.find((b) => b.id === selectedBotId);
   useBotDragDrop(bot);
@@ -57,6 +68,7 @@ export default function BotChatView() {
         ) : (
           <BotToday creating={creating} onCreate={handleCreateBot} onSelect={openBot} />
         )}
+        {picker}
       </div>
     );
   }
@@ -114,6 +126,7 @@ export default function BotChatView() {
       <BotPermissionGate bot={bot} />
       <BotComposer bot={bot} />
 
+      {picker}
       <BotSettingsDialog
         bot={newBot ?? bot}
         open={settingsOpen || Boolean(newBot)}

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { SideBarBotPane } from '@/components/bot';
 import { BotNotifications } from '@/components/bot/BotNotifications';
 import { BotSettingsDialog } from '@/components/bot/BotSettingsDialog';
+import { BotTemplatePicker } from '@/components/bot/BotTemplatePicker';
 import { useCreateBot } from '@/components/bot/useCreateBot';
 import { DesktopDrawer } from '@/components/pairing/DesktopDrawer';
 import { Button } from '@/components/ui/button';
@@ -36,7 +37,8 @@ export function AppSideBar() {
   // Only a phone drives a remote machine; a desktop is its own backend and has
   // nothing to switch between.
   const [desktopDrawerOpen, setDesktopDrawerOpen] = useState(false);
-  const { newBot, setNewBot, creating, handleCreateBot } = useCreateBot();
+  const { newBot, setNewBot, creating, handleCreateBot, pickerOpen, setPickerOpen, createFrom } =
+    useCreateBot();
   const setView = useLayoutStore((s) => s.setView);
 
   return (
@@ -171,6 +173,12 @@ export function AppSideBar() {
         defaultTab={activeSidebarTab === 'cc' ? 'cc' : 'codex'}
       />
 
+      <BotTemplatePicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        creating={creating}
+        onPick={createFrom}
+      />
       {newBot && (
         <BotSettingsDialog
           bot={newBot}
