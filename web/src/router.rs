@@ -71,6 +71,7 @@ use super::{
         api_get_settings_file, api_save_settings_file, api_pairing_info, health_check, api_model_list_other, api_load_env_keys, api_set_env,
         api_list_provider_presets, api_add_model_provider, api_list_config_providers,
         api_remove_model_provider,
+        api_custom_models_list, api_custom_models_add, api_custom_models_remove,
     },
     types::WebServerState,
     websocket::{sse_handler, ws_handler},
@@ -442,6 +443,9 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/sleep/prevent", post(api_prevent_sleep))
         .route("/api/sleep/allow", post(api_allow_sleep))
         .route("/api/settings", get(api_get_settings_file).post(api_save_settings_file))
+        .route("/api/custom-models", get(api_custom_models_list))
+        .route("/api/custom-models/add", post(api_custom_models_add))
+        .route("/api/custom-models/remove", post(api_custom_models_remove))
         .route("/api/pairing", get(api_pairing_info))
         .route_layer(middleware::from_fn_with_state(
             state.device_token.clone(),
