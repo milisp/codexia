@@ -1,6 +1,7 @@
-import { Bug, ChevronDown, ChevronRight, Monitor, Plus, Search } from 'lucide-react';
+import { Bot, Bug, Monitor, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AgentLogo } from '@/components/agent/AgentLogo';
 import { SideBarBotPane } from '@/components/bot';
 import { BotNotifications } from '@/components/bot/BotNotifications';
 import { BotSettingsDialog } from '@/components/bot/BotSettingsDialog';
@@ -8,7 +9,6 @@ import { BotTemplatePicker } from '@/components/bot/BotTemplatePicker';
 import { useCreateBot } from '@/components/bot/useCreateBot';
 import { DesktopDrawer } from '@/components/pairing/DesktopDrawer';
 import { Button } from '@/components/ui/button';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Sidebar,
   SidebarContent,
@@ -20,10 +20,14 @@ import {
 import { useTrafficLightConfig } from '@/hooks';
 import { isPhone } from '@/hooks/runtime';
 import { useLayoutStore } from '@/stores';
+import { useAcpStore } from '@/stores/useAcpStore';
+import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { UpdateIndicator } from '../../features/UpdateIndicator';
 import { SessionManagerDialog } from '../common/SessionManagerDialog';
 import { SideBarAgentHeader, SideBarAgentList, SideBarProjectActions } from './SideBarAgentPane';
 import { SideBarPinnedList } from './SideBarPinnedList';
+import { SideBarRecentChats } from './SideBarRecentChats';
+import { SideBarSection } from './SideBarSection';
 import { UserInfo } from './UserInfo';
 
 export function AppSideBar() {
@@ -40,6 +44,11 @@ export function AppSideBar() {
   const { newBot, setNewBot, creating, handleCreateBot, pickerOpen, setPickerOpen, createFrom } =
     useCreateBot();
   const setView = useLayoutStore((s) => s.setView);
+  const selectedAgent = useAgentSettingsStore((s) => s.selectedAgent);
+  const acpActive = useAcpStore((s) => s.active);
+  const acpAgentId = useAcpStore((s) => s.agentId);
+  // The project list below belongs to whichever agent drives the chat pane.
+  const projectsAgentId = acpActive ? acpAgentId : selectedAgent;
 
   return (
     <>
@@ -77,74 +86,51 @@ export function AppSideBar() {
         <SidebarContent className="min-w-0 max-w-full overflow-x-hidden gap-0 px-0">
           <SideBarAgentHeader />
 
-          <Collapsible
+          <SideBarSection
+            icon={<Bot />}
+            title="Bots"
             open={botsOpen}
             onOpenChange={(open) => {
               setBotsOpen(open);
               if (open) setHasSeenBotTab(true);
             }}
-          >
-            <div className="flex items-center px-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex-1 justify-start"
-                onClick={() => {
-                  setBotsOpen(true);
-                  setHasSeenBotTab(true);
-                  setView('bot');
-                }}
-              >
-                Bots
-              </Button>
-              <CollapsibleTrigger asChild>
+            onTitleClick={() => {
+              setBotsOpen(true);
+              setHasSeenBotTab(true);
+              setView('bot');
+            }}
+            actions={
+              <>
+                <BotNotifications />
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  aria-label={botsOpen ? 'Collapse bots' : 'Expand bots'}
+                  size="icon-sm"
+                  title={t('newBot')}
+                  aria-label={t('newBot')}
+                  onClick={handleCreateBot}
+                  disabled={creating}
                 >
-                  <ChevronRight
-                    className={`h-4 w-4 text-muted-foreground/60 transition-transform ${botsOpen ? 'rotate-90' : ''}`}
-                  />
+                  <Plus />
                 </Button>
-              </CollapsibleTrigger>
-              <BotNotifications />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 shrink-0"
-                title={t('newBot')}
-                aria-label={t('newBot')}
-                onClick={handleCreateBot}
-                disabled={creating}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            <CollapsibleContent>
-              <SideBarBotPane />
-            </CollapsibleContent>
-          </Collapsible>
+              </>
+            }
+          >
+            <SideBarBotPane />
+          </SideBarSection>
 
           <SideBarPinnedList />
 
-          <Collapsible open={projectsOpen} onOpenChange={setProjectsOpen}>
-            <div className="flex items-center px-1">
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="flex-1 justify-start gap-2">
-                  <span>Projects</span>
-                  <ChevronDown
-                    className={`h-4 w-4 text-muted-foreground/60 transition-transform ${projectsOpen ? '' : '-rotate-90'}`}
-                  />
-                </Button>
-              </CollapsibleTrigger>
-              <SideBarProjectActions />
-            </div>
-            <CollapsibleContent>
-              <SideBarAgentList />
-            </CollapsibleContent>
-          </Collapsible>
+          <SideBarSection
+            icon={<AgentLogo id={projectsAgentId} className="size-3.5" />}
+            title="Projects"
+            open={projectsOpen}
+            onOpenChange={setProjectsOpen}
+            actions={<SideBarProjectActions />}
+          >
+            <SideBarAgentList />
+          </SideBarSection>
+
+          <SideBarRecentChats />
         </SidebarContent>
 
         <SidebarFooter className="flex-row items-center p-0 min-w-0 max-w-full overflow-x-hidden">

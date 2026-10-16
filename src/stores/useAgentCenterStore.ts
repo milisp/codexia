@@ -5,17 +5,6 @@ export type AgentCenterCard =
   | { kind: 'codex'; id: string; preview?: string; worktreePath?: string; cwd?: string | null }
   | { kind: 'cc'; id: string; preview?: string; worktreePath?: string; cwd?: string | null };
 
-// Multi-agent view layout mode: grid of cards or solo active card.
-export type AgentCardsViewMode = 'grid' | 'solo';
-
-// User-adjusted size for a solo card in grid mode (Ghostty-style manual resize).
-// width is omitted until the user drags the right edge, letting the card fall back
-// to the layout's natural flex-basis; height always has a value (defaults to h-72).
-export interface AgentCardSize {
-  width?: number;
-  height: number;
-}
-
 interface AgentCenterState {
   cards: AgentCenterCard[];
   addAgentCard: (card: AgentCenterCard) => boolean;
@@ -23,10 +12,6 @@ interface AgentCenterState {
   updateCard: (card: AgentCenterCard) => void;
   currentAgentCardId: string | null;
   setCurrentAgentCardId: (id: string | null) => void;
-  cardsViewMode: AgentCardsViewMode;
-  setCardsViewMode: (mode: AgentCardsViewMode) => void;
-  cardSizeMap: Record<string, AgentCardSize>;
-  setCardSize: (cardId: string, size: AgentCardSize) => void;
 }
 
 export const useAgentCenterStore = create<AgentCenterState>()(
@@ -68,32 +53,20 @@ export const useAgentCenterStore = create<AgentCenterState>()(
 
       currentAgentCardId: null,
       setCurrentAgentCardId: (id) => set({ currentAgentCardId: id }),
-
-      cardsViewMode: 'solo',
-      setCardsViewMode: (mode) => set({ cardsViewMode: mode }),
-
-      cardSizeMap: {},
-      setCardSize: (cardId, size) =>
-        set((state) => ({ cardSizeMap: { ...state.cardSizeMap, [cardId]: size } })),
     }),
     {
       name: 'agent-center-store',
-      version: 5,
-      migrate: (persistedState: any, version: number) => {
-        if (version === 3 && persistedState?.cardsViewMode === 'single') {
-          persistedState.cardsViewMode = 'solo';
-        }
-        if (persistedState?.cardsViewMode === 'list') {
-          persistedState.cardsViewMode = 'solo';
+      version: 6,
+      // v6 dropped the grid/solo card layout and per-card sizes.
+      migrate: (persistedState: any) => {
+        if (persistedState) {
+          delete persistedState.cardsViewMode;
+          delete persistedState.cardSizeMap;
         }
         return persistedState;
       },
       // currentAgentCardId is runtime-only — not persisted
-      partialize: (state) => ({
-        cards: state.cards,
-        cardsViewMode: state.cardsViewMode,
-        cardSizeMap: state.cardSizeMap,
-      }),
+      partialize: (state) => ({ cards: state.cards }),
     }
   )
 );

@@ -14,21 +14,13 @@ import { deriveRenderItems } from './deriveRenderItems';
 
 interface CodexThreadProps {
   /**
-   * When provided, renders this specific thread (e.g. for an embedded card view)
-   * instead of the globally active thread from useCodexStore.
+   * When provided, renders this specific thread instead of the globally
+   * active thread from useCodexStore.
    */
   threadId?: string;
-  /**
-   * Set when embedded in a fixed-height container (e.g. an AgentCard) whose
-   * flex-1 ancestor chain doesn't resolve to a definite pixel height for
-   * `height: 100%` to latch onto. In that case we skip h-full and let flex-1
-   * alone determine the height. Standalone usage (AgentView) keeps h-full,
-   * since its ancestor chain does resolve to a definite height.
-   */
-  fillHeight?: boolean;
 }
 
-export function CodexThread({ threadId, fillHeight = true }: CodexThreadProps = {}) {
+export function CodexThread({ threadId }: CodexThreadProps = {}) {
   const { currentThreadId, events, turnTimingMap, retryNoticeMap } = useCodexStore();
 
   // Use the explicitly provided threadId when embedded, otherwise fall back
@@ -82,7 +74,7 @@ export function CodexThread({ threadId, fillHeight = true }: CodexThreadProps = 
   }
 
   return (
-    <div className={`flex-1 flex flex-col min-h-0 ${fillHeight ? 'h-full' : ''}`}>
+    <div className="flex-1 flex flex-col min-h-0 h-full">
       {/* Messages Area */}
       <div className="flex-1 min-h-0 overflow-hidden">
         <ScrollArea ref={scrollAreaRootRef} className="h-full px-4 pb-4">

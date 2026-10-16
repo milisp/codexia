@@ -8,7 +8,7 @@ import {
   SquarePen,
   X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
@@ -25,6 +25,8 @@ import { useLayoutStore } from '@/stores';
 import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { getFilename } from '@/utils/getFilename';
+import { RECENT_PROJECT_LIMIT, sortByRecentUse } from './projectRecency';
+import { SideBarShowMore } from './SideBarShowMore';
 
 type Props = {
   onNewAction: (project: string) => void;
@@ -33,13 +35,19 @@ type Props = {
 };
 
 export function SideBarProjectList({ onNewAction, newActionTitle, renderList }: Props) {
-  const { projects, removeProject, setCwd } = useWorkspaceStore();
+  const { projects, historyProjects, removeProject, setCwd } = useWorkspaceStore();
   const { setInstructionType } = useAgentSettingsStore();
   const { setView, expandedProjects, setProjectExpanded } = useLayoutStore();
   const [hoveredProject, setHoveredProject] = useState<string | null>(null);
   const serverProjects = useServerProjectsStore((s) => s.projects);
   const serverStatus = useServerProjectsStore((s) => s.status);
   const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(null);
+  const [showAll, setShowAll] = useState(false);
+  const sorted = useMemo(
+    () => sortByRecentUse(projects, historyProjects),
+    [projects, historyProjects]
+  );
+  const visible = showAll ? sorted : sorted.slice(0, RECENT_PROJECT_LIMIT);
 
   // A project backed by app-server is deleted there (after confirming), since
   // the local list is only a mirror of it and would bring it back.
@@ -60,7 +68,7 @@ export function SideBarProjectList({ onNewAction, newActionTitle, renderList }: 
 
   return (
     <div className="flex min-h-0 w-full flex-col gap-2 px-2 pb-2">
-      {projects.map((project) => (
+      {visible.map((project) => (
         <Collapsible
           key={project}
           open={isOpen(project)}
@@ -131,6 +139,12 @@ export function SideBarProjectList({ onNewAction, newActionTitle, renderList }: 
           <CollapsibleContent>{renderList(project)}</CollapsibleContent>
         </Collapsible>
       ))}
+
+      <SideBarShowMore
+        hiddenCount={sorted.length - RECENT_PROJECT_LIMIT}
+        expanded={showAll}
+        onToggle={() => setShowAll((v) => !v)}
+      />
 
       <ConfirmProjectActionDialog
         open={deleting !== null}

@@ -69,7 +69,7 @@ export function SideBarProjectActions() {
   const currentThreadSortLabel = sortKey === 'created_at' ? 'Created' : 'Updated';
 
   return (
-    <div className="flex items-center justify-end gap-1">
+    <div className="flex items-center justify-end gap-0.5">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
