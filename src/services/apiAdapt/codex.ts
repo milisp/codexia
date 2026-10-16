@@ -34,6 +34,8 @@ import type {
   ThreadGoalSetResponse,
   ThreadListParams,
   ThreadListResponse,
+  ThreadReadStateUpdateParams,
+  ThreadReadStateUpdateResponse,
   ThreadResumeParams,
   ThreadResumeResponse,
   ThreadRevertParams,
@@ -114,6 +116,13 @@ export async function deleteThread(threadId: ThreadId) {
 export async function renameThread(threadId: ThreadId, name: string) {
   const params = { threadId, name };
   return await postJson('/api/codex/thread/rename', params);
+}
+
+export async function updateThreadReadState(params: ThreadReadStateUpdateParams) {
+  return await postJson<ThreadReadStateUpdateResponse>(
+    '/api/codex/thread/readState/update',
+    params
+  );
 }
 
 export async function getAccount() {

@@ -403,6 +403,7 @@ macro_rules! codex_passthrough {
 codex_passthrough! {
     api_delete_thread => "thread/delete",
     api_rename_thread => "thread/name/set",
+    api_thread_read_state_update => "thread/readState/update",
     api_turn_steer => "turn/steer",
     api_thread_goal_set => "thread/goal/set",
     api_thread_goal_get => "thread/goal/get",

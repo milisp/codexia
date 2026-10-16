@@ -36,7 +36,7 @@ use super::{
         api_git_create_worktree, api_git_reverse_files, api_git_stage_files,
         api_git_status, api_git_unstage_files, api_git_commit, api_git_push,
         api_git_has_worktree_changes,
-        api_list_threads, api_delete_thread, api_rename_thread, api_turn_steer,
+        api_list_threads, api_delete_thread, api_rename_thread, api_thread_read_state_update, api_turn_steer,
         api_thread_goal_set, api_thread_goal_get, api_thread_goal_clear,
         api_thread_compact_start, api_thread_memory_mode_set, api_memory_reset,
         api_hooks_list, api_plugin_list, api_plugin_read, api_plugin_install,
@@ -192,6 +192,10 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/codex/thread/unarchive", post(api_unarchive_thread))
         .route("/api/codex/thread/delete", post(api_delete_thread))
         .route("/api/codex/thread/rename", post(api_rename_thread))
+        .route(
+            "/api/codex/thread/readState/update",
+            post(api_thread_read_state_update),
+        )
         .route("/api/codex/thread/goal/set", post(api_thread_goal_set))
         .route("/api/codex/thread/goal/get", post(api_thread_goal_get))
         .route("/api/codex/thread/goal/clear", post(api_thread_goal_clear))
