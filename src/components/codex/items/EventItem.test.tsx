@@ -8,6 +8,10 @@ import { deriveRenderItems } from '../thread/deriveRenderItems';
 import { EventItem } from './EventItem';
 import { ThreadStepChain } from './ThreadStepChain';
 
+vi.mock('@/components/Markdown', () => ({
+  Markdown: ({ value }: { value: string }) => <div>{value}</div>,
+}));
+
 vi.mock('@/hooks/use-highlighted-code', () => ({
   useHighlightedCode: (value: string) => value.split('\n'),
 }));

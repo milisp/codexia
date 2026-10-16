@@ -1,3 +1,4 @@
+import { Markdown } from '@/components/Markdown';
 import {
   TraceCollapsible,
   TraceCollapsibleContent,
@@ -27,7 +28,10 @@ export function Reasoning({ title, text, running, defaultOpen = false }: Reasoni
   return (
     <TraceCollapsible defaultOpen={defaultOpen}>
       <TraceCollapsibleTrigger>{line}</TraceCollapsibleTrigger>
-      <TraceCollapsibleContent className="whitespace-pre-wrap">{text}</TraceCollapsibleContent>
+      {/* Reasoning summaries are Markdown (e.g. a bold heading per step). */}
+      <TraceCollapsibleContent>
+        <Markdown value={text} className="text-sm text-muted-foreground" />
+      </TraceCollapsibleContent>
     </TraceCollapsible>
   );
 }
