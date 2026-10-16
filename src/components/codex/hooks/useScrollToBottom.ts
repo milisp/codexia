@@ -66,12 +66,11 @@ export function useScrollToBottom<T>(
   }, [checkIsAtBottom]);
 
   // Height/width of the viewport (or its content) can change without a 'scroll'
-  // event ever firing — e.g. dragging a card's resize handle (see useCardResize),
-  // a header wrapping to a second line, or fonts/images loading late. Without
+  // event ever firing — e.g. resizing a panel, a header wrapping to a second line, or fonts/images loading late. Without
   // this, isAtBottom goes stale and the view can silently drift away from the
   // latest message. A ResizeObserver re-derives isAtBottom on every box-size
   // change, and — if we were pinned to the bottom right before the resize —
-  // re-anchors to the bottom so shrinking/growing a card feels like a terminal
+  // re-anchors to the bottom so shrinking/growing the pane feels like a terminal
   // (content stays pinned) rather than leaving the scroll position stranded.
   useEffect(() => {
     const viewport = viewportRef.current;

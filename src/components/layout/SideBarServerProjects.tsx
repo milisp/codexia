@@ -10,7 +10,7 @@ import {
   SquarePen,
   Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Project } from '@/bindings/v2';
 import { ThreadList } from '@/components/codex/thread/ThreadList';
 import { Button } from '@/components/ui/button';
@@ -30,8 +30,8 @@ import { isPhone } from '@/hooks/runtime';
 import { useLayoutStore } from '@/stores';
 import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-
-const RECENT_ID = 'recent';
+import { RECENT_PROJECT_LIMIT, sortByRecency } from './projectRecency';
+import { SideBarShowMore } from './SideBarShowMore';
 
 interface SideBarServerProjectsProps {
   /** Starts a chat in `cwd`, or in no project for `null`. */
@@ -40,13 +40,16 @@ interface SideBarServerProjectsProps {
 
 type ProjectDialog = { kind: 'edit' | 'archive' | 'delete'; project: Project };
 
-/** Codex tab: app-server projects with their chats, then the unassigned "Recent" chats. */
+/** Codex tab: app-server projects with their chats. Unassigned chats live in `SideBarRecentChats`. */
 export function SideBarServerProjects({ onNewChat }: SideBarServerProjectsProps) {
   const projects = useServerProjectsStore((s) => s.projects);
   const { setView, expandedProjects, setProjectExpanded } = useLayoutStore();
   const { setInstructionType } = useAgentSettingsStore();
   const setCwd = useWorkspaceStore((s) => s.setCwd);
   const [dialog, setDialog] = useState<ProjectDialog | null>(null);
+  const [showAll, setShowAll] = useState(false);
+  const sorted = useMemo(() => sortByRecency(projects), [projects]);
+  const visible = showAll ? sorted : sorted.slice(0, RECENT_PROJECT_LIMIT);
   const phone = isPhone();
 
   const isOpen = (id: string) => expandedProjects[id] ?? true;
@@ -64,7 +67,7 @@ export function SideBarServerProjects({ onNewChat }: SideBarServerProjectsProps)
 
   return (
     <div className="flex min-h-0 w-full flex-col gap-2 px-2 pb-2">
-      {projects.map((project) => {
+      {visible.map((project) => {
         const root = primaryRoot(project);
         return (
           <Collapsible
@@ -150,35 +153,11 @@ export function SideBarServerProjects({ onNewChat }: SideBarServerProjectsProps)
         );
       })}
 
-      <Collapsible
-        open={isOpen(RECENT_ID)}
-        onOpenChange={(open) => setProjectExpanded(RECENT_ID, open)}
-        className="bg-sidebar/30"
-      >
-        <div className="group flex items-center gap-1 px-1 py-0.5 text-xs transition-colors hover:bg-foreground/10">
-          <CollapsibleTrigger className="flex min-w-0 flex-1 items-center gap-2 text-left">
-            <span className="truncate font-medium">Recent</span>
-            {isOpen(RECENT_ID) ? (
-              <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-0 group-hover:opacity-100" />
-            ) : (
-              <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-0 group-hover:opacity-100" />
-            )}
-          </CollapsibleTrigger>
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            title="New chat"
-            aria-label="New chat"
-            onClick={() => onNewChat(null)}
-            className="shrink-0"
-          >
-            <SquarePen />
-          </Button>
-        </div>
-        <CollapsibleContent>
-          <ThreadList projectId={null} />
-        </CollapsibleContent>
-      </Collapsible>
+      <SideBarShowMore
+        hiddenCount={sorted.length - RECENT_PROJECT_LIMIT}
+        expanded={showAll}
+        onToggle={() => setShowAll((v) => !v)}
+      />
 
       <EditProjectDialog
         projectId={dialog?.kind === 'edit' ? dialog.project.id : null}

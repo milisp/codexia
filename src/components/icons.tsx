@@ -10,6 +10,7 @@ import NvidiaIcon from '@/assets/nvidia-color.svg';
 import OllamaIcon from '@/assets/ollama.svg';
 import OpenAIIcon from '@/assets/openai.svg';
 import OpenRouterIcon from '@/assets/openrouter.svg';
+import { cn } from '@/lib/utils';
 
 type IconSize = 'sm' | 'md' | 'lg';
 
@@ -60,18 +61,12 @@ export function ProviderIcons({ providerId, size = 'md', className = '' }: Provi
 
 export function ClaudeCode({ size = 'md', className = '' }: BaseIconProps) {
   return (
-    <img
-      src={ClaudeCodeIcon}
-      alt="claude-code"
-      className={`${getSizeClass(size)} ${className}`.trim()}
-    />
+    <img src={ClaudeCodeIcon} alt="claude-code" className={cn(getSizeClass(size), className)} />
   );
 }
 
 export function Codex({ size = 'md', className = '' }: BaseIconProps) {
-  return (
-    <img src={CodexIcon} alt="codex" className={`${getSizeClass(size)} ${className}`.trim()} />
-  );
+  return <img src={CodexIcon} alt="codex" className={cn(getSizeClass(size), className)} />;
 }
 
 export function Keke({ size = 'md', className = '' }: BaseIconProps) {
@@ -79,23 +74,19 @@ export function Keke({ size = 'md', className = '' }: BaseIconProps) {
     <img
       src={KekeIcon}
       alt="keke"
-      className={`${getSizeClass(size)} rounded-sm object-cover ${className}`.trim()}
+      className={cn(getSizeClass(size), 'rounded-sm object-cover', className)}
     />
   );
 }
 
 export function Gemini({ size = 'md', className = '' }: BaseIconProps) {
-  return (
-    <img src={GeminiIcon} alt="gemini" className={`${getSizeClass(size)} ${className}`.trim()} />
-  );
+  return <img src={GeminiIcon} alt="gemini" className={cn(getSizeClass(size), className)} />;
 }
 
 export function Github({ size = 'md', className = '' }: BaseIconProps) {
-  return (
-    <img src={GithubIcon} alt="github" className={`${getSizeClass(size)} ${className}`.trim()} />
-  );
+  return <img src={GithubIcon} alt="github" className={cn(getSizeClass(size), className)} />;
 }
 
 export function MCP({ size = 'md', className = '' }: BaseIconProps) {
-  return <img src={MCPIcon} alt="mcp" className={`${getSizeClass(size)} ${className}`.trim()} />;
+  return <img src={MCPIcon} alt="mcp" className={cn(getSizeClass(size), className)} />;
 }

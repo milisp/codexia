@@ -77,6 +77,8 @@ export const ja = {
     settings: '設定',
     login: 'ログイン',
     signOut: 'サインアウト',
+    plugins: 'カスタマイズ',
+    automations: 'スケジュール',
   },
   slashCommands: {
     title: 'スラッシュコマンド',

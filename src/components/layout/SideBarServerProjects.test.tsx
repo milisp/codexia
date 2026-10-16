@@ -57,21 +57,34 @@ beforeEach(() => {
 });
 
 describe('SideBarServerProjects', () => {
-  it('lists projects with their chats, then the unassigned Recent chats', () => {
+  it('lists projects with their chats, without the unassigned Recent chats', () => {
     render(<SideBarServerProjects onNewChat={vi.fn()} />);
     expect(screen.getByText('Alpha')).toBeTruthy();
     expect(screen.getByTestId('threads-p1').textContent).toBe('/work/alpha');
-    expect(screen.getByText('Recent')).toBeTruthy();
-    expect(screen.getByTestId('threads-recent')).toBeTruthy();
+    expect(screen.queryByText('Recent')).toBeNull();
   });
 
-  it('starts a chat in the primary folder, or outside any project from Recent', () => {
+  it('starts a chat in the primary folder', () => {
     const onNewChat = vi.fn();
     render(<SideBarServerProjects onNewChat={onNewChat} />);
     fireEvent.click(screen.getByRole('button', { name: 'Start new thread in Alpha' }));
     expect(onNewChat).toHaveBeenLastCalledWith('/work/alpha');
-    fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
-    expect(onNewChat).toHaveBeenLastCalledWith(null);
+  });
+
+  it('shows the five most recent projects until Show more', () => {
+    const many = Array.from({ length: 7 }, (_, i) => ({
+      ...project(`m${i}`, `Project ${i}`, [`/work/m${i}`]),
+      recencyAt: i,
+    }));
+    useServerProjectsStore.setState({ projects: many });
+    render(<SideBarServerProjects onNewChat={vi.fn()} />);
+    expect(screen.getByText('Project 6')).toBeTruthy();
+    expect(screen.queryByText('Project 1')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Show more' }));
+    expect(screen.getByText('Project 1')).toBeTruthy();
+    expect(screen.getByText('Project 0')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Show less' }));
+    expect(screen.queryByText('Project 0')).toBeNull();
   });
 
   it('disables new chat for a project without folders', () => {

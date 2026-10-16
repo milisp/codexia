@@ -1,4 +1,4 @@
-import { LayoutGrid, PanelRight, SquareTerminal } from 'lucide-react';
+import { PanelRight, SquareTerminal } from 'lucide-react';
 import { useCodexStore } from '@/components/codex/stores';
 import { NewAgentButton } from '@/components/common/NewAgentButton';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,6 @@ import { PublishButton } from '@/features/publish/PublishButton';
 import { useTrafficLightConfig } from '@/hooks';
 import { isPhone } from '@/hooks/runtime';
 import { useCCStore, useLayoutStore, useWorkspaceStore } from '@/stores';
-import { useAgentCenterStore } from '@/stores/useAgentCenterStore';
 import { getFilename } from '@/utils/getFilename';
 import { OpenAppMenu } from './openApp/OpenAppMenu';
 
@@ -23,7 +22,6 @@ export function AgentViewHeader() {
     setRightPanelOpen,
   } = useLayoutStore();
   const isTerminalOpen = isRightPanelOpen && activeRightPanelTab === 'terminal';
-  const { cards, cardsViewMode, setCardsViewMode } = useAgentCenterStore();
   const { open: isSidebarOpen, openMobile, isMobile } = useSidebar();
   const { needsTrafficLightOffset } = useTrafficLightConfig(isSidebarOpen);
   const { currentThreadId } = useCodexStore();
@@ -33,8 +31,7 @@ export function AgentViewHeader() {
   const showTrigger = isMobile ? !openMobile : !isSidebarOpen;
   const hasActiveSession = currentThreadId || activeSessionId;
 
-  // A phone gets its own header from MobileShell: no card layouts (one card
-  // fills the screen), no right panel, and Back instead of a sidebar trigger.
+  // A phone gets its own header from MobileShell: no right panel, and Back instead of a sidebar trigger.
   if (isPhone()) return null;
 
   return (
@@ -55,17 +52,6 @@ export function AgentViewHeader() {
         {cwd && <ProjectRunMenu />}
         {cwd && <PublishButton />}
         {cwd && <OpenAppMenu path={cwd} />}
-        {cards.length > 1 && (
-          <Button
-            variant={cardsViewMode === 'grid' ? 'secondary' : 'ghost'}
-            size="icon"
-            onClick={() => setCardsViewMode(cardsViewMode === 'grid' ? 'solo' : 'grid')}
-            title={cardsViewMode === 'grid' ? 'Focus current session' : 'Grid view'}
-            aria-label={cardsViewMode === 'grid' ? 'Focus current session' : 'Grid view'}
-          >
-            <LayoutGrid className="size-4" />
-          </Button>
-        )}
         {!isRightPanelOpen && (
           <>
             {hasActiveSession && <GitActions />}
