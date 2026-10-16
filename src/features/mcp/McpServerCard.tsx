@@ -23,6 +23,7 @@ const AUTH_STATUS_LABEL: Record<McpAuthStatus, string> = {
   notLoggedIn: 'Not logged in',
   bearerToken: 'Token',
   oAuth: 'OAuth',
+  unknown: 'Unknown',
 };
 
 export const getServerProtocol = (config: McpServerConfig): 'stdio' | 'http' | 'sse' =>

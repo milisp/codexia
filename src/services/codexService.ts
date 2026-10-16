@@ -7,7 +7,7 @@ import type {
   ThreadGoalSetParams,
   ThreadListParams,
   ThreadResumeParams,
-  ThreadRollbackParams,
+  ThreadRevertParams,
   ThreadStartParams,
   UserInput,
 } from '@/bindings/v2';
@@ -25,7 +25,7 @@ import {
   threadGoalClear,
   threadGoalSet,
   threadResume,
-  threadRollback,
+  threadRevert,
   turnInterrupt,
   turnStart,
   turnSteer,
@@ -137,7 +137,7 @@ const syncThreadToStore = (
   };
 };
 
-/** Shared logic for thread fork/rollback: sync the updated thread to the store and return it. */
+/** Shared logic for thread fork: sync the updated thread to the store and return it. */
 const applyThreadMutation = (
   set: typeof useCodexStore.setState,
   threadId: string,
@@ -324,17 +324,14 @@ export const codexService = {
       throw error;
     }
   },
-  async threadRollback(threadId: string, numTurns: number) {
-    const set = useCodexStore.setState;
+  async threadRevert(threadId: string, beforeTurnId: string) {
     try {
-      const params: ThreadRollbackParams = {
-        threadId,
-        numTurns,
-      };
-      const response = await threadRollback(params);
-      return applyThreadMutation(set, threadId, response.thread);
+      const params: ThreadRevertParams = { threadId, beforeTurnId };
+      await threadRevert(params);
+      // The revert response omits turns, so reload the retained history.
+      await codexService.threadResume(threadId);
     } catch (error: unknown) {
-      console.error('[CodexService] threadRollback error:', error);
+      console.error('[CodexService] threadRevert error:', error);
       throw error;
     }
   },

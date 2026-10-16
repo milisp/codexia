@@ -30,6 +30,7 @@ const EVENT_LABELS: Record<HookEventName, string> = {
   subagentStart: 'Subagent start',
   subagentStop: 'Subagent stop',
   stop: 'Stop',
+  interrupt: 'Interrupt',
 };
 
 function eventLabel(name: HookEventName): string {
@@ -74,10 +75,15 @@ function HookRow({ hook }: { hook: HookMetadata }) {
         {hook.isManaged && <Badge variant="secondary">managed</Badge>}
         <Badge variant={trustVariant(hook.trustStatus)}>{hook.trustStatus}</Badge>
       </div>
-      {hook.command && (
+      {hook.handlerType === 'command' && hook.command && (
         <pre className="mt-1.5 overflow-x-auto rounded bg-muted p-1.5 font-mono text-[11px] whitespace-pre-wrap break-all">
           {hook.command}
         </pre>
+      )}
+      {hook.handlerType === 'mcpTool' && (
+        <div className="mt-1.5 font-mono text-[11px] text-muted-foreground">
+          {hook.server} / {hook.tool}
+        </div>
       )}
       {hook.statusMessage && <div className="mt-1 text-muted-foreground">{hook.statusMessage}</div>}
       <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">

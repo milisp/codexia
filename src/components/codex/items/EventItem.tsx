@@ -20,54 +20,6 @@ import { ThreadFileChangesSummary } from './ThreadFileChangesSummary';
 import { TurnPlan } from './TurnPlan';
 import { EditableUserMessageItem } from './UserMessageItem';
 
-type CollapsedJsonItemProps = {
-  label: string;
-  value: unknown;
-};
-
-const CollapsedJsonItem = ({ label, value }: CollapsedJsonItemProps) => {
-  return (
-    <details className="overflow-hidden rounded-md border bg-muted/20">
-      <summary className="cursor-pointer px-2 py-1 text-xs font-medium text-muted-foreground">
-        {label}
-      </summary>
-      <pre className="max-h-64 overflow-auto border-t bg-background/80 p-2">
-        <code>{JSON.stringify(value, null, 2)}</code>
-      </pre>
-    </details>
-  );
-};
-
-const getRollbackTurnsForTurn = (
-  context: RenderEventContext | undefined,
-  turnId: string
-): number => {
-  const events = context?.events;
-  const eventIndex = context?.eventIndex;
-  if (!events || eventIndex === undefined || eventIndex < 0) return 1;
-
-  const laterTurnIds = new Set<string>();
-  for (let i = eventIndex + 1; i < events.length; i += 1) {
-    const candidate = events[i];
-    let candidateTurnId: string | undefined;
-
-    if (
-      (candidate.method === 'item/started' || candidate.method === 'item/completed') &&
-      candidate.params?.turnId
-    ) {
-      candidateTurnId = candidate.params.turnId;
-    } else if (candidate.method === 'turn/completed') {
-      candidateTurnId = candidate.params?.turn?.id;
-    }
-
-    if (candidateTurnId && candidateTurnId !== turnId) {
-      laterTurnIds.add(candidateTurnId);
-    }
-  }
-
-  return laterTurnIds.size + 1;
-};
-
 type EventItemProps = {
   event: ServerNotification;
   context?: RenderEventContext;
@@ -104,13 +56,12 @@ export const EventItem = ({ event, context }: EventItemProps) => {
         case 'userMessage': {
           const threadId = event.params.threadId;
           const turnId = event.params.turnId;
-          const rollbackTurns = getRollbackTurnsForTurn(context, turnId);
 
           return (
             <EditableUserMessageItem
               content={startedItem.content}
               threadId={threadId}
-              rollbackTurns={rollbackTurns}
+              turnId={turnId}
             />
           );
         }
@@ -144,8 +95,17 @@ export const EventItem = ({ event, context }: EventItemProps) => {
           return <CollabAgentToolCallItem item={item as unknown as CollabAgentToolCallItemData} />;
         case 'mcpToolCall':
           return <McpToolCallItem item={item} />;
+        case 'webSearch':
+          return (
+            <p className="text-xs text-muted-foreground">
+              {t('items.webSearch', { query: item.query })}
+            </p>
+          );
+        case 'contextCompaction':
+          return <p className="text-xs text-muted-foreground">{t('items.contextCompacted')}</p>;
         default:
-          return <CollapsedJsonItem label={item.type} value={item} />;
+          // Item types without a renderer stay out of the transcript.
+          return null;
       }
     }
     case 'turn/completed': {
@@ -201,6 +161,6 @@ export const EventItem = ({ event, context }: EventItemProps) => {
       return null;
 
     default:
-      return <CollapsedJsonItem label={event.method} value={event.params} />;
+      return null;
   }
 };

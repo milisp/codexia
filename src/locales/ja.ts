@@ -174,6 +174,7 @@ export const ja = {
     },
     elicitation: {
       authorizationRequired: '認可が必要です',
+      verificationUnsupported: 'Codexia ではこの認証を完了できません。',
       approvalRequired: '承認が必要です',
       openLink: 'リンクを開く',
       selectOption: '選択してください',
@@ -192,6 +193,10 @@ export const ja = {
       expandContent: 'プランを展開',
       collapseContent: 'プランを折りたたむ',
       expandPlan: 'プランを展開',
+    },
+    items: {
+      webSearch: 'ウェブを検索しました: {{query}}',
+      contextCompacted: 'コンテキストを圧縮しました',
     },
     fileChanges: {
       changed_other: '{{count}} 件のファイルを変更',

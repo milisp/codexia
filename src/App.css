@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "shadcn/tailwind.css";
 @import "./styles/prism.css";
 @import "./styles/streaming.css";
 @import "./styles/git-diff.css";

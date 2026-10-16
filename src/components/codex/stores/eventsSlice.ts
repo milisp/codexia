@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { ServerNotification } from '@/bindings';
 import type { ThreadGoal, ThreadTokenUsage } from '@/bindings/v2';
 import { compactDeltaEvents } from './eventUtils';
+import { isTranscriptEvent } from './transcriptEvents';
 import type { CodexStore, EventsSlice, TurnTiming } from './types';
 
 export const createEventsSlice: StateCreator<CodexStore, [], [], EventsSlice> = (set) => ({
@@ -43,12 +44,13 @@ export const createEventsSlice: StateCreator<CodexStore, [], [], EventsSlice> = 
         });
       }
 
-      const newEvents = isRetryNotice
-        ? state.events
-        : {
-            ...state.events,
-            [threadId]: compactDeltaEvents(filteredEvents, event),
-          };
+      const newEvents =
+        isRetryNotice || !isTranscriptEvent(event)
+          ? state.events
+          : {
+              ...state.events,
+              [threadId]: compactDeltaEvents(filteredEvents, event),
+            };
 
       let threadStatusMap = state.threadStatusMap;
       if (event.method === 'thread/status/changed') {

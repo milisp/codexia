@@ -12,8 +12,16 @@ import type { ApprovalsReviewer } from "./ApprovalsReviewer";
 import type { AskForApproval } from "./AskForApproval";
 import type { SandboxPolicy } from "./SandboxPolicy";
 
-export type ThreadSettings = { cwd: AbsolutePathBuf, approvalPolicy: AskForApproval, approvalsReviewer: ApprovalsReviewer, sandboxPolicy: SandboxPolicy, activePermissionProfile: ActivePermissionProfile | null, model: string, modelProvider: string, serviceTier: string | null, effort: ReasoningEffort | null, summary: ReasoningSummary | null, collaborationMode: CollaborationMode,
+export type ThreadSettings = {
+/**
+ * Saved list of disabled plugin IDs. Does not yet filter plugin capabilities.
+ */
+disabledPluginIds: Array<string>, cwd: AbsolutePathBuf, approvalPolicy: AskForApproval, approvalsReviewer: ApprovalsReviewer, sandboxPolicy: SandboxPolicy, activePermissionProfile: ActivePermissionProfile | null, model: string, modelProvider: string, serviceTier: string | null, effort: ReasoningEffort | null, summary: ReasoningSummary | null, collaborationMode: CollaborationMode,
 /**
  * @deprecated Always `explicitRequestOnly`. Use `effort` for Ultra behavior.
  */
-multiAgentMode: MultiAgentMode, personality: Personality | null, };
+multiAgentMode: MultiAgentMode,
+/**
+ * @deprecated Reports the saved setting; `friendly` and `pragmatic` no longer select a style.
+ */
+personality: Personality | null, };

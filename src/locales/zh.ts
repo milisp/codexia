@@ -184,6 +184,7 @@ export const zh = {
     },
     elicitation: {
       authorizationRequired: '需要授权',
+      verificationUnsupported: 'Codexia 无法完成此验证。',
       approvalRequired: '需要批准',
       openLink: '打开链接',
       selectOption: '请选择一项',
@@ -202,6 +203,10 @@ export const zh = {
       expandContent: '展开计划内容',
       collapseContent: '收起计划内容',
       expandPlan: '展开计划',
+    },
+    items: {
+      webSearch: '已搜索网页:{{query}}',
+      contextCompacted: '已压缩上下文',
     },
     fileChanges: {
       changed_other: '{{count}} 个文件已更改',

@@ -100,6 +100,33 @@ export function ElicitationItem({ currentThreadId }: ElicitationItemProps) {
     );
   }
 
+  // User verification needs a passkey proof that Codexia cannot produce, so only cancel is offered.
+  if (request.mode === 'openai/userVerification') {
+    return (
+      <div className="rounded-md border bg-background p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary">{request.serverName}</Badge>
+          <span className="font-medium">{request.title}</span>
+        </div>
+        <div className="text-sm text-muted-foreground">{request.description}</div>
+        <div className="text-sm text-muted-foreground">
+          {t('elicitation.verificationUnsupported')}
+        </div>
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={submitting}
+          onClick={() => {
+            setSubmitting(true);
+            void respond(request.requestId, 'cancel').finally(() => setSubmitting(false));
+          }}
+        >
+          {t('common.cancel')}
+        </Button>
+      </div>
+    );
+  }
+
   const message = request.message;
   const fields = elicitationFields(request);
   const approval = isApprovalElicitation(request);

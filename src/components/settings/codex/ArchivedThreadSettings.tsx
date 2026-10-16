@@ -8,7 +8,12 @@ import { listThreads, unarchiveThread } from '@/services/apiAdapt';
 import { formatThreadAge } from '@/utils/formatThreadAge';
 import { getFilename } from '@/utils/getFilename';
 
-const EMPTY_LIST: ThreadListResponse = { data: [], nextCursor: null, backwardsCursor: null };
+const EMPTY_LIST: ThreadListResponse = {
+  data: [],
+  nextCursor: null,
+  backwardsCursor: null,
+  readStates: null,
+};
 
 export function ArchivedThreadSettings() {
   const [response, setResponse] = useState<ThreadListResponse>(EMPTY_LIST);

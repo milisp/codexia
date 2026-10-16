@@ -190,6 +190,7 @@ export const fr = {
     },
     elicitation: {
       authorizationRequired: 'Autorisation requise',
+      verificationUnsupported: 'Codexia ne peut pas effectuer cette vérification.',
       approvalRequired: 'Approbation requise',
       openLink: 'Ouvrir le lien',
       selectOption: 'Sélectionner une option',
@@ -208,6 +209,10 @@ export const fr = {
       expandContent: 'Développer le contenu du plan',
       collapseContent: 'Réduire le contenu du plan',
       expandPlan: 'Développer le plan',
+    },
+    items: {
+      webSearch: 'Recherche web : {{query}}',
+      contextCompacted: 'Contexte compacté',
     },
     fileChanges: {
       changed_one: '{{count}} fichier modifié',
