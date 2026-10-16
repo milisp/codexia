@@ -1,86 +1,69 @@
 import type { ServerNotification } from '@/bindings';
-import type { CommandAction } from '@/bindings/v2';
+import { isStepItem } from '../items/stepItems';
+import type { StepEntry } from '../items/ThreadStepChain';
 
-/** Intermediate render item: either a raw event or an aggregated command group. */
+/** Intermediate render item: either a raw event or a chain of consecutive steps. */
 export type RenderItem =
   | { kind: 'event'; event: ServerNotification; index: number }
-  | {
-      kind: 'cmdGroup';
-      actions: CommandAction[];
-      key: string;
-      commandItemId?: string | null;
-      aggregatedOutput?: string | null;
-      completed: boolean;
-    };
+  | { kind: 'chain'; key: string; steps: StepEntry[] };
 
-/** Pre-process events into render items, grouping commandExecution runs between agentMessages. */
+// Events that render something other than a step, so they end the current chain.
+function endsChain(event: ServerNotification): boolean {
+  switch (event.method) {
+    case 'item/started':
+    case 'item/completed':
+      return !isStepItem(event.params.item);
+    case 'error':
+    case 'warning':
+    case 'turn/started':
+    case 'turn/completed':
+    case 'turn/plan/updated':
+    case 'item/agentMessage/delta':
+    case 'item/commandExecution/terminalInteraction':
+      return true;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Pre-process events into render items. Consecutive step items (thinking, commands, tool
+ * calls) between messages are grouped into one chain; an `item/started` that has a matching
+ * `item/completed` is folded into it, so each step shows once.
+ */
 export function deriveRenderItems(events: ServerNotification[]): RenderItem[] {
-  const items: RenderItem[] = [];
-  let cmdBuffer: CommandAction[] = [];
-  let cmdBufferKey = '';
-  let cmdItemId: string | null = null;
-  let cmdAggregatedOutput: string | null = null;
+  const completedItemIds = new Set<string>();
+  const completedTurnIds = new Set<string>();
+  for (const event of events) {
+    if (event.method === 'item/completed') completedItemIds.add(event.params.item.id);
+    if (event.method === 'turn/completed') completedTurnIds.add(event.params.turn.id);
+  }
 
-  const flushCmdBuffer = (completed: boolean) => {
-    if (cmdBuffer.length === 0) return;
-    items.push({
-      kind: 'cmdGroup',
-      actions: cmdBuffer,
-      key: cmdBufferKey,
-      commandItemId: cmdItemId,
-      aggregatedOutput: cmdAggregatedOutput,
-      completed,
-    });
-    cmdBuffer = [];
-    cmdBufferKey = '';
-    cmdItemId = null;
-    cmdAggregatedOutput = null;
-  };
+  const items: RenderItem[] = [];
+  let chain: Extract<RenderItem, { kind: 'chain' }> | null = null;
 
   for (let i = 0; i < events.length; i++) {
     const event = events[i];
 
-    // Accumulate commandExecution into buffer — never flush here.
-    if (event.method === 'item/started' && event.params.item.type === 'commandExecution') {
-      if (cmdBuffer.length === 0) {
-        cmdBufferKey = `cmd-${i}`;
-        cmdItemId = event.params.item.id;
+    if (event.method === 'item/started' || event.method === 'item/completed') {
+      const { item } = event.params;
+      if (isStepItem(item)) {
+        const started = event.method === 'item/started';
+        if (started && completedItemIds.has(item.id)) continue;
+        if (!chain) {
+          chain = { kind: 'chain', key: `chain-${i}`, steps: [] };
+          items.push(chain);
+        }
+        // A step that never completed is only live while its turn is still open.
+        const running = started && !completedTurnIds.has(event.params.turnId);
+        chain.steps.push({ item, running });
+        continue;
       }
-      cmdBuffer.push(...(event.params.item.commandActions as CommandAction[]));
-      continue;
     }
 
-    // Capture aggregatedOutput from completed commandExecution.
-    if (event.method === 'item/completed' && event.params.item.type === 'commandExecution') {
-      cmdAggregatedOutput = event.params.item.aggregatedOutput ?? null;
-      continue;
-    }
-
-    // agentMessage started = flush commands that came before it (completed).
-    if (event.method === 'item/started' && event.params.item.type === 'agentMessage') {
-      flushCmdBuffer(true);
-      items.push({ kind: 'event', event, index: i });
-      continue;
-    }
-
-    // agentMessage completed = just push (content rendered here).
-    if (event.method === 'item/completed' && event.params.item.type === 'agentMessage') {
-      items.push({ kind: 'event', event, index: i });
-      continue;
-    }
-
-    // turn/completed = boundary, flush then push.
-    if (event.method === 'turn/completed') {
-      flushCmdBuffer(true);
-      items.push({ kind: 'event', event, index: i });
-      continue;
-    }
-
-    // Everything else: just push, never flush.
+    if (endsChain(event)) chain = null;
     items.push({ kind: 'event', event, index: i });
   }
 
-  // Flush trailing buffer (agent still running — not completed yet).
-  flushCmdBuffer(false);
   return items;
 }

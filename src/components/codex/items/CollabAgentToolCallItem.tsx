@@ -1,11 +1,12 @@
-import { Bot, Clock, GitBranch, Play, Send, Square } from 'lucide-react';
+import { Bot } from 'lucide-react';
 import type {
   CollabAgentState,
   CollabAgentStatus,
   CollabAgentTool,
   CollabAgentToolCallStatus,
 } from '@/bindings/v2';
-import { Badge } from '@/components/ui/badge';
+import { Subagent } from '@/components/ai-elements/Subagent';
+import { TraceIcon, TraceLine, TraceTitle } from '@/components/ui/trace';
 
 // Shape of the collabAgentToolCall item from item/completed.
 export interface CollabAgentToolCallItemData {
@@ -37,23 +38,6 @@ function toolLabel(tool: CollabAgentTool, status: CollabAgentToolCallStatus): st
       return done ? 'Closed sub-agent' : 'Closing sub-agent';
     default:
       return 'Sub-agent operation';
-  }
-}
-
-function toolIcon(tool: CollabAgentTool) {
-  switch (tool) {
-    case 'spawnAgent':
-      return <GitBranch className="h-3.5 w-3.5" />;
-    case 'sendInput':
-      return <Send className="h-3.5 w-3.5" />;
-    case 'resumeAgent':
-      return <Play className="h-3.5 w-3.5" />;
-    case 'wait':
-      return <Clock className="h-3.5 w-3.5" />;
-    case 'closeAgent':
-      return <Square className="h-3.5 w-3.5" />;
-    default:
-      return <Bot className="h-3.5 w-3.5" />;
   }
 }
 
@@ -96,80 +80,40 @@ interface CollabAgentToolCallItemProps {
 
 export function CollabAgentToolCallItem({ item }: CollabAgentToolCallItemProps) {
   const { tool, status, receiverThreadIds, prompt, agentsStates } = item;
-
-  const callStatusClass =
-    status === 'completed'
-      ? 'border-green-500/30 bg-green-500/5'
-      : status === 'failed'
-        ? 'border-red-500/30 bg-red-500/5'
-        : 'border-blue-500/30 bg-blue-500/5';
-
   const agentEntries = Object.entries(agentsStates ?? {});
+  const state = status === 'completed' ? 'done' : status === 'failed' ? 'error' : 'running';
+  const hasDetails = !!prompt || agentEntries.length > 0;
 
   return (
-    <div className={`rounded-md border px-3 py-2.5 text-xs space-y-2 ${callStatusClass}`}>
-      {/* Header row */}
-      <div className="flex items-center gap-2">
-        <span className="flex items-center gap-1 text-muted-foreground">
-          {toolIcon(tool)}
-          <span className="font-medium text-foreground">{toolLabel(tool, status)}</span>
-        </span>
-
-        {/* Receiver thread IDs */}
-        {receiverThreadIds.length > 0 && (
-          <span className="text-muted-foreground">
-            {receiverThreadIds.map((id) => (
-              <code key={id} className="font-mono text-[10px] bg-muted rounded px-1 py-0.5 mr-1">
-                {shortId(id)}
-              </code>
-            ))}
-          </span>
-        )}
-
-        {/* Overall call status badge */}
-        <Badge
-          variant="outline"
-          className={`ml-auto text-[10px] px-1.5 py-0 ${
-            status === 'completed'
-              ? 'border-green-500/40 text-green-700 dark:text-green-400'
-              : status === 'failed'
-                ? 'border-red-500/40 text-red-700 dark:text-red-400'
-                : 'border-blue-500/40 text-blue-700 dark:text-blue-400'
-          }`}
-        >
-          {status}
-        </Badge>
-      </div>
-
-      {/* Prompt snippet — first 120 chars */}
-      {prompt && (
-        <p className="text-muted-foreground italic line-clamp-2 leading-relaxed">
-          {prompt.length > 120 ? `${prompt.slice(0, 120)}…` : prompt}
-        </p>
-      )}
-
-      {/* Per-agent state rows */}
-      {agentEntries.length > 0 && (
-        <div className="space-y-1 pt-0.5">
+    <Subagent
+      title={toolLabel(tool, status)}
+      description={receiverThreadIds.map(shortId).join(' ') || undefined}
+      state={state}
+    >
+      {hasDetails ? (
+        <>
+          {prompt && (
+            <p className="italic line-clamp-3">
+              {prompt.length > 240 ? `${prompt.slice(0, 240)}…` : prompt}
+            </p>
+          )}
           {agentEntries.map(([threadId, agentState]) => {
             const { label, className } = agentStatusDisplay(agentState.status);
             return (
-              <div key={threadId} className="flex items-center gap-2">
-                <Bot className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                <code className="font-mono text-[10px] text-muted-foreground">
-                  {shortId(threadId)}
-                </code>
-                <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${className}`}>
+              <TraceLine key={threadId}>
+                <TraceIcon>
+                  <Bot />
+                </TraceIcon>
+                <code className="font-mono text-xs">{shortId(threadId)}</code>
+                <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${className}`}>
                   {label}
                 </span>
-                {agentState.message && (
-                  <span className="text-muted-foreground truncate">{agentState.message}</span>
-                )}
-              </div>
+                {agentState.message && <TraceTitle>{agentState.message}</TraceTitle>}
+              </TraceLine>
             );
           })}
-        </div>
-      )}
-    </div>
+        </>
+      ) : null}
+    </Subagent>
   );
 }

@@ -4,10 +4,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useScrollToBottom } from '../hooks';
 import { EventItem } from '../items';
 import { ApprovalItem } from '../items/ApprovalItem';
-import { CommandActionSummaryItem } from '../items/CommandActionSummaryItem';
 import { ElicitationItem } from '../items/ElicitationItem';
 import { PermissionsItem } from '../items/PermissionsItem';
 import { RequestUserInputItem } from '../items/RequestUserInputItem';
+import { ThreadStepChain } from '../items/ThreadStepChain';
 import { ScrollToBottomButton } from '../widget/ScrollToBottomButton';
 import { WorkingIndicator } from '../widget/WorkingIndicator';
 import { deriveRenderItems } from './deriveRenderItems';
@@ -49,17 +49,10 @@ export function CodexThread({ threadId, fillHeight = true }: CodexThreadProps = 
   const renderedEvents: Array<{ key: string; content: ReactNode }> = [];
 
   for (const item of renderItems) {
-    if (item.kind === 'cmdGroup') {
+    if (item.kind === 'chain') {
       renderedEvents.push({
         key: item.key,
-        content: (
-          <CommandActionSummaryItem
-            actions={item.actions}
-            commandItemId={item.commandItemId}
-            aggregatedOutput={item.aggregatedOutput}
-            completed={item.completed}
-          />
-        ),
+        content: <ThreadStepChain steps={item.steps} />,
       });
       continue;
     }
