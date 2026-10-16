@@ -31,6 +31,6 @@ export function useOpenThreadRead() {
     const key = `${currentThreadId}:${readState.revision}`;
     if (attempted.current.has(key)) return;
     attempted.current.add(key);
-    void setThreadReadState(currentThreadId, 'read');
+    void setThreadReadState(currentThreadId, 'read', { silent: true });
   }, [view, currentThreadId, readState]);
 }
