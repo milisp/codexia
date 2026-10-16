@@ -40,7 +40,8 @@ use super::{
         api_thread_goal_set, api_thread_goal_get, api_thread_goal_clear,
         api_thread_compact_start, api_thread_memory_mode_set, api_memory_reset,
         api_hooks_list, api_plugin_list, api_plugin_read, api_plugin_install,
-        api_plugin_uninstall, api_plugin_installed,
+        api_plugin_uninstall, api_plugin_installed, api_plugin_search,
+        api_account_usage_read,
         api_external_agent_config_detect, api_external_agent_config_import,
         api_external_agent_config_import_record_history,
         api_external_agent_config_import_read_histories,
@@ -216,6 +217,8 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/codex/plugin/install", post(api_plugin_install))
         .route("/api/codex/plugin/uninstall", post(api_plugin_uninstall))
         .route("/api/codex/plugin/installed", post(api_plugin_installed))
+        .route("/api/codex/plugin/search", post(api_plugin_search))
+        .route("/api/codex/account/usage/read", post(api_account_usage_read))
         .route(
             "/api/codex/external-agent-config/detect",
             post(api_external_agent_config_detect),

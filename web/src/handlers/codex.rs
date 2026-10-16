@@ -418,6 +418,8 @@ codex_passthrough! {
     api_plugin_install => "plugin/install",
     api_plugin_uninstall => "plugin/uninstall",
     api_plugin_installed => "plugin/installed",
+    api_plugin_search => "plugin/search",
+    api_account_usage_read => "account/usage/read",
     api_external_agent_config_detect => "externalAgentConfig/detect",
     api_external_agent_config_import => "externalAgentConfig/import",
     api_external_agent_config_import_record_history => "externalAgentConfig/import/recordHistory",

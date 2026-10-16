@@ -17,6 +17,7 @@ import {
   preferredLocalSources,
 } from './pluginTargets';
 import { useExternalUrl } from './useExternalUrl';
+import { usePluginSearch } from './usePluginSearch';
 
 /**
  * Process-wide cache of the last plugin/list result, so re-entering the view
@@ -59,6 +60,9 @@ export function usePluginsMarketplace(refreshTrigger = 0) {
   const [isLoading, setIsLoading] = useState(false);
   const [installingPluginId, setInstallingPluginId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  // Installed-state changes made while viewing server search results, which are not part of `marketplaces`.
+  const [installedOverrides, setInstalledOverrides] = useState<Record<string, boolean>>({});
+  const searchResults = usePluginSearch(query);
 
   const { setSelectedAgent } = useAgentSettingsStore();
   const { setView } = useLayoutStore();
@@ -89,6 +93,7 @@ export function usePluginsMarketplace(refreshTrigger = 0) {
 
   /** Flip the installed flag locally so the list stays in sync without a full reload. */
   const markInstalled = useCallback((pluginId: string, installed: boolean) => {
+    setInstalledOverrides((prev) => ({ ...prev, [pluginId]: installed }));
     setMarketplaces((prev) => {
       const next = prev.map((m) => ({
         ...m,
@@ -198,8 +203,24 @@ export function usePluginsMarketplace(refreshTrigger = 0) {
   const browseGroups = useMemo(() => {
     const needle = query.trim().toLowerCase();
     const groupsMap = new Map<string, PluginEntry[]>();
-    entries.forEach(({ marketplace: m, plugin: p }) => {
-      if (needle) {
+    // Server results are ranked and include the remote catalog; fall back to
+    // filtering the local list until they arrive (or if the request fails).
+    const source: PluginEntry[] = searchResults
+      ? searchResults.map((result) => ({
+          marketplace: {
+            name: result.marketplaceName,
+            path: result.marketplacePath,
+            interface: null,
+            plugins: [result.plugin],
+          },
+          plugin:
+            result.plugin.id in installedOverrides
+              ? { ...result.plugin, installed: installedOverrides[result.plugin.id] }
+              : result.plugin,
+        }))
+      : entries;
+    source.forEach(({ marketplace: m, plugin: p }) => {
+      if (needle && !searchResults) {
         const haystack = [
           p.name,
           p.interface?.displayName ?? '',
@@ -209,7 +230,8 @@ export function usePluginsMarketplace(refreshTrigger = 0) {
           .toLowerCase();
         if (!haystack.includes(needle)) return;
       }
-      const category = p.interface?.category || 'Others';
+      // Keep the server's relevance order by not splitting search results into categories.
+      const category = searchResults ? 'Results' : p.interface?.category || 'Others';
       if (!groupsMap.has(category)) {
         groupsMap.set(category, []);
       }
@@ -220,7 +242,7 @@ export function usePluginsMarketplace(refreshTrigger = 0) {
       if (b === 'Others') return -1;
       return a.localeCompare(b);
     });
-  }, [entries, query]);
+  }, [entries, query, searchResults, installedOverrides]);
 
   return {
     marketplaces,
