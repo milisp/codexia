@@ -71,18 +71,4 @@ export interface EventsSlice {
   setGoalEnabled: (goalEnabled: boolean) => void;
 }
 
-export interface QueueSlice {
-  /** Queue for messages that arrived while thread was busy */
-  queuedMessages: Array<{ text: string; images: string[] }>;
-  /** Flag to prevent processing multiple queued messages simultaneously */
-  isProcessingQueued: boolean;
-
-  queueMessage: (text: string, images: string[]) => void;
-  getQueuedMessages: () => Array<{ text: string; images: string[] }>;
-  clearQueue: () => void;
-  removeQueuedMessage: (index: number) => void;
-  processQueue: () => Promise<void>;
-  setProcessingQueued: (isProcessing: boolean) => void;
-}
-
-export type CodexStore = ThreadsSlice & EventsSlice & QueueSlice;
+export type CodexStore = ThreadsSlice & EventsSlice;

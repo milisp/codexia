@@ -11,7 +11,6 @@ import { useAcpStore } from '@/stores/useAcpStore';
 export async function hasActiveWork(): Promise<boolean> {
   const codex = useCodexStore.getState();
   if (Object.values(codex.threadStatusMap).some((status) => status.type === 'active')) return true;
-  if (codex.isProcessingQueued) return true;
 
   if (Object.values(useCCStore.getState().sessionLoadingMap).some(Boolean)) return true;
 

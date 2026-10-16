@@ -1,10 +1,11 @@
-import { ArrowUp, Pause, Play, Square, Target, X } from 'lucide-react';
+import { ArrowUp, ListPlus, Pause, Play, Square, Target, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import type { ThreadGoal } from '@/bindings/v2';
 import { AgentModelPanel } from '@/components/agent/AgentModelPanel';
 import { AgentModelTrigger } from '@/components/agent/AgentModelTrigger';
 import { useThreadGoal, useThreadStatus } from '@/components/codex/hooks';
-import { useCodexStore } from '@/components/codex/stores';
+import { getRunningTurnId, useCodexStore } from '@/components/codex/stores';
 import { ContextWindowWidget } from '@/components/codex/widget';
 import { FileMentionPopover } from '@/components/common';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ import { ComposerMenu } from './ComposerMenu';
 import { ComposerToolbarProvider } from './ComposerToolbarContext';
 import { DictationButton } from './DictationButton';
 import { ComposerEditor, type ComposerEditorHandle } from './editor/ComposerEditor';
+import { QueuedMessages } from './QueuedMessages';
 import { SlashCommandDialogs } from './SlashCommandDialogs';
 import { SlashCommandPopover } from './SlashCommandsSelector';
 import type { SlashDialog } from './slashCommands';
@@ -50,8 +52,7 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
   const [images, setImages] = useState<string[]>([]);
   const [slashDialog, setSlashDialog] = useState<SlashDialog | null>(null);
   const { inputValue, setInputValue, appendFileLinks } = useInputStore();
-  const { currentThreadId, currentTurnId, inputFocusTrigger, goalEnabled, setGoalEnabled } =
-    useCodexStore();
+  const { currentThreadId, inputFocusTrigger, goalEnabled, setGoalEnabled } = useCodexStore();
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
   const { cwd } = useWorkspaceStore.getState();
   const threadStatus = useThreadStatus();
@@ -81,9 +82,10 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
     }
 
     // If thread is active and we have a turnId, steer the existing turn.
-    if (threadStatus?.type === 'active' && currentThreadId && currentTurnId) {
+    const runningTurnId = getRunningTurnId(currentThreadId);
+    if (threadStatus?.type === 'active' && currentThreadId && runningTurnId) {
       try {
-        await codexService.turnSteer(currentThreadId, currentTurnId, text, images);
+        await codexService.turnSteer(currentThreadId, runningTurnId, text, images);
         setInputValue('');
         setImages([]);
       } catch (error) {
@@ -142,8 +144,25 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
   };
 
   const handleStop = async () => {
-    if (currentThreadId && currentTurnId) {
-      await codexService.turnInterrupt(currentThreadId, currentTurnId);
+    const runningTurnId = getRunningTurnId(currentThreadId);
+    if (currentThreadId && runningTurnId) {
+      await codexService.turnInterrupt(currentThreadId, runningTurnId);
+    }
+  };
+
+  // Lines the message up on the app-server instead of steering the running
+  // turn; it starts by itself once the turn completes.
+  const handleQueue = async () => {
+    const text = inputValue.trim();
+    if (!currentThreadId || (!text && images.length === 0)) return;
+    try {
+      await codexService.threadQueueAdd(currentThreadId, text, images);
+      setInputValue('');
+      setImages([]);
+    } catch (error) {
+      toast.error(
+        `Could not queue the message: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   };
 
@@ -206,6 +225,8 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
           triggerElement={wrapperRef.current}
           onOpenDialog={setSlashDialog}
         />
+
+        <QueuedMessages threadId={currentThreadId} running={threadStatus?.type === 'active'} />
 
         <div className="max-w-3xl mx-2 sm:mx-auto border rounded-xl bg-background shadow-sm focus-within:ring-1 focus-within:ring-ring transition-all overflow-hidden">
           {images.length > 0 && (
@@ -314,14 +335,28 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
                   }}
                 />
                 {threadStatus?.type === 'active' ? (
-                  <Button
-                    onClick={handleStop}
-                    variant="destructive"
-                    size="icon"
-                    className="h-10 w-10 md:h-8 md:w-8 rounded-full"
-                  >
-                    <Square className="w-4 h-4" />
-                  </Button>
+                  <>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 md:h-8 md:w-8 rounded-full"
+                      aria-label="Queue message"
+                      title="Queue message"
+                      disabled={!inputValue.trim() && images.length === 0}
+                      onClick={() => void handleQueue()}
+                    >
+                      <ListPlus className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      onClick={handleStop}
+                      variant="destructive"
+                      size="icon"
+                      className="h-10 w-10 md:h-8 md:w-8 rounded-full"
+                    >
+                      <Square className="w-4 h-4" />
+                    </Button>
+                  </>
                 ) : (
                   <Button
                     type="submit"
