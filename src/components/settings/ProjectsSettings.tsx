@@ -1,7 +1,9 @@
 import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from '@/components/ui/use-toast';
+import { ConfirmProjectActionDialog } from '@/features/projects/ProjectDialogs';
 import { findProjectForCwd } from '@/features/projects/projectModel';
 import { useServerProjectsStore } from '@/features/projects/useServerProjectsStore';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
@@ -9,6 +11,7 @@ import { getFilename } from '@/utils/getFilename';
 
 export function ProjectsSettings() {
   const { projects, setProjects, cwd, setCwd } = useWorkspaceStore();
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
 
   const moveProject = (index: number, direction: -1 | 1) => {
     const nextIndex = index + direction;
@@ -31,13 +34,13 @@ export function ProjectsSettings() {
     setProjects(next);
   };
 
-  const deleteProject = (project: string) => {
+  // Throws when the server rejects the delete, so the dialog stays open and
+  // the project is kept locally.
+  const deleteProject = async (project: string) => {
     const { status, projects: backing, remove } = useServerProjectsStore.getState();
     const deleted = status === 'ready' ? findProjectForCwd(backing, project) : null;
     if (deleted) {
-      remove(deleted.id).catch((error) =>
-        toast.error('Failed to delete project', { description: String(error) })
-      );
+      await remove(deleted.id);
     }
     const next = projects.filter((item) => item !== project);
     setProjects(next);
@@ -98,7 +101,7 @@ export function ProjectsSettings() {
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-destructive hover:text-destructive"
-                    onClick={() => deleteProject(project)}
+                    onClick={() => setPendingDelete(project)}
                     title="Delete project"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -109,6 +112,15 @@ export function ProjectsSettings() {
           )}
         </CardContent>
       </Card>
+      <ConfirmProjectActionDialog
+        open={pendingDelete !== null}
+        title="Delete project"
+        description={`Delete ${pendingDelete ? getFilename(pendingDelete) : 'this project'}? Its chats are kept and move to Recent; no folders are deleted.`}
+        confirmLabel="Delete project"
+        destructive
+        onConfirm={() => (pendingDelete ? deleteProject(pendingDelete) : Promise.resolve())}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+      />
     </section>
   );
 }
