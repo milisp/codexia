@@ -13,20 +13,20 @@ import { BotMessageList } from './BotMessageList';
 import { BotPermissionGate } from './BotPermissionGate';
 import { BotRoutines } from './BotRoutines';
 import { BotSettingsDialog } from './BotSettingsDialog';
+import { BotToday } from './BotToday';
 import { BotWaitingApprovals } from './BotWaitingApprovals';
 import { BotWelcome } from './BotWelcome';
 import { TRUST_LEVELS } from './botAgentDef';
-import { markBotRead } from './markBotRead';
 import { useBotDragDrop } from './useBotDragDrop';
-import { useBotSession } from './useBotSession';
 import { useCreateBot } from './useCreateBot';
+import { useOpenBot } from './useOpenBot';
 
 /** The full-screen conversation with one bot. */
 export default function BotChatView() {
   const { bots, selectedBotId, connectionByBot } = useBotUiStore();
   const connectionId = useAcpStore((s) => s.connectionId);
   const { newBot, setNewBot, creating, handleCreateBot } = useCreateBot();
-  const { open } = useBotSession();
+  const openBot = useOpenBot();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tasksOpen, setTasksOpen] = useState(false);
   const { open: isSidebarOpen, openMobile, isMobile } = useSidebar();
@@ -51,19 +51,11 @@ export default function BotChatView() {
             </div>
           )}
         </header>
-        <BotWelcome
-          bots={bots}
-          creating={creating}
-          onCreate={handleCreateBot}
-          onSelect={(item) => {
-            const status = useBotUiStore.getState().statusByBot[item.id];
-            if (status === 'blocked' || status === 'failed') {
-              useBotUiStore.getState().setBotStatus(item.id, null);
-            }
-            void markBotRead(item);
-            void open(item);
-          }}
-        />
+        {bots.length === 0 ? (
+          <BotWelcome creating={creating} onCreate={handleCreateBot} />
+        ) : (
+          <BotToday creating={creating} onCreate={handleCreateBot} onSelect={openBot} />
+        )}
       </div>
     );
   }

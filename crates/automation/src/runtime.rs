@@ -98,7 +98,9 @@ pub(super) async fn save_store(
     tasks: impl Iterator<Item = AutomationTask>,
 ) -> Result<(), String> {
     let mut store = AutomationStore {
-        tasks: tasks.collect(),
+        tasks: tasks
+            .map(|task| AutomationTask { next_run_at: None, ..task })
+            .collect(),
     };
     // Tasks come from a HashMap; sort so the file stays stable across writes.
     store.tasks.sort_by(|a, b| a.created_at.cmp(&b.created_at));

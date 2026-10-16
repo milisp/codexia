@@ -7,6 +7,7 @@ import type { Bot } from '@/services/apiAdapt/bots';
 import { type AcpTurnTrigger, useAcpStore } from '@/stores/useAcpStore';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 import { BotAvatar } from './BotAvatar';
+import { triggerLabel } from './triggerLabel';
 import { useBotTimeline } from './useBotTimeline';
 
 /** The conversation, as chat bubbles: you on the right, the bot on the left. */
@@ -118,10 +119,7 @@ export function BotMessageList({ bot }: { bot: Bot }) {
  */
 function TriggeredTurn({ trigger, text }: { trigger: AcpTurnTrigger; text: string }) {
   const Icon = trigger.kind === 'routine' ? Clock : BotIcon;
-  const label =
-    trigger.kind === 'routine'
-      ? `Scheduled · ${trigger.name ?? 'task'}`
-      : `Asked by ${trigger.name ?? 'another bot'}`;
+  const label = triggerLabel(trigger.kind, trigger.name);
   return (
     <details className="group mx-auto max-w-[80%] py-1 text-center text-xs text-muted-foreground">
       <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded-full border px-2 py-0.5 hover:bg-muted">

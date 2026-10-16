@@ -44,8 +44,6 @@ Its reported weakness is that too many proactive cards become noise.
 
 ## Where Codexia is behind
 
-- **No arrival surface.** Results are an unread badge per bot. Nothing shows
-  "what needs me, what got done, what's next" across all bots.
 - **Blank-page setup.** A new bot starts from an empty role, while Grok
   offers 56 ready-made roles.
 - **Schedules only.** There are no event triggers (git push, CI failure, new
@@ -56,7 +54,7 @@ Its reported weakness is that too many proactive cards become noise.
 
 ## Proposed design
 
-### 1. Today: one place to arrive (proposed)
+### 1. Today: one place to arrive (shipped)
 
 A **Today** view above the bot list. It holds three short sections, and
 nothing is shown when nothing needs you:

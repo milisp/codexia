@@ -372,6 +372,7 @@ mod tests {
             created_at: "2026-01-01T00:00:00Z".to_string(),
             paused: false,
             bot_id: None,
+            next_run_at: None,
             cwd_mode: CwdMode::Cwd,
         }
     }

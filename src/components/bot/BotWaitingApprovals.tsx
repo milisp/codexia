@@ -19,7 +19,13 @@ function keyOf(request: AcpWaitingApproval) {
  * on. The run is paused until one is answered here, from any window or device
  * connected to this backend.
  */
-export function BotWaitingApprovals({ bot }: { bot: Bot }) {
+export function BotWaitingApprovals({
+  bot,
+  className = 'shrink-0 border-t bg-amber-500/5 p-3',
+}: {
+  bot: Bot;
+  className?: string;
+}) {
   const status = useBotUiStore((s) => s.statusByBot[bot.id]);
   const upsertBot = useBotUiStore((s) => s.upsertBot);
   const [waiting, setWaiting] = useState<AcpWaitingApproval[]>([]);
@@ -63,7 +69,7 @@ export function BotWaitingApprovals({ bot }: { bot: Bot }) {
   };
 
   return (
-    <div className="shrink-0 space-y-2 border-t bg-amber-500/5 p-3">
+    <div className={`space-y-2 ${className}`}>
       {waiting.map((request) => {
         const title = request.toolCall?.title ?? 'Permission requested';
         const key = keyOf(request);

@@ -1,6 +1,7 @@
 mod conn;
 pub mod acp_sessions;
 pub mod automation_runs;
+pub mod bot_runs;
 pub mod bots;
 pub mod notes;
 

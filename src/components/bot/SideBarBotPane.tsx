@@ -1,10 +1,10 @@
-import { useCallback, useEffect } from 'react';
-import { type Bot, listBots } from '@/services/apiAdapt/bots';
+import { Sun } from 'lucide-react';
+import { useEffect } from 'react';
+import { listBots } from '@/services/apiAdapt/bots';
 import { useLayoutStore } from '@/stores';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 import { BotAvatar } from './BotAvatar';
-import { markBotRead } from './markBotRead';
-import { useBotSession } from './useBotSession';
+import { useOpenBot } from './useOpenBot';
 
 /** "3m", "4h", "2d" — enough to place a conversation without a full date. */
 function since(iso: string) {
@@ -24,7 +24,7 @@ export function SideBarBotPane() {
   const { bots, setBots, selectedBotId, connectionByBot, runningByBot, statusByBot } =
     useBotUiStore();
   const setView = useLayoutStore((s) => s.setView);
-  const { open } = useBotSession();
+  const select = useOpenBot();
 
   useEffect(() => {
     listBots()
@@ -32,23 +32,38 @@ export function SideBarBotPane() {
       .catch((e) => console.error('bots: failed to list', e));
   }, [setBots]);
 
-  const select = useCallback(
-    (bot: Bot) => {
-      setView('bot');
-      // Opening the bot is how blocked/failed gets acknowledged.
-      const status = useBotUiStore.getState().statusByBot[bot.id];
-      if (status === 'blocked' || status === 'failed') {
-        useBotUiStore.getState().setBotStatus(bot.id, null);
-      }
-      void markBotRead(bot);
-      void open(bot);
-    },
-    [open, setView]
-  );
+  const view = useLayoutStore((s) => s.view);
+  const needsYou = bots.filter((bot) => statusByBot[bot.id] === 'waiting').length;
+  const onToday = view === 'bot' && !selectedBotId;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto">
+        {bots.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              useBotUiStore.getState().setSelectedBotId(null);
+              setView('bot');
+            }}
+            aria-current={onToday ? 'page' : undefined}
+            className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent/50 ${
+              onToday ? 'bg-accent font-medium' : ''
+            }`}
+          >
+            <Sun className="h-4 w-4 text-muted-foreground" />
+            <span className="flex-1">Today</span>
+            {needsYou > 0 && (
+              <span
+                role="img"
+                aria-label={`${needsYou} need you`}
+                className="shrink-0 rounded-full bg-amber-500 px-1.5 text-[10px] text-white"
+              >
+                {needsYou}
+              </span>
+            )}
+          </button>
+        )}
         {bots.length === 0 && (
           <p className="px-3 py-6 text-center text-xs text-muted-foreground">
             Your bots will appear here.
