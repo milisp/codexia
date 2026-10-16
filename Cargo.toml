@@ -60,7 +60,7 @@ open = "5"
 
 # file watching
 notify = { version = "8", features = ["serde", "serialization-compat-6"] }
-notify-debouncer-full = "0.6"
+notify-debouncer-full = "0.7"
 
 # terminal
 portable-pty = "0.9"

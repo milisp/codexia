@@ -992,7 +992,7 @@ dependencies = [
  "log",
  "moka",
  "notify",
- "notify-debouncer-full",
+ "notify-debouncer-full 0.7.0",
  "nucleo",
  "objc2",
  "objc2-av-foundation",
@@ -1165,7 +1165,7 @@ dependencies = [
  "log",
  "nosleep",
  "notify",
- "notify-debouncer-full",
+ "notify-debouncer-full 0.7.0",
  "nucleo",
  "portable-pty",
  "regex",
@@ -1229,7 +1229,7 @@ dependencies = [
  "log",
  "moka",
  "notify",
- "notify-debouncer-full",
+ "notify-debouncer-full 0.7.0",
  "open",
  "portable-pty",
  "regex",
@@ -4977,6 +4977,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "notify-debouncer-full"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c02b49179cfebc9932238d04d6079912d26de0379328872846118a0fa0dbb302"
+dependencies = [
+ "file-id",
+ "log",
+ "notify",
+ "notify-types",
+ "walkdir",
+]
+
+[[package]]
 name = "notify-rust"
 version = "4.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7652,7 +7665,7 @@ dependencies = [
  "glob",
  "log",
  "notify",
- "notify-debouncer-full",
+ "notify-debouncer-full 0.6.0",
  "objc2-foundation",
  "percent-encoding",
  "schemars 0.8.22",
