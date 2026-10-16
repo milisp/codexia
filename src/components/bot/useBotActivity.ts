@@ -8,6 +8,7 @@ import { type BotInboxItem, listBots } from '@/services/apiAdapt/bots';
 import { useLayoutStore } from '@/stores';
 import { type BotActivityStatus, useBotUiStore } from '@/stores/useBotUiStore';
 import { markBotRead } from './markBotRead';
+import { releaseBotSession } from './releaseBotSession';
 
 type BotActivityPayload = { botId: string; sessionId?: string; status: BotActivityStatus };
 
@@ -18,7 +19,7 @@ const MESSAGES: Record<Exclude<BotActivityStatus, 'working'>, (name: string) => 
   failed: (name) => `${name} failed`,
 };
 
-function handleActivity({ botId, status }: BotActivityPayload) {
+function handleActivity({ botId, sessionId, status }: BotActivityPayload) {
   const ui = useBotUiStore.getState();
   if (status === 'working') {
     ui.setBotRunning(botId, true);
@@ -33,6 +34,9 @@ function handleActivity({ botId, status }: BotActivityPayload) {
   // The backend already bumped `unreadCount`; re-read so the badge shows it —
   // unless the bot is open, in which case the reply has already been seen.
   if (status !== 'waiting') refreshAfterRun(botId);
+  // A run that continued the open conversation left this client's process
+  // behind it; drop that process so the next message picks the run up.
+  if (status !== 'waiting' && sessionId) void releaseBotSession(botId, sessionId);
 
   // The user can already see the bot they are looking at.
   if (useLayoutStore.getState().view === 'bot' && ui.selectedBotId === botId) return;

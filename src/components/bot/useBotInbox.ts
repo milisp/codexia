@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { acpStop } from '@/services/apiAdapt/acp';
 import { type BotInboxItem, listBotInbox, resolveBotInbox } from '@/services/apiAdapt/bots';
-import { useAcpStore } from '@/stores/useAcpStore';
 import { useBotUiStore } from '@/stores/useBotUiStore';
+import { releaseBotSession } from './releaseBotSession';
 
 export type InboxAction = 'send' | 'discard' | 'done' | 'dismiss';
 
@@ -47,15 +46,7 @@ export async function resolveInboxItem(
     throw new Error('Wait for the current reply to finish, or stop it, first.');
   }
   const resolved = await resolveBotInbox({ id: item.id, action, ...extra });
-  if (continues && holdsSession && connection) {
-    await acpStop(connection).catch(() => {});
-    useBotUiStore.getState().clearBotConnection(item.botId);
-    if (useAcpStore.getState().connectionId === connection) {
-      const agentId = useAcpStore.getState().agentId;
-      useAcpStore.getState().reset();
-      useAcpStore.getState().setAgentId(agentId);
-    }
-  }
+  if (continues) await releaseBotSession(item.botId, item.sessionId);
   useBotUiStore.getState().bumpInbox();
   return resolved;
 }

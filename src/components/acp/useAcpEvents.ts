@@ -10,6 +10,8 @@ type AcpEventPayload = {
   kind: 'update' | 'permission' | 'stderr' | 'exited' | 'notification';
   /** Set on `update` and `permission`: which session on the connection it came from. */
   sessionId?: string;
+  /** Set on an `update` that a `session/load` replays from storage. */
+  replay?: boolean;
   update?: Record<string, unknown>;
   requestId?: string;
   toolCall?: Record<string, unknown>;
@@ -28,8 +30,18 @@ export function useAcpEvents(connectionId: string | null) {
     if (!connectionId) return;
 
     const handle = (payload: AcpEventPayload) => {
-      if (payload.connectionId !== connectionId) return;
       const store = useAcpStore.getState();
+      if (payload.connectionId !== connectionId) {
+        // Another process continuing the open conversation (a bot resuming it
+        // in the background): show what it adds live, but not its replay of
+        // what is already on screen, nor anything else from that process.
+        const continuesOpen =
+          payload.kind === 'update' &&
+          !payload.replay &&
+          Boolean(payload.sessionId) &&
+          payload.sessionId === store.sessionId;
+        if (!continuesOpen) return;
+      }
       // One process can host several sessions — drop the ones this pane is not
       // showing. Read the open session from the store rather than closing over
       // it: `session/load` replays its transcript the moment the pane switches,
