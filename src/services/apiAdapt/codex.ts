@@ -5,6 +5,8 @@ import type {
   GetAccountParams,
   GetAccountRateLimitsResponse,
   GetAccountResponse,
+  GetAccountTokenUsageParams,
+  GetAccountTokenUsageResponse,
   GrantedPermissionProfile,
   LoginAccountParams,
   LoginAccountResponse,
@@ -20,6 +22,8 @@ import type {
   PluginListResponse,
   PluginReadParams,
   PluginReadResponse,
+  PluginSearchParams,
+  PluginSearchResponse,
   PluginUninstallParams,
   PluginUninstallResponse,
   ReviewStartParams,
@@ -277,6 +281,15 @@ export async function threadGoalClear(params: ThreadGoalClearParams) {
 
 export async function pluginList(params: PluginListParams) {
   return await postJson<PluginListResponse>('/api/codex/plugin/list', params);
+}
+
+export async function pluginSearch(params: PluginSearchParams) {
+  return await postJson<PluginSearchResponse>('/api/codex/plugin/search', params);
+}
+
+/** Estimated per-thread usage; `threadUsage` is absent when the server has no billing route. */
+export async function accountUsageRead(params: GetAccountTokenUsageParams) {
+  return await postJson<GetAccountTokenUsageResponse>('/api/codex/account/usage/read', params);
 }
 
 export async function pluginInstalled(params: PluginInstalledParams) {

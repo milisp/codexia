@@ -5,7 +5,7 @@ import { AgentModelPanel } from '@/components/agent/AgentModelPanel';
 import { AgentModelTrigger } from '@/components/agent/AgentModelTrigger';
 import { useThreadGoal, useThreadStatus } from '@/components/codex/hooks';
 import { useCodexStore } from '@/components/codex/stores';
-import { ContextWindowWidget } from '@/components/codex/widget';
+import { ContextWindowWidget, ThreadCostWidget } from '@/components/codex/widget';
 import { FileMentionPopover } from '@/components/common';
 import { Button } from '@/components/ui/button';
 import { fileSrc } from '@/hooks/runtime';
@@ -306,6 +306,7 @@ export function Composer({ overrideSend, onAfterSend }: ComposerProps) {
                 )}
               </div>
               <div className="flex items-center gap-2">
+                <ThreadCostWidget />
                 <ContextWindowWidget />
                 <AgentModelPanel trigger={<AgentModelTrigger />} />
                 <DictationButton
