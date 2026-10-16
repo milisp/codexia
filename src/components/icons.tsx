@@ -3,6 +3,7 @@ import ClaudeCodeIcon from '@/assets/claudecode-color.svg';
 import CodexIcon from '@/assets/codex-color.svg';
 import GeminiIcon from '@/assets/gemini-color.svg';
 import GithubIcon from '@/assets/github.svg';
+import KekeIcon from '@/assets/keke/keke.webp';
 import MCPIcon from '@/assets/mcp.svg';
 import MiniMaxIcon from '@/assets/minimax-color.svg';
 import NvidiaIcon from '@/assets/nvidia-color.svg';
@@ -70,6 +71,16 @@ export function ClaudeCode({ size = 'md', className = '' }: BaseIconProps) {
 export function Codex({ size = 'md', className = '' }: BaseIconProps) {
   return (
     <img src={CodexIcon} alt="codex" className={`${getSizeClass(size)} ${className}`.trim()} />
+  );
+}
+
+export function Keke({ size = 'md', className = '' }: BaseIconProps) {
+  return (
+    <img
+      src={KekeIcon}
+      alt="keke"
+      className={`${getSizeClass(size)} rounded-sm object-cover ${className}`.trim()}
+    />
   );
 }
 

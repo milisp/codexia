@@ -1,13 +1,11 @@
-import { Bot, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { forwardRef } from 'react';
-import KekeIcon from '@/assets/keke-agent.svg';
 import { useConfigStore } from '@/components/codex/stores';
-import { AgentIcon } from '@/components/common/AgentIcon';
-import { ClaudeCode } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { useCCStore } from '@/stores/cc';
 import { useAcpStore } from '@/stores/useAcpStore';
 import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
+import { AgentLogo } from './AgentLogo';
 
 /**
  * Plain button trigger for `AgentModelPanel`. Deliberately has no popover of
@@ -36,14 +34,7 @@ export const AgentModelTrigger = forwardRef<HTMLButtonElement, React.ComponentPr
     let icon: React.ReactNode;
 
     if (active) {
-      icon =
-        agentId === 'keke' ? (
-          <img src={KekeIcon} alt="" className="h-4 w-4" />
-        ) : agentId === 'claude' ? (
-          <ClaudeCode size="sm" />
-        ) : (
-          <Bot className="h-4 w-4" />
-        );
+      icon = <AgentLogo id={agentId} />;
       const modelOption = acpConfigOptions.find(
         (option) => option.category === 'model' || option.category === 'model_config'
       );
@@ -66,11 +57,11 @@ export const AgentModelTrigger = forwardRef<HTMLButtonElement, React.ComponentPr
         acpReasoningEffort ??
         undefined;
     } else if (selectedAgent === 'cc') {
-      icon = <AgentIcon agent="cc" />;
+      icon = <AgentLogo id="cc" />;
       label = ccOptions.model ?? 'sonnet';
       effort = ccOptions.effort ?? 'medium';
     } else {
-      icon = <AgentIcon agent="codex" />;
+      icon = <AgentLogo id="codex" />;
       label = codexModel || 'Select model';
       effort = codexReasoningEffort !== 'none' ? codexReasoningEffort : undefined;
     }
