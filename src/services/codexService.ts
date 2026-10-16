@@ -1,3 +1,4 @@
+import type { ReasoningEffort } from '@/bindings';
 import type {
   SandboxMode,
   SandboxPolicy,
@@ -11,7 +12,14 @@ import type {
   ThreadStartParams,
   UserInput,
 } from '@/bindings/v2';
-import { useCodexStore, useConfigStore } from '@/components/codex/stores';
+import {
+  useCodexStore,
+  useConfigStore,
+  useThreadQueueStore,
+  useThreadReadStateStore,
+} from '@/components/codex/stores';
+import { findProjectForCwd } from '@/features/projects/projectModel';
+import { useServerProjectsStore } from '@/features/projects/useServerProjectsStore';
 import { useWorkspaceStore } from '@/stores';
 import { useSettingsStore } from '@/stores/settings';
 import { convertThreadHistoryToEvents } from '@/utils/threadHistoryConverter';
@@ -24,9 +32,14 @@ import {
   threadFork,
   threadGoalClear,
   threadGoalSet,
+  threadQueueAdd,
+  threadQueueDelete,
+  threadQueueReorder,
+  threadQueueStart,
   threadResume,
   threadRevert,
   turnInterrupt,
+  turnSettingsUpdate,
   turnStart,
   turnSteer,
 } from './apiAdapt';
@@ -167,6 +180,7 @@ export const codexService = {
       const response = await listThreads(params);
       const workingDirThreads = response.data;
       const nextCursor = response.nextCursor ?? null;
+      useThreadReadStateStore.getState().mergeFromList(response.readStates);
       const { setThreads, setThreadListNextCursor } = useCodexStore.getState();
       setThreads(workingDirThreads);
       setThreadListNextCursor(nextCursor);
@@ -253,10 +267,18 @@ export const codexService = {
           );
         }
       }
+      // Assign the chat to the app-server project that owns this workspace, so
+      // other clients list it there. Only sent once projects are known to work.
+      const projectState = useServerProjectsStore.getState();
+      const projectId =
+        projectState.status === 'ready'
+          ? (findProjectForCwd(projectState.projects, cwd)?.id ?? null)
+          : null;
       const params: ThreadStartParams = {
         model,
         modelProvider,
         cwd: threadCwd,
+        ...(projectId ? { projectId } : {}),
         approvalPolicy,
         sandbox,
         baseInstructions: null,
@@ -390,6 +412,50 @@ export const codexService = {
       console.error('[CodexService] turnSteer error:', error);
       throw error;
     }
+  },
+  /**
+   * Queues a message on the app-server; it starts when the thread next goes
+   * idle after a completed turn. Throws if the server rejects it.
+   */
+  async threadQueueAdd(threadId: string, input: string, images: string[] = []) {
+    const response = await threadQueueAdd({
+      threadId,
+      input: buildUserInputs(input, images),
+      clientUserMessageId: crypto.randomUUID(),
+    });
+    await useThreadQueueStore.getState().refresh(threadId);
+    return response.queuedSubmission;
+  },
+  async threadQueueDelete(threadId: string, queuedSubmissionId: string) {
+    await threadQueueDelete({ threadId, queuedSubmissionId });
+    await useThreadQueueStore.getState().refresh(threadId);
+  },
+  /** `queuedSubmissionIds` is the complete new order of the thread's queue. */
+  async threadQueueReorder(threadId: string, queuedSubmissionIds: string[]) {
+    await threadQueueReorder({ threadId, queuedSubmissionIds });
+    await useThreadQueueStore.getState().refresh(threadId);
+  },
+  /** Starts one queued message now; the server rejects it while a turn is active. */
+  async threadQueueStart(threadId: string, queuedSubmissionId: string) {
+    try {
+      const response = await threadQueueStart({ threadId, queuedSubmissionId });
+      useCodexStore.setState({ currentTurnId: response.turn.id });
+      return response.turn;
+    } finally {
+      await useThreadQueueStore.getState().refresh(threadId);
+    }
+  },
+  /**
+   * Changes model/effort of one running turn only (experimental). Resolves with
+   * the server status; `targetUnavailable` means nothing was changed.
+   */
+  async turnSettingsUpdate(
+    threadId: string,
+    turnId: string,
+    settings: { model?: string; effort?: ReasoningEffort }
+  ) {
+    const response = await turnSettingsUpdate({ threadId, turnId, ...settings });
+    return response.status;
   },
   async turnInterrupt(threadId: string, turnId: string) {
     const set = useCodexStore.setState;

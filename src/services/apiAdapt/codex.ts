@@ -5,6 +5,8 @@ import type {
   GetAccountParams,
   GetAccountRateLimitsResponse,
   GetAccountResponse,
+  GetAccountTokenUsageParams,
+  GetAccountTokenUsageResponse,
   GrantedPermissionProfile,
   LoginAccountParams,
   LoginAccountResponse,
@@ -20,8 +22,22 @@ import type {
   PluginListResponse,
   PluginReadParams,
   PluginReadResponse,
+  PluginSearchParams,
+  PluginSearchResponse,
   PluginUninstallParams,
   PluginUninstallResponse,
+  ProjectCreateParams,
+  ProjectCreateResponse,
+  ProjectDeleteParams,
+  ProjectImportParams,
+  ProjectImportResponse,
+  ProjectListParams,
+  ProjectListResponse,
+  ProjectMoveParams,
+  ProjectReadParams,
+  ProjectReadResponse,
+  ProjectUpdateParams,
+  ProjectUpdateResponse,
   ReviewStartParams,
   ReviewStartResponse,
   ThreadForkParams,
@@ -34,6 +50,23 @@ import type {
   ThreadGoalSetResponse,
   ThreadListParams,
   ThreadListResponse,
+  ThreadMetadataUpdateParams,
+  ThreadQueueAddParams,
+  ThreadQueueAddResponse,
+  ThreadQueueDeleteParams,
+  ThreadQueueDeleteResponse,
+  ThreadQueueListParams,
+  ThreadQueueListResponse,
+  ThreadQueueReorderParams,
+  ThreadQueueReorderResponse,
+  ThreadQueueStartParams,
+  ThreadQueueStartResponse,
+  ThreadQueueUpdateParams,
+  ThreadQueueUpdateResponse,
+  ThreadReadParams,
+  ThreadReadResponse,
+  ThreadReadStateUpdateParams,
+  ThreadReadStateUpdateResponse,
   ThreadResumeParams,
   ThreadResumeResponse,
   ThreadRevertParams,
@@ -41,6 +74,8 @@ import type {
   ThreadStartParams,
   ThreadStartResponse,
   TurnInterruptParams,
+  TurnSettingsUpdateParams,
+  TurnSettingsUpdateResponse,
   TurnStartParams,
   TurnStartResponse,
   TurnSteerParams,
@@ -52,7 +87,7 @@ import type {
   FrontendProviderModels,
   ProviderPreset,
 } from '@/components/codex/types';
-import { getJson, postJson, postNoContent } from './shared';
+import { getJson, postJson, postJsonWithOptions, postNoContent } from './shared';
 
 export * from './mcp';
 export * from './skills';
@@ -89,6 +124,34 @@ export async function turnSteer(params: TurnSteerParams) {
   return await postJson<TurnSteerResponse>('/api/codex/turn/steer', params);
 }
 
+export async function turnSettingsUpdate(params: TurnSettingsUpdateParams) {
+  return await postJson<TurnSettingsUpdateResponse>('/api/codex/turn/settings/update', params);
+}
+
+export async function threadQueueAdd(params: ThreadQueueAddParams) {
+  return await postJson<ThreadQueueAddResponse>('/api/codex/thread/queue/add', params);
+}
+
+export async function threadQueueList(params: ThreadQueueListParams) {
+  return await postJson<ThreadQueueListResponse>('/api/codex/thread/queue/list', params);
+}
+
+export async function threadQueueUpdate(params: ThreadQueueUpdateParams) {
+  return await postJson<ThreadQueueUpdateResponse>('/api/codex/thread/queue/update', params);
+}
+
+export async function threadQueueDelete(params: ThreadQueueDeleteParams) {
+  return await postJson<ThreadQueueDeleteResponse>('/api/codex/thread/queue/delete', params);
+}
+
+export async function threadQueueReorder(params: ThreadQueueReorderParams) {
+  return await postJson<ThreadQueueReorderResponse>('/api/codex/thread/queue/reorder', params);
+}
+
+export async function threadQueueStart(params: ThreadQueueStartParams) {
+  return await postJson<ThreadQueueStartResponse>('/api/codex/thread/queue/start', params);
+}
+
 export async function turnInterrupt(params: TurnInterruptParams) {
   return await postJson('/api/codex/turn/interrupt', params);
 }
@@ -114,6 +177,61 @@ export async function deleteThread(threadId: ThreadId) {
 export async function renameThread(threadId: ThreadId, name: string) {
   const params = { threadId, name };
   return await postJson('/api/codex/thread/rename', params);
+}
+
+// Read-state callers show their own errors (or stay silent), so no generic toast.
+export async function updateThreadReadState(params: ThreadReadStateUpdateParams) {
+  return await postJsonWithOptions<ThreadReadStateUpdateResponse>(
+    '/api/codex/thread/readState/update',
+    params,
+    { suppressToast: true }
+  );
+}
+
+export async function readThread(params: ThreadReadParams) {
+  return await postJsonWithOptions<ThreadReadResponse>('/api/codex/thread/read', params, {
+    suppressToast: true,
+  });
+}
+
+// Projects are experimental app-server methods (Codexia initializes with
+// `experimentalApi: true`) and need the sqlite state DB; without it they fail
+// with "method not found".
+export async function listProjects(params: ProjectListParams = {}) {
+  // Background probe: an unsupported server must not raise a toast.
+  return await postJsonWithOptions<ProjectListResponse>('/api/codex/project/list', params, {
+    suppressToast: true,
+  });
+}
+
+export async function readProject(params: ProjectReadParams) {
+  return await postJson<ProjectReadResponse>('/api/codex/project/read', params);
+}
+
+export async function createProject(params: ProjectCreateParams) {
+  return await postJson<ProjectCreateResponse>('/api/codex/project/create', params);
+}
+
+export async function importProject(params: ProjectImportParams) {
+  return await postJsonWithOptions<ProjectImportResponse>('/api/codex/project/import', params, {
+    suppressToast: true,
+  });
+}
+
+export async function updateProject(params: ProjectUpdateParams) {
+  return await postJson<ProjectUpdateResponse>('/api/codex/project/update', params);
+}
+
+export async function moveProject(params: ProjectMoveParams) {
+  return await postJson('/api/codex/project/move', params);
+}
+
+export async function deleteProject(params: ProjectDeleteParams) {
+  return await postJson('/api/codex/project/delete', params);
+}
+
+export async function updateThreadMetadata(params: ThreadMetadataUpdateParams) {
+  return await postJson('/api/codex/thread/metadata/update', params);
 }
 
 export async function getAccount() {
@@ -277,6 +395,15 @@ export async function threadGoalClear(params: ThreadGoalClearParams) {
 
 export async function pluginList(params: PluginListParams) {
   return await postJson<PluginListResponse>('/api/codex/plugin/list', params);
+}
+
+export async function pluginSearch(params: PluginSearchParams) {
+  return await postJson<PluginSearchResponse>('/api/codex/plugin/search', params);
+}
+
+/** Estimated per-thread usage; `threadUsage` is absent when the server has no billing route. */
+export async function accountUsageRead(params: GetAccountTokenUsageParams) {
+  return await postJson<GetAccountTokenUsageResponse>('/api/codex/account/usage/read', params);
 }
 
 export async function pluginInstalled(params: PluginInstalledParams) {

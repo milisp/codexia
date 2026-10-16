@@ -4,10 +4,6 @@ import type { FileUpdateChange } from '@/bindings/v2';
 import { Badge } from '@/components/ui/badge';
 import { AgentMessageItem } from './AgentMessageItem';
 import {
-  CollabAgentToolCallItem,
-  type CollabAgentToolCallItemData,
-} from './CollabAgentToolCallItem';
-import {
   aggregateFileChanges,
   aggregateTurnChangesFromContext,
   getChangeCounts,
@@ -15,15 +11,22 @@ import {
   type RenderEventContext,
 } from './fileChangeLogic';
 import { IndividualFileChanges } from './IndividualFileChanges';
-import { McpToolCallItem } from './McpToolCallItem';
+import { isStepItem } from './stepItems';
 import { ThreadFileChangesSummary } from './ThreadFileChangesSummary';
-import { TurnPlan } from './TurnPlan';
+import { ThreadStepChain } from './ThreadStepChain';
+import { PlanTextItem, TurnPlan } from './TurnPlan';
 import { EditableUserMessageItem } from './UserMessageItem';
 
 type EventItemProps = {
   event: ServerNotification;
   context?: RenderEventContext;
 };
+
+// True when the transcript already holds the `item/completed` for this item id.
+const isItemCompleted = (itemId: string, context?: RenderEventContext) =>
+  !!context?.events?.some(
+    (candidate) => candidate.method === 'item/completed' && candidate.params.item.id === itemId
+  );
 
 export const EventItem = ({ event, context }: EventItemProps) => {
   const { t } = useTranslation('thread');
@@ -65,15 +68,15 @@ export const EventItem = ({ event, context }: EventItemProps) => {
             />
           );
         }
-        case 'commandExecution':
-          return null;
-        case 'reasoning':
         case 'agentMessage':
         case 'enteredReviewMode':
         case 'fileChange':
           return null;
         default:
-          return null;
+          // A step that already completed is rendered from its `item/completed`.
+          return isStepItem(startedItem) && !isItemCompleted(event.params.item.id, context) ? (
+            <ThreadStepChain steps={[{ item: startedItem, running: true }]} />
+          ) : null;
       }
     }
     case 'item/completed': {
@@ -82,30 +85,18 @@ export const EventItem = ({ event, context }: EventItemProps) => {
         case 'agentMessage':
           return item.text.trim() ? <AgentMessageItem text={item.text} /> : null;
         case 'userMessage':
-        case 'commandExecution':
           return null;
         case 'fileChange':
           return renderFileChanges(item.changes);
         case 'enteredReviewMode':
         case 'exitedReviewMode':
-        case 'reasoning':
           return null;
-        case 'collabAgentToolCall':
-          // Render the multi-agent sub-agent operation card.
-          return <CollabAgentToolCallItem item={item as unknown as CollabAgentToolCallItemData} />;
-        case 'mcpToolCall':
-          return <McpToolCallItem item={item} />;
-        case 'webSearch':
-          return (
-            <p className="text-xs text-muted-foreground">
-              {t('items.webSearch', { query: item.query })}
-            </p>
-          );
-        case 'contextCompaction':
-          return <p className="text-xs text-muted-foreground">{t('items.contextCompacted')}</p>;
+        case 'plan':
+          return <PlanTextItem text={item.text} />;
         default:
-          // Item types without a renderer stay out of the transcript.
-          return null;
+          // Steps (thinking, commands, tool calls) render as trace lines; other item
+          // types without a renderer stay out of the transcript.
+          return isStepItem(item) ? <ThreadStepChain steps={[{ item, running: false }]} /> : null;
       }
     }
     case 'turn/completed': {

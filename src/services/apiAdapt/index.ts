@@ -7,6 +7,7 @@ export * from './bots';
 
 export * from './cc';
 export * from './codex';
+export * from './customModels';
 export * from './dictation';
 export * from './filesystem';
 export * from './git';

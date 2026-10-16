@@ -4,7 +4,7 @@ use axum::{
     body::Body,
     extract::{Query, State as AxumState},
     http::{StatusCode, header},
-    response::Response,
+    response::{IntoResponse, Response},
 };
 use serde::Deserialize;
 
@@ -100,13 +100,19 @@ fn expand_home(path: &str) -> std::path::PathBuf {
     std::path::PathBuf::from(path)
 }
 
-pub(crate) async fn api_read_directory(
-    Json(params): Json<FilesystemPathParams>,
-) -> Result<Json<Vec<FileEntry>>, ErrorResponse> {
-    let entries = read_directory(params.path)
-        .await
-        .map_err(to_error_response)?;
-    Ok(Json(entries))
+pub(crate) async fn api_read_directory(Json(params): Json<FilesystemPathParams>) -> Response {
+    // A folder that is gone (e.g. a deleted worktree a thread still points at)
+    // is an expected client state, not a server failure.
+    if !expand_home(&params.path).is_dir() {
+        let body = ErrorResponse {
+            error: "Directory does not exist".to_string(),
+        };
+        return (StatusCode::NOT_FOUND, Json(body)).into_response();
+    }
+    match read_directory(params.path).await {
+        Ok(entries) => Json(entries).into_response(),
+        Err(e) => to_error_response(e).into_response(),
+    }
 }
 
 pub(crate) async fn api_get_home_directory() -> Result<Json<String>, ErrorResponse> {
@@ -223,4 +229,17 @@ pub(crate) async fn api_unwatch_directory(
         .await
         .map_err(to_error_response)?;
     Ok(StatusCode::OK)
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn missing_directory_is_not_found() {
+        let params = FilesystemPathParams {
+            path: "/definitely/not/a/real/codexia/dir".to_string(),
+        };
+        let response = api_read_directory(Json(params)).await;
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    }
 }

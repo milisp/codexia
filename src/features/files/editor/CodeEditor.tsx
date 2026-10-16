@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronUp, FileText, Save, Search, Send, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import AceEditor from 'react-ace';
+import ReactAceModule from 'react-ace';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useThemeContext } from '@/contexts/ThemeContext';
@@ -32,6 +32,12 @@ import 'ace-builds/src-noconflict/ext-language_tools';
 import 'ace-builds/src-noconflict/theme-monokai';
 import 'ace-builds/src-noconflict/theme-github';
 import { aceMapping, editableExtensions } from './languageMap';
+
+// react-ace is CommonJS with `exports.default`. Vite 8 imports CommonJS with Node
+// semantics (the default import is the whole module.exports), while TypeScript
+// and older bundlers unwrap `default`; accept both shapes.
+const AceEditor =
+  (ReactAceModule as unknown as { default?: typeof ReactAceModule }).default ?? ReactAceModule;
 
 interface CodeEditorProps {
   content: string;

@@ -1,7 +1,12 @@
 import { type RefObject, useCallback } from 'react';
 import type { ServerNotification } from '@/bindings/ServerNotification';
 import type { AccountLoginCompletedNotification } from '@/bindings/v2';
-import { useCodexStore } from '@/components/codex/stores';
+import {
+  useCodexStore,
+  useThreadQueueStore,
+  useThreadReadStateStore,
+} from '@/components/codex/stores';
+import { useServerProjectsStore } from '@/features/projects/useServerProjectsStore';
 import { allowSleep, preventSleep } from '@/services/apiAdapt';
 import { playBeep } from '@/utils/beep';
 import { shouldPlayCompletionBeep } from './beepOnCompletion';
@@ -31,6 +36,31 @@ export function useServerNotificationHandler(
         threadId = payload.params.threadId;
       }
 
+      if (method === 'thread/readState/changed') {
+        // Sidebar state only; never part of the transcript.
+        useThreadReadStateStore
+          .getState()
+          .setState(payload.params.threadId, payload.params.readState);
+        return;
+      }
+
+      // Project and thread-assignment changes drive the sidebar only; they never
+      // belong in a transcript, so they are handled here and stop.
+      if (method === 'project/changed') {
+        void useServerProjectsStore.getState().refresh();
+        return;
+      }
+      if (method === 'thread/project/updated') {
+        const { threadId: assignedThreadId, projectId } = payload.params;
+        useCodexStore.setState((state) => ({
+          threads: state.threads.map((thread) =>
+            thread.id === assignedThreadId ? { ...thread, projectId } : thread
+          ),
+        }));
+        useServerProjectsStore.getState().bumpThreads();
+        return;
+      }
+
       if (method === 'account/updated') {
         void syncAccountState(true);
       }
@@ -43,6 +73,13 @@ export function useServerNotificationHandler(
       }
 
       if (threadId) {
+        // The notification only names the thread; the queue itself is refetched
+        // and never enters the transcript.
+        if (method === 'thread/queue/changed') {
+          void useThreadQueueStore.getState().refresh(threadId);
+          return;
+        }
+
         if (
           [
             'thread/settings/updated',

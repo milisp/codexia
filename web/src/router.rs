@@ -36,11 +36,17 @@ use super::{
         api_git_create_worktree, api_git_reverse_files, api_git_stage_files,
         api_git_status, api_git_unstage_files, api_git_commit, api_git_push,
         api_git_has_worktree_changes,
-        api_list_threads, api_delete_thread, api_rename_thread, api_turn_steer,
+        api_list_threads, api_delete_thread, api_rename_thread, api_thread_read, api_thread_read_state_update, api_turn_steer,
+        api_turn_settings_update, api_thread_queue_add, api_thread_queue_list,
+        api_thread_queue_update, api_thread_queue_delete, api_thread_queue_reorder,
+        api_thread_queue_start,
         api_thread_goal_set, api_thread_goal_get, api_thread_goal_clear,
         api_thread_compact_start, api_thread_memory_mode_set, api_memory_reset,
+        api_thread_metadata_update, api_project_list, api_project_read, api_project_create,
+        api_project_import, api_project_update, api_project_move, api_project_delete,
         api_hooks_list, api_plugin_list, api_plugin_read, api_plugin_install,
-        api_plugin_uninstall, api_plugin_installed,
+        api_plugin_uninstall, api_plugin_installed, api_plugin_search,
+        api_account_usage_read,
         api_external_agent_config_detect, api_external_agent_config_import,
         api_external_agent_config_import_record_history,
         api_external_agent_config_import_read_histories,
@@ -71,6 +77,7 @@ use super::{
         api_get_settings_file, api_save_settings_file, api_pairing_info, health_check, api_model_list_other, api_load_env_keys, api_set_env,
         api_list_provider_presets, api_add_model_provider, api_list_config_providers,
         api_remove_model_provider,
+        api_custom_models_list, api_custom_models_add, api_custom_models_remove,
     },
     types::WebServerState,
     websocket::{sse_handler, ws_handler},
@@ -192,6 +199,11 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/codex/thread/unarchive", post(api_unarchive_thread))
         .route("/api/codex/thread/delete", post(api_delete_thread))
         .route("/api/codex/thread/rename", post(api_rename_thread))
+        .route("/api/codex/thread/read", post(api_thread_read))
+        .route(
+            "/api/codex/thread/readState/update",
+            post(api_thread_read_state_update),
+        )
         .route("/api/codex/thread/goal/set", post(api_thread_goal_set))
         .route("/api/codex/thread/goal/get", post(api_thread_goal_get))
         .route("/api/codex/thread/goal/clear", post(api_thread_goal_clear))
@@ -204,12 +216,25 @@ pub fn create_router(state: WebServerState) -> Router {
             post(api_thread_memory_mode_set),
         )
         .route("/api/codex/memory/reset", post(api_memory_reset))
+        .route(
+            "/api/codex/thread/metadata/update",
+            post(api_thread_metadata_update),
+        )
+        .route("/api/codex/project/list", post(api_project_list))
+        .route("/api/codex/project/read", post(api_project_read))
+        .route("/api/codex/project/create", post(api_project_create))
+        .route("/api/codex/project/import", post(api_project_import))
+        .route("/api/codex/project/update", post(api_project_update))
+        .route("/api/codex/project/move", post(api_project_move))
+        .route("/api/codex/project/delete", post(api_project_delete))
         .route("/api/codex/hooks/list", post(api_hooks_list))
         .route("/api/codex/plugin/list", post(api_plugin_list))
         .route("/api/codex/plugin/read", post(api_plugin_read))
         .route("/api/codex/plugin/install", post(api_plugin_install))
         .route("/api/codex/plugin/uninstall", post(api_plugin_uninstall))
         .route("/api/codex/plugin/installed", post(api_plugin_installed))
+        .route("/api/codex/plugin/search", post(api_plugin_search))
+        .route("/api/codex/account/usage/read", post(api_account_usage_read))
         .route(
             "/api/codex/external-agent-config/detect",
             post(api_external_agent_config_detect),
@@ -229,6 +254,13 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/codex/turn/start", post(api_turn_start))
         .route("/api/codex/turn/steer", post(api_turn_steer))
         .route("/api/codex/turn/interrupt", post(api_turn_interrupt))
+        .route("/api/codex/turn/settings/update", post(api_turn_settings_update))
+        .route("/api/codex/thread/queue/add", post(api_thread_queue_add))
+        .route("/api/codex/thread/queue/list", post(api_thread_queue_list))
+        .route("/api/codex/thread/queue/update", post(api_thread_queue_update))
+        .route("/api/codex/thread/queue/delete", post(api_thread_queue_delete))
+        .route("/api/codex/thread/queue/reorder", post(api_thread_queue_reorder))
+        .route("/api/codex/thread/queue/start", post(api_thread_queue_start))
         .route(
             "/api/codex/model/list",
             get(api_model_list).post(api_model_list_post),
@@ -437,6 +469,9 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/sleep/prevent", post(api_prevent_sleep))
         .route("/api/sleep/allow", post(api_allow_sleep))
         .route("/api/settings", get(api_get_settings_file).post(api_save_settings_file))
+        .route("/api/custom-models", get(api_custom_models_list))
+        .route("/api/custom-models/add", post(api_custom_models_add))
+        .route("/api/custom-models/remove", post(api_custom_models_remove))
         .route("/api/pairing", get(api_pairing_info))
         .route_layer(middleware::from_fn_with_state(
             state.device_token.clone(),
