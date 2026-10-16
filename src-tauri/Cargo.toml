@@ -87,7 +87,7 @@ ignore = { workspace = true }
 nucleo = { workspace = true }
 cpal = "0.15"
 whisper-rs = "0.12"
-sha2 = "0.10"
+sha2 = "0.11"
 
 # --- mobile-only: pairing is done by scanning the desktop's QR code ---
 [target.'cfg(any(target_os = "ios", target_os = "android"))'.dependencies]
