@@ -12,6 +12,11 @@ import type { SandboxPolicy } from "./SandboxPolicy";
 
 export type ThreadSettingsUpdateParams = { threadId: string,
 /**
+ * Replace this thread's disabled plugin IDs.
+ * Omitted/null preserves the list; [] clears it.
+ */
+disabledPluginIds?: Array<string> | null,
+/**
  * Override the working directory for subsequent turns.
  */
 cwd?: string | null,
@@ -61,6 +66,7 @@ collaborationMode?: CollaborationMode | null,
  */
 multiAgentMode?: MultiAgentMode | null,
 /**
- * Override the personality for subsequent turns.
+ * @deprecated `friendly` and `pragmatic` no longer select a style.
+ * Changing this does not rewrite the thread's existing instructions.
  */
 personality?: Personality | null, };

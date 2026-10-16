@@ -27,7 +27,9 @@ export const UserMessageItem = ({
 }: UserMessageItemProps) => {
   const { t } = useTranslation('thread');
   const isWindowFocused = useWindowFocus();
-  const images = content.filter((m) => m.type === 'image').map((m) => m.url);
+  const images = content
+    .filter((m) => m.type === 'image')
+    .flatMap((m) => ('url' in m ? [m.url] : []));
   const localImages = content.filter((m) => m.type === 'localImage').map((m) => fileSrc(m.path));
   const text = content
     .filter((m) => m.type === 'text')
@@ -98,13 +100,13 @@ export const UserMessageItem = ({
 type EditableUserMessageItemProps = {
   content: Array<UserInput>;
   threadId: string;
-  rollbackTurns: number;
+  turnId: string;
 };
 
 export const EditableUserMessageItem = ({
   content,
   threadId,
-  rollbackTurns,
+  turnId,
 }: EditableUserMessageItemProps) => {
   const { t } = useTranslation('thread');
   const [pendingText, setPendingText] = useState<string | null>(null);
@@ -112,9 +114,8 @@ export const EditableUserMessageItem = ({
   const { hasConfirmedEditRollback, setHasConfirmedEditRollback } = useEventPreferencesStore();
 
   const applyEdit = async (text: string) => {
-    if (rollbackTurns > 0) {
-      await codexService.threadRollback(threadId, rollbackTurns);
-    }
+    // Branch into a new thread that ends before this turn; the original thread is kept.
+    await codexService.threadFork(threadId, { beforeTurnId: turnId });
     useInputStore.getState().setInputValue(text);
   };
 

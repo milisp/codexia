@@ -36,8 +36,6 @@ import type {
   ThreadListResponse,
   ThreadResumeParams,
   ThreadResumeResponse,
-  ThreadRollbackParams,
-  ThreadRollbackResponse,
   ThreadStartParams,
   ThreadStartResponse,
   TurnInterruptParams,
@@ -75,10 +73,6 @@ export async function threadResume(params: ThreadResumeParams) {
 
 export async function threadFork(params: ThreadForkParams) {
   return await postJson<ThreadForkResponse>('/api/codex/thread/fork', params);
-}
-
-export async function threadRollback(params: ThreadRollbackParams) {
-  return await postJson<ThreadRollbackResponse>('/api/codex/thread/rollback', params);
 }
 
 export async function turnStart(params: TurnStartParams) {

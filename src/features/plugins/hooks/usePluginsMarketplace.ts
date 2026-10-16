@@ -37,6 +37,7 @@ function summaryToDetail(marketplace: PluginMarketplaceEntry, plugin: PluginSumm
     shareUrl: null,
     description: null,
     skills: [],
+    onboardingSkill: null,
     hooks: [],
     apps: [],
     appTemplates: [],

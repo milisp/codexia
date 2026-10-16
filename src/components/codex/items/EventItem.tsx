@@ -38,36 +38,6 @@ const CollapsedJsonItem = ({ label, value }: CollapsedJsonItemProps) => {
   );
 };
 
-const getRollbackTurnsForTurn = (
-  context: RenderEventContext | undefined,
-  turnId: string
-): number => {
-  const events = context?.events;
-  const eventIndex = context?.eventIndex;
-  if (!events || eventIndex === undefined || eventIndex < 0) return 1;
-
-  const laterTurnIds = new Set<string>();
-  for (let i = eventIndex + 1; i < events.length; i += 1) {
-    const candidate = events[i];
-    let candidateTurnId: string | undefined;
-
-    if (
-      (candidate.method === 'item/started' || candidate.method === 'item/completed') &&
-      candidate.params?.turnId
-    ) {
-      candidateTurnId = candidate.params.turnId;
-    } else if (candidate.method === 'turn/completed') {
-      candidateTurnId = candidate.params?.turn?.id;
-    }
-
-    if (candidateTurnId && candidateTurnId !== turnId) {
-      laterTurnIds.add(candidateTurnId);
-    }
-  }
-
-  return laterTurnIds.size + 1;
-};
-
 type EventItemProps = {
   event: ServerNotification;
   context?: RenderEventContext;
@@ -104,13 +74,12 @@ export const EventItem = ({ event, context }: EventItemProps) => {
         case 'userMessage': {
           const threadId = event.params.threadId;
           const turnId = event.params.turnId;
-          const rollbackTurns = getRollbackTurnsForTurn(context, turnId);
 
           return (
             <EditableUserMessageItem
               content={startedItem.content}
               threadId={threadId}
-              rollbackTurns={rollbackTurns}
+              turnId={turnId}
             />
           );
         }

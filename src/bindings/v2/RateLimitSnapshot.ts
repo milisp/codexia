@@ -7,7 +7,11 @@ import type { RateLimitReachedType } from "./RateLimitReachedType";
 import type { RateLimitWindow } from "./RateLimitWindow";
 import type { SpendControlLimitSnapshot } from "./SpendControlLimitSnapshot";
 
-export type RateLimitSnapshot = { limitId: string | null, limitName: string | null, primary: RateLimitWindow | null, secondary: RateLimitWindow | null, credits: CreditsSnapshot | null, individualLimit: SpendControlLimitSnapshot | null,
+export type RateLimitSnapshot = { limitId: string | null, limitName: string | null,
+/**
+ * Normal model whose display name and reasoning options describe this quota alias.
+ */
+normalModelSlug: string | null, primary: RateLimitWindow | null, secondary: RateLimitWindow | null, credits: CreditsSnapshot | null, individualLimit: SpendControlLimitSnapshot | null,
 /**
  * Backend-reported spend-control state. `None` is unavailable, not a sparse-update recovery.
  */

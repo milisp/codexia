@@ -42,7 +42,12 @@ interface ThreadAction {
   onSelect: () => void;
 }
 
-const EMPTY_LIST: ThreadListResponse = { data: [], nextCursor: null, backwardsCursor: null };
+const EMPTY_LIST: ThreadListResponse = {
+  data: [],
+  nextCursor: null,
+  backwardsCursor: null,
+  readStates: null,
+};
 
 const PAGE_SIZE = 3;
 

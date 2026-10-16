@@ -54,18 +54,6 @@ pub(crate) async fn api_fork_thread(
     Ok(Json(result))
 }
 
-pub(crate) async fn api_rollback_thread(
-    AxumState(state): AxumState<WebServerState>,
-    Json(params): Json<Value>,
-) -> Result<Json<Value>, ErrorResponse> {
-    let result = require_codex(&state)?
-        .codex
-        .send_request("thread/rollback", params)
-        .await
-        .map_err(to_error_response)?;
-    Ok(Json(result))
-}
-
 pub(crate) async fn api_list_threads(
     AxumState(state): AxumState<WebServerState>,
     Json(params): Json<Value>,

@@ -186,6 +186,7 @@ export const en = {
     },
     elicitation: {
       authorizationRequired: 'Authorization required',
+      verificationUnsupported: 'Codexia cannot complete this verification.',
       approvalRequired: 'Approval required',
       openLink: 'Open link',
       selectOption: 'Select an option',
@@ -220,9 +221,9 @@ export const en = {
       edited: 'Edited',
     },
     editRollback: {
-      title: 'Confirm edit rollback',
+      title: 'Edit from this message?',
       description:
-        'Edit will immediately rollback this turn and all later turns, then place your message back into input. Continue?',
+        'A new thread will start from before this message, and your message will be placed back into input. The original thread is kept. Continue?',
     },
     userMessage: {
       edit: 'Edit message',

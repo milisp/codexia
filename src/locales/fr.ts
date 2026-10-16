@@ -190,6 +190,7 @@ export const fr = {
     },
     elicitation: {
       authorizationRequired: 'Autorisation requise',
+      verificationUnsupported: 'Codexia ne peut pas effectuer cette vérification.',
       approvalRequired: 'Approbation requise',
       openLink: 'Ouvrir le lien',
       selectOption: 'Sélectionner une option',
@@ -226,9 +227,9 @@ export const fr = {
       edited: 'Modifié',
     },
     editRollback: {
-      title: 'Confirmer l’annulation de la modification',
+      title: 'Modifier à partir de ce message ?',
       description:
-        'La modification annulera immédiatement ce tour et tous les suivants, puis replacera votre message dans la zone de saisie. Continuer ?',
+        'Un nouveau fil sera créé à partir d’avant ce message, et votre message sera replacé dans la zone de saisie. Le fil d’origine est conservé. Continuer ?',
     },
     userMessage: {
       edit: 'Modifier le message',

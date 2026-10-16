@@ -184,6 +184,7 @@ export const zh = {
     },
     elicitation: {
       authorizationRequired: '需要授权',
+      verificationUnsupported: 'Codexia 无法完成此验证。',
       approvalRequired: '需要批准',
       openLink: '打开链接',
       selectOption: '请选择一项',
@@ -217,8 +218,8 @@ export const zh = {
       edited: '已编辑',
     },
     editRollback: {
-      title: '确认回滚编辑',
-      description: '编辑会立即回滚本轮及之后的所有轮次,并把你的消息放回输入框。是否继续?',
+      title: '从这条消息开始编辑?',
+      description: '将从这条消息之前新建一个线程,并把你的消息放回输入框。原线程会保留。是否继续?',
     },
     userMessage: {
       edit: '编辑消息',

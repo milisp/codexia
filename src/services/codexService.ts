@@ -7,7 +7,6 @@ import type {
   ThreadGoalSetParams,
   ThreadListParams,
   ThreadResumeParams,
-  ThreadRollbackParams,
   ThreadStartParams,
   UserInput,
 } from '@/bindings/v2';
@@ -25,7 +24,6 @@ import {
   threadGoalClear,
   threadGoalSet,
   threadResume,
-  threadRollback,
   turnInterrupt,
   turnStart,
   turnSteer,
@@ -137,7 +135,7 @@ const syncThreadToStore = (
   };
 };
 
-/** Shared logic for thread fork/rollback: sync the updated thread to the store and return it. */
+/** Shared logic for thread fork: sync the updated thread to the store and return it. */
 const applyThreadMutation = (
   set: typeof useCodexStore.setState,
   threadId: string,
@@ -311,30 +309,17 @@ export const codexService = {
       throw error;
     }
   },
-  async threadFork(threadId: string) {
+  async threadFork(threadId: string, options: Pick<ThreadForkParams, 'beforeTurnId'> = {}) {
     const set = useCodexStore.setState;
     try {
       const params: ThreadForkParams = {
         threadId,
+        ...options,
       };
       const response = await threadFork(params);
       return applyThreadMutation(set, response.thread.id, response.thread);
     } catch (error: unknown) {
       console.error('[CodexService] threadFork error:', error);
-      throw error;
-    }
-  },
-  async threadRollback(threadId: string, numTurns: number) {
-    const set = useCodexStore.setState;
-    try {
-      const params: ThreadRollbackParams = {
-        threadId,
-        numTurns,
-      };
-      const response = await threadRollback(params);
-      return applyThreadMutation(set, threadId, response.thread);
-    } catch (error: unknown) {
-      console.error('[CodexService] threadRollback error:', error);
       throw error;
     }
   },

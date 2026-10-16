@@ -174,6 +174,7 @@ export const ja = {
     },
     elicitation: {
       authorizationRequired: '認可が必要です',
+      verificationUnsupported: 'Codexia ではこの認証を完了できません。',
       approvalRequired: '承認が必要です',
       openLink: 'リンクを開く',
       selectOption: '選択してください',
@@ -208,9 +209,9 @@ export const ja = {
       edited: '編集',
     },
     editRollback: {
-      title: '編集のロールバックを確認',
+      title: 'このメッセージから編集しますか?',
       description:
-        '編集するとこのターンと以降のすべてのターンが即座にロールバックされ、メッセージが入力欄に戻ります。続行しますか?',
+        'このメッセージより前の時点から新しいスレッドを作成し、メッセージを入力欄に戻します。元のスレッドは残ります。続行しますか?',
     },
     userMessage: {
       edit: 'メッセージを編集',
