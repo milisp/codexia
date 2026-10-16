@@ -54,7 +54,7 @@ use super::{
         api_respond_file_change_approval, api_respond_mcp_elicitation,
         api_respond_permissions_approval, api_respond_user_input,
         api_resume_thread,
-        api_fork_thread,
+        api_revert_thread, api_fork_thread,
         api_search_files, api_search_files_by_name, api_skills_config_write, api_skills_list, api_start_review,
         api_start_thread, api_watch_directory, api_unwatch_directory,
         api_mcp_server_oauth_login, api_list_mcp_server_status,
@@ -186,6 +186,7 @@ pub fn create_router(state: WebServerState) -> Router {
         .route("/api/codex/start-thread", post(api_start_thread))
         .route("/api/codex/thread/resume", post(api_resume_thread))
         .route("/api/codex/thread/fork", post(api_fork_thread))
+        .route("/api/codex/thread/revert", post(api_revert_thread))
         .route("/api/codex/thread/list", post(api_list_threads))
         .route("/api/codex/thread/archive", post(api_archive_thread))
         .route("/api/codex/thread/unarchive", post(api_unarchive_thread))

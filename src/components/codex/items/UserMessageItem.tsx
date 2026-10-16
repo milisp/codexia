@@ -114,8 +114,7 @@ export const EditableUserMessageItem = ({
   const { hasConfirmedEditRollback, setHasConfirmedEditRollback } = useEventPreferencesStore();
 
   const applyEdit = async (text: string) => {
-    // Branch into a new thread that ends before this turn; the original thread is kept.
-    await codexService.threadFork(threadId, { beforeTurnId: turnId });
+    await codexService.threadRevert(threadId, turnId);
     useInputStore.getState().setInputValue(text);
   };
 

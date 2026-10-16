@@ -227,9 +227,9 @@ export const fr = {
       edited: 'Modifié',
     },
     editRollback: {
-      title: 'Modifier à partir de ce message ?',
+      title: 'Confirmer l’annulation de la modification',
       description:
-        'Un nouveau fil sera créé à partir d’avant ce message, et votre message sera replacé dans la zone de saisie. Le fil d’origine est conservé. Continuer ?',
+        'La modification annulera immédiatement ce tour et tous les suivants, puis replacera votre message dans la zone de saisie. Continuer ?',
     },
     userMessage: {
       edit: 'Modifier le message',

@@ -7,6 +7,7 @@ import type {
   ThreadGoalSetParams,
   ThreadListParams,
   ThreadResumeParams,
+  ThreadRevertParams,
   ThreadStartParams,
   UserInput,
 } from '@/bindings/v2';
@@ -24,6 +25,7 @@ import {
   threadGoalClear,
   threadGoalSet,
   threadResume,
+  threadRevert,
   turnInterrupt,
   turnStart,
   turnSteer,
@@ -309,17 +311,27 @@ export const codexService = {
       throw error;
     }
   },
-  async threadFork(threadId: string, options: Pick<ThreadForkParams, 'beforeTurnId'> = {}) {
+  async threadFork(threadId: string) {
     const set = useCodexStore.setState;
     try {
       const params: ThreadForkParams = {
         threadId,
-        ...options,
       };
       const response = await threadFork(params);
       return applyThreadMutation(set, response.thread.id, response.thread);
     } catch (error: unknown) {
       console.error('[CodexService] threadFork error:', error);
+      throw error;
+    }
+  },
+  async threadRevert(threadId: string, beforeTurnId: string) {
+    try {
+      const params: ThreadRevertParams = { threadId, beforeTurnId };
+      await threadRevert(params);
+      // The revert response omits turns, so reload the retained history.
+      await codexService.threadResume(threadId);
+    } catch (error: unknown) {
+      console.error('[CodexService] threadRevert error:', error);
       throw error;
     }
   },

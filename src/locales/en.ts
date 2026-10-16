@@ -221,9 +221,9 @@ export const en = {
       edited: 'Edited',
     },
     editRollback: {
-      title: 'Edit from this message?',
+      title: 'Confirm edit rollback',
       description:
-        'A new thread will start from before this message, and your message will be placed back into input. The original thread is kept. Continue?',
+        'Edit will immediately rollback this turn and all later turns, then place your message back into input. Continue?',
     },
     userMessage: {
       edit: 'Edit message',
