@@ -22,6 +22,18 @@ import type {
   PluginReadResponse,
   PluginUninstallParams,
   PluginUninstallResponse,
+  ProjectCreateParams,
+  ProjectCreateResponse,
+  ProjectDeleteParams,
+  ProjectImportParams,
+  ProjectImportResponse,
+  ProjectListParams,
+  ProjectListResponse,
+  ProjectMoveParams,
+  ProjectReadParams,
+  ProjectReadResponse,
+  ProjectUpdateParams,
+  ProjectUpdateResponse,
   ReviewStartParams,
   ReviewStartResponse,
   ThreadForkParams,
@@ -34,6 +46,7 @@ import type {
   ThreadGoalSetResponse,
   ThreadListParams,
   ThreadListResponse,
+  ThreadMetadataUpdateParams,
   ThreadResumeParams,
   ThreadResumeResponse,
   ThreadRevertParams,
@@ -52,7 +65,7 @@ import type {
   FrontendProviderModels,
   ProviderPreset,
 } from '@/components/codex/types';
-import { getJson, postJson, postNoContent } from './shared';
+import { getJson, postJson, postJsonWithOptions, postNoContent } from './shared';
 
 export * from './mcp';
 export * from './skills';
@@ -114,6 +127,46 @@ export async function deleteThread(threadId: ThreadId) {
 export async function renameThread(threadId: ThreadId, name: string) {
   const params = { threadId, name };
   return await postJson('/api/codex/thread/rename', params);
+}
+
+// Projects are experimental app-server methods (Codexia initializes with
+// `experimentalApi: true`) and need the sqlite state DB; without it they fail
+// with "method not found".
+export async function listProjects(params: ProjectListParams = {}) {
+  // Background probe: an unsupported server must not raise a toast.
+  return await postJsonWithOptions<ProjectListResponse>('/api/codex/project/list', params, {
+    suppressToast: true,
+  });
+}
+
+export async function readProject(params: ProjectReadParams) {
+  return await postJson<ProjectReadResponse>('/api/codex/project/read', params);
+}
+
+export async function createProject(params: ProjectCreateParams) {
+  return await postJson<ProjectCreateResponse>('/api/codex/project/create', params);
+}
+
+export async function importProject(params: ProjectImportParams) {
+  return await postJsonWithOptions<ProjectImportResponse>('/api/codex/project/import', params, {
+    suppressToast: true,
+  });
+}
+
+export async function updateProject(params: ProjectUpdateParams) {
+  return await postJson<ProjectUpdateResponse>('/api/codex/project/update', params);
+}
+
+export async function moveProject(params: ProjectMoveParams) {
+  return await postJson('/api/codex/project/move', params);
+}
+
+export async function deleteProject(params: ProjectDeleteParams) {
+  return await postJson('/api/codex/project/delete', params);
+}
+
+export async function updateThreadMetadata(params: ThreadMetadataUpdateParams) {
+  return await postJson('/api/codex/thread/metadata/update', params);
 }
 
 export async function getAccount() {

@@ -2,6 +2,7 @@ import { type RefObject, useCallback } from 'react';
 import type { ServerNotification } from '@/bindings/ServerNotification';
 import type { AccountLoginCompletedNotification } from '@/bindings/v2';
 import { useCodexStore } from '@/components/codex/stores';
+import { useServerProjectsStore } from '@/features/projects/useServerProjectsStore';
 import { allowSleep, preventSleep } from '@/services/apiAdapt';
 import { playBeep } from '@/utils/beep';
 import { shouldPlayCompletionBeep } from './beepOnCompletion';
@@ -29,6 +30,23 @@ export function useServerNotificationHandler(
         threadId = payload.params.thread.id;
       } else if ('threadId' in payload.params) {
         threadId = payload.params.threadId;
+      }
+
+      // Project and thread-assignment changes drive the sidebar only; they never
+      // belong in a transcript, so they are handled here and stop.
+      if (method === 'project/changed') {
+        void useServerProjectsStore.getState().refresh();
+        return;
+      }
+      if (method === 'thread/project/updated') {
+        const { threadId: assignedThreadId, projectId } = payload.params;
+        useCodexStore.setState((state) => ({
+          threads: state.threads.map((thread) =>
+            thread.id === assignedThreadId ? { ...thread, projectId } : thread
+          ),
+        }));
+        useServerProjectsStore.getState().bumpThreads();
+        return;
       }
 
       if (method === 'account/updated') {

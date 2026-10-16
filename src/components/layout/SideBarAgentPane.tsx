@@ -106,7 +106,7 @@ export function SideBarAgentList() {
   const { handleNewSession } = useCCSessionManager();
 
   const handleCreateNewThreadForProject = useCallback(
-    (project: string) => {
+    (project: string | null) => {
       if (project !== cwd) setCwd(project);
       void handleNewThread();
     },
