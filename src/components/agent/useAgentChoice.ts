@@ -3,15 +3,27 @@ import { acpStop } from '@/services/apiAdapt/acp';
 import { useLayoutStore } from '@/stores';
 import { useAcpStore } from '@/stores/useAcpStore';
 import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
+import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
 export type AgentOption =
   | { kind: 'builtin'; id: 'codex' | 'cc'; name: string; available: true }
   | { kind: 'acp'; id: string; name: string; available: boolean };
 
-const BUILTIN: AgentOption[] = [
+export const BUILTIN_AGENTS: AgentOption[] = [
   { kind: 'builtin', id: 'codex', name: 'Codex', available: true },
   { kind: 'builtin', id: 'cc', name: 'Claude Agent', available: true },
 ];
+
+/**
+ * ACP agents can't start without a folder. If none is selected, fall back to
+ * the most recently used project (or the last one added).
+ */
+function ensureProjectForAcp() {
+  const { cwd, projects, historyProjects, setCwd } = useWorkspaceStore.getState();
+  if (cwd || projects.length === 0) return;
+  const added = new Set(projects);
+  setCwd(historyProjects.find((path) => added.has(path)) ?? projects[projects.length - 1]);
+}
 
 /** Every agent that can drive the chat pane, plus which one does now. */
 export function useAgentChoice() {
@@ -21,7 +33,7 @@ export function useAgentChoice() {
   const acpAgents = useAcpAgents() ?? [];
 
   const options: AgentOption[] = [
-    ...BUILTIN,
+    ...BUILTIN_AGENTS,
     ...acpAgents.map((a) => ({
       kind: 'acp' as const,
       id: a.id,
@@ -45,6 +57,7 @@ export function useAgentChoice() {
       setActive(false);
       return;
     }
+    ensureProjectForAcp();
     if (active && agentId === option.id) return;
     if (connectionId && agentId !== option.id) {
       await acpStop(connectionId);

@@ -56,7 +56,7 @@ export function MobileHome({
         <span className="min-w-0 flex-1 truncate font-medium text-base">
           {desktop?.name ?? 'No desktop'}
         </span>
-        <AgentSwitcher className="flex shrink-0 gap-1" />
+        <AgentSwitcher className="shrink-0" />
         <Button
           variant="ghost"
           size="icon"
