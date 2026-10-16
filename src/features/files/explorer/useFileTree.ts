@@ -81,7 +81,8 @@ export function useFileTree(folder: string): UseFileTreeReturn {
   const listDir = useCallback(
     async (dir: string): Promise<FileNode[]> => {
       const resolvedDir = await canonicalizePath(dir);
-      const entries = await readDirectory(resolvedDir);
+      // The tree shows its own error state, so skip the generic toast.
+      const entries = await readDirectory(resolvedDir, { suppressToast: true });
       return sortNodes(
         entries
           .filter((e) => !shouldSkipEntry(e.name, hiddenSet))
@@ -119,7 +120,12 @@ export function useFileTree(folder: string): UseFileTreeReturn {
         }
       } catch (err) {
         if (isActive) {
-          setError(err instanceof Error ? err.message : String(err) || 'Failed to read folder.');
+          const message = err instanceof Error ? err.message : String(err);
+          setError(
+            message === 'Directory does not exist'
+              ? `Folder not found: ${folder}`
+              : message || 'Failed to read folder.'
+          );
           setRoot(null);
         }
       } finally {
