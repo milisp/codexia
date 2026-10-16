@@ -86,6 +86,7 @@ codexia/
 ## docs
 - docs/ROADMAP-MULTI-CLIENT.md
 - docs/BOT_DESIGN.md
+- docs/COMPETITORS.md - competitor research and Claude bot runtime feasibility
 
 ## Web first
 
