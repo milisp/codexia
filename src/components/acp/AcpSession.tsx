@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { acpAuthenticate, acpNewSession, acpRespondPermission } from '@/services/apiAdapt/acp';
 import { useWorkspaceStore } from '@/stores';
 import { useAcpStore } from '@/stores/useAcpStore';
+import { AcpThought } from './AcpThought';
 import { AcpToolCall } from './AcpToolCall';
 import { useAcpEvents } from './useAcpEvents';
 
@@ -68,14 +69,15 @@ export default function AcpSession() {
           if (entry.role === 'tool') {
             return <AcpToolCall key={entry.id} entry={entry} />;
           }
+          if (entry.role === 'thought') {
+            return (
+              <div key={entry.id} className="px-1">
+                <AcpThought text={entry.text} />
+              </div>
+            );
+          }
           const tone =
-            entry.role === 'user'
-              ? 'bg-muted'
-              : entry.role === 'thought'
-                ? 'text-muted-foreground italic'
-                : entry.role === 'error'
-                  ? 'text-destructive'
-                  : '';
+            entry.role === 'user' ? 'bg-muted' : entry.role === 'error' ? 'text-destructive' : '';
           return (
             <div key={entry.id} className={`whitespace-pre-wrap rounded-md px-2 py-1 ${tone}`}>
               {entry.text}

@@ -52,3 +52,24 @@ it('names the bot that asked for a delegated run', () => {
   render(<BotMessageList bot={bot} />);
   expect(screen.getByText('Asked by Ada')).toBeTruthy();
 });
+
+it('collapses a thought to a Thinking marker, with the reasoning one click away', () => {
+  sections.mockReturnValue([
+    {
+      sessionId: 's3',
+      entries: [
+        { id: 's3:t', role: 'thought', text: 'The user wants the price.' },
+        { id: 's3:a', role: 'agent', text: 'Tea is $4.20.' },
+      ],
+    },
+  ]);
+  render(<BotMessageList bot={bot} />);
+  const marker = screen.getByText('Thinking');
+  const details = marker.closest('details');
+  expect(details?.open).toBe(false);
+  expect(details?.textContent).toContain('The user wants the price.');
+  fireEvent.click(marker);
+  expect(details?.open).toBe(true);
+  // The reply itself is never folded into the thought.
+  expect(screen.getByTestId('markdown').textContent).toBe('Tea is $4.20.');
+});
