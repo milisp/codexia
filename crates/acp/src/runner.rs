@@ -35,7 +35,10 @@ impl AgentRunner for BotAgentRunner {
                 &spec.prompt,
                 spec.cwd.as_deref(),
                 true,
-                serde_json::json!({ "kind": "routine", "name": spec.task_name }),
+                serde_json::json!({
+                    "kind": if spec.event.is_some() { "event" } else { "routine" },
+                    "name": spec.task_name,
+                }),
                 None,
                 |session_id| on_started(session_id),
             )

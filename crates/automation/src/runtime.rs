@@ -19,6 +19,8 @@ pub(super) struct AutomationRuntime {
     pub(super) tasks: HashMap<String, AutomationTask>,
     pub(super) job_ids: HashMap<String, Uuid>,
     pub(super) ctx: ExecutionContext,
+    /// Why a triggered task cannot be checked, by task id; set by the watcher.
+    pub(super) trigger_errors: HashMap<String, String>,
 }
 
 /// Cheap-to-clone handle to the automation runtime. Hosts (`src-tauri`, `web`)
@@ -49,12 +51,13 @@ impl AutomationHandle {
             tasks: HashMap::new(),
             job_ids: HashMap::new(),
             ctx,
+            trigger_errors: HashMap::new(),
         };
         runtime.scheduler.start().await.map_err(|err| err.to_string())?;
 
         let store = load_store(&runtime.storage_path).await?;
         for task in store.tasks {
-            if !task.paused {
+            if !task.paused && task.trigger.is_none() {
                 match schedule_task(&runtime.scheduler, runtime.ctx.clone(), &task).await
                 {
                     Ok(job_id) => {
@@ -68,7 +71,9 @@ impl AutomationHandle {
             runtime.tasks.insert(task.id.clone(), task);
         }
 
-        Ok(Self(Arc::new(Mutex::new(runtime))))
+        let handle = Self(Arc::new(Mutex::new(runtime)));
+        tokio::spawn(super::trigger::watch(handle.clone()));
+        Ok(handle)
     }
 
     pub(super) async fn lock(&self) -> tokio::sync::MutexGuard<'_, AutomationRuntime> {
@@ -99,7 +104,7 @@ pub(super) async fn save_store(
 ) -> Result<(), String> {
     let mut store = AutomationStore {
         tasks: tasks
-            .map(|task| AutomationTask { next_run_at: None, ..task })
+            .map(|task| AutomationTask { next_run_at: None, trigger_error: None, ..task })
             .collect(),
     };
     // Tasks come from a HashMap; sort so the file stays stable across writes.

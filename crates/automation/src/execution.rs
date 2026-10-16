@@ -67,6 +67,15 @@ fn emit_skipped(ctx: &ExecutionContext, task_id: &str, reason: &str) {
 }
 
 pub(super) async fn execute_task(task: AutomationTask, ctx: ExecutionContext) {
+    execute_task_with(task, ctx, None).await
+}
+
+/// Run a task because its trigger fired; `event` says what happened.
+pub(super) async fn execute_task_for_event(task: AutomationTask, ctx: ExecutionContext, event: String) {
+    execute_task_with(task, ctx, Some(event)).await
+}
+
+async fn execute_task_with(task: AutomationTask, ctx: ExecutionContext, event: Option<String>) {
     let Some(_guard) = RunGuard::acquire(&task.id) else {
         emit_skipped(&ctx, &task.id, "a previous run is still in flight");
         return;
@@ -103,6 +112,7 @@ pub(super) async fn execute_task(task: AutomationTask, ctx: ExecutionContext) {
                     model.as_str(),
                     model_provider.as_str(),
                     run_cwd.as_deref(),
+                    event.as_deref(),
                 )
                 .await
             }
@@ -168,6 +178,7 @@ async fn run_one_target(
     model: &str,
     model_provider: &str,
     target_cwd: Option<&str>,
+    event: Option<&str>,
 ) -> Result<(), String> {
     // The runner reports its run key (codex thread id / cc session id) as soon as it
     // exists, which is well before a synchronous run finishes.
@@ -209,11 +220,15 @@ async fn run_one_target(
     let spec = AgentRunSpec {
         task_id: task.id.clone(),
         task_name: task.name.clone(),
-        prompt: task.prompt.clone(),
+        prompt: match event {
+            Some(event) => format!("{}\n\nWhat set this off:\n{event}", task.prompt),
+            None => task.prompt.clone(),
+        },
         model: model.to_string(),
         model_provider: model_provider.to_string(),
         cwd: target_cwd.map(str::to_string),
         bot_id: task.bot_id.clone(),
+        event: event.map(str::to_string),
         on_started,
     };
 
@@ -373,6 +388,8 @@ mod tests {
             paused: false,
             bot_id: None,
             next_run_at: None,
+            trigger: None,
+            trigger_error: None,
             cwd_mode: CwdMode::Cwd,
         }
     }

@@ -20,6 +20,22 @@ pub struct AutomationSchedule {
     pub weekdays: Vec<String>,
 }
 
+/// Something on this machine that starts a task instead of its schedule.
+/// Checked by polling while Codexia runs; what changed while it was closed is
+/// not replayed.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum AutomationTrigger {
+    /// New commits on `branch` (any git ref, e.g. `main` or `origin/main`).
+    GitBranch { repo: String, branch: String },
+    /// A new file or folder directly inside `folder`.
+    NewFile { folder: String },
+    /// A GitHub Actions run of the repository fails (via `gh`).
+    CiFailed { repo: String },
+    /// An open issue is newly assigned to you (via `gh`).
+    IssueAssigned { repo: String },
+}
+
 /// Where a run does its work.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -60,6 +76,13 @@ pub struct AutomationTask {
     /// task has none.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub next_run_at: Option<String>,
+    /// Run on this event instead of the schedule.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trigger: Option<AutomationTrigger>,
+    /// Why the trigger cannot be checked right now (`gh` missing, not a git
+    /// repository, ...). Filled in when tasks are listed, never stored.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trigger_error: Option<String>,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
