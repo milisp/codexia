@@ -250,7 +250,8 @@ pub fn update_bot(id: &str, patch: &BotPatch) -> Result<BotRecord, String> {
     get_bot(id)?.ok_or_else(|| format!("No bot with id `{id}`"))
 }
 
-/// Remove the bot and every conversation belonging to it, transcripts included.
+/// Remove the bot and everything belonging to it: conversations, transcripts,
+/// run records and inbox items.
 pub fn delete_bot(id: &str) -> Result<(), String> {
     let conn = get_connection()?;
     conn.execute(
@@ -261,6 +262,10 @@ pub fn delete_bot(id: &str) -> Result<(), String> {
     .map_err(|e| format!("Failed to delete bot transcripts: {}", e))?;
     conn.execute("DELETE FROM acp_sessions WHERE bot_id = ?1", params![id])
         .map_err(|e| format!("Failed to delete bot sessions: {}", e))?;
+    conn.execute("DELETE FROM bot_runs WHERE bot_id = ?1", params![id])
+        .map_err(|e| format!("Failed to delete bot runs: {}", e))?;
+    conn.execute("DELETE FROM bot_inbox WHERE bot_id = ?1", params![id])
+        .map_err(|e| format!("Failed to delete bot inbox: {}", e))?;
     conn.execute("DELETE FROM bots WHERE id = ?1", params![id])
         .map_err(|e| format!("Failed to delete bot: {}", e))?;
     Ok(())

@@ -54,6 +54,11 @@ impl AcpState {
         self.sink.clone()
     }
 
+    /// Every running connection.
+    pub(crate) fn connections(&self) -> impl Iterator<Item = Arc<AcpClient>> + '_ {
+        self.connections.iter().map(|c| c.value().clone())
+    }
+
     pub(crate) fn insert(&self, connection_id: String, client: Arc<AcpClient>) {
         self.connections.insert(connection_id, client);
     }

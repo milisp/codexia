@@ -37,9 +37,19 @@ pub struct ConnectionPolicy {
     /// runs nobody is watching, where an unanswered request would hang the
     /// turn until it timed out.
     pub unattended: Option<UnattendedApprovals>,
+    /// Tools (keke ids) allowed without asking, watched or not: Codexia's own
+    /// tools that only leave something for the person to review. A request
+    /// keke marks as person-required is still put in front of a person.
+    pub auto_allow: Vec<String>,
 }
 
 impl ConnectionPolicy {
+    /// The answer for a request this policy allows on its own.
+    fn auto_answer(&self, params: &Value) -> Option<Value> {
+        (!person_required(params) && self.auto_allow.contains(&approval_key(params)))
+            .then(|| select(params, "allow_once"))
+    }
+
     fn revoke_delegation(&self) {
         for server in &self.mcp_servers {
             if server["name"] == "codexia-bots"
@@ -415,7 +425,7 @@ impl AcpClient {
     /// Returns the full `session/new` result: besides `sessionId` it carries
     /// `modes`, `models` and `configOptions`, which drive the session controls.
     pub async fn new_session(&self, cwd: &str) -> Result<Value, String> {
-        let servers = self.session_mcp_servers();
+        let (servers, capabilities) = self.session_mcp_servers();
         let res = self
             .request(
                 "session/new",
@@ -427,6 +437,9 @@ impl AcpClient {
             .and_then(Value::as_str)
             .ok_or("session/new returned no sessionId")?
             .to_string();
+        for token in &capabilities {
+            crate::delegation::bind(token, &session_id);
+        }
         self.track_session(session_id.clone()).await;
         if let Err(e) = codexia_db::acp_sessions::upsert_session(
             &session_id,
@@ -444,7 +457,10 @@ impl AcpClient {
     /// `agentCapabilities.loadSession` support this; the others must be given
     /// the stored transcript as read-only history instead.
     pub async fn load_session(&self, session_id: &str, cwd: &str) -> Result<Value, String> {
-        let servers = self.session_mcp_servers();
+        let (servers, capabilities) = self.session_mcp_servers();
+        for token in &capabilities {
+            crate::delegation::bind(token, session_id);
+        }
         // The replay arrives as ordinary `session/update` notifications, which
         // are already stored — don't write them a second time.
         self.replaying.insert(session_id.to_string(), ());
@@ -467,6 +483,11 @@ impl AcpClient {
             log::warn!("acp: failed to record session: {e}");
         }
         Ok(res)
+    }
+
+    /// Whether `session_id` was opened on this connection.
+    pub fn has_session(&self, session_id: &str) -> bool {
+        self.sessions.contains_key(session_id)
     }
 
     /// Remember a session and make it the default for calls that omit an id.
@@ -625,7 +646,11 @@ impl AcpClient {
         let _ = self.child.lock().await.kill().await;
     }
 
-    fn session_mcp_servers(&self) -> Vec<Value> {
+    /// The servers to hand a new or loaded session, with a fresh
+    /// `codexia-bots` capability each time, plus those capabilities so the
+    /// caller can bind them to the session id.
+    fn session_mcp_servers(&self) -> (Vec<Value>, Vec<String>) {
+        let mut issued = Vec::new();
         let mut servers = self.policy.mcp_servers.clone();
         for server in &mut servers {
             if server["name"] != "codexia-bots" {
@@ -636,15 +661,16 @@ impl AcpClient {
             for header in headers {
                 if header["name"] == "X-Codexia-Delegation" {
                     let template = header["value"].as_str().unwrap_or_default();
-                    if crate::delegation::verify(template, caller) {
-                        let token = crate::delegation::issue(caller);
+                    if let Some(grant) = crate::delegation::grant(template, caller) {
+                        let token = crate::delegation::issue(caller, grant.ask);
                         self.delegation_tokens.insert(token.clone(), ());
                         header["value"] = json!(token);
+                        issued.push(token);
                     }
                 }
             }
         }
-        servers
+        (servers, issued)
     }
 
     fn revoke_delegation(&self) {
@@ -807,14 +833,16 @@ impl AcpClient {
             (Some(method), None) => {
                 let params = msg.get("params").cloned().unwrap_or(Value::Null);
                 if method == "session/update" {
-                    if let (Some(session_id), Some(update)) = (
-                        params.get("sessionId").and_then(Value::as_str),
-                        params.get("update"),
-                    ) {
+                    let session_id = params.get("sessionId").and_then(Value::as_str);
+                    if let (Some(session_id), Some(update)) = (session_id, params.get("update")) {
                         self.persist(session_id, update);
                     }
+                    // A `session/load` replay repeats what is already stored;
+                    // a client following the live transcript must skip it.
+                    let replay = session_id.is_some_and(|id| self.replaying.contains_key(id));
                     self.emit(json!({
                         "kind": "update",
+                        "replay": replay,
                         "sessionId": params.get("sessionId"),
                         "update": params.get("update"),
                     }));
@@ -905,6 +933,9 @@ impl AcpClient {
                 Ok(Some(Value::Null))
             }
             "session/request_permission" => {
+                if let Some(answer) = self.policy.auto_answer(&params) {
+                    return Ok(Some(answer));
+                }
                 let unattended = self.policy.unattended.clone();
                 if let Some(unattended) = &unattended
                     && let Standing::Answer(answer) = unattended.standing(&params)
@@ -994,7 +1025,7 @@ for line in sys.stdin:
     #[tokio::test]
     async fn older_and_nonisolating_runtimes_fail_before_bot_session_creation() {
         for advertised in ["absent", "merge"] {
-            let template = crate::delegation::issue("caller");
+            let template = crate::delegation::issue("caller", true);
             let policy = ConnectionPolicy { strict_mcp: true, mcp_servers: vec![json!({
                 "name":"codexia-bots", "headers":[{"name":"X-Codexia-Delegation","value":template}]
             })], ..Default::default() };
@@ -1032,7 +1063,7 @@ for line in sys.stdin:
     #[cfg(unix)]
     #[tokio::test]
     async fn strict_sessions_bind_rotate_and_revoke_collaboration_capabilities() {
-        let template = crate::delegation::issue("caller");
+        let template = crate::delegation::issue("caller", true);
         let policy = ConnectionPolicy { strict_mcp: true, mcp_servers: vec![json!({
             "name":"codexia-bots", "type":"http", "url":"http://127.0.0.1/mcp/bots?from=caller",
             "headers":[{"name":"X-Codexia-Delegation","value":template}]
@@ -1066,6 +1097,22 @@ for line in sys.stdin:
         let mut request = request(kind);
         request["_meta"] = json!({ "keke.dev/person-required": true });
         request
+    }
+
+    #[test]
+    fn auto_allowed_tools_skip_the_person_unless_keke_requires_one() {
+        let policy = ConnectionPolicy {
+            auto_allow: vec!["acp:codexia-bots:propose_draft".into()],
+            ..Default::default()
+        };
+        let mut draft = request("other");
+        draft["_meta"] = json!({ "keke.dev/tool": "acp:codexia-bots:propose_draft" });
+        assert_eq!(policy.auto_answer(&draft).as_ref().and_then(|a| a["outcome"]["optionId"].as_str()), Some("allow"));
+        let mut other = draft.clone();
+        other["_meta"]["keke.dev/tool"] = json!("acp:codexia-bots:ask_bot");
+        assert!(policy.auto_answer(&other).is_none());
+        draft["_meta"]["keke.dev/person-required"] = json!(true);
+        assert!(policy.auto_answer(&draft).is_none());
     }
 
     #[test]

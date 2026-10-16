@@ -1,4 +1,4 @@
-import { Bot as BotIcon, Clock } from 'lucide-react';
+import { Bot as BotIcon, CircleCheck, Clock, Send } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { AcpToolCall } from '@/components/acp/AcpToolCall';
 import { Markdown } from '@/components/Markdown';
@@ -113,12 +113,19 @@ export function BotMessageList({ bot }: { bot: Bot }) {
   );
 }
 
+const TRIGGER_ICONS: Record<AcpTurnTrigger['kind'], typeof Clock> = {
+  routine: Clock,
+  bot: BotIcon,
+  draft: Send,
+  handback: CircleCheck,
+};
+
 /**
  * A turn a routine or another bot started. Not shown as a message from you:
  * a compact marker, with the request it ran on one click away.
  */
 function TriggeredTurn({ trigger, text }: { trigger: AcpTurnTrigger; text: string }) {
-  const Icon = trigger.kind === 'routine' ? Clock : BotIcon;
+  const Icon = TRIGGER_ICONS[trigger.kind] ?? BotIcon;
   const label = triggerLabel(trigger.kind, trigger.name);
   return (
     <details className="group mx-auto max-w-[80%] py-1 text-center text-xs text-muted-foreground">

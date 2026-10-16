@@ -26,6 +26,7 @@ fn init_tables(conn: &Connection) -> Result<(), String> {
     init_acp_sessions_tables(conn)?;
     init_bots_table(conn)?;
     crate::bot_runs::init_table(conn)?;
+    crate::bot_inbox::init_table(conn)?;
     Ok(())
 }
 

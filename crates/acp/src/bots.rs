@@ -22,6 +22,10 @@ use crate::client::{AcpClient, ConnectionPolicy, UnattendedApprovals, WaitClock}
 /// `blocked` or `failed`.
 pub const BOT_EVENT: &str = "bot:activity";
 
+/// Event sent when a bot leaves a draft or hands a step back:
+/// `{ botId, item }`, where `item` is the stored inbox item.
+pub const INBOX_EVENT: &str = "bot:inbox";
+
 /// Longest an unattended turn may work before it is abandoned. Time spent
 /// waiting for a person does not count against it.
 const UNATTENDED_TIMEOUT: Duration = Duration::from_secs(60 * 60);
@@ -42,6 +46,13 @@ pub const REQUIRED_APPROVALS: &[&str] = &[
     "*transfer*",
     "*subscri*",
     "acp:*:*delete*",
+];
+
+/// Codexia's own tools that only store something for the person to review
+/// (see `codexia-bots`); allowed without a prompt at every trust level.
+pub const BUILTIN_SAFE_TOOLS: &[&str] = &[
+    "acp:codexia-bots:propose_draft",
+    "acp:codexia-bots:hand_back",
 ];
 
 /// The approval policy and sandbox mode a trust level stands for, in keke's
@@ -111,15 +122,12 @@ pub fn agent_def(bot: &BotRecord) -> Result<AcpAgentDef, String> {
 /// Explicit `keke:<name>` selections resolve against keke's native user file.
 /// Legacy bare Codex names are deliberately not remapped: migration requires
 /// adding a native definition and explicitly selecting its qualified name.
-/// The built-in `codexia-bots` server is added when `delegate` is set, so
-/// the bot can hand work to the others.
+/// The built-in `codexia-bots` server always comes first: it carries drafts
+/// and hand-backs, and, when `delegate` is set, the tools to ask other bots.
 pub async fn mcp_servers(bot: &BotRecord, api_port: u16, delegate: bool) -> Vec<Value> {
     use crate::mcp::read_mcp_servers;
 
-    let mut servers = Vec::new();
-    if delegate {
-        servers.push(bots_server(&bot.id, api_port));
-    }
+    let mut servers = vec![bots_server(&bot.id, api_port, delegate)];
     let wanted = parse_list(&bot.mcp_servers);
     if wanted.is_empty() {
         return servers;
@@ -159,10 +167,11 @@ fn selected_servers(bot_id: &str, wanted: Vec<String>, configured: &crate::mcp::
     servers
 }
 
-/// Codexia's own MCP server, through which a bot reaches the other bots. The
-/// URL identifies the caller; the bearer capability authenticates that identity.
-fn bots_server(bot_id: &str, api_port: u16) -> Value {
-    let capability = crate::delegation::issue(bot_id);
+/// Codexia's own MCP server: drafts, hand-backs and, with `ask`, the other
+/// bots. The URL identifies the caller; the bearer capability authenticates
+/// that identity and says whether it may ask.
+fn bots_server(bot_id: &str, api_port: u16, ask: bool) -> Value {
+    let capability = crate::delegation::issue(bot_id, ask);
     json!({
         "type": "http",
         "name": "codexia-bots",
@@ -193,6 +202,7 @@ pub async fn policy(
             approved_tools: parse_list(&bot.approved_tools),
             ..Default::default()
         }),
+        auto_allow: BUILTIN_SAFE_TOOLS.iter().map(|t| t.to_string()).collect(),
     }
 }
 
@@ -244,6 +254,8 @@ pub struct RunReport {
     pub blocked: bool,
     /// The agent's reply, as text.
     pub reply: String,
+    /// Its last message: the result, after any progress notes.
+    pub last_message: String,
 }
 
 /// Run bookkeeping is best effort: a database hiccup must not fail the run.
@@ -253,14 +265,35 @@ fn record_run(result: Result<(), String>) {
     }
 }
 
-/// The agent's messages in a stored transcript, joined into one reply.
-fn reply_text(session_id: &str) -> String {
-    codexia_db::acp_sessions::get_updates(session_id)
-        .unwrap_or_default()
-        .iter()
-        .filter(|u| u.get("sessionUpdate").and_then(Value::as_str) == Some("agent_message_chunk"))
-        .filter_map(|u| u.get("content")?.get("text")?.as_str())
-        .collect()
+/// The agent's messages in a stored transcript, in order. Chunks stream
+/// one message in pieces; anything else in between (a tool call, a thought)
+/// ends the message.
+fn reply_messages(session_id: &str) -> Vec<String> {
+    let updates = codexia_db::acp_sessions::get_updates(session_id).unwrap_or_default();
+    messages_of(&updates)
+}
+
+fn messages_of(updates: &[Value]) -> Vec<String> {
+    let mut messages: Vec<String> = Vec::new();
+    let mut open = false;
+    for update in updates {
+        if update.get("sessionUpdate").and_then(Value::as_str) != Some("agent_message_chunk") {
+            open = false;
+            continue;
+        }
+        let text = update
+            .get("content")
+            .and_then(|c| c.get("text"))
+            .and_then(Value::as_str)
+            .unwrap_or_default();
+        match messages.last_mut() {
+            Some(last) if open => last.push_str(text),
+            _ => messages.push(text.to_string()),
+        }
+        open = true;
+    }
+    messages.retain(|m| !m.trim().is_empty());
+    messages
 }
 
 /// Drive `turn` to completion within [`UNATTENDED_TIMEOUT`] of working time:
@@ -302,6 +335,10 @@ impl crate::AcpState {
     ///
     /// The conversation lands in the bot's history like any other, the bot's
     /// unread count goes up, and [`BOT_EVENT`] tells the UI as it goes.
+    ///
+    /// With `resume`, the turn continues that stored conversation instead of
+    /// opening a fresh session.
+    #[allow(clippy::too_many_arguments)]
     pub async fn run_bot_unattended(
         &self,
         bot_id: &str,
@@ -309,6 +346,7 @@ impl crate::AcpState {
         cwd: Option<&str>,
         delegate: bool,
         trigger: Value,
+        resume: Option<&str>,
         on_started: impl FnOnce(&str),
     ) -> Result<RunReport, String> {
         let bot = codexia_db::bots::get_bot(bot_id)?
@@ -322,13 +360,13 @@ impl crate::AcpState {
             trigger.get("name").and_then(Value::as_str),
         ));
         let result = self
-            .run_unattended_inner(&bot, &connection_id, prompt, cwd, delegate, trigger, on_started)
+            .run_unattended_inner(&bot, &connection_id, prompt, cwd, delegate, trigger, resume, on_started)
             .await;
         let (session_id, status, summary) = match &result {
             Ok(report) => (
                 Some(report.session_id.as_str()),
                 if report.blocked { "blocked" } else { "done" },
-                codexia_db::bot_runs::summarize(&report.reply),
+                codexia_db::bot_runs::summarize(&report.last_message),
             ),
             Err(e) => (None, "failed", Some(e.clone())),
         };
@@ -350,6 +388,7 @@ impl crate::AcpState {
         cwd: Option<&str>,
         delegate: bool,
         trigger: Value,
+        resume: Option<&str>,
         on_started: impl FnOnce(&str),
     ) -> Result<RunReport, String> {
         let bot = bot.clone();
@@ -398,12 +437,19 @@ impl crate::AcpState {
 
         let result = async {
             select_provider(&client, &bot).await;
-            let session = client.new_session(&cwd).await?;
-            let session_id = session
-                .get("sessionId")
-                .and_then(Value::as_str)
-                .ok_or("session/new returned no sessionId")?
-                .to_string();
+            let session_id = match resume {
+                Some(session_id) => {
+                    client.load_session(session_id, &cwd).await?;
+                    session_id.to_string()
+                }
+                None => client
+                    .new_session(&cwd)
+                    .await?
+                    .get("sessionId")
+                    .and_then(Value::as_str)
+                    .ok_or("session/new returned no sessionId")?
+                    .to_string(),
+            };
             let _ = session_cell.set(session_id.clone());
             record_run(codexia_db::bot_runs::update(&connection_id, Some(&session_id), "working", None));
             apply_settings(&client, &session_id, &bot).await;
@@ -431,11 +477,41 @@ impl crate::AcpState {
             log::warn!("bot {}: could not count the reply: {e}", bot.id);
         }
         self.emit_bot(&bot.id, &session_id, if blocked { "blocked" } else { "done" });
+        let messages = reply_messages(&session_id);
         Ok(RunReport {
-            reply: reply_text(&session_id),
+            reply: messages.join("\n\n"),
+            last_message: messages.last().cloned().unwrap_or_default(),
             session_id,
             blocked,
         })
+    }
+
+    /// Continue a bot's stored conversation on the person's behalf (a sent
+    /// draft, a finished hand-back), unattended. A process that still has the
+    /// conversation open is stopped first, so two processes never write to
+    /// one session; a client reopening the bot starts a fresh one.
+    pub async fn resume_bot(
+        &self,
+        bot_id: &str,
+        session_id: &str,
+        prompt: &str,
+        trigger: Value,
+    ) -> Result<RunReport, String> {
+        let holders: Vec<String> = self
+            .connections()
+            .filter(|c| c.bot_id.as_deref() == Some(bot_id) && c.has_session(session_id))
+            .map(|c| c.connection_id.clone())
+            .collect();
+        for connection_id in holders {
+            let _ = self.stop(&connection_id).await;
+        }
+        self.run_bot_unattended(bot_id, prompt, None, true, trigger, Some(session_id), |_| {})
+            .await
+    }
+
+    /// Tell every client a bot left something for its person.
+    pub fn notify_inbox(&self, item: &codexia_db::bot_inbox::BotInboxItem) {
+        self.sink().emit(INBOX_EVENT, json!({ "botId": item.bot_id, "item": item }));
     }
 
     fn emit_bot(&self, bot_id: &str, session_id: &str, status: &str) {
@@ -476,7 +552,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn delegated_run_has_no_builtin_capability() {
+    async fn only_delegating_runs_may_ask_other_bots() {
         let bot: BotRecord = serde_json::from_value(json!({
             "id": "delegated", "name": "Delegated", "title": null,
             "avatar": "", "color": "", "agentId": "keke", "provider": null,
@@ -486,22 +562,18 @@ mod tests {
             "archived": false, "notificationsEnabled": true, "unreadCount": 0,
             "lastViewedAt": null, "createdAt": "", "updatedAt": ""
         })).unwrap();
-        assert!(mcp_servers(&bot, 9000, false).await.is_empty());
         for unattended in [false, true] {
             for delegate in [false, true] {
                 let policy = policy(&bot, 9000, unattended, delegate).await;
                 assert!(policy.strict_mcp);
-                assert_eq!(policy.mcp_servers.len(), usize::from(delegate));
+                assert_eq!(policy.mcp_servers.len(), 1);
                 assert_eq!(policy.unattended.is_some(), unattended);
-                for server in policy.mcp_servers {
-                    crate::delegation::revoke(server["headers"][0]["value"].as_str().unwrap());
-                }
+                let token = policy.mcp_servers[0]["headers"][0]["value"].as_str().unwrap();
+                let grant = crate::delegation::grant(token, &bot.id).unwrap();
+                assert_eq!(grant.ask, delegate);
+                crate::delegation::revoke(token);
             }
         }
-        let servers = mcp_servers(&bot, 9000, true).await;
-        let token = servers[0]["headers"][0]["value"].as_str().unwrap();
-        assert!(crate::delegation::verify(token, &bot.id));
-        crate::delegation::revoke(token);
     }
 
     #[test]
@@ -553,8 +625,24 @@ mod tests {
     }
 
     #[test]
+    fn a_tool_call_between_chunks_splits_the_reply_into_messages() {
+        let chunk = |text: &str| json!({ "sessionUpdate": "agent_message_chunk", "content": { "type": "text", "text": text } });
+        let updates = [
+            json!({ "sessionUpdate": "user_message_chunk", "content": { "type": "text", "text": "go" } }),
+            chunk("I'll save "),
+            chunk("the draft."),
+            json!({ "sessionUpdate": "tool_call", "toolCallId": "t1" }),
+            chunk("  "),
+            json!({ "sessionUpdate": "tool_call_update", "toolCallId": "t1" }),
+            chunk("Saved for review."),
+        ];
+        assert_eq!(messages_of(&updates), ["I'll save the draft.", "Saved for review."]);
+        assert!(messages_of(&[]).is_empty());
+    }
+
+    #[test]
     fn bots_server_names_the_asking_bot() {
-        let server = bots_server("bot-1", 9000);
+        let server = bots_server("bot-1", 9000, true);
         assert_eq!(server["url"], "http://127.0.0.1:9000/mcp/bots?from=bot-1");
         assert_eq!(server["type"], "http");
         let token = server["headers"][0]["value"].as_str().unwrap();

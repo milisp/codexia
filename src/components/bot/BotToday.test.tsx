@@ -7,8 +7,11 @@ import { useBotUiStore } from '@/stores/useBotUiStore';
 const listRuns = vi.fn();
 const listTasks = vi.fn();
 const update = vi.fn();
+const listInbox = vi.fn();
 vi.mock('@/services/apiAdapt/bots', () => ({
   listBotRuns: (...args: unknown[]) => listRuns(...args),
+  listBotInbox: (...args: unknown[]) => listInbox(...args),
+  resolveBotInbox: vi.fn(),
   updateBot: (...args: unknown[]) => update(...args),
   parseBotList: () => [],
 }));
@@ -76,6 +79,7 @@ function task(overrides: Partial<AutomationTask>): AutomationTask {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  listInbox.mockResolvedValue([]);
   useBotUiStore.setState({ bots: [scout, shop], statusByBot: {} });
 });
 
@@ -151,5 +155,29 @@ describe('BotToday', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Scout' }));
     expect(select).toHaveBeenCalledWith(scout);
+  });
+
+  it('lists drafts and hand-backs from every bot under Needs you', async () => {
+    listRuns.mockResolvedValue([]);
+    listTasks.mockResolvedValue([]);
+    listInbox.mockResolvedValue([
+      {
+        id: 'd1',
+        botId: 'scout',
+        sessionId: 's1',
+        kind: 'draft',
+        title: 'Reply to Ana',
+        body: 'Hi Ana',
+        action: 'reply in Gmail',
+        status: 'open',
+        createdAt: '',
+        resolvedAt: null,
+      },
+    ]);
+    render(<BotToday creating={false} onCreate={vi.fn()} onSelect={vi.fn()} />);
+    const needs = await screen.findByRole('region', { name: 'Needs you' });
+    expect(within(needs).getByText('Reply to Ana')).toBeTruthy();
+    expect(within(needs).getByRole('button', { name: 'Send' })).toBeTruthy();
+    expect(listInbox).toHaveBeenCalledWith(undefined);
   });
 });

@@ -7,6 +7,10 @@ export function triggerLabel(kind: AcpTurnTrigger['kind'] | string, name?: strin
       return `Scheduled · ${name ?? 'task'}`;
     case 'bot':
       return `Asked by ${name ?? 'another bot'}`;
+    case 'draft':
+      return `You approved · ${name ?? 'draft'}`;
+    case 'handback':
+      return `You finished · ${name ?? 'a step'}`;
     default:
       return name ?? kind;
   }

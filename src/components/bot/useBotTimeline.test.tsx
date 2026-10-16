@@ -63,6 +63,21 @@ describe('continuous Bot timeline', () => {
     expect(getSession).toHaveBeenCalledTimes(1);
   });
 
+  it('skips the replay of a resumed conversation, which is already stored', async () => {
+    listSessions.mockResolvedValue([record('resumed', '1')]);
+    getSession.mockResolvedValue([said('Draft ready')]);
+    const { result } = renderHook(() => useBotTimeline('bot'));
+    await waitFor(() => expect(texts(result.current.sections)).toEqual(['Draft ready']));
+    const update = (text: string, replay: boolean) =>
+      act(() => activity({ data: JSON.stringify({
+        event: 'acp-message',
+        payload: { botId: 'bot', kind: 'update', replay, sessionId: 'resumed', update: said(text) },
+      }) }));
+    update('Draft ready', true);
+    update(' Sent.', false);
+    expect(texts(result.current.sections)).toEqual(['Draft ready Sent.']);
+  });
+
   it('loads a run it has not seen when its first update arrives', async () => {
     listSessions.mockResolvedValue([]);
     const { result } = renderHook(() => useBotTimeline('bot'));

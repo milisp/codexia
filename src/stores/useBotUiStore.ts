@@ -51,6 +51,9 @@ interface BotUiStore {
    */
   kekeSpawnFailed: boolean;
   setKekeSpawnFailed: (failed: boolean) => void;
+  /** Bumped when any bot's drafts or hand-backs change, to re-read them. */
+  inboxRevision: number;
+  bumpInbox: () => void;
 }
 
 export const useBotUiStore = create<BotUiStore>((set) => ({
@@ -120,4 +123,6 @@ export const useBotUiStore = create<BotUiStore>((set) => ({
     set((state) => ({ sessionByBot: { ...state.sessionByBot, [botId]: sessionId } })),
   kekeSpawnFailed: false,
   setKekeSpawnFailed: (kekeSpawnFailed) => set({ kekeSpawnFailed }),
+  inboxRevision: 0,
+  bumpInbox: () => set((state) => ({ inboxRevision: state.inboxRevision + 1 })),
 }));

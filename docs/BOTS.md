@@ -22,6 +22,36 @@ list). It holds only what is new or needs you:
 Runs are recorded in `~/.codexia/cache.db` (`bot_runs`); a run that was still
 open when the app quit is shown as failed.
 
+## Drafts and hand-backs
+
+Every bot gets two Codexia tools that leave something for you instead of
+acting:
+
+- `propose_draft(title, body, action?)`: for anything that would leave the
+  computer on your behalf (an email reply, a message, a post, a comment). The
+  draft shows in Today and above the bot's composer. You can edit it, then
+  **Send**, which continues the conversation the draft came from with your
+  final text and asks the bot to carry out `action`. Send is not a direct
+  call: the bot's tool calls still go through its trust level and approval
+  rules, and payments still always ask. A draft without an `action` can only
+  be copied or discarded.
+- `hand_back(title, steps, url?)`: for a step only you can do (signing in, a
+  password or one-time code, a CAPTCHA, approving in another app). The bot
+  ends its turn; you do the step yourself, optionally leave a note (never a
+  password), and press **Done** to continue the conversation, or **Dismiss**.
+  Codexia never sees or stores the secret.
+
+Both tools are allowed without a prompt at every trust level, because they
+only store an item for you. Send and Done run unattended in the stored
+session (keke `session/load`); if a bot window still has that conversation
+open, its process is stopped first, so two processes never write to one
+session, and your next message starts a fresh one.
+
+Items are stored in `~/.codexia/cache.db` (`bot_inbox`). Whether a bot uses
+these tools depends on the model following the instructions; nothing stops a
+bot with an email tool and the right trust level from sending directly, so
+keep such tools behind "Ask" if you want every send reviewed.
+
 ## Trust levels
 
 The trust level decides what a bot may do without asking you.
@@ -188,8 +218,8 @@ you can reply to a routine's result directly.
 
 ## Bot-to-bot help
 
-Authorized bot collaboration uses a built-in MCP server, `codexia-bots`, served by the local API at
-`/mcp/bots`, with two tools:
+Authorized bot collaboration uses the built-in MCP server `codexia-bots`, served by the local API at
+`/mcp/bots`, with two tools besides drafts and hand-backs:
 
 - `list_bots`: id, name and title of allowed, non-archived collaborators.
 - `ask_bot`: hand a self-contained request to another bot and wait for its
@@ -202,13 +232,15 @@ it has no implicit administrative authority. Review the target's permissions
 before authorizing delegation: its tools may be more powerful than the caller's.
 
 The MCP endpoint requires a process-local bearer capability bound to the caller;
-the `from` query parameter alone is not authority. Capabilities are issued only
-for sessions with delegation enabled, expire after eight hours, and are revoked
+the `from` query parameter alone is not authority. Capabilities are issued
+per session (each one says whether it may ask other bots and which session it
+belongs to), expire after eight hours, and are revoked
 when the connection stops, its process exits, or its client is dropped. Existing
 and new bots default to an empty collaborator allowlist until explicitly saved.
 
-Help is one hop deep: a bot that was asked by another bot does not get
-`codexia-bots`, so bots cannot bounce work back and forth. The request shows
+Help is one hop deep: a bot that was asked by another bot gets `codexia-bots`
+without `list_bots` and `ask_bot` (its capability does not allow asking), so
+bots cannot bounce work back and forth. The request shows
 up in the target bot's conversation like a routine run.
 
 ## Notifications

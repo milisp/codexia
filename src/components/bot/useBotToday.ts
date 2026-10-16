@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { type AutomationTask, listAutomations } from '@/services/apiAdapt/automation';
 import { type Bot, type BotRun, listBotRuns, updateBot } from '@/services/apiAdapt/bots';
 import { useBotUiStore } from '@/stores/useBotUiStore';
+import { useBotInbox } from './useBotInbox';
 
 const FINISHED = new Set(['done', 'blocked', 'failed']);
 
@@ -45,6 +46,11 @@ export function useBotToday() {
   const byId = useMemo(() => new Map(bots.map((bot) => [bot.id, bot])), [bots]);
 
   const waiting = bots.filter((bot) => statusByBot[bot.id] === 'waiting');
+  const { items } = useBotInbox();
+  const inbox = items.flatMap((item) => {
+    const bot = byId.get(item.botId);
+    return bot ? [{ item, bot }] : [];
+  });
 
   const done: TodayRun[] = runs.flatMap((run) => {
     const bot = byId.get(run.botId);
@@ -64,17 +70,16 @@ export function useBotToday() {
     const now = new Date().toISOString();
     const seen = new Set(done.map((run) => run.botId));
     try {
-      for (const id of seen) {
-        useBotUiStore
-          .getState()
-          .upsertBot(await updateBot(id, { unreadCount: 0, lastViewedAt: now }));
-      }
+      const updated = await Promise.all(
+        [...seen].map((id) => updateBot(id, { unreadCount: 0, lastViewedAt: now }))
+      );
+      for (const bot of updated) useBotUiStore.getState().upsertBot(bot);
     } catch (failure) {
       setError(String(failure));
     }
   };
 
-  return { bots, waiting, done, upcoming, error, reload, markAllSeen };
+  return { bots, waiting, inbox, done, upcoming, error, reload, markAllSeen };
 }
 
 /** "09:00", "Tomorrow 09:00", "Mon 09:00" or a date, for an upcoming run. */
