@@ -100,21 +100,19 @@ fn expand_home(path: &str) -> std::path::PathBuf {
     std::path::PathBuf::from(path)
 }
 
-pub(crate) async fn api_read_directory(
-    Json(params): Json<FilesystemPathParams>,
-) -> Result<Json<Vec<FileEntry>>, Response> {
+pub(crate) async fn api_read_directory(Json(params): Json<FilesystemPathParams>) -> Response {
     // A folder that is gone (e.g. a deleted worktree a thread still points at)
     // is an expected client state, not a server failure.
     if !expand_home(&params.path).is_dir() {
         let body = ErrorResponse {
             error: "Directory does not exist".to_string(),
         };
-        return Err((StatusCode::NOT_FOUND, Json(body)).into_response());
+        return (StatusCode::NOT_FOUND, Json(body)).into_response();
     }
-    let entries = read_directory(params.path)
-        .await
-        .map_err(|e| to_error_response(e).into_response())?;
-    Ok(Json(entries))
+    match read_directory(params.path).await {
+        Ok(entries) => Json(entries).into_response(),
+        Err(e) => to_error_response(e).into_response(),
+    }
 }
 
 pub(crate) async fn api_get_home_directory() -> Result<Json<String>, ErrorResponse> {
@@ -241,7 +239,7 @@ mod tests {
         let params = FilesystemPathParams {
             path: "/definitely/not/a/real/codexia/dir".to_string(),
         };
-        let err = api_read_directory(Json(params)).await.unwrap_err();
-        assert_eq!(err.status(), StatusCode::NOT_FOUND);
+        let response = api_read_directory(Json(params)).await;
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
     }
 }
