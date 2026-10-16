@@ -86,7 +86,17 @@ export function MobileHome({
         {acpActive ? (
           <SideBarAcpTab onStartNewSession={onNewInProject} />
         ) : selectedAgent === 'codex' ? (
-          <SideBarCodexTab onCreateNewThread={onNewInProject} />
+          <SideBarCodexTab
+            onCreateNewThread={(project) => {
+              if (project) {
+                onNewInProject(project);
+                return;
+              }
+              // "Recent" starts a chat outside any project.
+              useWorkspaceStore.getState().setCwd(null);
+              onNewSession();
+            }}
+          />
         ) : (
           <SideBarClaudeTab onStartNewSession={onNewInProject} />
         )}

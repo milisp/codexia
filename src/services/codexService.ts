@@ -18,6 +18,8 @@ import {
   useThreadQueueStore,
   useThreadReadStateStore,
 } from '@/components/codex/stores';
+import { findProjectForCwd } from '@/features/projects/projectModel';
+import { useServerProjectsStore } from '@/features/projects/useServerProjectsStore';
 import { useWorkspaceStore } from '@/stores';
 import { useSettingsStore } from '@/stores/settings';
 import { convertThreadHistoryToEvents } from '@/utils/threadHistoryConverter';
@@ -265,10 +267,18 @@ export const codexService = {
           );
         }
       }
+      // Assign the chat to the app-server project that owns this workspace, so
+      // other clients list it there. Only sent once projects are known to work.
+      const projectState = useServerProjectsStore.getState();
+      const projectId =
+        projectState.status === 'ready'
+          ? (findProjectForCwd(projectState.projects, cwd)?.id ?? null)
+          : null;
       const params: ThreadStartParams = {
         model,
         modelProvider,
         cwd: threadCwd,
+        ...(projectId ? { projectId } : {}),
         approvalPolicy,
         sandbox,
         baseInstructions: null,

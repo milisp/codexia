@@ -6,6 +6,7 @@ import {
   usePermissionsStore,
   useRequestUserInputStore,
 } from '@/components/codex/stores';
+import { useServerProjectsSync } from '@/features/projects/useServerProjectsSync';
 import { isDesktopTauri } from '@/hooks/runtime';
 import { getAccountWithParams } from '@/services';
 import { useLayoutStore } from '@/stores';
@@ -48,6 +49,8 @@ export function useCodexEvents(enabled = true) {
     // enough for this one-shot initial sync.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
+
+  useServerProjectsSync(enabled);
 
   const handleServerNotification = useServerNotificationHandler(
     {

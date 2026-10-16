@@ -6,6 +6,7 @@ import {
   useThreadQueueStore,
   useThreadReadStateStore,
 } from '@/components/codex/stores';
+import { useServerProjectsStore } from '@/features/projects/useServerProjectsStore';
 import { allowSleep, preventSleep } from '@/services/apiAdapt';
 import { playBeep } from '@/utils/beep';
 import { shouldPlayCompletionBeep } from './beepOnCompletion';
@@ -40,6 +41,23 @@ export function useServerNotificationHandler(
         useThreadReadStateStore
           .getState()
           .setState(payload.params.threadId, payload.params.readState);
+        return;
+      }
+
+      // Project and thread-assignment changes drive the sidebar only; they never
+      // belong in a transcript, so they are handled here and stop.
+      if (method === 'project/changed') {
+        void useServerProjectsStore.getState().refresh();
+        return;
+      }
+      if (method === 'thread/project/updated') {
+        const { threadId: assignedThreadId, projectId } = payload.params;
+        useCodexStore.setState((state) => ({
+          threads: state.threads.map((thread) =>
+            thread.id === assignedThreadId ? { ...thread, projectId } : thread
+          ),
+        }));
+        useServerProjectsStore.getState().bumpThreads();
         return;
       }
 

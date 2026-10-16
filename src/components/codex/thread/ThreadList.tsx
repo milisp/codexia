@@ -27,6 +27,8 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { toast } from '@/components/ui/use-toast';
+import { threadInScope } from '@/features/projects/projectModel';
+import { useServerProjectsStore } from '@/features/projects/useServerProjectsStore';
 import { isDesktopTauri } from '@/hooks/runtime';
 import { THREADS_CHANGED_EVENT } from '@/hooks/useGlobalShortcuts';
 import { archiveThread, deleteThread, listThreads, renameThread } from '@/services/apiAdapt';
@@ -39,7 +41,13 @@ import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { formatThreadAge } from '@/utils/formatThreadAge';
 
 interface ThreadListProps {
-  cwd: string;
+  /** Lists threads whose session cwd matches; ignored when `projectId` is set. */
+  cwd?: string;
+  /**
+   * Lists the threads app-server assigned to this project, or the unassigned
+   * ones for `null` (the "Recent" group). Takes precedence over `cwd`.
+   */
+  projectId?: string | null;
 }
 
 interface ThreadAction {
@@ -59,7 +67,11 @@ const EMPTY_LIST: ThreadListResponse = {
 
 const PAGE_SIZE = 3;
 
-export function ThreadList({ cwd }: ThreadListProps) {
+export function ThreadList({ cwd: cwdProp, projectId }: ThreadListProps) {
+  const byProject = projectId !== undefined;
+  const cwd = cwdProp ?? '';
+  const scopeKey = byProject ? `project:${projectId}` : cwd;
+  const threadsVersion = useServerProjectsStore((s) => s.threadsVersion);
   const { cwd: workspaceCwd, setCwd } = useWorkspaceStore();
   const { setView } = useLayoutStore();
   const { addAgentCard, setCurrentAgentCardId } = useAgentCenterStore();
@@ -84,12 +96,15 @@ export function ThreadList({ cwd }: ThreadListProps) {
   const threads = useMemo(() => {
     const seen = new Set(response.data.map((t) => t.id));
     const live = storeThreads.filter(
-      (t) => t.cwd === cwd && t.modelProvider === modelProvider && !seen.has(t.id)
+      (t) =>
+        (byProject ? threadInScope(t, projectId ?? null) : t.cwd === cwd) &&
+        t.modelProvider === modelProvider &&
+        !seen.has(t.id)
     );
     if (live.length === 0) return response.data;
     const key = sortKey === 'created_at' ? 'createdAt' : 'updatedAt';
     return [...live, ...response.data].sort((a, b) => b[key] - a[key]);
-  }, [response.data, storeThreads, cwd, modelProvider, sortKey]);
+  }, [response.data, storeThreads, byProject, projectId, cwd, modelProvider, sortKey]);
 
   // --- Thread loading (search + sort delegated to backend) ---
 
@@ -98,8 +113,14 @@ export function ThreadList({ cwd }: ThreadListProps) {
 
   // Keep however many threads are already visible when the list reloads
   // (select / delete / archive / fork) instead of collapsing back to one page.
-  const loadedRef = useRef({ cwd, count: 0 });
-  if (loadedRef.current.cwd !== cwd) loadedRef.current = { cwd, count: 0 };
+  const loadedRef = useRef({ scope: scopeKey, count: 0 });
+  if (loadedRef.current.scope !== scopeKey) loadedRef.current = { scope: scopeKey, count: 0 };
+
+  // Project scope filters on the server's assignment; otherwise on exact cwd.
+  const scopeParams = useMemo<Pick<ThreadListParams, 'cwd' | 'projectId'>>(
+    () => (byProject ? { projectId } : { cwd }),
+    [byProject, projectId, cwd]
+  );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: refreshCounter is the manual reload trigger
   useEffect(() => {
@@ -108,14 +129,14 @@ export function ThreadList({ cwd }: ThreadListProps) {
       limit: Math.max(PAGE_SIZE, loadedRef.current.count),
       sortKey,
       modelProviders: providerFilter,
-      cwd,
+      ...scopeParams,
       useStateDbOnly: true,
     };
     const load = async () => {
       try {
         const res = await listThreads(params);
         if (cancelled) return;
-        loadedRef.current = { cwd, count: res.data.length };
+        loadedRef.current = { scope: scopeKey, count: res.data.length };
         useThreadReadStateStore.getState().mergeFromList(res.readStates);
         setResponse(res);
       } catch (err) {
@@ -126,7 +147,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
     return () => {
       cancelled = true;
     };
-  }, [cwd, sortKey, providerFilter, refreshCounter]);
+  }, [scopeKey, scopeParams, sortKey, providerFilter, refreshCounter, threadsVersion]);
 
   const refresh = useCallback(() => setRefreshCounter((n) => n + 1), []);
 
@@ -142,12 +163,17 @@ export function ThreadList({ cwd }: ThreadListProps) {
   useEffect(() => {
     const localIds = new Set(response.data.map((t) => t.id));
     const newIds = storeThreads
-      .filter((t) => t.cwd === cwd && !localIds.has(t.id) && !seenStoreIdsRef.current.has(t.id))
+      .filter(
+        (t) =>
+          (byProject ? threadInScope(t, projectId ?? null) : t.cwd === cwd) &&
+          !localIds.has(t.id) &&
+          !seenStoreIdsRef.current.has(t.id)
+      )
       .map((t) => t.id);
     if (newIds.length === 0) return;
     for (const id of newIds) seenStoreIdsRef.current.add(id);
     refresh();
-  }, [storeThreads, response.data, cwd, refresh]);
+  }, [storeThreads, response.data, byProject, projectId, cwd, refresh]);
 
   useEffect(() => {
     if (!isDesktopTauri()) return;
@@ -169,22 +195,22 @@ export function ThreadList({ cwd }: ThreadListProps) {
   // --- Thread actions ---
 
   const handleSelectThread = useCallback(
-    async (threadId: string) => {
+    async (threadId: string, threadCwd: string) => {
       if (threadId === currentThreadId) return;
-      if (cwd !== workspaceCwd) setCwd(cwd);
+      if (threadCwd && threadCwd !== workspaceCwd) setCwd(threadCwd);
       await codexService.setCurrentThread(threadId);
     },
-    [currentThreadId, cwd, workspaceCwd, setCwd]
+    [currentThreadId, workspaceCwd, setCwd]
   );
 
   const handleOpenThread = useCallback(
-    async (threadId: string, preview?: string) => {
-      addAgentCard({ kind: 'codex', id: threadId, preview, cwd });
+    async (threadId: string, threadCwd: string, preview?: string) => {
+      addAgentCard({ kind: 'codex', id: threadId, preview, cwd: threadCwd });
       setCurrentAgentCardId(threadId);
       setView('agent');
-      await handleSelectThread(threadId);
+      await handleSelectThread(threadId, threadCwd);
     },
-    [handleSelectThread, setView, setCurrentAgentCardId, addAgentCard, cwd]
+    [handleSelectThread, setView, setCurrentAgentCardId, addAgentCard]
   );
 
   const handleArchive = useCallback(
@@ -209,7 +235,12 @@ export function ThreadList({ cwd }: ThreadListProps) {
         toast.error('Failed to fork thread', { description: String(err) });
         return;
       }
-      addAgentCard({ kind: 'codex', id: threadId, preview: thread?.preview, cwd });
+      addAgentCard({
+        kind: 'codex',
+        id: threadId,
+        preview: thread?.preview,
+        cwd: thread?.cwd || cwd,
+      });
       setCurrentAgentCardId(threadId);
       setView('agent');
       refresh();
@@ -255,20 +286,20 @@ export function ThreadList({ cwd }: ThreadListProps) {
         modelProviders: providerFilter,
         useStateDbOnly: true,
         sortKey,
-        cwd,
+        ...scopeParams,
       };
       const res = await listThreads(params);
       useThreadReadStateStore.getState().mergeFromList(res.readStates);
       setResponse((prev) => {
         const seen = new Set(prev.data.map((t) => t.id));
         const data = [...prev.data, ...res.data.filter((t) => !seen.has(t.id))];
-        loadedRef.current = { cwd, count: data.length };
+        loadedRef.current = { scope: scopeKey, count: data.length };
         return { ...res, data };
       });
     } finally {
       setIsLoadingMore(false);
     }
-  }, [cwd, isLoadingMore, nextCursor, sortKey, providerFilter]);
+  }, [scopeKey, scopeParams, isLoadingMore, nextCursor, sortKey, providerFilter]);
 
   const openRenameDialog = useCallback((thread: Thread) => {
     // Prefer explicit name, fall back to preview (first message).
@@ -396,7 +427,7 @@ export function ThreadList({ cwd }: ThreadListProps) {
                     longPressFiredRef.current = false;
                     return;
                   }
-                  void handleOpenThread(thread.id, thread.preview);
+                  void handleOpenThread(thread.id, thread.cwd || cwd, thread.preview);
                 }}
                 onPointerDown={(e) => startLongPress(e, thread.id)}
                 onPointerUp={cancelLongPress}

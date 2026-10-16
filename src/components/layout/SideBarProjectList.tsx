@@ -17,6 +17,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ConfirmProjectActionDialog } from '@/features/projects/ProjectDialogs';
+import { findProjectForCwd } from '@/features/projects/projectModel';
+import { useServerProjectsStore } from '@/features/projects/useServerProjectsStore';
 import { isPhone } from '@/hooks/runtime';
 import { useLayoutStore } from '@/stores';
 import { useAgentSettingsStore } from '@/stores/useAgentSettingsStore';
@@ -34,6 +37,17 @@ export function SideBarProjectList({ onNewAction, newActionTitle, renderList }: 
   const { setInstructionType } = useAgentSettingsStore();
   const { setView, expandedProjects, setProjectExpanded } = useLayoutStore();
   const [hoveredProject, setHoveredProject] = useState<string | null>(null);
+  const serverProjects = useServerProjectsStore((s) => s.projects);
+  const serverStatus = useServerProjectsStore((s) => s.status);
+  const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(null);
+
+  // A project backed by app-server is deleted there (after confirming), since
+  // the local list is only a mirror of it and would bring it back.
+  const removeProjectAt = (project: string) => {
+    const backing = serverStatus === 'ready' ? findProjectForCwd(serverProjects, project) : null;
+    if (backing) setDeleting({ id: backing.id, name: backing.name });
+    else removeProject(project);
+  };
 
   const isOpen = (project: string) => expandedProjects[project] ?? true;
   const toggleProject = (project: string, open: boolean) => setProjectExpanded(project, open);
@@ -93,7 +107,7 @@ export function SideBarProjectList({ onNewAction, newActionTitle, renderList }: 
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => removeProject(project)}>
+                  <DropdownMenuItem onClick={() => removeProjectAt(project)}>
                     <X /> Remove
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => openAgentInstructions(project)}>
@@ -117,6 +131,18 @@ export function SideBarProjectList({ onNewAction, newActionTitle, renderList }: 
           <CollapsibleContent>{renderList(project)}</CollapsibleContent>
         </Collapsible>
       ))}
+
+      <ConfirmProjectActionDialog
+        open={deleting !== null}
+        title="Delete project"
+        description={`Delete ${deleting?.name ?? 'this project'}? Its chats are kept and no folders are deleted.`}
+        confirmLabel="Delete project"
+        destructive
+        onConfirm={() =>
+          deleting ? useServerProjectsStore.getState().remove(deleting.id) : Promise.resolve()
+        }
+        onOpenChange={(open) => !open && setDeleting(null)}
+      />
 
       {/* The phone's home screen says this itself, with a retry. */}
       {projects.length === 0 && !isPhone() && (

@@ -42,6 +42,8 @@ use super::{
         api_thread_queue_start,
         api_thread_goal_set, api_thread_goal_get, api_thread_goal_clear,
         api_thread_compact_start, api_thread_memory_mode_set, api_memory_reset,
+        api_thread_metadata_update, api_project_list, api_project_read, api_project_create,
+        api_project_import, api_project_update, api_project_move, api_project_delete,
         api_hooks_list, api_plugin_list, api_plugin_read, api_plugin_install,
         api_plugin_uninstall, api_plugin_installed, api_plugin_search,
         api_account_usage_read,
@@ -214,6 +216,17 @@ pub fn create_router(state: WebServerState) -> Router {
             post(api_thread_memory_mode_set),
         )
         .route("/api/codex/memory/reset", post(api_memory_reset))
+        .route(
+            "/api/codex/thread/metadata/update",
+            post(api_thread_metadata_update),
+        )
+        .route("/api/codex/project/list", post(api_project_list))
+        .route("/api/codex/project/read", post(api_project_read))
+        .route("/api/codex/project/create", post(api_project_create))
+        .route("/api/codex/project/import", post(api_project_import))
+        .route("/api/codex/project/update", post(api_project_update))
+        .route("/api/codex/project/move", post(api_project_move))
+        .route("/api/codex/project/delete", post(api_project_delete))
         .route("/api/codex/hooks/list", post(api_hooks_list))
         .route("/api/codex/plugin/list", post(api_plugin_list))
         .route("/api/codex/plugin/read", post(api_plugin_read))
