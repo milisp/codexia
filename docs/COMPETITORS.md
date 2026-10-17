@@ -225,10 +225,11 @@ bugs, none about bots.
 
 Codexia can run headless on a Linux server and be reached from a phone. This
 is for people who are comfortable running a server; it is not the consumer
-product shape (see [Direction](#direction)). Setup is in
-[SERVER.md](SERVER.md).
+product shape (see [Direction](#direction)).
 
-Done on `feat/web-musl` **(code)**:
+Built on the `feat/web-musl` branch **(code)**, not merged: server hosting
+belongs in keke-cloud, so the branch is kept as a reference (setup notes in
+its `docs/SERVER.md`):
 
 - Static musl `codexia-web` packages (x86_64, aarch64) with the pinned keke
   bundled; install script with systemd and optional Tailscale; Docker image.
