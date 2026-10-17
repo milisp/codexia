@@ -59,7 +59,9 @@ export function useCreateBot() {
         useAcpStore.getState().setAgentId(bot.agentId);
         useBotUiStore.getState().setSelectedBotId(bot.id);
         setView('bot');
-        setNewBot(bot);
+        // A role is ready to use, so it lands in its chat; only a blank bot
+        // opens its settings to be described first.
+        if (!template) setNewBot(bot);
       } catch (error) {
         toast({
           title: 'Could not create bot',
