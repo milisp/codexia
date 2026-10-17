@@ -51,6 +51,8 @@ notify = { workspace = true }
 notify-debouncer-full = { workspace = true }
 portable-pty = { workspace = true }
 zip = { workspace = true }
+# Terminal QR code for `codexia-web pair`.
+qrcode = { version = "0.14", default-features = false }
 
 # --- codex / claude related deps ---
 claude-agent-sdk-rs = { workspace = true }

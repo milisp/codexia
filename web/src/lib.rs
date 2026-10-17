@@ -2,6 +2,7 @@ pub mod watcher;
 pub mod auth;
 mod event_sink;
 pub mod events;
+pub mod pairing;
 pub mod tailscale;
 mod handlers;
 pub mod router;

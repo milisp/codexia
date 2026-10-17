@@ -11,12 +11,13 @@ import { QuitDialog } from '@/components/dialogs';
 import { AppLayout } from '@/components/layout';
 import { MobileShell } from '@/components/mobile/MobileShell';
 import { PairingView } from '@/components/pairing/PairingView';
+import { WebAccessGate } from '@/components/pairing/WebAccessGate';
 import { TelemetryConsentDialog } from '@/components/settings/TelemetryConsentDialog';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { TodoCaptureHint } from '@/features/todos/TodoCaptureHint';
-import { isDesktopTauri, isPhone } from '@/hooks/runtime';
+import { isDesktopTauri, isPhone, isTauri } from '@/hooks/runtime';
 import { useAppDeepLink } from '@/hooks/useAppDeepLink';
 import { useDoubleShiftCapture } from '@/hooks/useDoubleShiftCapture';
 import { useUrlParamThread } from '@/hooks/useUrlParamThread';
@@ -128,6 +129,15 @@ function AppEntry() {
 
   // A phone has no local backend, so it cannot do anything until it is paired.
   if (isPhone() && !isPaired) return <PairingView />;
+
+  // The browser build may be served to another machine, which signs in first.
+  if (!isTauri()) {
+    return (
+      <WebAccessGate>
+        <AppShell />
+      </WebAccessGate>
+    );
+  }
 
   return <AppShell />;
 }
