@@ -18,6 +18,33 @@ wrong or outdated; check the vendor before quoting them.
 
 All entries are **(reported)**.
 
+These are consumer products, not B2B: Dots goes to paid ChatGPT users (and
+Enterprise with admin activation); Hark Pro has a free tier, no team plan and
+an 18+ age limit. They can host a cloud computer per user because they are
+heavily funded (Hark raised over $700M at a $6B valuation in May 2026, and
+reportedly gave the first 100,000 users free premium). An independent project
+cannot copy that hosting model; see [Direction](#direction).
+
+## Open-source self-hosted: Hermes Agent
+
+Nous Research's [Hermes Agent](https://hermes-agent.nousresearch.com) is the
+closest open-source reference **(reported)**:
+
+- Self-hosted. Chat gateways (Telegram and others) admit users by a static
+  allow-list or by pairing: an unknown user gets a one-time code and the
+  owner approves it (`hermes pairing approve <platform> <code>`, or the
+  dashboard in third-party Railway deployments).
+- Hermes Desktop (public preview, June 2026; macOS, Windows, Linux) has a
+  **Bot Mode**, on by default: each profile is a bot with its own
+  conversation and Routines (Hermes cron), group chats and @mentions between
+  bots. It is the same direction as Codexia's bots.
+- The desktop app connects to a backend on another machine (`hermes serve`
+  on a VPS or home server, behind an auth provider), over SSH, or to Hermes
+  Cloud. So a desktop app plus a remote backend is a working product shape.
+
+Codexia bots have pieces Hermes Bot Mode does not list: a drafts and
+hand-backs inbox, and person-required approvals for payment-like tools.
+
 ### Where Codexia differs
 
 Gaps, mostly because Codexia has no cloud computer:
@@ -121,51 +148,51 @@ From `keke-agent/crates/sandbox` **(code)**:
   only, so this is not a launch blocker. [BOTS.md](BOTS.md#trust-levels)
   should still say the sandbox is enforced on macOS and Linux only.
 
-## Linux cloud host with phone client
+## Linux server with phone client
 
-Goal: a bot host that is not a desktop app. Codexia runs headless on a Linux
-server, and the phone is the main way to talk to bots and approve steps.
-This is how Codexia gets closer to "keeps working after you close the
-laptop" without a vendor cloud.
+Codexia can run headless on a Linux server and be reached from a phone. This
+is for people who are comfortable running a server; it is not the consumer
+product shape (see [Direction](#direction)). Setup is in
+[SERVER.md](SERVER.md).
 
-Already in the repo **(code)**:
+Done on `feat/web-musl` **(code)**:
 
-- `codexia-web` headless binary (`web/`). `server_web.rs` starts the
-  automation runtime (schedules and triggers) and cleans up orphaned bot
-  runs, so bots and routines run without the desktop app.
-- Bot API routes in `web/src/router.rs` (`/api/bots/*`, inbox, runs) and the
-  `codexia-bots` MCP endpoint.
-- `release-web.yml` publishes Linux tarballs (per arch and libc) built by
-  `scripts/package-web.sh`.
-- Remote access over Tailscale; iOS thin client per
-  [ROADMAP-MULTI-CLIENT.md](ROADMAP-MULTI-CLIENT.md).
+- Static musl `codexia-web` packages (x86_64, aarch64) with the pinned keke
+  bundled; install script with systemd and optional Tailscale; Docker image.
+- `codexia-web pair` (browser link and QR code) and token sign-in from the
+  browser build; `--host` for containers and reverse proxies.
+- Telegram gateway: waiting approvals with buttons, drafts, hand-backs and
+  finished runs; chat messages become bot turns.
 
-Missing or unverified:
+Still missing:
 
-- **keke is not bundled** in the web package (`scripts/package-web.sh` does
-  not mention keke). A server falls back to `keke` on `PATH` or
-  `npx @milisp/keke@latest`, which is not the tested version. Ship or pin it.
-- **Phone notifications**: no push (APNs, Web Push, ntfy) found. Approvals
-  that wait 12 hours need a push to the phone, not a desktop toast.
-- **Server install**: no Dockerfile or systemd unit; needs a one-command
-  install with restart on failure and an always-on service.
-- **Sign-in on a server**: keke provider login, `gh` login and MCP OAuth on a
-  machine without a browser.
-- **Exposure**: authentication for the API when reachable beyond Tailscale
-  (see `web/src/auth.rs`).
-- Landlock availability on the server kernel.
+- **Phone push** (APNs or Web Push). Telegram covers this only for people
+  who set up a Telegram bot.
+- **Sign-in on a server** for MCP OAuth: keke only accepts loopback
+  redirects, so a phone cannot finish the browser step.
+- Landlock availability on the server kernel is unverified.
 
-## Launch checklist (Product Hunt)
+## Direction
 
-1. Copy: Codexia hosts Codex and Claude Code sessions; bots ("dots") run on
-   keke. Say it runs on your own machine or Linux server, with your own
-   subscriptions; no claim of a vendor cloud.
-2. One-line position, for example: "Open-source Dots on your own Linux
-   server: keke bots you reach from your phone, with enforced approvals."
-3. Before launch: bundle or pin keke in the Linux package, and add phone push
-   for approvals.
-4. Demo: trigger on the server, unattended run, payment-like step waits,
-   approve from phone.
+Decided 2026-10-16:
+
+- **No hosted VMs run by this project.** Ordinary users will not set up
+  Tailscale or a Telegram bot, and hosting a cloud computer per user needs
+  funding this project does not have.
+- **Demo first.** Show the app-first experience on one machine and one user
+  (a Mac or one VPS), record it, and use it for a waitlist and for investor
+  conversations. The demo script and the status of each step are in
+  [DEMO.md](DEMO.md).
+- **keke-cloud is the future engine**, in its own repo
+  (`milisp/keke-cloud`, not published yet). It is a lean, keke-centred
+  backend with an API; Codexia web, the iOS app and chat gateways are its
+  clients. Its plan describes hosting options (one-click deploy into the
+  user's own account, partners hosting it, or a funded hosted service).
+- **Codexia is web-first.** The desktop app stays as a client for people who
+  want it; new features go into shared crates and the web API.
+
+Do not claim a vendor cloud, always-on availability independent of the host,
+or a hosted service, in any copy.
 
 ## Sources
 
@@ -181,3 +208,9 @@ Missing or unverified:
 - [Hark on Product Hunt](https://www.producthunt.com/products/hark-3)
 - [Hark AI: What Hark Pro Does](https://www.usecarly.com/blog/hark-ai/)
 - [Free Open Source dots Arrives as OpenDots](https://pasqualepillitteri.it/en/news/20412/free-open-source-dots-opendots-alternatives)
+- [Hark releases an AI personal assistant (TechCrunch)](https://techcrunch.com/2026/10/06/hark-releases-an-ai-personal-assistant-with-a-focus-on-privacy/)
+- [Hark raises $700M Series A (RuntimeWire)](https://runtimewire.com/article/hark-raises-700m-series-a-brett-adcock)
+- [Hark: free premium for the first 100,000 users (KuCoin)](https://www.kucoin.com/news/flash/figure-ai-founder-launches-personal-ai-assistant-hark-offering-free-premium-access-to-first-100k-users)
+- [Hermes Agent: team Telegram assistant](https://hermes-agent.nousresearch.com/docs/guides/team-telegram-assistant)
+- [Hermes Agent: Desktop](https://hermes-agent.nousresearch.com/docs/user-guide/desktop)
+- [Hermes releases official desktop app (Decrypt)](https://decrypt.co/369952/hermes-ai-agent-official-app-terminal)
