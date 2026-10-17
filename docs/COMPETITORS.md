@@ -1,7 +1,7 @@
 # Competitors and bot runtime notes
 
 Research notes on hosted personal agents, open-source Dots alternatives, and
-what it would take to run a bot on Claude Code. Last checked 2026-10-16.
+what it would take to run a bot on Claude Code. Last checked 2026-10-17.
 
 Facts marked **(code)** were read from source at the stated version. Facts
 marked **(reported)** come from launch posts and secondary blogs and may be
@@ -24,6 +24,40 @@ an 18+ age limit. They can host a cloud computer per user because they are
 heavily funded (Hark raised over $700M at a $6B valuation in May 2026, and
 reportedly gave the first 100,000 users free premium). An independent project
 cannot copy that hosting model; see [Direction](#direction).
+
+### Who cannot get Dots
+
+Checked 2026-10-17 from third-party reports two to three weeks old
+**(reported)**; confirm on OpenAI's pages before quoting.
+
+- **Free, Go and Plus: no Dot in any region.** A Dot comes with Pro 100,
+  Pro 200 or Pro 500 ($100, $200, $500 a month) or Business Premium
+  (about $125 per user a month, or $100 billed annually; about EUR 85 in
+  Europe).
+- **Pro is not offered in the EEA, the UK or Switzerland**, with no reason or
+  date given. In Europe only Business Premium includes a Dot.
+- **Meta Muse** is US and Canada only; Meta reportedly held back the European
+  launch over EU data rules.
+- **Grok Bot** is reported available to some European users, without a
+  published country list. Hark's European availability was not found.
+- European press already frames this as "a continent without AI agents"
+  (Trending Topics).
+
+### Anthropic
+
+No Dots-style always-on personal agent was found **(reported)**. What exists:
+
+| Product | What it is |
+| --- | --- |
+| Claude Managed Agents (public beta April 2026) | Developer API: define an agent, Anthropic runs it in its own sandbox, billed by usage |
+| Claude Cowork (GA April 2026; folding into the main Claude app for Pro and Max from September) | Agent inside the Claude app; described as task-scoped |
+| Claude Code cloud sessions (one source: GA September 2026) | Managed VMs for coding tasks |
+| Claude Code routines | Cloud agents on a cron schedule, for coding work |
+| Claude Tag | Claude in Slack |
+
+So Claude Pro and Max users also have no personal always-on agent. Codexia
+cannot fully serve them yet: see [the required-approvals
+blocker](#the-blocker-required-approvals).
 
 ## Open-source self-hosted: Hermes Agent
 
@@ -148,6 +182,43 @@ From `keke-agent/crates/sandbox` **(code)**:
   only, so this is not a launch blocker. [BOTS.md](BOTS.md#trust-levels)
   should still say the sandbox is enforced on macOS and Linux only.
 
+## Recent launches (October 2026)
+
+Leads, not verified against primary sources **(reported)**:
+
+- **OpenCode 2.0** (mid-October): one background service shared by terminal,
+  web and desktop; background subagents; "Code Mode" where agents script
+  calls across MCP servers and OpenAPI endpoints; an SDK for embedding.
+  Closest in shape to Codexia + keke.
+- **Show HN, 10-11 October**: a tool that lets agents draw arrows, boxes and
+  text on the user's screen (about 400 points), and **Talorys**, a
+  self-hosted personal agent on Cloudflare's free tier (about 245 points).
+- **Agent37** (YC F26): low-cost sandboxes for running agents.
+- **NVIDIA Nemotron 3.5** (15 October), including Bolt E4B, a 4 GB edge model
+  due 23 October; NVIDIA OpenShell, an open runtime enforcing security,
+  network and privacy policy for agents.
+
+### Agents on old Android phones
+
+Already common, mostly with the previous generation of open agents
+**(reported)**: OpenClaw in Termux (many guides), andClaw on Google Play,
+AidanPark's Claw App (one APK, no Termux), ZeroClaw (Rust, Android builds)
+and PicoClaw (Go). ZeroClaw and PicoClaw report smaller binaries than keke
+(keke 0.1.45 is 21 MB on macOS arm64; codex 239 MB, Claude Code 256 MB,
+opencode 89 MB, grok 160 MB, measured on this machine). Platform limits for
+an app that hosts an agent: Android 10+ only executes binaries shipped in
+the APK, and Android 15 caps `dataSync` foreground services at 6 hours a day.
+
+## Codexia star history
+
+From the GitHub API (UTC, current stargazers only): bursts on
+2025-09-16..18 (55; about 78 at the time, per the maintainer), 2026-04-20
+(41 in one day) and 2026-06-30..07-02 (46); otherwise 5-10 a day, falling
+to under one a day in September and October 2026. Bursts last two or three
+days, so a launch window is days, not months. About 30k release downloads
+in total; external issues are about web mode, Windows, remote SSH and UI
+bugs, none about bots.
+
 ## Linux server with phone client
 
 Codexia can run headless on a Linux server and be reached from a phone. This
@@ -191,6 +262,18 @@ Decided 2026-10-16:
 - **Codexia is web-first.** The desktop app stays as a client for people who
   want it; new features go into shared crates and the web API.
 
+Launch angle (proposed 2026-10-17, not decided):
+
+- Dots needs ChatGPT Pro and is not offered on Pro in Europe; Plus users have
+  none anywhere. Codexia bots run on keke with the ChatGPT (or Grok)
+  subscription the user already has, on their own machine. Draft line:
+  "Dots needs ChatGPT Pro and isn't available in Europe. This runs on the
+  Plus subscription you already have, on your own machine."
+- Differences to show, with code evidence: real tools and MCP, approvals
+  enforced by keke (payments always ask), drafts and hand-backs, phone
+  access. Open-source clones drop at least one of these (see above).
+- Claude users come second, after the required-approvals blocker is solved.
+
 Do not claim a vendor cloud, always-on availability independent of the host,
 or a hosted service, in any copy.
 
@@ -214,3 +297,20 @@ or a hosted service, in any copy.
 - [Hermes Agent: team Telegram assistant](https://hermes-agent.nousresearch.com/docs/guides/team-telegram-assistant)
 - [Hermes Agent: Desktop](https://hermes-agent.nousresearch.com/docs/user-guide/desktop)
 - [Hermes releases official desktop app (Decrypt)](https://decrypt.co/369952/hermes-ai-agent-official-app-terminal)
+- [preuve.ai: ChatGPT Dots review, Pro blocked in EU](https://preuve.ai/blog/chatgpt-dots)
+- [Beam: OpenAI Dots usage limits](https://beam.ai/agentic-insights/openai-dots-usage-limits-pro-200)
+- [SaaS CRM Review: OpenAI Dots pricing and availability](https://saascrmreview.com/openai-dots/)
+- [Trending Topics: A continent without AI agents](https://www.trendingtopics.eu/dots-muse-siri-ai-europe/)
+- [Merca2: Meta holds back Muse in Europe](https://www.merca2.es/2026/10/07/meta-muse-europa-leyes-2468346/)
+- [Capital & Compute: Dots vs Muse vs Grok Bot](https://capitalandcompute.net/blog/dots-vs-muse-vs-grok-bot/)
+- [Anthropic Managed Agents and Cowork GA](https://pasqualepillitteri.it/en/news/755/anthropic-managed-agents-cowork-ga-april-9-2026)
+- [Linas Substack: Everything Anthropic shipped in 2026](https://linas.substack.com/p/anthropic-claude-2026-every-launch-guide)
+- [Agent37: Claude Managed Agents pricing](https://www.agent37.com/blog/claude-managed-agents-pricing)
+- [AlternativeTo: OpenCode 2.0](https://alternativeto.net/news/2026/10/opencode-2-0-officially-launches-with-background-agents-code-mode-and-a-rebuilt-api)
+- [agents-radar HN digest 2026-10-11](https://github.com/ghub1821239/agents-radar/issues/632)
+- [agents-radar HN digest 2026-10-11 (Talorys)](https://github.com/845421145-lang/agents-radar/issues/414)
+- [byteiota: NVIDIA Nemotron 3.5](https://byteiota.com/nvidia-nemotron-35-super-vl-bolt/)
+- [OpenClaw on Android with Termux](https://openclaws.io/blog/openclaw-android-termux)
+- [GitHub: AidanPark/openclaw-android](https://github.com/AidanPark/openclaw-android/releases)
+- [It's FOSS: OpenClaw alternatives](https://itsfoss.com/openclaw-alternatives/)
+- [Android: foreground service timeout](https://developer.android.com/develop/background-work/services/fg-service-timeout)
