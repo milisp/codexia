@@ -204,8 +204,10 @@ Already common, mostly with the previous generation of open agents
 **(reported)**: OpenClaw in Termux (many guides), andClaw on Google Play,
 AidanPark's Claw App (one APK, no Termux), ZeroClaw (Rust, Android builds)
 and PicoClaw (Go). ZeroClaw and PicoClaw report smaller binaries than keke
-(keke 0.1.45 is 21 MB on macOS arm64; codex 239 MB, Claude Code 256 MB,
-opencode 89 MB, grok 160 MB, measured on this machine). Platform limits for
+(keke 0.1.45 is 21 MB on macOS arm64, and keke 0.1.46 static musl aarch64
+stripped is 18 MB, 8.5 MB gzipped; codex 239 MB, Claude Code 256 MB,
+opencode 89 MB, grok 160 MB, measured on this machine). keke's README says
+"~7 MB", which none of these builds match. Platform limits for
 an app that hosts an agent: Android 10+ only executes binaries shipped in
 the APK, and Android 15 caps `dataSync` foreground services at 6 hours a day.
 
