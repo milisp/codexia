@@ -117,7 +117,16 @@ impl AcpState {
         if let Some(bot) = &bot {
             crate::bots::select_provider(&client, bot).await;
         }
-        let (session, session_error) = match client.new_session(cwd).await {
+        let opened = match &bot {
+            Some(bot) => {
+                crate::bots::open_with_signed_in_route(&client, bot, &initialize, || {
+                    client.new_session(cwd)
+                })
+                .await
+            }
+            None => client.new_session(cwd).await,
+        };
+        let (session, session_error) = match opened {
             Ok(session) => (Some(session), None),
             Err(e) => (None, Some(e)),
         };
@@ -194,7 +203,8 @@ impl AcpState {
     /// Open a session on a connection that had to authenticate first.
     pub async fn new_session(&self, connection_id: &str, cwd: &str) -> Result<Value, String> {
         let client = self.get(connection_id)?;
-        let session = client.new_session(cwd).await?;
+        let cwd = session_cwd(&client, cwd)?;
+        let session = client.new_session(&cwd).await?;
         if let Some(session_id) = session.get("sessionId").and_then(Value::as_str) {
             self.apply_bot_settings(&client, session_id).await;
         }
@@ -275,4 +285,20 @@ impl AcpState {
         }
         Ok(())
     }
+}
+
+/// The folder a session opens in: `cwd`, or a bot's own folder when the bot
+/// has no project, the same fallback [`AcpState::start`] uses.
+fn session_cwd(client: &AcpClient, cwd: &str) -> Result<String, String> {
+    if !cwd.is_empty() {
+        return Ok(cwd.to_string());
+    }
+    let bot = client
+        .bot_id
+        .as_deref()
+        .map(codexia_db::bots::get_bot)
+        .transpose()?
+        .flatten()
+        .ok_or("no folder to open the session in")?;
+    crate::bots::work_dir(&bot)
 }
