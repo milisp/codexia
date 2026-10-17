@@ -63,6 +63,33 @@ already have." and the waitlist link.
 5. **Routines fire on time** with the app open on the Mac, and step 6 lists
    both runs.
 
+## First-use test, 2026-10-17
+
+Run on `feat/web-musl` (`codexia-web` release build) with `HOME` pointed at
+an empty folder, a new browser origin, a phone-width window (598 px), no
+codex, keke 0.1.45 copied in, and the ChatGPT login copied from the
+maintainer's `~/.keke`. Gmail and payment steps were not tested.
+
+What a new user hits, in order:
+
+| # | Step | Result | Cause |
+|---|---|---|---|
+| 1 | Open the app | A coding composer with **Codex** selected, though codex is not installed; nothing points to bots. Console and server log a `codex backend is not available` error every 4 s | Coding workspace is the default view |
+| 2 | Find bots | Sidebar → Bots → "Create your first bot" → role picker. Engineering roles come first; Daily Brief is under Briefs | Template order |
+| 3 | Pick Daily Brief | Bot and its 08:00 routine are created, then the full settings dialog opens (workspace `/path/to/project`, model note, long persona) | Picker opens settings |
+| 4 | Reload with one bot | Main view shows **"Create your first bot"** indefinitely; it switches to Today only after the sidebar is opened | `BotChatView` reads `bots` from `useBotUiStore`, which only sidebar components (`SideBarBotPane`, `BotNotifications`) load; on a phone the sidebar is closed |
+| 5 | Open the bot | "Daily Brief runs on the keke agent, which isn't installed yet. **Install keke**", although keke was on `PATH` | The bot's `cwd` is `""` (no project folder), so spawning keke fails with `No such file or directory`, which the UI reports as keke missing |
+| 6 | (Install keke button) | Not clicked: it runs `npm install -g @milisp/keke`, which fails without Node and installs globally | `install_preset` in `crates/acp/src/agents.rs` |
+| 7 | After setting a folder, no login | Red text: `Internal error: no ANTHROPIC_API_KEY stored for 'anthropic'; export it, or set it in the client's login`. No sign-in action | keke defaults to `anthropic` without `config.toml`; its first-run provider picker only runs in the TUI |
+| 8 | ChatGPT login present, still Anthropic | Same error until **ChatGPT** is picked in bot settings → Model → Provider | Same default |
+| 9 | First message | First approval asked is `acp:codexia-bots:list_bots` ("calls the `codexia-bots` MCP server") | Internal collaboration tool asks like any MCP tool |
+| 10 | Without web search config | Bot asks to run `bash` with a Python script fetching Google News (denied); then says it cannot write the brief without sources | Fresh keke has no `[providers.codex.web_search]` |
+| 11 | With web search configured | Three items with links, sources labelled as secondary, delivered as a **draft** ("Draft to copy", Copy/Discard) rather than a report | Role prompt's hand-over text steers to `propose_draft` |
+
+So a brand-new user does not reach a first brief without editing files or
+knowing keke internals. Steps 4, 5, 7/8 and 10 block the demo story; 1, 3,
+9 and 11 make it look unfinished.
+
 ## Gaps that affect the video
 
 | Gap | Effect | Option for the demo |
