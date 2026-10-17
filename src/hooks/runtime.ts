@@ -1,6 +1,7 @@
 import { convertFileSrc, isTauri } from '@tauri-apps/api/core';
 import { platform } from '@tauri-apps/plugin-os';
 import { desktopBaseUrl, pairedDesktop } from '@/stores/usePairingStore';
+import { useWebAccessStore } from '@/stores/useWebAccessStore';
 
 export const DEFAULT_PORT = 7420;
 const configuredPort = Number(import.meta.env.VITE_WEB_PORT || DEFAULT_PORT);
@@ -57,8 +58,12 @@ const resolveApiBase = () => {
   return `${protocol}://${host}:${configuredPort}`;
 };
 
-/** The paired desktop's device token, when this build needs to authenticate. */
-const authToken = () => pairedDesktop()?.token ?? null;
+/**
+ * The device token, when this build needs to authenticate: the paired
+ * machine's on a phone, or the serving server's in a remote browser.
+ */
+const authToken = () =>
+  pairedDesktop()?.token ?? (isTauri() ? null : useWebAccessStore.getState().token);
 
 /** `Authorization` header for `fetch`, empty when talking to a local backend. */
 export const authHeaders = (): Record<string, string> => {
