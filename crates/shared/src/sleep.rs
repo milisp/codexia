@@ -3,6 +3,7 @@ use std::{
     sync::{Arc, LazyLock},
 };
 
+#[cfg(not(target_env = "musl"))]
 use nosleep::{NoSleep, NoSleepType};
 use tokio::sync::Mutex;
 
@@ -70,7 +71,10 @@ impl Default for SleepState {
     }
 }
 
+/// On musl (headless servers) there is no sleep inhibitor: holds are only
+/// counted, and the host's own power settings apply.
 struct NoSleepController {
+    #[cfg(not(target_env = "musl"))]
     nosleep: Option<NoSleep>,
     active_conversations: HashSet<String>,
 }
@@ -78,6 +82,7 @@ struct NoSleepController {
 impl NoSleepController {
     fn new() -> Self {
         Self {
+            #[cfg(not(target_env = "musl"))]
             nosleep: None,
             active_conversations: HashSet::new(),
         }
@@ -93,6 +98,7 @@ impl NoSleepController {
             return Ok(());
         }
 
+        #[cfg(not(target_env = "musl"))]
         {
             if self.nosleep.is_none() {
                 self.nosleep = Some(NoSleep::new().map_err(|err| err.to_string())?);
@@ -122,6 +128,7 @@ impl NoSleepController {
             }
         }
 
+        #[cfg(not(target_env = "musl"))]
         if self.active_conversations.is_empty()
             && let Some(nosleep) = self.nosleep.as_ref()
         {

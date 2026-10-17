@@ -1,9 +1,16 @@
+#[cfg(target_env = "musl")]
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 const DEFAULT_WEB_PORT: u16 = 7420;
 
 fn parse_web_options() -> (String, u16, Vec<String>) {
     // Loopback by default: binding wider exposes shell and filesystem access,
     // so reaching the tailnet is opt-in via --remote.
-    let mut host = "127.0.0.1".to_string();
+    // `--host` (or CODEXIA_HOST) binds another address, e.g. 0.0.0.0 inside a
+    // container or behind a TLS reverse proxy. Non-loopback callers still need
+    // the device token.
+    let mut host = std::env::var("CODEXIA_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
     let mut remote = false;
     let mut port: u16 = std::env::var("VITE_WEB_PORT")
         .ok()
@@ -36,6 +43,16 @@ fn parse_web_options() -> (String, u16, Vec<String>) {
                 }
             }
             "--remote" => remote = true,
+            "--host" => {
+                if let Some(v) = args.next() {
+                    host = v;
+                }
+            }
+            _ if arg.starts_with("--host=") => {
+                if let Some(v) = arg.split('=').nth(1) {
+                    host = v.to_string();
+                }
+            }
             "--allow-origin" => {
                 if let Some(v) = args.next() {
                     allowed_origins.push(v);
@@ -71,7 +88,28 @@ fn parse_web_options() -> (String, u16, Vec<String>) {
 }
 
 fn main() {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().map(String::as_str) == Some("pair") {
+        let port = std::env::var("VITE_WEB_PORT")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(DEFAULT_WEB_PORT);
+        if let Err(e) = codexia_web::pairing::run(&args[1..], port) {
+            eprintln!("{e}");
+            std::process::exit(1);
+        }
+        return;
+    }
+
     let (host, port, allowed_origins) = parse_web_options();
+    if host != "127.0.0.1" && host != "localhost" {
+        eprintln!("To connect a phone or browser, run: codexia-web pair");
+        if !codexia_web::tailscale::detect().is_some_and(|info| info.ipv4 == host) {
+            eprintln!(
+                "Serving plain HTTP on {host}: put Tailscale or a TLS reverse proxy in front before exposing it to the internet"
+            );
+        }
+    }
     if !allowed_origins.is_empty() {
         eprintln!("Extra CORS origins allowed: {:?}", allowed_origins);
         codexia_web::router::set_extra_allowed_origins(allowed_origins);

@@ -58,6 +58,13 @@ fi
 echo "    -> Copying binary from ${bin_dir}"
 cp "${bin_dir}/codexia-web${bin_ext}" "${stage_dir}/codexia-web${bin_ext}"
 
+# keke next to codexia-web is preferred over PATH and npx (see
+# crates/acp/src/agents.rs), so the package runs the tested keke version.
+if [[ -n "${KEKE_BIN:-}" ]]; then
+  echo "    -> Bundling keke from ${KEKE_BIN}"
+  cp "${KEKE_BIN}" "${stage_dir}/keke${bin_ext}"
+fi
+
 echo "    -> Generating start-server.sh"
 cat > "${stage_dir}/start-server.sh" <<'EOF'
 #!/usr/bin/env bash

@@ -42,5 +42,9 @@ walkdir = { workspace = true }
 nucleo = { workspace = true }
 tokio-cron-scheduler = { workspace = true }
 agent-insights = { workspace = true }
-nosleep = { version = "0.2.1" }
 codexia-git = { workspace = true }
+
+# Linux reaches logind over D-Bus, which a static musl build cannot link.
+# musl builds are headless servers, which do not idle-sleep.
+[target.'cfg(not(target_env = "musl"))'.dependencies]
+nosleep = { version = "0.2.1" }

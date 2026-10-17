@@ -82,7 +82,9 @@ The trust level decides what a bot may do without asking you.
 | Autonomous | `auto` | `workspace_write` | keke's model-backed reviewer answers ordinary requests; a failed or unclear review refuses the step. |
 
 The sandbox mode and approval policy are sent to keke for every session, so
-they are enforced by the agent, not just shown in the UI. An unknown level
+they are enforced by the agent, not just shown in the UI. keke's sandbox runs
+on macOS and Linux; on Windows commands are not sandboxed, so host bots on a
+Mac or a Linux machine. An unknown level
 falls back to Ask. Autonomous uses keke's `auto`, not `never`: `never` would
 authorize every step, sandbox escapes included, without any review. The
 reviewer is a model and can be wrong or misled; it is a check, not a guarantee.
