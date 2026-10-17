@@ -1,3 +1,7 @@
+#[cfg(target_env = "musl")]
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 const DEFAULT_WEB_PORT: u16 = 7420;
 
 fn parse_web_options() -> (String, u16, Vec<String>) {

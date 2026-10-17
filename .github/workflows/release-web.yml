@@ -19,16 +19,21 @@ jobs:
   publish-web-linux:
     permissions:
       contents: write
-    env:
-      PKG_CONFIG_ALLOW_CROSS: "1"
     strategy:
       fail-fast: false
       matrix:
         include:
-          - target: x86_64-unknown-linux-gnu
+          # Static musl builds run on any Linux distribution, including the
+          # older glibc of Debian 12 / Ubuntu 22.04 servers and Alpine.
+          - target: x86_64-unknown-linux-musl
             arch: x86_64
-            libc: gnu
-    runs-on: ubuntu-24.04
+            libc: musl
+            runner: ubuntu-24.04
+          - target: aarch64-unknown-linux-musl
+            arch: aarch64
+            libc: musl
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -45,12 +50,43 @@ jobs:
         uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           toolchain: stable
-          targets: x86_64-unknown-linux-gnu
+          targets: ${{ matrix.target }}
 
       - name: install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install -y musl-tools
+          # Bundled C sources (SQLite, zstd, ring, mimalloc) compile against
+          # musl's headers; host build scripts keep the system compiler.
+          target_env="$(echo '${{ matrix.target }}' | tr '-' '_')"
+          echo "CC_${target_env}=musl-gcc" >> "$GITHUB_ENV"
+
+      - name: Read pinned keke version
+        shell: bash
+        run: |
+          VERSION=$(cat .github/keke-version)
+          [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.-]+)?$ ]] || { echo "Invalid keke version: $VERSION" >&2; exit 1; }
+          echo "KEKE_VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Checkout keke
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          repository: milisp/keke-agent
+          ref: ${{ env.KEKE_VERSION }}
+          path: keke-agent
+
+      # Built from source so this CI does not inflate keke's download counts.
+      # keke's rust-toolchain.toml pins its own channel, so the target is
+      # added to that toolchain.
+      - name: Build keke sidecar
+        shell: bash
+        run: |
+          cd keke-agent
+          rustup toolchain install --profile minimal
+          rustup target add ${{ matrix.target }}
+          cargo build --release --locked -p keke-cli --target ${{ matrix.target }}
+          echo "KEKE_BIN=$PWD/target/${{ matrix.target }}/release/keke" >> "$GITHUB_ENV"
 
       - name: install frontend dependencies
         run: bun install
