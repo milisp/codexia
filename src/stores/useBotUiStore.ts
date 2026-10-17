@@ -10,6 +10,11 @@ export type BotActivityStatus = 'working' | 'waiting' | 'done' | 'blocked' | 'fa
 
 interface BotUiStore {
   bots: Bot[];
+  /**
+   * Whether `bots` has been read from the backend yet. Until then an empty
+   * list means "not known", not "no bots", so the first-bot welcome waits.
+   */
+  botsLoaded: boolean;
   setBots: (bots: Bot[]) => void;
   /** Replace one bot in place, after an update round-trip. */
   upsertBot: (bot: Bot) => void;
@@ -58,7 +63,8 @@ interface BotUiStore {
 
 export const useBotUiStore = create<BotUiStore>((set) => ({
   bots: [],
-  setBots: (bots) => set({ bots }),
+  botsLoaded: false,
+  setBots: (bots) => set({ bots, botsLoaded: true }),
   upsertBot: (bot) =>
     set((state) => ({
       bots: state.bots.some((b) => b.id === bot.id)

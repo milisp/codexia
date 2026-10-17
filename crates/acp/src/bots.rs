@@ -78,6 +78,32 @@ pub fn memory_dir(bot_id: &str) -> Option<PathBuf> {
     )
 }
 
+/// The folder a bot works in: its project folder, or, for a bot without one
+/// (a briefing or an inbox bot), a folder of its own beside its memory.
+/// Spawning keke in an empty or missing `cwd` fails with ENOENT, which the
+/// Bot tab would otherwise report as keke not being installed.
+pub fn work_dir(bot: &BotRecord) -> Result<String, String> {
+    if !bot.cwd.is_empty() {
+        return Ok(bot.cwd.clone());
+    }
+    let home = dirs::home_dir().ok_or("no home directory for the bot's workspace")?;
+    work_dir_in(&home, bot)
+}
+
+fn work_dir_in(home: &std::path::Path, bot: &BotRecord) -> Result<String, String> {
+    if !bot.cwd.is_empty() {
+        return Ok(bot.cwd.clone());
+    }
+    let dir = home
+        .join(".codexia")
+        .join("bots")
+        .join(&bot.id)
+        .join("workspace");
+    std::fs::create_dir_all(&dir)
+        .map_err(|e| format!("could not create {}: {e}", dir.display()))?;
+    Ok(dir.to_string_lossy().into_owned())
+}
+
 /// The process definition for one bot.
 ///
 /// keke has no notion of a named agent, so a bot's identity is handed over the
@@ -392,7 +418,10 @@ impl crate::AcpState {
         on_started: impl FnOnce(&str),
     ) -> Result<RunReport, String> {
         let bot = bot.clone();
-        let cwd = cwd.filter(|c| !c.is_empty()).unwrap_or(&bot.cwd).to_string();
+        let cwd = match cwd.filter(|c| !c.is_empty()) {
+            Some(cwd) => cwd.to_string(),
+            None => work_dir(&bot)?,
+        };
         let policy = policy(&bot, self.api_port(), true, delegate).await;
         let approvals = policy.unattended.clone().unwrap_or_default();
 
@@ -600,6 +629,26 @@ mod tests {
         let rules = def.env.get("KEKE_REQUIRE_APPROVAL").unwrap();
         assert!(rules.split(',').any(|r| r == "*pay*"));
         assert_eq!(rules.split(',').count(), REQUIRED_APPROVALS.len());
+    }
+
+    #[test]
+    fn a_bot_without_a_project_works_in_its_own_folder() {
+        let home = tempfile::tempdir().unwrap();
+        let mut bot: BotRecord = serde_json::from_value(json!({
+            "id": "brief", "name": "Brief", "title": null,
+            "avatar": "", "color": "", "agentId": "keke", "provider": null,
+            "model": null, "reasoningEffort": null, "cwd": "",
+            "systemPrompt": null, "trustLevel": "read_only", "approvedTools": "[]",
+            "mcpServers": "[]", "allowedBotIds": "[]", "pinned": false,
+            "archived": false, "notificationsEnabled": true, "unreadCount": 0,
+            "lastViewedAt": null, "createdAt": "", "updatedAt": ""
+        })).unwrap();
+        let dir = work_dir_in(home.path(), &bot).unwrap();
+        assert!(dir.ends_with("/.codexia/bots/brief/workspace"));
+        assert!(std::path::Path::new(&dir).is_dir());
+
+        bot.cwd = "/srv/project".into();
+        assert_eq!(work_dir_in(home.path(), &bot).unwrap(), "/srv/project");
     }
 
     #[tokio::test(start_paused = true)]

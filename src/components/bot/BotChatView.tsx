@@ -1,23 +1,23 @@
 import { CalendarClock, Settings } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAcpEvents } from '@/components/acp/useAcpEvents';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useTrafficLightConfig } from '@/hooks';
+import { listBots } from '@/services/apiAdapt/bots';
 import { useAcpStore } from '@/stores/useAcpStore';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 import { BotAvatar } from './BotAvatar';
 import { BotComposer } from './BotComposer';
+import { BotHome } from './BotHome';
 import { BotInbox } from './BotInbox';
 import { BotMessageList } from './BotMessageList';
 import { BotPermissionGate } from './BotPermissionGate';
 import { BotRoutines } from './BotRoutines';
 import { BotSettingsDialog } from './BotSettingsDialog';
 import { BotTemplatePicker } from './BotTemplatePicker';
-import { BotToday } from './BotToday';
 import { BotWaitingApprovals } from './BotWaitingApprovals';
-import { BotWelcome } from './BotWelcome';
 import { TRUST_LEVELS } from './botAgentDef';
 import { useBotDragDrop } from './useBotDragDrop';
 import { useCreateBot } from './useCreateBot';
@@ -25,7 +25,7 @@ import { useOpenBot } from './useOpenBot';
 
 /** The full-screen conversation with one bot. */
 export default function BotChatView() {
-  const { bots, selectedBotId, connectionByBot } = useBotUiStore();
+  const { bots, botsLoaded, setBots, selectedBotId, connectionByBot } = useBotUiStore();
   const connectionId = useAcpStore((s) => s.connectionId);
   const { newBot, setNewBot, creating, handleCreateBot, pickerOpen, setPickerOpen, createFrom } =
     useCreateBot();
@@ -37,6 +37,14 @@ export default function BotChatView() {
   const { needsTrafficLightOffset } = useTrafficLightConfig(isSidebarOpen);
 
   useAcpEvents(connectionId);
+
+  // The sidebar also loads the list, but on a phone it starts closed, so this
+  // view cannot rely on it.
+  useEffect(() => {
+    listBots()
+      .then(setBots)
+      .catch((e) => console.error('bots: failed to list', e));
+  }, [setBots]);
 
   const picker = (
     <BotTemplatePicker
@@ -63,11 +71,13 @@ export default function BotChatView() {
             </div>
           )}
         </header>
-        {bots.length === 0 ? (
-          <BotWelcome creating={creating} onCreate={handleCreateBot} />
-        ) : (
-          <BotToday creating={creating} onCreate={handleCreateBot} onSelect={openBot} />
-        )}
+        <BotHome
+          bots={bots}
+          loaded={botsLoaded}
+          creating={creating}
+          onCreate={handleCreateBot}
+          onSelect={openBot}
+        />
         {picker}
       </div>
     );
