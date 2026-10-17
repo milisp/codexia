@@ -90,6 +90,17 @@ impl AcpState {
                 ConnectionPolicy::default(),
             ),
         };
+        // An empty `cwd` makes the spawn fail with ENOENT: a bot without a
+        // project gets its own folder, anything else starts in the home folder.
+        let cwd = match (&bot, cwd.is_empty()) {
+            (_, false) => cwd.to_string(),
+            (Some(bot), true) => crate::bots::work_dir(bot)?,
+            (None, true) => dirs::home_dir()
+                .ok_or("no home directory to start the agent in")?
+                .to_string_lossy()
+                .into_owned(),
+        };
+        let cwd = cwd.as_str();
 
         let connection_id = uuid::Uuid::new_v4().to_string();
         let (client, initialize) = AcpClient::spawn(
