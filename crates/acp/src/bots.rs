@@ -247,6 +247,54 @@ pub async fn select_provider(client: &AcpClient, bot: &BotRecord) {
     }
 }
 
+/// A route keke reports as holding a real credential, ChatGPT first. Routes
+/// that need no credential (a local server) are signed in by definition and
+/// are not a sign that the person chose them, so they are skipped.
+fn signed_in_route(initialize: &Value) -> Option<String> {
+    let routes: Vec<&str> = initialize["authMethods"]
+        .as_array()?
+        .iter()
+        .filter(|m| m["_meta"]["signedIn"] == true && m["_meta"]["credentialSource"].is_string())
+        .filter_map(|m| m["id"].as_str())
+        .collect();
+    routes
+        .iter()
+        .find(|id| **id == "codex")
+        .or_else(|| routes.first())
+        .map(|id| id.to_string())
+}
+
+/// Open (or resume) a bot's session. A bot with no provider runs on keke's
+/// default route; when that has no credential, the session is retried once on
+/// a route that has one, so a person signed in to ChatGPT never has to pick it.
+pub async fn open_with_signed_in_route<T, F, Fut>(
+    client: &AcpClient,
+    bot: &BotRecord,
+    initialize: &Value,
+    open: F,
+) -> Result<T, String>
+where
+    F: Fn() -> Fut,
+    Fut: std::future::Future<Output = Result<T, String>>,
+{
+    let error = match open().await {
+        Ok(opened) => return Ok(opened),
+        Err(error) => error,
+    };
+    if bot.provider.as_deref().is_some_and(|p| !p.is_empty()) {
+        return Err(error);
+    }
+    let Some(route) = signed_in_route(initialize) else {
+        return Err(error);
+    };
+    if let Err(e) = client.authenticate(&route).await {
+        log::warn!("bot {}: could not fall back to {route}: {e}", bot.name);
+        return Err(error);
+    }
+    log::info!("bot {}: default route failed ({error}); using {route}", bot.name);
+    open().await
+}
+
 /// Apply the bot's settings to a session its agent has just opened. An agent
 /// that does not offer one of them says so per option; that is not a reason
 /// to abandon the rest.
@@ -453,7 +501,7 @@ impl crate::AcpState {
             }
         });
 
-        let (client, _) = AcpClient::spawn(
+        let (client, initialize) = AcpClient::spawn(
             connection_id.clone(),
             &agent_def(&bot)?,
             Some(&cwd),
@@ -468,16 +516,20 @@ impl crate::AcpState {
             select_provider(&client, &bot).await;
             let session_id = match resume {
                 Some(session_id) => {
-                    client.load_session(session_id, &cwd).await?;
+                    open_with_signed_in_route(&client, &bot, &initialize, || {
+                        client.load_session(session_id, &cwd)
+                    })
+                    .await?;
                     session_id.to_string()
                 }
-                None => client
-                    .new_session(&cwd)
-                    .await?
-                    .get("sessionId")
-                    .and_then(Value::as_str)
-                    .ok_or("session/new returned no sessionId")?
-                    .to_string(),
+                None => open_with_signed_in_route(&client, &bot, &initialize, || {
+                    client.new_session(&cwd)
+                })
+                .await?
+                .get("sessionId")
+                .and_then(Value::as_str)
+                .ok_or("session/new returned no sessionId")?
+                .to_string(),
             };
             let _ = session_cell.set(session_id.clone());
             record_run(codexia_db::bot_runs::update(&connection_id, Some(&session_id), "working", None));
@@ -698,5 +750,29 @@ mod tests {
         assert!(crate::delegation::verify(token, "bot-1"));
         assert!(!crate::delegation::verify(token, "bot-2"));
         crate::delegation::revoke(token);
+    }
+
+    #[test]
+    fn falls_back_to_a_route_with_a_credential_chatgpt_first() {
+        let method = |id: &str, signed_in: bool, source: Option<&str>| {
+            json!({"id": id, "_meta": {"signedIn": signed_in, "credentialSource": source}})
+        };
+        let init = |methods: Vec<Value>| json!({ "authMethods": methods });
+
+        let all = init(vec![
+            method("anthropic", false, None),
+            method("ollama", true, None),
+            method("grok", true, Some("oauth")),
+            method("codex", true, Some("oauth")),
+        ]);
+        assert_eq!(signed_in_route(&all).as_deref(), Some("codex"));
+
+        let grok_only = init(vec![method("codex", false, None), method("grok", true, Some("oauth"))]);
+        assert_eq!(signed_in_route(&grok_only).as_deref(), Some("grok"));
+
+        // A local server needs no credential; that is not a sign-in.
+        let local_only = init(vec![method("anthropic", false, None), method("ollama", true, None)]);
+        assert_eq!(signed_in_route(&local_only), None);
+        assert_eq!(signed_in_route(&json!({})), None);
     }
 }

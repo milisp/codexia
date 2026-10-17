@@ -8,6 +8,7 @@ import { captureBotOptions } from '@/stores/useBotOptionsStore';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 import { applyAcpUpdate } from '../acp/applyUpdate';
 import { loadAcpAgents } from '../acp/useAcpAgents';
+import { hasSignedInRoute } from './signedIn';
 
 /** Replay only the active runtime transcript; older work belongs to the Bot timeline. */
 async function replayCurrent(botId: string, sessionId: string) {
@@ -160,6 +161,8 @@ export function useBotSession() {
       captureBotOptions(bot.provider, res.initialize, res.session);
 
       if (res.sessionError || !res.sessionId) {
+        // With no account signed in, the composer offers a sign-in instead.
+        if (!hasSignedInRoute(res.initialize.authMethods ?? [])) return null;
         store.addEntry({
           id: `start-${Date.now()}`,
           role: 'error',

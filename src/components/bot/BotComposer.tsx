@@ -7,11 +7,13 @@ import type { Bot } from '@/services/apiAdapt/bots';
 import { useAcpStore } from '@/stores/useAcpStore';
 import { useBotUiStore } from '@/stores/useBotUiStore';
 import { BotKekeInstall } from './BotKekeInstall';
+import { BotSignIn } from './BotSignIn';
 import { BotToolsMenu } from './BotToolsMenu';
+import { hasSignedInRoute } from './signedIn';
 import { useBotSession } from './useBotSession';
 
 export function BotComposer({ bot }: { bot: Bot }) {
-  const { connectionId, connecting, setRunning, addEntry } = useAcpStore();
+  const { connectionId, connecting, authMethods, setRunning, addEntry } = useAcpStore();
   const connectionByBot = useBotUiStore((s) => s.connectionByBot);
   const sessionByBot = useBotUiStore((s) => s.sessionByBot);
   const kekeSpawnFailed = useBotUiStore((s) => s.kekeSpawnFailed);
@@ -40,6 +42,18 @@ export function BotComposer({ bot }: { bot: Bot }) {
   const kekeMissing = !hasSession && ((keke !== undefined && !keke.local) || kekeSpawnFailed);
 
   if (kekeMissing) return <BotKekeInstall botName={bot.name} />;
+  // The agent started but has no account to work with: offer a sign-in in
+  // the composer's place rather than a raw credential error.
+  const needsSignIn =
+    Boolean(botConnection) &&
+    !botSession &&
+    connectionId === botConnection &&
+    !connecting &&
+    authMethods.length > 0 &&
+    !hasSignedInRoute(authMethods);
+  if (needsSignIn) {
+    return <BotSignIn bot={bot} connectionId={botConnection} methods={authMethods} />;
+  }
 
   const send = async () => {
     const trimmed = text.trim();
