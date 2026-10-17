@@ -87,10 +87,12 @@ codexia/
 - docs/ROADMAP-MULTI-CLIENT.md
 - docs/BOT_DESIGN.md
 
-## web server
+## Web first
 
-- new tauri command add a api to `web/src/handlers/` 
-- invoke add to `src/services/tauri/`
+- Web (`codexia-web`) is the primary runtime; the desktop app is a shell around the same UI.
+- New backend features go into shared crates plus an HTTP/WS handler in `web/src/handlers/`. Do not add a matching `#[tauri::command]` by default.
+- Add a Tauri command only for desktop-only capabilities (native dialogs, window control, open local apps, dictation, sleep prevention). Gate its UI with the runtime check so the web build hides it.
+- Frontend calls go through the web API client; do not add new `invoke` wrappers for features that work over HTTP.
 
 ## tailscale for remote control
 
